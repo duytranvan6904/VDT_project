@@ -150,11 +150,11 @@ def week_dates(week_num):
 # TASK DATA — Detailed breakdown
 # ============================================================================
 def get_tasks():
-    """Return comprehensive task list."""
+    """Return comprehensive task list aligned with README.md & user constraints."""
     tasks = [
-        # GIAI ĐOẠN 1: Simulation & APF trên Simulink — Tuần 1-2
+        # GIAI ĐOẠN 1: Setup & Simulation — Tuần 1-2
         # --- Week 1 ---
-        ("GĐ1-T01", "GĐ1: Simulation & APF", "W1", "M1", 
+        ("GĐ1-T01", "GĐ1: Setup & Sim", "W1", "M1", 
          "Xây dựng mô hình động học 6DOF UAV trên Simulink",
          "Mô hình input: lực/moment, output: pose (x,y,z,φ,θ,ψ). Bao gồm mô hình cánh quạt, trọng lực, khí động.",
          "Tuân", "Duy", "🔴 Critical", "—",
@@ -163,290 +163,263 @@ def get_tasks():
          "File .slx mô hình UAV",
          "Mô hình chạy ổn định, output đúng physical unit"),
 
-        ("GĐ1-T02", "GĐ1: Simulation & APF", "W1", "M8",
-         "Lập trình hàm APF: lực hút, lực đẩy, Modified APF",
-         "Triển khai Attractive Potential, Repulsive Potential, xử lý GNRON (Goal Non-Reachable with Obstacles Nearby), lực xoay chống Local Minima.",
+        ("GĐ1-T02", "GĐ1: Setup & Sim", "W1", "M8",
+         "Lập trình thuật toán Standard APF baseline",
+         "Triển khai Attractive Potential, Repulsive Potential, xử lý GNRON, lực xoay chống Local Minima.",
          "Tuân", "Duy", "🔴 Critical", "GĐ1-T01",
          PROJECT_START + timedelta(days=2), PROJECT_START + timedelta(days=6),
          20, "⬜ Not Started", 0,
          "Module APF (.m/.slx)",
-         "APF hội tụ với ≥ 5 cấu hình vật cản khác nhau"),
+         "APF hội tụ với ≥ 5 cấu hình vật cản trong mô phỏng"),
 
-        ("GĐ1-T03", "GĐ1: Simulation & APF", "W1", "M2",
-         "Nghiên cứu & chuẩn bị pipeline YOLO detection",
-         "Survey YOLO versions (v8/v11), chọn model phù hợp cho embedded. Chuẩn bị dataset, test trên PC.",
-         "Duy", "Tuân", "🟡 High", "—",
+        ("GĐ1-T03", "GĐ1: Setup & Sim", "W1", "M2",
+         "Lập trình ArUco Detection & PnP Pose Estimation (Python)",
+         "Phát hiện ArUco marker (cv2.aruco), tính pose 6DOF (solvePnP) và xuất 2D Bounding Box (u,v,w,h).",
+         "Duy", "Tuân", "🔴 Critical", "—",
          PROJECT_START, PROJECT_START + timedelta(days=4),
-         12, "⬜ Not Started", 0,
-         "Report chọn model + benchmark",
-         "Model chạy được trên PC, mAP > 0.7 trên test set"),
+         16, "⬜ Not Started", 0,
+         "Python script ArUco detect",
+         "Nhận diện ArUco ổn định trên dataset ảnh thô"),
 
-        ("GĐ1-T04", "GĐ1: Simulation & APF", "W1", "M1",
-         "Cài đặt Ubuntu + ROS 2 Humble + PX4-Autopilot",
-         "Setup dual-boot/VM, cài ROS 2 Humble, PX4 SITL, Gazebo Garden. Đảm bảo build thành công.",
-         "Việt Anh", "Duy", "🔴 Critical", "—",
+        ("GĐ1-T04", "GĐ1: Setup & Sim", "W1", "M1",
+         "Setup Ubuntu 22.04 + ROS 2 Humble + PX4 SITL + Gazebo + RViz",
+         "Thiết lập môi trường mô phỏng ROS 2 Humble, PX4 SITL, Gazebo Garden và RViz visualization.",
+         "Duy", "Việt Anh", "🔴 Critical", "—",
          PROJECT_START, PROJECT_START + timedelta(days=3),
-         10, "⬜ Not Started", 0,
-         "Screenshot build thành công",
-         "PX4 SITL + Gazebo chạy được, ROS 2 topic nhận được"),
+         12, "⬜ Not Started", 0,
+         "Môi trường mô phỏng sẵn sàng",
+         "PX4 SITL + Gazebo + RViz chạy mượt, ROS 2 topic nhận đủ"),
+
+        ("GĐ1-T05", "GĐ1: Setup & Sim", "W1", "M9",
+         "[Việt Anh] Đọc & nghiên cứu cấu trúc PX4 Firmware Low-Level Controller",
+         "Phân tích module mc_pos_control & mc_att_control của PX4, bộ điều khiển P/PID vị trí & vận tốc.",
+         "Việt Anh", "Tuân", "🔴 Critical", "—",
+         PROJECT_START + timedelta(days=1), PROJECT_START + timedelta(days=5),
+         16, "⬜ Not Started", 0,
+         "Báo cáo kiến trúc PX4 mc_pos_control",
+         "Hiểu rõ sơ đồ P/PID vị trí/vận tốc & các tham số MPC_*"),
 
         # --- Week 2 ---
-        ("GĐ1-T05", "GĐ1: Simulation & APF", "W2", "M8",
-         "Quét bộ thông số APF (k_att, k_rep, d0) trên Simulink",
-         "Chạy Monte Carlo/grid search trên các bộ thông số. Tìm bộ tối ưu cho nhiều kịch bản vật cản.",
+        ("GĐ1-T06", "GĐ1: Setup & Sim", "W2", "M8",
+         "Quét tham số Standard APF & Nâng cấp VO-APF (Simulink)",
+         "Grid search bộ tham số k_att, k_rep. Nâng cấp lực đẩy phụ thuộc vận tốc tương đối (VO-APF).",
          "Tuân", "Duy", "🟡 High", "GĐ1-T02",
          PROJECT_START + timedelta(days=7), PROJECT_START + timedelta(days=10),
          14, "⬜ Not Started", 0,
-         "Bảng thông số tối ưu + đồ thị quỹ đạo",
-         "Tracking error < 0.3m trên simulation, quỹ đạo mượt"),
+         "Bảng tham số APF/VO-APF",
+         "Tracking error < 0.3m trên Simulink, quỹ đạo mượt"),
 
-        ("GĐ1-T06", "GĐ1: Simulation & APF", "W2", "M2/M3",
-         "Tích hợp YOLO + ByteTrack, tính toạ độ 3D từ depth",
-         "Kết hợp YOLO detection với ByteTrack tracker. Sử dụng depth camera để tính toạ độ 3D trong Local Frame.",
+        ("GĐ1-T07", "GĐ1: Setup & Sim", "W2", "M3",
+         "Lập trình thuật toán H-Pad Depth Masking (Python/OpenCV)",
+         "Sử dụng 2D Bounding Box ArUco dilate 15% để zero-out vùng H-Pad trên ma trận depth.",
          "Duy", "Việt Anh", "🔴 Critical", "GĐ1-T03",
-         PROJECT_START + timedelta(days=7), PROJECT_START + timedelta(days=12),
-         18, "⬜ Not Started", 0,
-         "Python module Vision pipeline",
-         "Tracking liên tục ≥ 30 FPS, 3D error < 0.5m trong phòng"),
-
-        ("GĐ1-T07", "GĐ1: Simulation & APF", "W2", "M1/M9",
-         "Thiết lập Offboard control: takeoff, land, waypoint",
-         "Xây dựng ROS 2 node giao tiếp PX4 qua uXRCE-DDS. Thực hiện takeoff, land, waypoint tracking trong Gazebo.",
-         "Việt Anh", "Tuân", "🔴 Critical", "GĐ1-T04",
-         PROJECT_START + timedelta(days=7), PROJECT_START + timedelta(days=12),
+         PROJECT_START + timedelta(days=7), PROJECT_START + timedelta(days=11),
          16, "⬜ Not Started", 0,
-         "ROS 2 package offboard_control",
-         "UAV takeoff → waypoint → land thành công 100% trong SITL"),
+         "Module Depth Masking",
+         "Zero-out chính xác 100% vùng H-Pad BBox trên depth map"),
 
-        ("GĐ1-T08", "GĐ1: Simulation & APF", "W2", "M1",
-         "Xác định hệ quy chiếu & interface giữa các module",
-         "Thống nhất frame conventions (NED/ENU), message types, topic names giữa Vision → Control → PX4.",
-         "Cả nhóm", "—", "🟡 High", "GĐ1-T04",
-         PROJECT_START + timedelta(days=9), PROJECT_START + timedelta(days=10),
-         6, "⬜ Not Started", 0,
-         "Document interface specification",
-         "Tài liệu rõ ràng, cả nhóm thống nhất"),
+        ("GĐ1-T08", "GĐ1: Setup & Sim", "W2", "M2",
+         "[Hardware Arrived] Bench-test RealSense D435i + Pi 5 OS",
+         "Cài đặt Raspberry Pi OS 64-bit, ROS 2 Humble, realsense2_camera driver. Test luồng RGB+Depth.",
+         "Việt Anh", "Duy", "🔴 Critical", "—",
+         PROJECT_START + timedelta(days=7), PROJECT_START + timedelta(days=11),
+         14, "⬜ Not Started", 0,
+         "Pi 5 OS & D435i driver OK",
+         "realsense2_camera publish RGB + Depth 30 FPS trên Pi 5"),
 
-        # GIAI ĐOẠN 2: Theo dõi mục tiêu & Bám mục tiêu — Tuần 3-4
-        # --- Week 3 ---
-        ("GĐ2-T01", "GĐ2: Tracking & Follow", "W3", "M4/M5",
-         "Thiết kế EKF ước lượng vận tốc mục tiêu",
-         "Extended Kalman Filter: state = [x, y, z, vx, vy, vz], measurement từ Vision pipeline. Tune Q, R matrices.",
-         "Duy", "Tuân", "🔴 Critical", "GĐ1-T06",
-         PROJECT_START + timedelta(days=14), PROJECT_START + timedelta(days=18),
-         18, "⬜ Not Started", 0,
-         "EKF module (Python/C++)",
-         "Velocity estimate error < 0.3 m/s trên dữ liệu mô phỏng"),
-
-        ("GĐ2-T02", "GĐ2: Tracking & Follow", "W3", "M5",
-         "Lập trình Dead Reckoning khi mất dấu mục tiêu",
-         "Khi camera mất dấu (1-2s), sử dụng EKF prediction để duy trì ước lượng vị trí mục tiêu.",
-         "Duy", "Tuân", "🟡 High", "GĐ2-T01",
-         PROJECT_START + timedelta(days=17), PROJECT_START + timedelta(days=20),
-         10, "⬜ Not Started", 0,
-         "Dead Reckoning module",
-         "Dự đoán đúng hướng đi khi ngắt frame 1-2s"),
-
-        ("GĐ2-T03", "GĐ2: Tracking & Follow", "W3", "M6",
-         "Xây dựng quy luật bám Virtual Stand-off Tracking",
-         "Thiết kế guidance law: UAV giữ khoảng cách d_follow phía sau mục tiêu, tự điều chỉnh heading.",
-         "Tuân", "Duy", "🔴 Critical", "GĐ1-T05",
-         PROJECT_START + timedelta(days=14), PROJECT_START + timedelta(days=19),
-         16, "⬜ Not Started", 0,
-         "Follow guidance module",
-         "UAV giữ khoảng cách ổn định ±0.5m trong SITL"),
-
-        ("GĐ2-T04", "GĐ2: Tracking & Follow", "W3", "M1",
-         "Tích hợp Vision node vào ROS 2, publish topic",
-         "Đóng gói Vision pipeline thành ROS 2 node, publish TargetState message lên topic.",
-         "Việt Anh", "Duy", "🟡 High", "GĐ1-T06, GĐ1-T07",
-         PROJECT_START + timedelta(days=14), PROJECT_START + timedelta(days=18),
+        ("GĐ1-T09", "GĐ1: Setup & Sim", "W2", "M10",
+         "[Việt Anh] Lập trình ROS 2 Servo Gimbal Control (GPIO PWM)",
+         "Viết ROS 2 node xuất xung PWM qua chân GPIO Pi 5 để điều khiển Servo Gimbal góc pitch.",
+         "Việt Anh", "Tuân", "🟡 High", "GĐ1-T08",
+         PROJECT_START + timedelta(days=9), PROJECT_START + timedelta(days=12),
          12, "⬜ Not Started", 0,
-         "ROS 2 vision node package",
-         "Topic publish ổn định ≥ 30 Hz"),
+         "ROS 2 gimbal control node",
+         "Servo quay mượt 0° -> -90° qua lệnh ROS 2 topic"),
+
+        ("GĐ1-T10", "GĐ1: Setup & Sim", "W2", "M5",
+         "[Duy] Thiết kế & Mô phỏng IBVS Landing Controller (Vision Side)",
+         "Lập trình thuật toán Image-Based Visual Servoing tính sai lệch pixel tâm marker, đóng gói tín hiệu gửi cho Tuân.",
+         "Duy", "Tuân", "🔴 Critical", "GĐ1-T03",
+         PROJECT_START + timedelta(days=9), PROJECT_START + timedelta(days=13),
+         16, "⬜ Not Started", 0,
+         "Module IBVS Landing (Python)",
+         "Đóng gói IBVS visual servoing signal gửi cho Tuân"),
+
+        # GIAI ĐOẠN 2: SITL & Bench Test — Tuần 3-4
+        # --- Week 3 ---
+        ("GĐ2-T01", "GĐ2: SITL & Bench", "W3", "M4/M5",
+         "Thiết kế & Lập trình EKF 6-state ước lượng H-Pad State",
+         "EKF 6-state (x,y,z,vx,vy,vz) lọc mượt vị trí và ước lượng vận tốc bãi đáp di động H-Pad.",
+         "Duy", "Tuân", "🔴 Critical", "GĐ1-T03",
+         PROJECT_START + timedelta(days=14), PROJECT_START + timedelta(days=18),
+         18, "⬜ Not Started", 0,
+         "ROS 2 EKF Node (Python/C++)",
+         "Ước lượng với sai số vận tốc < 0.3 m/s"),
+
+        ("GĐ2-T02", "GĐ2: SITL & Bench", "W3", "M8/M9",
+         "Port VO-APF Planner & IBVS Landing Controller sang ROS 2",
+         "Chuyển đổi thuật toán VO-APF và IBVS Landing từ mô phỏng sang ROS 2 C++/Python packages.",
+         "Tuân", "Duy", "🔴 Critical", "GĐ1-T06, GĐ1-T10",
+         PROJECT_START + timedelta(days=14), PROJECT_START + timedelta(days=19),
+         20, "⬜ Not Started", 0,
+         "ROS 2 Planner packages",
+         "Chạy mượt trong ROS 2, latency < 20 ms/cycle"),
+
+        ("GĐ2-T03", "GĐ2: SITL & Bench", "W3", "M10",
+         "Xây dựng ROS 2 Finite State Machine (FSM 4 States)",
+         "Quản lý chuyển vùng 4 trạng thái: SEARCH -> FOLLOW -> APPROACH -> LAND, điều khiển Gimbal tilt.",
+         "Việt Anh", "Tuân", "🔴 Critical", "GĐ1-T09",
+         PROJECT_START + timedelta(days=14), PROJECT_START + timedelta(days=18),
+         14, "⬜ Not Started", 0,
+         "ROS 2 FSM node + Diagram",
+         "Chuyển đổi 4 trạng thái đúng 100%"),
+
+        ("GĐ2-T04", "GĐ2: SITL & Bench", "W3", "M9",
+         "[Việt Anh] Phân tích kịch bản tùy biến PX4 Low-Level Position Controller",
+         "Nghiên cứu phương án chỉnh sửa tham số PID hoặc can thiệp code mc_pos_control nếu landing offboard bị lệch.",
+         "Việt Anh", "Tuân", "🟡 High", "GĐ1-T05",
+         PROJECT_START + timedelta(days=16), PROJECT_START + timedelta(days=20),
+         12, "⬜ Not Started", 0,
+         "Tài liệu hướng dẫn override PX4 controller",
+         "Nắm rõ phương pháp sửa code mc_pos_control nếu land lệch"),
+
+        ("GĐ2-T05", "GĐ2: SITL & Bench", "W3", "M2/M3",
+         "Bench-test Vision + Depth Masking + IBVS + EKF trên Pi 5",
+         "Chạy toàn bộ Vision pipeline thực tế trên Pi 5 + D435i. Đo FPS, latency và độ chính xác depth mask.",
+         "Duy", "Việt Anh", "🔴 Critical", "GĐ1-T07, GĐ1-T08, GĐ1-T10",
+         PROJECT_START + timedelta(days=16), PROJECT_START + timedelta(days=20),
+         14, "⬜ Not Started", 0,
+         "Bench-test report",
+         "Vision pipeline đạt ≥ 30 FPS, latency < 100 ms trên Pi 5"),
 
         # --- Week 4 ---
-        ("GĐ2-T05", "GĐ2: Tracking & Follow", "W4", "M4",
-         "Calibration camera, test depth accuracy",
-         "Calibrate intrinsic/extrinsic parameters. Đánh giá độ chính xác depth tại các khoảng cách 1-10m.",
-         "Duy", "Việt Anh", "🟡 High", "GĐ1-T06",
-         PROJECT_START + timedelta(days=21), PROJECT_START + timedelta(days=24),
-         10, "⬜ Not Started", 0,
-         "Calibration report + parameters file",
-         "Depth error < 5% tại khoảng cách 1-5m"),
-
-        ("GĐ2-T06", "GĐ2: Tracking & Follow", "W4", "M8/M9",
-         "Port APF từ Simulink sang C++/Python ROS 2 node",
-         "Chuyển đổi thuật toán Modified APF sang ROS 2. Kết nối với obstacle data (depth/pointcloud).",
-         "Tuân", "Việt Anh", "🔴 Critical", "GĐ1-T05, GĐ2-T03",
-         PROJECT_START + timedelta(days=21), PROJECT_START + timedelta(days=26),
-         20, "⬜ Not Started", 0,
-         "ROS 2 APF planner node",
-         "APF hoạt động đúng trong SITL, kết quả tương đương Simulink"),
-
-        ("GĐ2-T07", "GĐ2: Tracking & Follow", "W4", "M10",
-         "Xây dựng State Machine (SEARCH/FOLLOW/AVOID/HOLD)",
-         "Finite State Machine quản lý chế độ bay. Transition logic rõ ràng, có timeout và fallback.",
-         "Việt Anh", "Tuân", "🔴 Critical", "GĐ2-T04, GĐ2-T06",
-         PROJECT_START + timedelta(days=23), PROJECT_START + timedelta(days=27),
-         14, "⬜ Not Started", 0,
-         "State Machine node + diagram",
-         "Chuyển trạng thái đúng 100% trong SITL test cases"),
-
-        ("GĐ2-T08", "GĐ2: Tracking & Follow", "W4", "M1-M10",
-         "★ MILESTONE 1: Test tích hợp toàn hệ thống trên SITL",
-         "Chạy full pipeline: Vision → EKF → Follow → APF → State Machine → PX4 trên Gazebo. Quay video demo.",
-         "Cả nhóm", "—", "🔴 Critical", "GĐ2-T06, GĐ2-T07",
-         PROJECT_START + timedelta(days=26), PROJECT_START + timedelta(days=27),
-         8, "⬜ Not Started", 0,
-         "Video demo SITL + test report",
-         "UAV bám mục tiêu ≥ 60s, né ≥ 3 vật cản, tracking error < 1.0m"),
-
-        # GIAI ĐOẠN 3: Phần cứng & Bench Test — Tuần 5-6
-        # --- Week 5 ---
-        ("GĐ3-T01", "GĐ3: Hardware & Bench Test", "W5", "M1",
-         "Lắp ráp Companion Computer + Camera lên kit X500",
-         "Mount máy tính nhúng, camera, module nguồn BEC. Đảm bảo cân bằng trọng tâm.",
-         "Việt Anh", "Tuân", "🔴 Critical", "—",
-         PROJECT_START + timedelta(days=28), PROJECT_START + timedelta(days=31),
+        ("GĐ2-T06", "GĐ2: SITL & Bench", "W4", "M1-M10",
+         "★ MILESTONE 1: Full Gazebo SITL Demo (SEARCH->FOLLOW->LAND)",
+         "Chạy mô phỏng khép kín full pipeline trên Gazebo SITL. Quay video demo kết quả.",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ2-T02, GĐ2-T03",
+         PROJECT_START + timedelta(days=21), PROJECT_START + timedelta(days=23),
          12, "⬜ Not Started", 0,
-         "Ảnh lắp ráp + checklist phần cứng",
-         "Tất cả module lắp chắc chắn, trọng tâm OK"),
+         "SITL Demo Video + Report",
+         "Target follow ≥ 60s, né ≥ 3 vật cản, land error < 0.3m"),
 
-        ("GĐ3-T02", "GĐ3: Hardware & Bench Test", "W5", "M9/M10",
-         "Thiết lập UART/USB giữa máy tính nhúng và PX4",
-         "Cấu hình serial baudrate 921600, test MAVLink/uXRCE-DDS. Setup Offboard switch qua RC + Kill switch.",
-         "Việt Anh", "Duy", "🔴 Critical", "GĐ3-T01",
-         PROJECT_START + timedelta(days=30), PROJECT_START + timedelta(days=33),
-         14, "⬜ Not Started", 0,
-         "Communication test log",
-         "Telemetry ổn định ≥ 30 phút, Offboard switch 100%"),
-
-        ("GĐ3-T03", "GĐ3: Hardware & Bench Test", "W5", "M2",
-         "Tối ưu YOLO → TensorRT/ONNX cho máy tính nhúng",
-         "Convert model sang TensorRT FP16. Benchmark FPS trên hardware thực.",
-         "Duy", "Việt Anh", "🟡 High", "GĐ1-T06",
-         PROJECT_START + timedelta(days=28), PROJECT_START + timedelta(days=33),
+        ("GĐ2-T07", "GĐ2: SITL & Bench", "W4", "M1",
+         "[Hardware Arrived] Lắp ráp cơ khí S500 V2 + Wiring UBEC Dual Power",
+         "Cả nhóm cùng lắp ráp frame S500 V2, mount Pixhawk 6C, Pi 5, Camera D435i, Gimbal, đi nguồn UBEC kép.",
+         "Cả nhóm", "—", "🔴 Critical", "—",
+         PROJECT_START + timedelta(days=21), PROJECT_START + timedelta(days=25),
          16, "⬜ Not Started", 0,
-         "Optimized model + benchmark report",
-         "FPS ≥ 15 trên máy tính nhúng (target ≥ 25)"),
+         "Drone hardware completed",
+         "Cân bằng trọng tâm, 2 nguồn 5.2V FC & 5V/5A Pi 5 riêng biệt"),
 
-        ("GĐ3-T04", "GĐ3: Hardware & Bench Test", "W5", "M8",
-         "Fine-tune APF + EKF parameters trên SITL",
-         "Chạy thêm nhiều kịch bản SITL để tinh chỉnh tham số trước khi sang phần cứng.",
-         "Tuân", "Duy", "🟢 Normal", "GĐ2-T08",
-         PROJECT_START + timedelta(days=28), PROJECT_START + timedelta(days=33),
+        ("GĐ2-T08", "GĐ2: SITL & Bench", "W4", "M9",
+         "Calibrate Pixhawk 6C + Bench-test UART micro-XRCE-DDS",
+         "Calibrate IMU, Mag, Baro, ESC. Kết nối UART micro-XRCE-DDS Pi 5 <-> Pixhawk 6C baud 921600.",
+         "Việt Anh", "Duy", "🔴 Critical", "GĐ2-T07",
+         PROJECT_START + timedelta(days=24), PROJECT_START + timedelta(days=27),
+         14, "⬜ Not Started", 0,
+         "Calibration & Telemetry log",
+         "Sensor calib 100% OK, telemetry đệm micro-XRCE-DDS ≥ 30 min"),
+
+        # GIAI ĐOẠN 3: Integration & Flight Test — Tuần 5-6
+        # --- Week 5 ---
+        ("GĐ3-T01", "GĐ3: Integration & Flight", "W5", "M1-M10",
+         "Đóng gói ROS 2 Package & Bench Test Dry Run (No Props)",
+         "Test chạy khô không gắn cánh quạt: kiểm tra phản ứng motor khi H-Pad di chuyển, test RC Kill Switch.",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ2-T08",
+         PROJECT_START + timedelta(days=28), PROJECT_START + timedelta(days=31),
+         14, "⬜ Not Started", 0,
+         "Dry run video + motor log",
+         "Motor phản ứng đúng hướng 100%, Kill switch ngắt < 50 ms"),
+
+        ("GĐ3-T02", "GĐ3: Integration & Flight", "W5", "M1-M10",
+         "Test Plan Verification cho từng Module trước khi bay",
+         "Nghiệm thu toàn bộ 5 bài Test Plan module an toàn trước khi thực hiện outdoor flight test.",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ3-T01",
+         PROJECT_START + timedelta(days=31), PROJECT_START + timedelta(days=34),
          12, "⬜ Not Started", 0,
-         "Updated parameter set + test results",
-         "Cải thiện tracking error ≥ 10% so với tuần 4"),
+         "Module Test Plan Checklist",
+         "Tất cả 5 module vượt qua bài kiểm tra an toàn"),
 
         # --- Week 6 ---
-        ("GĐ3-T05", "GĐ3: Hardware & Bench Test", "W6", "M2/M4",
-         "Test camera + Vision pipeline trên phần cứng",
-         "Chạy full Vision pipeline (YOLO + ByteTrack + depth) trên máy tính nhúng. Benchmark end-to-end latency.",
-         "Duy", "Việt Anh", "🔴 Critical", "GĐ3-T03",
+        ("GĐ3-T03", "GĐ3: Integration & Flight", "W6", "M9",
+         "Flight Test #1-2: Pha SEARCH & FOLLOW bãi trống",
+         "Bay thử ngoài trời bãi trống. Quadrotor cất cánh, quay tìm ArUco và duy trì FOLLOW ở d_follow = 2-3m.",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ3-T02",
          PROJECT_START + timedelta(days=35), PROJECT_START + timedelta(days=38),
          12, "⬜ Not Started", 0,
-         "Hardware Vision benchmark",
-         "End-to-end latency < 100ms, FPS ≥ 15"),
+         "Flight #1-2 log + Video",
+         "★ MS2: Bám mục tiêu ≥ 30s, tracking error < 1.0m RMSE"),
 
-        ("GĐ3-T06", "GĐ3: Hardware & Bench Test", "W6", "M9",
-         "Dry Run: test motor response (không cánh quạt)",
-         "Chạy toàn bộ hệ thống, kiểm tra motor phản ứng đúng khi mục tiêu di chuyển. Không gắn propeller.",
-         "Việt Anh", "Tuân", "🔴 Critical", "GĐ3-T02, GĐ3-T05",
-         PROJECT_START + timedelta(days=37), PROJECT_START + timedelta(days=39),
-         8, "⬜ Not Started", 0,
-         "Dry run video + motor log",
-         "Motor response đúng hướng 100%, latency < 200ms"),
-
-        ("GĐ3-T07", "GĐ3: Hardware & Bench Test", "W6", "M8/M9",
-         "Calibrate thuật toán APF/EKF trên phần cứng thực",
-         "Tune lại tham số cho điều kiện thực tế (noise, latency khác simulation).",
-         "Tuân", "Duy", "🟡 High", "GĐ3-T06",
+        ("GĐ3-T04", "GĐ3: Integration & Flight", "W6", "M9",
+         "Fine-tune tham số PX4 Position Controller (MPC_*) nếu cần",
+         "Điều chỉnh MPC_XY_P, MPC_Z_P trên Pixhawk 6C nếu đáp ứng bám vị trí thực tế chưa mượt.",
+         "Việt Anh", "Tuân", "🟡 High", "GĐ3-T03",
          PROJECT_START + timedelta(days=38), PROJECT_START + timedelta(days=41),
-         12, "⬜ Not Started", 0,
-         "Updated real-world parameter set",
-         "Parameters converge, ready for flight test"),
+         10, "⬜ Not Started", 0,
+         "Updated PX4 param config",
+         "Đáp ứng phản hồi vị trí mượt, không bị dội / dao động"),
 
-        ("GĐ3-T08", "GĐ3: Hardware & Bench Test", "W6", "M9",
-         "Bay bãi trống: bám mục tiêu động (chưa có vật cản)",
-         "Bay thực tế trong bãi trống. Mục tiêu đi bộ, UAV tự bám theo.",
-         "Cả nhóm", "—", "🔴 Critical", "GĐ3-T06, GĐ3-T07",
-         PROJECT_START + timedelta(days=40), PROJECT_START + timedelta(days=41),
-         6, "⬜ Not Started", 0,
-         "Flight video + PX4 ulog",
-         "★ MS2: Bám mục tiêu ≥ 30s, tracking error < 1.5m, Yaw auto-align"),
-
-        # GIAI ĐOẠN 4: Thực nghiệm thực tế & Đóng gói — Tuần 7-9
+        # GIAI ĐOẠN 4: Landing & Report — Tuần 7-9
         # --- Week 7 ---
-        ("GĐ4-T01", "GĐ4: Thực nghiệm & Báo cáo", "W7", "M7/M8",
-         "Setup bãi thử nghiệm có vật cản mềm/an toàn",
-         "Đặt cọc tiêu, thùng xốp làm vật cản. Đo vị trí ground truth.",
-         "Việt Anh", "Tuân", "🟡 High", "—",
-         PROJECT_START + timedelta(days=42), PROJECT_START + timedelta(days=43),
-         6, "⬜ Not Started", 0,
-         "Sơ đồ bãi thử + ảnh setup",
-         "Ít nhất 3 vật cản, khoảng cách rõ ràng"),
-
-        ("GĐ4-T02", "GĐ4: Thực nghiệm & Báo cáo", "W7", "M1-M10",
-         "Bay thực với vật cản: APF + EKF full system",
-         "Kích hoạt toàn bộ hệ thống ngoài thực tế. Nhiều kịch bản: thẳng, zigzag, khuất sau vật cản.",
-         "Cả nhóm", "—", "🔴 Critical", "GĐ3-T08, GĐ4-T01",
-         PROJECT_START + timedelta(days=44), PROJECT_START + timedelta(days=47),
-         12, "⬜ Not Started", 0,
-         "Flight videos + ulogs các kịch bản",
+        ("GĐ4-T01", "GĐ4: Landing & Report", "W7", "M8/M9",
+         "Flight Test #3-5: Pha FOLLOW + Né vật cản (APF/VO-APF)",
+         "Bố trí vật cản mềm trên đường bay. Đánh giá khả năng né vật cản thực tế của VO-APF.",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ3-T03",
+         PROJECT_START + timedelta(days=42), PROJECT_START + timedelta(days=45),
+         14, "⬜ Not Started", 0,
+         "Flight #3-5 log + Video",
          "★ MS3: Né vật cản thành công, min clearance > 0.8m"),
 
-        ("GĐ4-T03", "GĐ4: Thực nghiệm & Báo cáo", "W7", "M5",
-         "Test kịch bản target lost & re-acquisition",
-         "Mục tiêu đi khuất sau vật cản, đánh giá khả năng dự đoán và bắt lại dấu.",
-         "Duy", "Tuân", "🟡 High", "GĐ4-T02",
-         PROJECT_START + timedelta(days=46), PROJECT_START + timedelta(days=48),
-         8, "⬜ Not Started", 0,
-         "Test report + video",
-         "Target re-acquisition < 3s sau khi mất dấu"),
+        ("GĐ4-T02", "GĐ4: Landing & Report", "W7", "M10",
+         "Test pha APPROACH & Gimbal multi-phase tilt angle",
+         "Test pha tiếp cận H-Pad, kiểm tra Gimbal tilt mượt xuống -60° và bám tâm marker.",
+         "Việt Anh", "Tuân", "🟡 High", "GĐ4-T01",
+         PROJECT_START + timedelta(days=45), PROJECT_START + timedelta(days=48),
+         10, "⬜ Not Started", 0,
+         "Flight APPROACH video",
+         "Gimbal tilt mượt xuống -60° khi tiếp cận H-Pad"),
 
         # --- Week 8 ---
-        ("GĐ4-T04", "GĐ4: Thực nghiệm & Báo cáo", "W8", "—",
-         "Trích xuất & phân tích log (PX4 ulog + ROS 2 bag)",
-         "Trích xuất dữ liệu từ log, tính tracking error, min obstacle clearance, system latency.",
-         "Duy", "Tuân", "🔴 Critical", "GĐ4-T02, GĐ4-T03",
+        ("GĐ4-T03", "GĐ4: Landing & Report", "W8", "M1-M10",
+         "Flight Test #6-10: Full Pipeline & Precision LAND trên Target Động",
+         "Thực hiện trọn vẹn 4 pha SEARCH -> FOLLOW -> APPROACH -> LAND lên H-Pad di chuyển (≤ 5.0 m/s).",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ4-T01, GĐ4-T02",
          PROJECT_START + timedelta(days=49), PROJECT_START + timedelta(days=52),
-         14, "⬜ Not Started", 0,
-         "Processed data files (.csv/.mat)",
-         "Data đầy đủ cho tất cả kịch bản test"),
+         16, "⬜ Not Started", 0,
+         "Flight #6-10 log + Video",
+         "★ MS4: Land accuracy < 30cm từ tâm ArUco marker"),
 
-        ("GĐ4-T05", "GĐ4: Thực nghiệm & Báo cáo", "W8", "—",
-         "Vẽ đồ thị định lượng: tracking error, clearance, latency",
-         "Biểu đồ so sánh simulation vs thực tế. Bảng tổng hợp KPI.",
-         "Duy", "Tuân", "🟡 High", "GĐ4-T04",
+        ("GĐ4-T04", "GĐ4: Landing & Report", "W8", "—",
+         "Trích xuất PX4 ulog + ROS 2 bag & Vẽ đồ thị KPI",
+         "Phân tích ulog và bag file. Vẽ đồ thị tracking error, obstacle clearance, latency.",
+         "Duy", "Tuân", "🔴 Critical", "GĐ4-T03",
          PROJECT_START + timedelta(days=51), PROJECT_START + timedelta(days=54),
          12, "⬜ Not Started", 0,
-         "Đồ thị + bảng KPI (.png/.pdf)",
-         "Đồ thị rõ ràng, có legend, axis labels"),
+         "Đồ thị KPI (.png/.pdf)",
+         "Đo đủ 7 chỉ số KPI theo yêu cầu đề tài"),
 
-        ("GĐ4-T06", "GĐ4: Thực nghiệm & Báo cáo", "W8", "—",
-         "Đóng gói mã nguồn + viết tài liệu vận hành",
-         "Clean code, README, hướng dẫn build/deploy, launch files.",
-         "Việt Anh", "Duy", "🟡 High", "GĐ2-T08",
-         PROJECT_START + timedelta(days=49), PROJECT_START + timedelta(days=54),
-         14, "⬜ Not Started", 0,
-         "GitHub repo / zip package",
-         "README đầy đủ, build thành công theo hướng dẫn"),
+        ("GĐ4-T05", "GĐ4: Landing & Report", "W8", "—",
+         "Đóng gói mã nguồn GitHub + Viết tài liệu vận hành",
+         "Clean mã nguồn ROS 2, tạo README chi tiết hướng dẫn build, config và deploy.",
+         "Việt Anh", "Duy", "🟡 High", "GĐ4-T03",
+         PROJECT_START + timedelta(days=51), PROJECT_START + timedelta(days=54),
+         10, "⬜ Not Started", 0,
+         "Source code & Manual",
+         "Code clean, README chi tiết hướng dẫn deploy"),
 
         # --- Week 9 (Buffer) ---
-        ("GĐ4-T07", "GĐ4: Thực nghiệm & Báo cáo", "W9", "—",
-         "Hoàn thiện báo cáo nghiệm thu",
-         "Viết báo cáo đầy đủ: lý thuyết, thiết kế, kết quả, kết luận. Kèm video demo.",
-         "Cả nhóm", "—", "🔴 Critical", "GĐ4-T04, GĐ4-T05, GĐ4-T06",
+        ("GĐ4-T06", "GĐ4: Landing & Report", "W9", "—",
+         "Hoàn thiện Báo cáo Nghiệm thu + Video Demo chính thức",
+         "Viết báo cáo tổng kết đồ án, chỉnh sửa Video Demo 3 phút hoàn chỉnh nghiệm thu.",
+         "Cả nhóm", "—", "🔴 Critical", "GĐ4-T04, GĐ4-T05",
          PROJECT_START + timedelta(days=56), PROJECT_START + timedelta(days=60),
          18, "⬜ Not Started", 0,
-         "Báo cáo .docx/.pdf + video",
-         "Báo cáo hoàn chỉnh, video ≥ 3 phút"),
+         "Final Report docx + Video",
+         "Báo cáo hoàn chỉnh, Video demo chuyên nghiệp ≥ 3 min"),
 
-        ("GĐ4-T08", "GĐ4: Thực nghiệm & Báo cáo", "W9", "—",
-         "Buffer: Bay bổ sung / fix bugs / cải thiện",
-         "Thời gian dự phòng cho các vấn đề phát sinh. Bay thêm nếu cần data.",
+        ("GĐ4-T07", "GĐ4: Landing & Report", "W9", "—",
+         "Buffer: Bay bổ sung / Dự phòng sự cố",
+         "Thời gian dự phòng phát sinh cho các tình huống hư hỏng/cần bay bổ sung data.",
          "Cả nhóm", "—", "🟢 Normal", "—",
          PROJECT_START + timedelta(days=56), PROJECT_START + timedelta(days=62),
          12, "⬜ Not Started", 0,
@@ -499,7 +472,10 @@ def get_risks():
 # SHEET 1: DASHBOARD
 # ============================================================================
 def create_dashboard(wb):
-    ws = wb.active
+    if "DASHBOARD" in wb.sheetnames:
+        ws = wb["DASHBOARD"]
+    else:
+        ws = wb.create_sheet("DASHBOARD", 0)
     ws.title = "DASHBOARD"
     ws.sheet_properties.tabColor = C_HEADER_BG
 
@@ -1450,7 +1426,19 @@ def create_weekly_report(wb):
 # MAIN
 # ============================================================================
 def main():
-    wb = openpyxl.Workbook()
+    target_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VDT_project.xlsx")
+    MANAGED_SHEETS = {"DASHBOARD", "TASK_TRACKER", "GANTT_VIEW", "RISK_LOG", "WEEKLY_REPORT"}
+
+    if os.path.exists(target_path):
+        print(f"Loading existing workbook from: {target_path}")
+        wb = openpyxl.load_workbook(target_path)
+        for s_name in list(wb.sheetnames):
+            if s_name in MANAGED_SHEETS:
+                del wb[s_name]
+    else:
+        wb = openpyxl.Workbook()
+        if "Sheet" in wb.sheetnames:
+            del wb["Sheet"]
 
     print("Creating DASHBOARD...")
     create_dashboard(wb)
@@ -1467,19 +1455,26 @@ def main():
     print("Creating WEEKLY_REPORT...")
     create_weekly_report(wb)
 
-    # Save
-    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               "Quadrotor_Project_Tracker.xlsx")
-    try:
-        wb.save(output_path)
-        print(f"\n[OK] File saved: {output_path}")
-    except PermissionError:
-        output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   "Quadrotor_Project_Tracker_v2.xlsx")
-        wb.save(output_path)
-        print(f"\n[OK] Original file locked. File saved as fallback: {output_path}")
+    # Reorder sheets: MANAGED_SHEETS first, then any preserved sheets (like 'List đồ cần mua')
+    ordered_sheets = []
+    for s_name in ["DASHBOARD", "TASK_TRACKER", "GANTT_VIEW", "RISK_LOG", "WEEKLY_REPORT"]:
+        if s_name in wb.sheetnames:
+            ordered_sheets.append(wb[s_name])
+    for s_name in wb.sheetnames:
+        if s_name not in MANAGED_SHEETS:
+            ordered_sheets.append(wb[s_name])
+    wb._sheets = ordered_sheets
 
-    print(f"Sheets: {wb.sheetnames}")
+    try:
+        wb.save(target_path)
+        print(f"\n[OK] File saved successfully: {target_path}")
+    except PermissionError:
+        fallback_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VDT_project_v2.xlsx")
+        wb.save(fallback_path)
+        print(f"\n[OK] Target file locked. Saved as fallback: {fallback_path}")
+
+    safe_sheetnames = [s.encode('ascii', 'ignore').decode() if not s.isascii() else s for s in wb.sheetnames]
+    print(f"Final Sheets: {safe_sheetnames}")
     print(f"Project: {PROJECT_START.strftime('%d/%m/%Y')} - {PROJECT_END.strftime('%d/%m/%Y')} ({NUM_WEEKS} weeks)")
     print(f"Team: Duy, Tuan, Viet Anh")
     print(f"Total tasks: {len(get_tasks())}")
