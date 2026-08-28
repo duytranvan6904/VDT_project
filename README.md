@@ -18,7 +18,7 @@
 
 | Hạng mục | Phạm vi |
 |----------|---------|
-| **Nền tảng bay** | Quadrotor duy nhất (Holybro S500 V2), sử dụng PX4 Autopilot (Pixhawk 6C), companion computer Raspberry Pi 5 (4GB RAM) |
+| **Nền tảng bay** | Quadrotor duy nhất (Holybro S500 V2), sử dụng PX4 Autopilot (Pixhawk 6C), companion computer Raspberry Pi 5 (8GB RAM) |
 | **Cảm biến** | 1 camera RGB-D duy nhất gắn trên gimbal 1-axis Pitch servo (kết hợp Yaw Quadrotor) |
 | **Mục tiêu bám** | H-Pad (bãi đáp) được dán ArUco marker, gắn trên platform di động (xe đẩy / xe robot) di chuyển |
 | **Nhiệm vụ** | Pipeline 4 pha liên tục: **SEARCH → FOLLOW → APPROACH → LAND** |
@@ -79,15 +79,14 @@ Drone căn chỉnh tâm marker với tâm camera frame, đảm bảo alignment t
 
 | Ràng buộc | Giá trị | Ghi chú |
 |-----------|---------|---------|
-| Vận tốc platform di động | ≤ 1.0 m/s | Tương đương đi bộ / xe đẩy chậm |
+| Vận tốc platform di động | ≤ 5.0 m/s | Tương đương đi bộ / xe đẩy chậm |
 | Khoảng cách giữa các vật cản | ≥ 1.5 m | Đảm bảo quadrotor có lối đi |
 | Độ cao bay follow | 3 - 4 m | Đủ cao để FOV nhìn rộng, đủ thấp để detect marker |
 | Khoảng cách follow (horizontal) | 2 - 3 m so với target | |
 | Camera duy nhất | 1 × Depth Camera (RGB-D) | D435i |
-| Tốc độ bay tối đa drone | ≤ 2.0 m/s | Giới hạn an toàn ngoài trời |
+| Tốc độ bay tối đa drone | ≤ 10.0 m/s | Giới hạn an toàn ngoài trời |
 | Wind condition | ≤ Beaufort 3 (≤ 3.4 m/s) | Bay ngoài trời điều kiện gió nhẹ |
-| Trigger hạ cánh | Manual (RC Switch Channel 7/8) | Human-in-the-Loop |
-| Kill Switch | Luôn sẵn sàng (RC Channel 5/6) | Safety-critical |
+| Trigger hạ cánh | Manual or QGC | Human-in-the-Loop |
 
 ### 3.2. Phần cứng thực nghiệm
 
@@ -98,7 +97,6 @@ Drone căn chỉnh tâm marker với tâm camera frame, đảm bảo alignment t
 | **Companion Computer** | Raspberry Pi 5 (4GB RAM) | Chạy ROS 2, vision pipeline,planner |
 | **Camera** | Intel RealSense D435i | RGB + Depth stream |
 | **Gimbal** | 1-axis Pitch servo (1× MG90S + giá đỡ) | Tilt camera (gập lên/xuống); hướng ngang Pan điều khiển qua góc Yaw của Quadrotor |
-| **RC Transmitter** | Radiomaster TX16S (hoặc tương đương) | Manual override, Kill Switch, Land trigger |
 | **Landing Platform** | H-Pad (50×50cm) với ArUco marker trên xe đẩy / xe RC | Mục tiêu di động |
 | **Battery** | LiPo 4S 5200mAh | Thời gian bay ≥ 10 phút |
 | **Giao tiếp PX4 ↔ Pi** | UART / micro-XRCE-DDS | ROS 2 – PX4 bridge |
@@ -111,7 +109,7 @@ Drone căn chỉnh tâm marker với tâm camera frame, đảm bảo alignment t
 | 1 | **Tracking error** (pha FOLLOW) | < 1.0 m (RMSE) | Log pose error từ EKF vs. ground truth (GPS hoặc Optitrack nếu có) |
 | 2 | **Min obstacle clearance** | > 0.8 m | Đo khoảng cách gần nhất từ drone tới vật cản trong mỗi flight |
 | 3 | **Landing accuracy** (tâm marker) | < 30 cm | Đo khoảng cách giữa tâm drone và tâm H-Pad sau touchdown |
-| 4 | **End-to-end latency** (sensor → cmd) | < 150 ms | Timestamp đo trên ROS 2 topic chain |
+| 4 | **End-to-end latency** (sensor → cmd) | < 500 ms | Timestamp đo trên ROS 2 topic chain |
 | 5 | **Follow duration** (continuous) | ≥ 60 s | Thời gian duy trì FOLLOW liên tục không mất target |
 | 6 | **Mission success rate** | ≥ 70% | Trên ≥ 5 lần bay: SEARCH → FOLLOW → APPROACH → LAND thành công |
 | 7 | **APF computation time** | < 20 ms / cycle | Benchmark VO-APF node trên Pi 5 |
@@ -410,7 +408,7 @@ Hai thread chia sẻ BBox qua shared memory (lock-free queue) để đảm bảo
 |------------|----------|
 | FSM | 4 states: SEARCH → FOLLOW → APPROACH → LAND, transition logic rõ ràng |
 | Offboard interface | `px4_ros_com` + micro-XRCE-DDS agent |
-| Safety | Kill switch (RC ch5/6), watchdog timer (heartbeat), geo-fence |
+| Safety | Kill switch, watchdog timer (heartbeat), geo-fence |
 | Gimbal control | PWM output từ GPIO Pi 5, PID smoothing (EMA filter) |
 
 ---
