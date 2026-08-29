@@ -1,0 +1,16 @@
+# Dependencies for ArUco Detection & PnP Pose Estimation with Intel RealSense D435
+
+# Intel RealSense SDK 2.0 Python Wrapper
+pyrealsense2>=2.50.0
+
+# Computer Vision and Image Processing
+opencv-python>=4.5.0
+opencv-contrib-python>=4.5.0
+
+# Scientific Computing & Math
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Visualization & Config
+matplotlib>=3.5.0
+PyYAML>=5.4.1
