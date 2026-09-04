@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version="1.9">
+  <world name="obstacle_avoidance">
+    <physics type="ode"><max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate></physics>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type="adiabatic"/>
+    <scene><grid>true</grid><ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background><shadows>false</shadows></scene>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine></plugin>
+    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz-sim-air-pressure-system" name="gz::sim::systems::AirPressure"/>
+    <plugin filename="gz-sim-magnetometer-system" name="gz::sim::systems::Magnetometer"/>
+    <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
+    <light type="directional" name="sun"><cast_shadows>false</cast_shadows>
+      <pose>0 0 10 0 0 0</pose><diffuse>0.9 0.9 0.9 1</diffuse>
+      <direction>-0.5 0.1 -0.9</direction></light>
+    <model name="ground_plane"><static>true</static><link name="link">
+      <collision name="c"><geometry><plane><normal>0 0 1</normal>
+        <size>200 200</size></plane></geometry></collision>
+      <visual name="v"><geometry><plane><normal>0 0 1</normal>
+        <size>200 200</size></plane></geometry>
+        <material><ambient>0.7 0.7 0.7 1</ambient>
+          <diffuse>0.7 0.7 0.7 1</diffuse></material></visual>
+    </link></model>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg>8.546163739800146</longitude_deg>
+      <elevation>0</elevation>
+    </spherical_coordinates>
+
+    <model name="cyl_1"><static>true</static>
+      <pose>-8.62 -4.21 1.37 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.63</radius><length>2.75</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.63</radius><length>2.75</length>
+      </cylinder></geometry>
+      <material><ambient>0.21 0.28 0.40 1</ambient>
+        <diffuse>0.21 0.28 0.40 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_2"><static>true</static>
+      <pose>2.83 6.56 1.97 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.41</radius><length>3.95</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.41</radius><length>3.95</length>
+      </cylinder></geometry>
+      <material><ambient>0.48 0.30 0.79 1</ambient>
+        <diffuse>0.48 0.30 0.79 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_3"><static>true</static>
+      <pose>-3.98 -8.76 1.39 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.48</radius><length>2.79</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.48</radius><length>2.79</length>
+      </cylinder></geometry>
+      <material><ambient>0.24 0.67 0.69 1</ambient>
+        <diffuse>0.24 0.67 0.69 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_4"><static>true</static>
+      <pose>4.04 -9.12 1.77 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.51</radius><length>3.54</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.51</radius><length>3.54</length>
+      </cylinder></geometry>
+      <material><ambient>0.69 0.89 0.38 1</ambient>
+        <diffuse>0.69 0.89 0.38 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_5"><static>true</static>
+      <pose>2.00 8.57 1.90 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.40</radius><length>3.81</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.40</radius><length>3.81</length>
+      </cylinder></geometry>
+      <material><ambient>0.30 0.23 0.36 1</ambient>
+        <diffuse>0.30 0.23 0.36 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_6"><static>true</static>
+      <pose>-7.03 -1.26 1.61 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.59</radius><length>3.22</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.59</radius><length>3.22</length>
+      </cylinder></geometry>
+      <material><ambient>0.63 0.60 0.39 1</ambient>
+        <diffuse>0.63 0.60 0.39 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_7"><static>true</static>
+      <pose>-0.22 -8.38 1.67 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.59</radius><length>3.34</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.59</radius><length>3.34</length>
+      </cylinder></geometry>
+      <material><ambient>0.55 0.78 0.32 1</ambient>
+        <diffuse>0.55 0.78 0.32 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_8"><static>true</static>
+      <pose>-3.31 -8.65 1.41 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.53</radius><length>2.82</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.53</radius><length>2.82</length>
+      </cylinder></geometry>
+      <material><ambient>0.70 0.29 0.25 1</ambient>
+        <diffuse>0.70 0.29 0.25 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_9"><static>true</static>
+      <pose>0.99 8.40 1.92 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.46</radius><length>3.83</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.46</radius><length>3.83</length>
+      </cylinder></geometry>
+      <material><ambient>0.66 0.35 0.37 1</ambient>
+        <diffuse>0.66 0.35 0.37 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_10"><static>true</static>
+      <pose>3.14 -5.45 1.67 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.46</radius><length>3.33</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.46</radius><length>3.33</length>
+      </cylinder></geometry>
+      <material><ambient>0.30 0.24 0.45 1</ambient>
+        <diffuse>0.30 0.24 0.45 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_11"><static>true</static>
+      <pose>3.79 4.02 1.45 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.43</radius><length>2.89</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.43</radius><length>2.89</length>
+      </cylinder></geometry>
+      <material><ambient>0.84 0.32 0.76 1</ambient>
+        <diffuse>0.84 0.32 0.76 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_12"><static>true</static>
+      <pose>-9.28 5.56 1.88 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.42</radius><length>3.76</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.42</radius><length>3.76</length>
+      </cylinder></geometry>
+      <material><ambient>0.70 0.66 0.27 1</ambient>
+        <diffuse>0.70 0.66 0.27 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_13"><static>true</static>
+      <pose>5.22 -6.62 1.80 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.64</radius><length>3.59</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.64</radius><length>3.59</length>
+      </cylinder></geometry>
+      <material><ambient>0.72 0.55 0.80 1</ambient>
+        <diffuse>0.72 0.55 0.80 1</diffuse></material>
+      </visual></link>
+    </model>
+    <model name="cyl_14"><static>true</static>
+      <pose>9.66 -2.89 1.94 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder>
+        <radius>0.43</radius><length>3.88</length>
+      </cylinder></geometry></collision>
+      <visual name="v"><geometry><cylinder>
+        <radius>0.43</radius><length>3.88</length>
+      </cylinder></geometry>
+      <material><ambient>0.66 0.38 0.33 1</ambient>
+        <diffuse>0.66 0.38 0.33 1</diffuse></material>
+      </visual></link>
+    </model>
+  </world>
+</sdf>

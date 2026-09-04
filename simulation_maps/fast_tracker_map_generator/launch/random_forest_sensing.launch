@@ -1,0 +1,14 @@
+<launch>
+  <!-- Fast-tracker Map Generator Launch File -->
+  <node pkg="map_generator" type="random_forest_sensing" name="random_forest_sensing" output="screen">
+    <param name="map/obs_num" value="40" />
+    <param name="map/x_size" value="30.0" />
+    <param name="map/y_size" value="30.0" />
+    <param name="map/z_size" value="5.0" />
+    <param name="map/resolution" value="0.1" />
+    <param name="sensing/rate" value="1.0" />
+  </node>
+
+  <!-- RViz for Visualization -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find map_generator)/launch/default.rviz" required="false" />
+</launch>

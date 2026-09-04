@@ -1,0 +1,74 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /GlobalMapPointCloud1
+        - /SensorPointCloud1
+        - /DroneMarker1
+      Splitter Ratio: 0.5
+    Tree Height: 500
+  - Class: rviz_common/Views
+    Name: Views
+
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 1
+      Class: rviz_default_plugins/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Name: Grid
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: GlobalMapPointCloud
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map_generator/global_cloud
+      Style: Flat Squares
+      Size (m): 0.1
+      Color Transformer: FlatColor
+      Color: 220; 220; 255
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: SensorCameraPointCloud
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /depth_camera/points
+      Style: Points
+      Size (m): 0.05
+      Color Transformer: AxisColor
+      Axis: Z
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: DroneMarker
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /drone/marker
+  Enabled: true
+  Global Options:
+    Background Color: 13; 13; 23
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 22
+      Yaw: 6.05
+      Pitch: 0.49
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
