@@ -5,8 +5,9 @@ from datetime import datetime
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
-
+from std_msgs.msg import UInt8
 from px4_msgs.msg import VehicleLocalPosition, TrajectorySetpoint, VehicleStatus, VehicleLandDetected
+from fsm_state_machine.msg import AltEstimate
 
 
 class FlightDataLogger(Node):
@@ -24,10 +25,12 @@ class FlightDataLogger(Node):
         self.setpoint = None
         self.vehicle_status = None
         self.land_detected = None
+        self.fsm_state = None
+        self.alt_estimate = None
 
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
             depth=5
         )
@@ -48,6 +51,14 @@ class FlightDataLogger(Node):
             VehicleLandDetected, '/fmu/out/vehicle_land_detected',
             self.land_detected_cb, qos_profile
         )
+        self.create_subscription(
+            UInt8, '/fsm/state',
+            self.fsm_state_cb, qos_profile
+        )
+        self.create_subscription(
+            AltEstimate, '/alt_estimator/state',
+            self.alt_estimate_cb, qos_profile
+        )
 
         self.csv_file = open(self.log_path, 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file)
@@ -58,7 +69,7 @@ class FlightDataLogger(Node):
             'sp_x', 'sp_y', 'sp_z',
             'sp_vx', 'sp_vy', 'sp_vz',
             'nav_state', 'arming_state',
-            'landed'
+            'fsm_state', 'touchdown_flag', 'px4_landed'
         ])
 
         self.create_timer(0.05, self.log_row)
@@ -77,6 +88,12 @@ class FlightDataLogger(Node):
     def land_detected_cb(self, msg):
         self.land_detected = msg
 
+    def fsm_state_cb(self, msg):
+        self.fsm_state = msg.data
+
+    def alt_estimate_cb(self, msg):
+        self.alt_estimate = msg
+
     def log_row(self):
         if self.local_position is None:
             return
@@ -84,10 +101,13 @@ class FlightDataLogger(Node):
         pos = self.local_position
         sp = self.setpoint
         status = self.vehicle_status
-        land = self.land_detected
 
         sp_pos = sp.position if sp is not None else [float('nan')] * 3
         sp_vel = sp.velocity if sp is not None else [float('nan')] * 3
+
+        touchdown_flag = self.alt_estimate.touchdown_flag if self.alt_estimate is not None else ''
+        px4_landed = self.land_detected.landed if self.land_detected is not None else ''
+        fsm_state = self.fsm_state if self.fsm_state is not None else ''
 
         self.csv_writer.writerow([
             pos.timestamp,
@@ -97,7 +117,7 @@ class FlightDataLogger(Node):
             sp_vel[0], sp_vel[1], sp_vel[2],
             status.nav_state if status is not None else '',
             status.arming_state if status is not None else '',
-            land.landed if land is not None else ''
+            fsm_state, touchdown_flag, px4_landed
         ])
         self.csv_file.flush()
 
