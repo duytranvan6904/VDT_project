@@ -121,7 +121,7 @@ function check_approach_transition(counters, rc, sensors) -> State or None
     return FOLLOW
   if counters.marker_lost_time > 3.0:
     return FOLLOW
-  if sensors.align_error < 0.3 and sensors.altitude < 0.5:
+  if sensors.align_error < 0.3 and sensors.delta_h < LAND_ENTRY_HEIGHT:
     return LAND
   return None
 ```
@@ -266,13 +266,13 @@ function servo_write(handle, angle_deg, cfg, state)
   state.current_angle_deg = angle_deg
 ```
 
-### 2.5. Đọc phản hồi vị trí thực tế (nếu servo có feedback)
+### 2.5. Vị trí hiện tại — không có phản hồi phần cứng (MG90S)
+
+MG90S là servo open-loop, không có chân feedback ra ngoài. `servo_read_feedback` không áp dụng được — thay vào đó, "vị trí hiện tại" chỉ là giá trị lệnh cuối cùng đã ghi, lấy thẳng từ `ServoState` (mục 2.1) do chính `servo_write` cập nhật, không đọc từ cảm biến nào cả.
 
 ```
-function servo_read_feedback(adc_handle, cfg) -> float
-  raw = adc_read(adc_handle)
-  return map_range(raw, cfg.feedback_min, cfg.feedback_max,
-                    cfg.angle_min_deg, cfg.angle_max_deg)
+function servo_get_last_commanded_angle(state) -> float
+  return state.current_angle_deg
 ```
 
 ### 2.6. Debug
@@ -303,7 +303,6 @@ struct GimbalTelemetry {
   delta_h: float
   d_horiz: float
   altitude: float
-  current_gimbal_angle: float
   valid: bool
 }
 
@@ -318,12 +317,11 @@ struct GimbalContext {
 ### 3.2. Đọc và xử lý dữ liệu telemetry đầu vào
 
 ```
-function gimbal_telemetry_read(ekf_state, alt_estimator, servo_feedback) -> GimbalTelemetry
+function gimbal_telemetry_read(ekf_state, alt_estimator) -> GimbalTelemetry
   t = GimbalTelemetry{}
   t.delta_h = ekf_state.z - alt_estimator.altitude
   t.d_horiz = norm(ekf_state.x, ekf_state.y)
   t.altitude = alt_estimator.altitude
-  t.current_gimbal_angle = servo_feedback.angle_deg
   t.valid = true
   return t
 ```
@@ -339,6 +337,8 @@ function gimbal_telemetry_validate(t, timeout_flags) -> GimbalTelemetry
 
 ### 3.3. Tính góc mục tiêu theo từng phase (tách riêng từng hàm)
 
+Toàn bộ 3 phase dùng chung nguyên lý hình học `θ = -arctan(chênh_cao / khoảng_cách_ngang)`, thống nhất trên `delta_h` (chênh cao drone-H-Pad) chứ không dùng `altitude` tuyệt đối của drone — vì H-Pad có thể ở độ cao bất kỳ, không cố định sát mặt đất, nên khoảng cách còn lại tới H-Pad luôn phải tính tương đối, không phải so với mặt đất.
+
 ```
 function target_angle_search() -> float
   return 0.0
@@ -351,12 +351,12 @@ function target_angle_follow(t) -> float
 
 ```
 function target_angle_approach(t) -> float
-  return -atan2(t.d_horiz, t.altitude)
+  return -atan2(t.delta_h, t.d_horiz)
 ```
 
 ```
 function target_angle_land(t) -> float
-  ratio = clamp(t.altitude / 0.5, 0.0, 1.0)
+  ratio = clamp(1.0 - t.delta_h / LAND_ENTRY_HEIGHT, 0.0, 1.0)
   return lerp(-60.0, -90.0, ratio)
 ```
 
@@ -370,6 +370,8 @@ function gimbal_target_angle(state, t) -> float
 ```
 
 ### 3.4. Bộ lọc làm mượt PID
+
+Lưu ý quan trọng: vì MG90S không có phản hồi, `current` truyền vào PID (`ctx.current_angle`) là **góc lệnh phần mềm đã ghi lần trước**, không phải góc đo thực tế từ servo. Nên đây không phải vòng điều khiển closed-loop đúng nghĩa (không có sai số thật giữa lệnh và vị trí vật lý để sửa) — bản chất nó là một **bộ lọc/trajectory generator**: dùng công thức PID để biến chuyển động từ góc lệnh hiện tại tới góc mục tiêu thành một đường đi mượt, thay vì nhảy thẳng tới target trong 1 bước.
 
 ```
 function pid_init(kp, ki, kd, out_min, out_max) -> PIDState
@@ -416,9 +418,9 @@ function gimbal_init(kp, ki, kd, max_slew_rate) -> GimbalContext
 ```
 
 ```
-function gimbal_control_step(ctx, state, ekf_state, alt_estimator, servo_feedback,
+function gimbal_control_step(ctx, state, ekf_state, alt_estimator,
                               timeout_flags, servo_handle, servo_cfg, servo_state, dt)
-  t = gimbal_telemetry_read(ekf_state, alt_estimator, servo_feedback)
+  t = gimbal_telemetry_read(ekf_state, alt_estimator)
   t = gimbal_telemetry_validate(t, timeout_flags)
   if not t.valid:
     return ctx.current_angle
@@ -643,6 +645,7 @@ function xrce_topic_list() -> list of TopicConfig
     TopicConfig("vehicle_command", "VehicleCommand", PUB),
     TopicConfig("vehicle_odometry", "VehicleOdometry", SUB),
     TopicConfig("battery_status", "BatteryStatus", SUB),
+    TopicConfig("vehicle_status", "VehicleStatus", SUB),
   ]
 ```
 
@@ -871,8 +874,272 @@ Ghi chú: kill switch chạy trên thread/task riêng, tần số cao hơn main 
 
 ---
 
+## 8. Input State Cache (glue layer giữa DDS topic và các module xử lý)
+
+Khối này vá 2 lỗ hổng: (1) `ekf_state`/`vision_state`/`alt_estimator` dùng trong `sensor_read` (mục 1.2) chưa có nơi ghi vào; (2) `planner_output` dùng trong `build_setpoint_follow`/`build_setpoint_approach` (mục 4.2) cũng chưa có nơi ghi vào. Cả hai đều là dữ liệu đến qua subscriber của module 5 (micro-XRCE-DDS), cần một tầng cache trung gian trong `mission_manager_node` trước khi các module khác đọc ra.
+
+### 8.1. Data structures
+
+```
+struct InputStateCache {
+  ekf_state: EKFState
+  vision_state: VisionState
+  alt_estimator: AltState
+  planner_output: PlannerOutput
+  battery_status: BatteryStatus
+  vehicle_status: VehicleStatus
+  last_ekf_time: float
+  last_vision_time: float
+  last_alt_time: float
+  last_planner_time: float
+  last_battery_time: float
+  last_vehicle_status_time: float
+}
+
+struct TimeoutFlags {
+  ekf_timeout: bool
+  vision_timeout: bool
+  alt_timeout: bool
+  planner_timeout: bool
+}
+```
+
+### 8.2. Subscriber callback — ghi message mới nhất vào cache
+
+```
+function on_ekf_msg(msg, cache)
+  cache.ekf_state = msg
+  cache.last_ekf_time = now()
+```
+
+```
+function on_vision_msg(msg, cache)
+  cache.vision_state = msg
+  cache.last_vision_time = now()
+```
+
+```
+function on_alt_msg(msg, cache)
+  cache.alt_estimator = msg
+  cache.last_alt_time = now()
+```
+
+```
+function on_planner_msg(msg, cache)
+  cache.planner_output = msg
+  cache.last_planner_time = now()
+```
+
+```
+function on_battery_msg(msg, cache)
+  cache.battery_status = msg
+  cache.last_battery_time = now()
+```
+
+```
+function on_vehicle_status_msg(msg, cache)
+  cache.vehicle_status = msg
+  cache.last_vehicle_status_time = now()
+```
+
+### 8.3. Tính timeout flags
+
+```
+function compute_timeout_flags(cache, ekf_to, vision_to, alt_to, planner_to) -> TimeoutFlags
+  return TimeoutFlags{
+    ekf_timeout = now() - cache.last_ekf_time > ekf_to,
+    vision_timeout = now() - cache.last_vision_time > vision_to,
+    alt_timeout = now() - cache.last_alt_time > alt_to,
+    planner_timeout = now() - cache.last_planner_time > planner_to
+  }
+```
+
+### 8.4. Đăng ký callback vào topic đã tạo ở module 5
+
+```
+function input_cache_bind_subscribers(participant, cache)
+  register_callback(participant, "hpad/state_filtered", on_ekf_msg, cache)
+  register_callback(participant, "hpad/pose", on_vision_msg, cache)
+  register_callback(participant, "vehicle_odometry", on_alt_msg, cache)
+  register_callback(participant, "cmd/velocity", on_planner_msg, cache)
+  register_callback(participant, "battery_status", on_battery_msg, cache)
+  register_callback(participant, "vehicle_status", on_vehicle_status_msg, cache)
+```
+
+### 8.5. Khởi tạo — ghép vào setup của module 5
+
+```
+function input_cache_init(participant) -> InputStateCache
+  cache = InputStateCache{}
+  input_cache_bind_subscribers(participant, cache)
+  return cache
+```
+
+### 8.6. Debug
+
+```
+function input_cache_debug_log(cache, flags)
+  print(timestamp(), flags.ekf_timeout, flags.vision_timeout,
+        flags.alt_timeout, flags.planner_timeout)
+```
+
+Cách dùng: `cache = input_cache_init(ctx.participant)` chạy một lần sau `xrce_setup_all` (mục 5.6). Mỗi chu kỳ của vòng lặp chính, gọi `compute_timeout_flags(cache, ...)` để lấy `timeout_flags` truyền vào `sensor_validate` (mục 1.2) và `gimbal_telemetry_validate` (mục 3.2); đồng thời lấy `cache.ekf_state`, `cache.vision_state`, `cache.alt_estimator` truyền vào `sensor_read`, và `cache.planner_output` truyền vào `offboard_main_loop`. Nếu `planner_timeout = true`, Offboard manager nên dùng lại `build_setpoint_search()` (velocity 0) thay vì `planner_output` cũ, tương tự cách `sensor_validate` ép `marker_detected = false` khi timeout.
+
+---
+
+## 9. Offboard Safety Monitor (failsafe mở rộng)
+
+Module 4.5 (`offboard_watchdog_check`) chỉ xử lý đúng 1 trường hợp — mất heartbeat — và phản ứng duy nhất là HOLD, không tự phục hồi. Module này bổ sung các trường hợp còn thiếu: pin yếu, PX4/EKF2 mất healthy, phi công chuyển tay qua RC, và escalation theo thời gian (mất Offboard ngắn → HOLD, kéo dài → RTL).
+
+### 9.1. Data structures
+
+```
+enum FailsafeLevel {
+  NONE, RC_OVERRIDE, EKF_UNHEALTHY,
+  BATTERY_WARNING, BATTERY_CRITICAL,
+  OFFBOARD_LOST_SHORT, OFFBOARD_LOST_LONG
+}
+
+struct SafetyThresholds {
+  battery_warning_pct: float
+  battery_critical_pct: float
+  offboard_hold_timeout: float
+  offboard_rtl_timeout: float
+}
+
+struct SafetyContext {
+  active_failsafe: FailsafeLevel
+  force_land_requested: bool
+}
+```
+
+### 9.2. Đánh giá pin
+
+```
+function check_battery_failsafe(battery_status, th) -> FailsafeLevel
+  if battery_status.remaining_pct < th.battery_critical_pct:
+    return BATTERY_CRITICAL
+  if battery_status.remaining_pct < th.battery_warning_pct:
+    return BATTERY_WARNING
+  return NONE
+```
+
+### 9.3. Đánh giá health nội bộ PX4 (EKF2, GPS/vision fusion)
+
+```
+function check_ekf_health(vehicle_status) -> bool
+  return vehicle_status.ekf2_healthy and vehicle_status.pos_estimate_valid
+```
+
+### 9.4. Phát hiện phi công chuyển mode thủ công qua RC
+
+```
+function check_rc_override(vehicle_status, offboard_ctx) -> bool
+  return offboard_ctx.offboard_active and vehicle_status.nav_state != NAV_STATE_OFFBOARD
+```
+
+### 9.5. Escalation theo thời gian mất Offboard (HOLD ngắn hạn -> RTL dài hạn)
+
+```
+function offboard_watchdog_escalate(offboard_ctx, th) -> FailsafeLevel
+  elapsed = now() - offboard_ctx.last_heartbeat_time
+  if elapsed > th.offboard_rtl_timeout:
+    return OFFBOARD_LOST_LONG
+  if elapsed > th.offboard_hold_timeout:
+    return OFFBOARD_LOST_SHORT
+  return NONE
+```
+
+### 9.6. Thực thi hành động theo từng cấp độ failsafe
+
+```
+function safety_execute_action(level, safety_ctx, offboard_ctx)
+  switch level:
+    case RC_OVERRIDE:
+      offboard_ctx.offboard_active = false
+    case EKF_UNHEALTHY:
+      publish_vehicle_command(CMD_SET_MODE, mode=HOLD)
+      offboard_ctx.offboard_active = false
+    case BATTERY_WARNING:
+      safety_ctx.force_land_requested = true
+    case BATTERY_CRITICAL:
+      publish_vehicle_command(CMD_SET_MODE, mode=RTL)
+      offboard_ctx.offboard_active = false
+    case OFFBOARD_LOST_SHORT:
+      publish_vehicle_command(CMD_SET_MODE, mode=HOLD)
+      offboard_ctx.offboard_active = false
+    case OFFBOARD_LOST_LONG:
+      publish_vehicle_command(CMD_SET_MODE, mode=RTL)
+      offboard_ctx.offboard_active = false
+```
+
+### 9.7. Re-engage sau khi failsafe đã hết (chỉ HOLD ngắn hạn, không tự động cho RTL/battery critical)
+
+```
+function offboard_try_reengage(safety_ctx, offboard_ctx)
+  if safety_ctx.active_failsafe == NONE and not offboard_ctx.offboard_active:
+    offboard_ctx.engage_counter = 0
+    offboard_engage_request(offboard_ctx)
+```
+
+### 9.8. Vòng lặp giám sát chính — ghép các khối trên
+
+```
+function safety_monitor_init() -> SafetyContext
+  return SafetyContext{active_failsafe=NONE, force_land_requested=false}
+```
+
+```
+function safety_monitor_loop(safety_ctx, offboard_ctx, cache, th, rate=5Hz)
+  loop at rate:
+    level = NONE
+    if check_rc_override(cache.vehicle_status, offboard_ctx):
+      level = RC_OVERRIDE
+    elif not check_ekf_health(cache.vehicle_status):
+      level = EKF_UNHEALTHY
+    else:
+      level = check_battery_failsafe(cache.battery_status, th)
+      if level == NONE:
+        level = offboard_watchdog_escalate(offboard_ctx, th)
+
+    safety_ctx.active_failsafe = level
+    if level != NONE:
+      safety_execute_action(level, safety_ctx, offboard_ctx)
+    else:
+      offboard_try_reengage(safety_ctx, offboard_ctx)
+
+    safety_debug_log(safety_ctx, level)
+```
+
+### 9.9. Debug
+
+```
+function safety_debug_log(ctx, level)
+  print(timestamp(), level, ctx.force_land_requested, ctx.active_failsafe)
+```
+
+### 9.10. Điểm nối với FSM — ép chuyển LAND sớm khi pin yếu
+
+`safety_ctx.force_land_requested` (bật ở `BATTERY_WARNING`) được gộp vào tín hiệu land request ngay trong `fsm_update` (mục 1.7), không cần đổi chữ ký các hàm `check_*_transition`:
+
+```
+function fsm_update(ctx, ekf_state, vision_state, alt_estimator, channels,
+                     timeout_flags, safety_ctx, dt) -> State
+  ...
+  rc = rc_fsm_extract(channels)
+  rc.land_switch = rc.land_switch or safety_ctx.force_land_requested
+  ...
+```
+
+Nhờ vậy `check_follow_transition`/`check_approach_transition` (mục 1.5) coi pin yếu tương đương phi công đã bật switch LAND, mà không cần thêm nhánh logic riêng.
+
+---
+
 ## Ghi chú tích hợp chung
 
 - Tất cả module publish debug log qua hàm `*_debug_log` riêng, có thể bật/tắt bằng flag `DEBUG_ENABLED` global.
 - FSM là nguồn state duy nhất, các module gimbal/offboard/planner đọc `ctx.state` read-only, không tự ý đổi state.
 - Kill switch có độ ưu tiên cao nhất; khi `SYSTEM_KILLED = true`, Offboard manager và FSM phải dừng gửi mọi setpoint/lệnh mới.
+- Mọi dữ liệu vào từ topic DDS (EKF, vision, altitude, planner output) đều đi qua Input State Cache (mục 8) trước khi tới FSM/Gimbal/Offboard — không module nào subscribe trực tiếp và tự giữ state riêng.
+- Toàn bộ điều kiện liên quan tới "gần chạm H-Pad" (chuyển APPROACH→LAND ở mục 1.5, nội suy pitch ở mục 3.3) dùng chung hằng số `LAND_ENTRY_HEIGHT` và đều tính theo `delta_h` (chênh cao tới H-Pad), không dùng `altitude` tuyệt đối AGL — vì H-Pad có thể ở độ cao bất kỳ, không cố định sát mặt đất.
+- Module 9 (Safety Monitor) chạy song song, tần số thấp hơn main loop (5Hz), giám sát pin/EKF2 health/RC override/thời gian mất Offboard — độc lập với watchdog cơ bản ở mục 4.5 nhưng dùng chung `offboard_ctx`. Không thay thế Kill switch (mục 7): Safety Monitor xử lý các tình huống còn cứu được (HOLD, RTL, ép LAND sớm), Kill switch chỉ dùng khi cần dừng tuyệt đối ngay lập tức.
