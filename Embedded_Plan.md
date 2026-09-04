@@ -874,7 +874,7 @@ Ghi chú: kill switch chạy trên thread/task riêng, tần số cao hơn main 
 
 ---
 
-## 8. Input State Cache (glue layer giữa DDS topic và các module xử lý)
+## 8. Input State Cache
 
 Khối này vá 2 lỗ hổng: (1) `ekf_state`/`vision_state`/`alt_estimator` dùng trong `sensor_read` (mục 1.2) chưa có nơi ghi vào; (2) `planner_output` dùng trong `build_setpoint_follow`/`build_setpoint_approach` (mục 4.2) cũng chưa có nơi ghi vào. Cả hai đều là dữ liệu đến qua subscriber của module 5 (micro-XRCE-DDS), cần một tầng cache trung gian trong `mission_manager_node` trước khi các module khác đọc ra.
 
@@ -987,9 +987,7 @@ Cách dùng: `cache = input_cache_init(ctx.participant)` chạy một lần sau 
 
 ---
 
-## 9. Offboard Safety Monitor (failsafe mở rộng)
-
-Module 4.5 (`offboard_watchdog_check`) chỉ xử lý đúng 1 trường hợp — mất heartbeat — và phản ứng duy nhất là HOLD, không tự phục hồi. Module này bổ sung các trường hợp còn thiếu: pin yếu, PX4/EKF2 mất healthy, phi công chuyển tay qua RC, và escalation theo thời gian (mất Offboard ngắn → HOLD, kéo dài → RTL).
+## 9. Offboard Safety Monitor
 
 ### 9.1. Data structures
 
@@ -1117,22 +1115,6 @@ function safety_monitor_loop(safety_ctx, offboard_ctx, cache, th, rate=5Hz)
 function safety_debug_log(ctx, level)
   print(timestamp(), level, ctx.force_land_requested, ctx.active_failsafe)
 ```
-
-### 9.10. Điểm nối với FSM — ép chuyển LAND sớm khi pin yếu
-
-`safety_ctx.force_land_requested` (bật ở `BATTERY_WARNING`) được gộp vào tín hiệu land request ngay trong `fsm_update` (mục 1.7), không cần đổi chữ ký các hàm `check_*_transition`:
-
-```
-function fsm_update(ctx, ekf_state, vision_state, alt_estimator, channels,
-                     timeout_flags, safety_ctx, dt) -> State
-  ...
-  rc = rc_fsm_extract(channels)
-  rc.land_switch = rc.land_switch or safety_ctx.force_land_requested
-  ...
-```
-
-Nhờ vậy `check_follow_transition`/`check_approach_transition` (mục 1.5) coi pin yếu tương đương phi công đã bật switch LAND, mà không cần thêm nhánh logic riêng.
-
 ---
 
 ## Ghi chú tích hợp chung
