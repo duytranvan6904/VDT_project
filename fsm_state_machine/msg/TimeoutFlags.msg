@@ -1,0 +1,2 @@
+bool ekf_timeout
+bool vision_timeout

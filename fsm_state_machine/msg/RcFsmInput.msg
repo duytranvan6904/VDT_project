@@ -1,0 +1,2 @@
+bool land_switch
+bool kill_switch
