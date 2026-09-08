@@ -36,5 +36,6 @@ target_link_libraries(rc_node "${cpp_typesupport_target}")
 ament_target_dependencies(rc_node rclcpp fsm_state_machine)
 
 install(TARGETS rc_node DESTINATION lib/${PROJECT_NAME})
-
+install(DIRECTORY include/ DESTINATION include)
+ament_export_include_directories(include)
 ament_package()
