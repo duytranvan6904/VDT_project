@@ -19,6 +19,11 @@ FsmNode::FsmNode()
     "alt_estimator/state", 10, std::bind(&FsmNode::on_alt, this, std::placeholders::_1));
   rc_sub_ = create_subscription<msg::RcFsmInput>(
     "rc/fsm_input", 10, std::bind(&FsmNode::on_rc, this, std::placeholders::_1));
+  rclcpp::QoS killed_qos(1);
+  killed_qos.transient_local();
+  killed_sub_ = create_subscription<std_msgs::msg::Bool>(
+    "system/killed", killed_qos,
+     std::bind(&FsmNode::on_killed, this, std::placeholders::_1));
   timeout_sub_ = create_subscription<msg::TimeoutFlags>(
     "input_cache/timeout_flags", 10,
     std::bind(&FsmNode::on_timeout_flags, this, std::placeholders::_1));
@@ -31,6 +36,11 @@ FsmNode::FsmNode()
 
   timer_ = create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&FsmNode::update, this));
+}
+
+void FsmNode::on_killed(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  killed_ = msg->data;
 }
 
 void FsmNode::on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -100,6 +110,10 @@ void FsmNode::log_debug(const SensorInput & s, const RcInput & rc) const
 
 void FsmNode::update()
 {
+  if (killed_) {
+    return;
+  }
+  
   const double now_sec = this->now().seconds();
   const float dt = last_update_time_ > 0.0 ?
     static_cast<float>(now_sec - last_update_time_) : 0.0f;
@@ -109,15 +123,18 @@ void FsmNode::update()
 
   counters_update_marker_stable(ctx_.counters, s.marker_detected);
   counters_update_marker_lost(ctx_.counters, s.marker_detected, dt);
-  
+
   RcInput effective_rc = rc_input_;
   effective_rc.land_switch = effective_rc.land_switch || force_land_requested_;
 
-  const auto next_state = evaluate_transition(
-    ctx_.state, ctx_.counters, effective_rc, s, land_entry_height_);
+  std::optional<State> next_state;
+  if (force_land_requested_ && ctx_.state != State::LAND && ctx_.state != State::COMPLETE) {
+    next_state = State::LAND;
+  } else {
+    next_state = evaluate_transition(
+      ctx_.state, ctx_.counters, effective_rc, s, land_entry_height_);
+  }
 
-  const auto next_state = evaluate_transition(
-    ctx_.state, ctx_.counters, rc_input_, s, land_entry_height_);
   if (next_state && *next_state != ctx_.state) {
     ctx_.state = *next_state;
     counters_reset(ctx_.counters);
@@ -142,7 +159,7 @@ void FsmNode::update()
   }
 
   publish_state();
-  log_debug(s, rc_input_);
+  log_debug(s, effective_rc);
 }
 
 }  // namespace fsm_state_machine

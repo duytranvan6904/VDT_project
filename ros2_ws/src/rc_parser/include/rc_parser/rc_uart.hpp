@@ -18,7 +18,7 @@ public:
   bool read_frame(std::array<uint8_t, SBUS_FRAME_LEN> & frame_out);
 
 private:
-  void configure_port(int baudrate);
+  bool configure_port(int baudrate);
 
   int fd_;
   std::vector<uint8_t> buffer_;

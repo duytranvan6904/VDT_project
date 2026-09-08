@@ -1,4 +1,5 @@
 #include "offboard_manager/offboard_logic.hpp"
+#include <cmath>
 
 namespace offboard_manager
 {
@@ -19,6 +20,11 @@ Setpoint build_setpoint_follow(const PlannerOutput & planner_output)
 {
   Setpoint sp;
   sp.type = SetpointType::VELOCITY;
+  if (!std::isfinite(planner_output.vx) || !std::isfinite(planner_output.vy) ||
+    !std::isfinite(planner_output.vz) || !std::isfinite(planner_output.yaw))
+  {
+    return build_setpoint_search(0.0f);
+  }
   sp.vx = planner_output.vx;
   sp.vy = planner_output.vy;
   sp.vz = planner_output.vz;
@@ -37,8 +43,8 @@ Setpoint build_setpoint_land(const PlannerOutput & planner_output, float land_de
   sp.type = SetpointType::VELOCITY;
   sp.vx = 0.0f;
   sp.vy = 0.0f;
-  sp.vz = land_descent_rate;
-  sp.yaw = planner_output.yaw;
+  sp.vz = std::isfinite(land_descent_rate) ? land_descent_rate : 0.0f;
+  sp.yaw = std::isfinite(planner_output.yaw) ? planner_output.yaw : 0.0f;
   return sp;
 }
 

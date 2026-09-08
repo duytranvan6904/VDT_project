@@ -1,3 +1,6 @@
+import math
+import time
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
@@ -17,6 +20,7 @@ class ServoNode(Node):
         self.angle_min_deg = self.declare_parameter('angle_min_deg', 0.0).value
         self.angle_max_deg = self.declare_parameter('angle_max_deg', 180.0).value
         self.home_angle_deg = self.declare_parameter('home_angle_deg', 90.0).value
+        self.input_timeout_sec = self.declare_parameter('input_timeout_sec', 1.0).value
         self.debug_enabled = self.declare_parameter('debug_enabled', False).value
 
         factory = LGPIOFactory()
@@ -31,11 +35,14 @@ class ServoNode(Node):
 
         self.current_angle_deg = self.home_angle_deg
         self.current_pwm_us = 0.0
+        self.last_command_time = None
+        self.timed_out = False
         self.write_angle(self.home_angle_deg)
 
         self.sub = self.create_subscription(
             Float32, 'gimbal/target_angle_deg', self.angle_cb, 10
         )
+        self.create_timer(0.1, self.watchdog_cb)
 
     def write_angle(self, servo_angle_deg):
         self.servo.angle = servo_angle_deg
@@ -47,10 +54,22 @@ class ServoNode(Node):
         self.log_debug()
 
     def angle_cb(self, msg):
+        if not math.isfinite(msg.data):
+            return
         servo_angle = control_angle_to_servo_angle(
             msg.data, self.home_angle_deg, self.angle_min_deg, self.angle_max_deg
         )
         self.write_angle(servo_angle)
+        self.last_command_time = time.monotonic()
+        self.timed_out = False
+
+    def watchdog_cb(self):
+        if self.last_command_time is None:
+            return
+        if time.monotonic() - self.last_command_time > self.input_timeout_sec:
+            if not self.timed_out:
+                self.write_angle(self.home_angle_deg)
+                self.timed_out = True
 
     def log_debug(self):
         if not self.debug_enabled:

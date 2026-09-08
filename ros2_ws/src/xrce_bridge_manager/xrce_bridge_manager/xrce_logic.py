@@ -6,7 +6,7 @@ def agent_is_running(serial_port):
     try:
         output = subprocess.check_output(['pgrep', '-f', pattern])
         return len(output.strip()) > 0
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, OSError):
         return False
 
 

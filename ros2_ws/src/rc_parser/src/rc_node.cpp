@@ -31,12 +31,13 @@ RcNode::RcNode()
 void RcNode::update()
 {
   std::array<uint8_t, SBUS_FRAME_LEN> frame{};
-  if (!uart_->is_open() || !uart_->read_frame(frame)) {
-    return;
-  }
-
-  RcChannels channels = sbus_decode_frame(frame);
   const double now_sec = this->now().seconds();
+  RcChannels channels;
+  if (uart_->is_open() && uart_->read_frame(frame)) {
+    channels = sbus_decode_frame(frame);
+  } else {
+    channels.failsafe = true;
+  }
 
   if (channels.valid && !channels.failsafe) {
     last_valid_time_ = now_sec;

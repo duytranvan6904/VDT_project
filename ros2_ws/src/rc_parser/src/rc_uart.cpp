@@ -1,6 +1,7 @@
 #include "rc_parser/rc_uart.hpp"
 #include <algorithm>
 #include <asm/termios.h>
+#include <cerrno>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -12,8 +13,9 @@ SbusUart::SbusUart(const std::string & device, int baudrate)
 : fd_(-1)
 {
   fd_ = open(device.c_str(), O_RDONLY | O_NOCTTY | O_NONBLOCK);
-  if (fd_ >= 0) {
-    configure_port(baudrate);
+  if (fd_ >= 0 && !configure_port(baudrate)) {
+    close(fd_);
+    fd_ = -1;
   }
 }
 
@@ -29,10 +31,12 @@ bool SbusUart::is_open() const
   return fd_ >= 0;
 }
 
-void SbusUart::configure_port(int baudrate)
+bool SbusUart::configure_port(int baudrate)
 {
-  struct termios2 tio;
-  ioctl(fd_, TCGETS2, &tio);
+  struct termios2 tio{};
+  if (ioctl(fd_, TCGETS2, &tio) != 0) {
+    return false;
+  }
 
   tio.c_cflag &= ~CBAUD;
   tio.c_cflag |= BOTHER;
@@ -50,13 +54,23 @@ void SbusUart::configure_port(int baudrate)
   tio.c_oflag = 0;
   tio.c_lflag = 0;
 
-  ioctl(fd_, TCSETS2, &tio);
+  return ioctl(fd_, TCSETS2, &tio) == 0;
 }
 
 bool SbusUart::read_frame(std::array<uint8_t, SBUS_FRAME_LEN> & frame_out)
 {
+  if (fd_ < 0) {
+    return false;
+  }
   uint8_t byte;
-  while (read(fd_, &byte, 1) == 1) {
+  while (true) {
+    const ssize_t result = read(fd_, &byte, 1);
+    if (result != 1) {
+      if (result < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        return false;
+      }
+      return false;
+    }
     buffer_.push_back(byte);
     if (buffer_.size() > SBUS_FRAME_LEN) {
       buffer_.erase(buffer_.begin());

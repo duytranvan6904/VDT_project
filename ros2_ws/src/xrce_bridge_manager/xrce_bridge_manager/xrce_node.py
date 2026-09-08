@@ -41,16 +41,28 @@ class XrceBridgeNode(Node):
         self.last_status_time = time.monotonic()
 
     def start_agent(self):
+        if self.agent_process is not None:
+            if self.agent_process.poll() is None:
+                return
+            self.agent_process = None
         if agent_is_running(self.serial_port):
             return
-        self.agent_process = spawn_agent(self.serial_port, self.baudrate)
+        try:
+            self.agent_process = spawn_agent(self.serial_port, self.baudrate)
+        except (OSError, ValueError) as exc:
+            self.agent_process = None
+            self.get_logger().error(f'Cannot start MicroXRCEAgent: {exc}')
 
     def check_connection(self):
+        process_alive = self.agent_process is not None and self.agent_process.poll() is None
+        external_agent = agent_is_running(self.serial_port)
         elapsed = time.monotonic() - self.last_status_time
-        return elapsed < self.connection_timeout_sec
+        return (process_alive or external_agent) and elapsed < self.connection_timeout_sec
 
     def reconnect(self):
         self.retry_count += 1
+        if self.agent_process is not None and self.agent_process.poll() is not None:
+            self.agent_process = None
         self.start_agent()
 
     def monitor_step(self):

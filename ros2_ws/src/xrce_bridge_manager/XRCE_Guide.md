@@ -23,8 +23,10 @@ Lúc khởi động node:
 1. Kiểm tra Agent đã chạy chưa (`pgrep`), nếu chưa thì spawn tiến trình `MicroXRCEAgent serial --dev <serial_port> -b <baudrate>`.
 
 Mỗi chu kỳ 1s (`monitor_step`):
-1. Tính thời gian kể từ lần nhận `VehicleStatus` gần nhất.
-2. Nếu vượt `connection_timeout_sec` → coi là mất kết nối, tăng `retry_count`, gọi lại `start_agent()` để khởi động lại tiến trình Agent.
+1. Kiểm tra `MicroXRCEAgent` do node quản lý còn sống (`poll()`) hoặc có tiến trình Agent bên ngoài.
+2. Tính thời gian kể từ lần nhận `VehicleStatus` gần nhất.
+3. Chỉ báo connected khi Agent còn sống và `VehicleStatus` còn fresh.
+4. Nếu vượt `connection_timeout_sec` hoặc Agent đã chết → coi là mất kết nối, tăng `retry_count`, gọi lại `start_agent()` để khởi động lại tiến trình Agent.
 3. Log debug nếu bật.
 
 Lưu ý: participant/topic phía PX4 (`offboard_control_mode`, `trajectory_setpoint`, `vehicle_odometry`...) là do firmware PX4 tự tạo khi Agent sống — node này không tạo topic nào cả, chỉ giữ cho Agent luôn chạy.
@@ -79,6 +81,6 @@ Kiểm tra có đang nhận dữ liệu từ PX4 không (nếu topic này có me
 ros2 topic echo /fmu/out/vehicle_status
 ```
 
-Nếu `connected` cứ nhảy `False` liên tục dù Agent vẫn sống: khả năng cao sai `serial_port` hoặc `baudrate` không khớp cấu hình `uxrce_dds_client` trong PX4 (kiểm tra bằng `param show UXRCE_DDS_*` qua QGroundControl hoặc MAVLink console).
+Nếu `connected` cứ nhảy `False` liên tục dù Agent vẫn sống: khả năng cao sai `serial_port`, `baudrate` không khớp cấu hình `uxrce_dds_client`, hoặc `VehicleStatus` publish thưa hơn timeout. Kiểm tra bằng `param show UXRCE_DDS_*` qua QGroundControl/MAVLink console và tăng timeout phù hợp.
 
 Nếu Agent liên tục bị spawn lại (retry_count tăng đều dù dây cắm ổn định): kiểm tra `connection_timeout_sec` có đang đặt quá nhỏ so với tần số publish thật của `vehicle_status` (PX4 mặc định publish khá chậm, thường dưới 1Hz) — nên tăng lên ít nhất 3-5s để tránh false positive.

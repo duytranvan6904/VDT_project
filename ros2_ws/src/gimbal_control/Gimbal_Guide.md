@@ -35,11 +35,13 @@ Mỗi chu kỳ:
 | LAND | nội suy -60 đến -90 độ theo `delta_h / land_entry_height` |
 | COMPLETE | 0 độ (mặc định) |
 
-4. PID làm mượt từ góc hiện tại tới góc mục tiêu (không phải closed-loop thật vì servo không feedback).
+4. PID làm mượt từ góc hiện tại tới góc mục tiêu (không phải closed-loop thật vì servo không feedback). Integral có anti-windup: không tích phân thêm khi output đã bão hòa theo hướng lỗi.
 5. Slew rate limiter giới hạn tốc độ đổi góc tối đa mỗi giây.
 6. Publish góc cuối ra `gimbal/target_angle_deg`.
 
 Đổi phase thì PID tự reset integral và prev_error về 0.
+
+Telemetry, `dt`, hệ số PID và kết quả trung gian phải là finite. Dữ liệu NaN/vô hạn hoặc `dt <= 0` sẽ bỏ qua chu kỳ và reset PID khi cần. `land_entry_height` phải lớn hơn 0; giá trị không hợp lệ dùng góc bắt đầu LAND (`-60` độ) thay vì chia cho 0.
 
 ## 3. Cách chạy
 

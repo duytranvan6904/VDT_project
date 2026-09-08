@@ -2,6 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/u_int8.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include "fsm_state_machine/fsm_actions.hpp"
 #include "fsm_state_machine/fsm_types.hpp"
 #include "fsm_state_machine/msg/alt_estimate.hpp"
@@ -31,6 +32,10 @@ private:
   void on_force_land(const std_msgs::msg::Bool::SharedPtr msg);
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr force_land_sub_;
   bool force_land_requested_ = false;
+
+  void on_killed(const std_msgs::msg::Bool::SharedPtr msg);
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr killed_sub_;
+  bool killed_ = false;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_sub_;
   rclcpp::Subscription<msg::VisionMarker>::SharedPtr vision_sub_;

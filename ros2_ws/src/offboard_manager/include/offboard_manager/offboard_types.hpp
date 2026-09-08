@@ -50,4 +50,11 @@ struct OffboardContext
   Setpoint setpoint;
 };
 
+enum class EngagePhase
+{
+  WAIT_SETPOINT_STREAM,
+  WAIT_MODE_CONFIRM,
+  WAIT_HEALTH_CONFIRM
+};
+
 }  // namespace offboard_manager

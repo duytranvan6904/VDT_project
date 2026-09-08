@@ -10,6 +10,9 @@ pip install -r requirements.txt
 ## 2. Chuẩn bị dữ liệu
 
 - File log CSV từ `flight_data_logger` sau chuyến bay thử (có cột `fsm_state`, `pos_*`, `vel_*`, `sp_vx/vy`).
+- Cột bắt buộc được kiểm tra khi load: `timestamp`, `fsm_state`, position, velocity và `sp_vx/sp_vy/sp_vz`.
+- Các giá trị số không chuyển được sang numeric, NaN hoặc vô hạn sẽ bị loại khỏi phân tích.
+- Timestamp được giả định là microseconds, phải tăng dần trong phase LAND; dòng trùng timestamp bị loại. Cần tối thiểu 5 dòng LAND hợp lệ.
 - File tham số hiện tại đọc từ QGroundControl > Parameters, tự điền vào `current_params.json`:
 
 ```json
@@ -35,6 +38,8 @@ python3 -m landing_diagnostics.report flight_log_20260908.csv
 ```
 
 ## 4. Đọc kết quả
+
+Nếu dữ liệu LAND hợp lệ không đủ 5 dòng hoặc timestamp không tăng dần, report dừng với `ValueError` thay vì tạo metric không đáng tin cậy. Correlation sẽ trả `0.0` nếu dữ liệu hằng hoặc kết quả không finite.
 
 ```
 mean_err_xy   = 0.32 m/s   # sai số tốc độ ngang trung bình khi LAND

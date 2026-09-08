@@ -95,7 +95,7 @@ Tính góc mục tiêu theo state và hình học tương đối giữa UAV vớ
 - FOLLOW/APPROACH: `-atan2(delta_h, d_horiz)` đổi sang độ.
 - LAND: nội suy từ `-60` đến `-90` độ.
 - Mặc định PID: `kp=1.0`, `ki=0.0`, `kd=0.1`.
-- Đây là điều khiển open-loop ở cấp servo; `current_angle_` là góc lệnh trước đó, không phải feedback vật lý.
+- Đây là điều khiển open-loop ở cấp servo; `current_angle_` là góc lệnh trước đó, không phải feedback vật lý. PID có anti-windup, finite-value checks và bảo vệ `land_entry_height`/slew rate khỏi dữ liệu không hợp lệ.
 
 ### `servo_control` (Python)
 
@@ -108,7 +108,7 @@ gimbal/target_angle_deg
   -> AngularServo.angle
 ```
 
-Mặc định: GPIO `18`, PWM `600..2400 us`, góc servo `0..180`, home `90` độ. Package không chạy trực tiếp trên Windows hoặc PX4 flight controller.
+Mặc định: GPIO `18`, PWM `600..2400 us`, góc servo `0..180`, home `90` độ, timeout input `1.0 s`. Khi mất lệnh gimbal quá timeout, servo trở về home; giá trị NaN/vô hạn bị bỏ qua. Package không chạy trực tiếp trên Windows hoặc PX4 flight controller. Xem [Servo_Guide.md](ros2_ws/src/servo_control/Servo_Guide.md).
 
 ### `input_state_cache` (C++)
 
@@ -125,12 +125,13 @@ Chuyển state và planner output thành lệnh PX4:
 - Timer 20 Hz.
 - Phát `OffboardControlMode`, `TrajectorySetpoint` và `VehicleCommand`.
 - Gửi 10 chu kỳ setpoint trước khi yêu cầu chuyển Offboard.
-- Sau engage sẽ gửi lệnh arm tự động.
+- Chờ `VehicleStatus.nav_state == OFFBOARD` từ message còn fresh trước khi tiếp tục.
+- Chỉ arm khi `VehicleStatus` và `VehicleLocalPosition` đã nhận, còn fresh, EKF có `xy_valid/z_valid` và PX4 không ở failsafe.
 - SEARCH dừng vị trí và quay theo `yaw_search_rate`.
 - FOLLOW/APPROACH dùng velocity từ planner.
 - LAND dừng vận tốc ngang và dùng `land_descent_rate`.
 
-Tham số chính: `required_engage_cycles=10`, `watchdog_timeout_sec=0.5`, `yaw_search_rate=0.3`, `land_descent_rate=0.4`.
+Tham số chính: `required_engage_cycles=10`, `mode_confirm_timeout_cycles=20`, `health_confirm_timeout_cycles=100`, `data_freshness_timeout_sec=1.0`, `max_horizontal_velocity=2.0`, `max_vertical_velocity=1.0`, `max_yaw=3.14`, `watchdog_timeout_sec=0.5`, `yaw_search_rate=0.3`, `land_descent_rate=0.4`. Planner output non-finite bị thay bằng setpoint an toàn và output hợp lệ bị clamp theo các giới hạn này.
 
 ### `offboard_safety_monitor` (C++)
 
@@ -141,6 +142,8 @@ Tham số chính: `required_engage_cycles=10`, `watchdog_timeout_sec=0.5`, `yaw_
 - Mất Offboard 1 giây: yêu cầu HOLD.
 - Mất Offboard 5 giây: yêu cầu RTL.
 - Phát lệnh PX4, `safety/inhibit_offboard` và `safety/force_land`.
+- `force_land_requested` mặc định latch đến khi node restart; dùng `force_land_latched=false` chỉ cho bench/test với battery fresh và hợp lệ.
+- Xem [Safety_Guide.md](ros2_ws/src/offboard_safety_monitor/Safety_Guide.md) để biết policy reset.
 
 ### `rc_parser` (C++)
 
@@ -150,13 +153,13 @@ Tham số chính: `required_engage_cycles=10`, `watchdog_timeout_sec=0.5`, `yaw_
 - Land switch channel mặc định `4`, kill switch channel `5` (zero-based).
 - Ngưỡng thấp/cao `1200/1800 us`.
 - Frame timeout `0.5 s`.
-- Phụ thuộc Linux/POSIX (`termios`, `TCGETS2`, `BOTHER`), không build native trên Windows.
+- Phụ thuộc Linux/POSIX (`termios`, `TCGETS2`, `BOTHER`), không build native trên Windows. Return value của `ioctl/read` được kiểm tra; khi mất frame hoặc UART lỗi, node vẫn publish `valid=false`, `failsafe=true`.
 
 ### `kill_switch` (C++)
 
 Debounce kill channel trong ba chu kỳ, sau đó latch trạng thái killed và gửi `VEHICLE_CMD_COMPONENT_ARM_DISARM` với force-disarm (`param2=21196`). Phát thêm `system/killed` với QoS transient-local.
 
-Kill switch hiện không tự kích hoạt khi mất RC và chưa được `offboard_manager` dùng để dừng setpoint.
+Kill switch không tự kích hoạt khi mất RC; tuy nhiên khi đã publish `system/killed`, `fsm_state_machine` dừng update và `offboard_manager` reset engage, dừng heartbeat/setpoint.
 
 ### `xrce_bridge_manager` (Python)
 
@@ -166,7 +169,7 @@ Kiểm tra và khởi động `MicroXRCEAgent` bằng lệnh:
 MicroXRCEAgent serial --dev <serial_port> -b <baudrate>
 ```
 
-Mặc định dùng `/dev/ttyAMA0`, `921600 baud`, timeout kết nối `2.0 s`. Trạng thái kết nối được suy ra gián tiếp từ thời điểm nhận `/fmu/out/vehicle_status`.
+Mặc định dùng `/dev/ttyAMA0`, `921600 baud`, timeout kết nối `2.0 s`. Trạng thái connected yêu cầu Agent còn sống và `/fmu/out/vehicle_status` còn fresh; process chết hoặc status stale đều kích hoạt reconnect. Xem [XRCE_Guide.md](ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md).
 
 ## Messages
 
@@ -241,7 +244,7 @@ colcon build
 source install/setup.bash
 ```
 
-Hiện chưa có launch file, parameter YAML tập trung, CI hoặc bộ test tự động. Build nguyên trạng đang bị chặn bởi lỗi khai báo trùng `next_state` trong `fsm_state_machine/src/fsm_node.cpp`.
+Hiện chưa có launch file, parameter YAML tập trung, CI hoặc bộ test tự động. Các bước engage/arm cần được kiểm thử với PX4 SITL trước khi dùng phần cứng.
 
 ### Build diagnostics
 
@@ -309,7 +312,7 @@ Chạy report:
 python3 -m landing_diagnostics.report flight_log.csv --params-json current_params.json
 ```
 
-File `current_params.json` là input được guide yêu cầu nhưng chưa có sẵn trong repository. Pipeline cũng chưa có sample log hoặc test dữ liệu mẫu; cần kiểm tra NaN, timestamp và giới hạn tham số trước khi dùng kết quả để tuning thật.
+File `current_params.json` là input tùy chọn và chưa có sẵn trong repository. Pipeline kiểm tra schema, ép numeric, loại NaN/vô hạn, loại timestamp trùng và yêu cầu timestamp LAND tăng dần cùng tối thiểu 5 mẫu hợp lệ. Xem [Diagnostic_Guide.md](landing_diagnostics/Diagnostic_Guide.md).
 
 ## Tích hợp PX4 và QGroundControl
 
@@ -332,29 +335,20 @@ Hiện có thể kiểm tra thủ công bằng `ros2 topic pub`, `ros2 topic ech
 - Test safety state machine, command acknowledgement và startup timeout.
 - Test HIL, sample flight log hoặc CI build/lint.
 
-Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup, force-land, kill switch, HOLD/RTL, PX4 mode acknowledgement, planner velocity bounds và behavior khi XRCE/RC bị ngắt.
+Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup, force-land, kill switch, HOLD/RTL, freshness của `VehicleStatus`/`VehicleLocalPosition`, PX4 mode acknowledgement, planner velocity bounds và behavior khi XRCE/RC bị ngắt.
 
 ## Các vấn đề cần xử lý
 
 ### Mức cao
 
-1. Sửa lỗi compile do khai báo `const auto next_state` trùng trong `fsm_node.cpp`.
-2. Sửa FSM để đánh giá `effective_rc`; hiện `safety/force_land` chưa thực sự ép chuyển trạng thái.
-3. Propagate `system/killed` đến Offboard manager và các node liên quan.
-4. Không đánh giá EKF/pin là lỗi trước khi nhận message PX4 đầu tiên và xác nhận freshness.
-5. Không tự arm nếu chưa xác nhận PX4 healthy, đúng mode và đã sẵn sàng.
-6. Bổ sung launch file, readiness ordering và parameter YAML.
+1. Bổ sung test FSM để xác nhận `effective_rc` và `safety/force_land` luôn ép chuyển sang `LAND` từ các state đang bay.
+2. Bổ sung launch file, readiness ordering và parameter YAML.
 
 ### Mức trung bình
 
 - Dùng `planner_timeout` trong Offboard/FSM.
-- Reset `force_land_requested` khi điều kiện pin trở lại bình thường hoặc định nghĩa rõ cơ chế latch.
-- Thêm anti-windup, finite-value checks và bảo vệ chia cho 0 cho gimbal PID.
-- Thêm timeout an toàn cho servo khi mất input.
-- Kiểm tra return value của UART/ioctl và xử lý mất RC.
-- Thêm giới hạn và validation cho velocity từ planner.
-- Cải thiện XRCE health check thay vì chỉ suy ra từ `VehicleStatus`.
-- Xử lý NaN, dữ liệu ngắn và timestamp lỗi trong diagnostics.
+- Force-land mặc định latch đến khi restart; chỉ dùng `force_land_latched=false` cho bench/test với điều kiện reset rõ ràng.
+- Bổ sung unit/integration tests cho các validation và timeout mới.
 
 ### Mức tài liệu và phát hành
 
@@ -372,8 +366,10 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 - [landing_diagnostics/Diagnostic_Guide.md](landing_diagnostics/Diagnostic_Guide.md)
 - [ros2_ws/src/fsm_state_machine/FSM_Guide.md](ros2_ws/src/fsm_state_machine/FSM_Guide.md)
 - [ros2_ws/src/gimbal_control/Gimbal_Guide.md](ros2_ws/src/gimbal_control/Gimbal_Guide.md)
+- [ros2_ws/src/servo_control/Servo_Guide.md](ros2_ws/src/servo_control/Servo_Guide.md)
 - [ros2_ws/src/input_state_cache/ISC_Guide.md](ros2_ws/src/input_state_cache/ISC_Guide.md)
 - [ros2_ws/src/offboard_manager/Offboard_Guide.md](ros2_ws/src/offboard_manager/Offboard_Guide.md)
+- [ros2_ws/src/offboard_safety_monitor/Safety_Guide.md](ros2_ws/src/offboard_safety_monitor/Safety_Guide.md)
 - [ros2_ws/src/rc_parser/RC_Guide.md](ros2_ws/src/rc_parser/RC_Guide.md)
 - [ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md](ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md)
 - [References/Link.txt](References/Link.txt)

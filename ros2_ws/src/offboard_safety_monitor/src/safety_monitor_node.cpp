@@ -1,5 +1,6 @@
 #include "offboard_safety_monitor/safety_monitor_node.hpp"
 #include "offboard_safety_monitor/safety_logic.hpp"
+#include <cmath>
 
 namespace offboard_safety_monitor
 {
@@ -21,7 +22,9 @@ SafetyMonitorNode::SafetyMonitorNode()
   thresholds_.offboard_hold_timeout = declare_parameter<double>("offboard_hold_timeout", 1.0);
   thresholds_.offboard_rtl_timeout = declare_parameter<double>("offboard_rtl_timeout", 5.0);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
-
+  force_land_latched_ = declare_parameter<bool>("force_land_latched", true);
+  
+  data_freshness_timeout_sec_ = declare_parameter<double>("data_freshness_timeout_sec", 1.0);
   status_sub_ = create_subscription<px4_msgs::msg::VehicleStatus>(
     "/fmu/out/vehicle_status", 10,
     std::bind(&SafetyMonitorNode::on_vehicle_status, this, std::placeholders::_1));
@@ -52,11 +55,15 @@ void SafetyMonitorNode::on_vehicle_status(const px4_msgs::msg::VehicleStatus::Sh
 void SafetyMonitorNode::on_local_position(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg)
 {
   local_position_ = *msg;
+  has_local_position_ = true;
+  last_local_position_time_ = this->now().seconds();
 }
 
 void SafetyMonitorNode::on_battery(const px4_msgs::msg::BatteryStatus::SharedPtr msg)
 {
   battery_status_ = *msg;
+  has_battery_ = true;
+  last_battery_time_ = this->now().seconds();
 }
 
 void SafetyMonitorNode::on_offboard_status(
@@ -67,10 +74,19 @@ void SafetyMonitorNode::on_offboard_status(
 
 void SafetyMonitorNode::update()
 {
+  const double now_sec = this->now().seconds();
+
+  const bool ekf_fresh = is_fresh(
+    has_local_position_, last_local_position_time_, now_sec, data_freshness_timeout_sec_);
+  const bool battery_fresh = is_fresh(
+    has_battery_, last_battery_time_, now_sec, data_freshness_timeout_sec_);
+
   const bool rc_override = check_rc_override(
     offboard_status_.offboard_active, vehicle_status_.nav_state, NAV_STATE_OFFBOARD);
-  const bool ekf_healthy = check_ekf_health(local_position_.xy_valid, local_position_.z_valid);
-  const FailsafeLevel battery_level = check_battery_failsafe(battery_status_.remaining, thresholds_);
+  const bool ekf_healthy = check_ekf_health(
+    local_position_.xy_valid, local_position_.z_valid, ekf_fresh);
+  const FailsafeLevel battery_level = check_battery_failsafe(
+    battery_status_.remaining, battery_fresh, thresholds_);
   const FailsafeLevel escalate_level = offboard_watchdog_escalate(
     offboard_status_.heartbeat_age_sec, thresholds_);
 
@@ -80,6 +96,11 @@ void SafetyMonitorNode::update()
   ctx_.active_failsafe = level;
   if (level == FailsafeLevel::BATTERY_WARNING) {
     ctx_.force_land_requested = true;
+  } else if (!force_land_latched_ && level == FailsafeLevel::NONE && battery_fresh &&
+    std::isfinite(battery_status_.remaining) &&
+    battery_status_.remaining >= thresholds_.battery_warning_frac)
+  {
+    ctx_.force_land_requested = false;
   }
 
   execute_action(level);

@@ -46,6 +46,13 @@ private:
   SafetyThresholds thresholds_;
   SafetyContext ctx_;
   bool debug_enabled_;
+  bool force_land_latched_;
+  bool has_local_position_ = false;
+  bool has_battery_ = false;
+  double last_local_position_time_ = 0.0;
+  double last_battery_time_ = 0.0;
+  double data_freshness_timeout_sec_ = 1.0;
+  
 };
 
 }  // namespace offboard_safety_monitor

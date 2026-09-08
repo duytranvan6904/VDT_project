@@ -6,7 +6,7 @@ namespace rc_parser
 RcChannels rc_validate(
   RcChannels channels, const RcConfig & cfg, double last_valid_time, double now)
 {
-  if (now - last_valid_time > cfg.frame_timeout) {
+  if (last_valid_time <= 0.0 || now - last_valid_time > cfg.frame_timeout) {
     channels.valid = false;
   }
   if (channels.failsafe) {

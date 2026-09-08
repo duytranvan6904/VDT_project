@@ -1,10 +1,26 @@
 #include "offboard_safety_monitor/safety_logic.hpp"
+#include <cmath>
 
 namespace offboard_safety_monitor
 {
 
-FailsafeLevel check_battery_failsafe(float remaining_frac, const SafetyThresholds & th)
+bool is_fresh(bool has_data, double last_received_time, double now, double timeout_sec)
 {
+  if (!has_data) {
+    return false;
+  }
+  return (now - last_received_time) <= timeout_sec;
+}
+
+FailsafeLevel check_battery_failsafe(
+  float remaining_frac, bool battery_fresh, const SafetyThresholds & th)
+{
+  if (!battery_fresh) {
+    return FailsafeLevel::NONE;
+  }
+  if (!std::isfinite(remaining_frac) || remaining_frac < 0.0f || remaining_frac > 1.0f) {
+    return FailsafeLevel::NONE;
+  }
   if (remaining_frac < th.battery_critical_frac) {
     return FailsafeLevel::BATTERY_CRITICAL;
   }
@@ -14,8 +30,11 @@ FailsafeLevel check_battery_failsafe(float remaining_frac, const SafetyThreshold
   return FailsafeLevel::NONE;
 }
 
-bool check_ekf_health(bool xy_valid, bool z_valid)
+bool check_ekf_health(bool xy_valid, bool z_valid, bool ekf_fresh)
 {
+  if (!ekf_fresh) {
+    return true;
+  }
   return xy_valid && z_valid;
 }
 

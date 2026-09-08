@@ -28,7 +28,9 @@ Mỗi chu kỳ 20ms (`update()`):
 2. `sbus_decode_frame()` giải mã 16 kênh 11-bit, lấy cờ failsafe.
 3. `rc_validate()` đánh dấu `valid = false` nếu: quá `frame_timeout` chưa có frame hợp lệ, có cờ failsafe, hoặc có kênh nằm ngoài [800, 2200].
 4. `rc_get_land_trigger()` / `rc_get_kill_switch()` đọc switch position (LOW/MID/HIGH) theo ngưỡng `low_threshold`/`high_threshold` trên đúng channel index cấu hình.
-5. Publish `rc/fsm_input` (chỉ `true` khi `valid == true`, tránh gửi tín hiệu giả lúc mất kết nối) và `rc/channels_raw` (dữ liệu thô để debug).
+5. Publish `rc/fsm_input` (chỉ `true` khi `valid == true`) và `rc/channels_raw` (dữ liệu thô để debug). Khi UART không mở được hoặc mất frame, node vẫn publish định kỳ `valid = false`, `failsafe = true` để downstream biết RC đã mất.
+
+`TCGETS2`, `TCSETS2` và `read()` đều được kiểm tra return value. Nếu cấu hình UART thất bại, file descriptor được đóng và node chuyển sang trạng thái mất RC.
 
 ## 3. Cách chạy
 
@@ -88,7 +90,7 @@ Xem tín hiệu FSM đang nhận:
 ros2 topic echo /rc/fsm_input
 ```
 
-Nếu node không log gì, không publish gì: kiểm tra UART có mở được không (log lỗi lúc khởi động `Khong mo duoc serial device ...`), thường do sai `serial_device` hoặc thiếu quyền truy cập cổng serial (`sudo usermod -aG dialout $USER` rồi đăng nhập lại).
+Nếu `valid=0` và `failsafe=1`: kiểm tra UART có mở được không (log lỗi lúc khởi động `Khong mo duoc serial device ...`), thường do sai `serial_device`, lỗi cấu hình ioctl hoặc thiếu quyền truy cập cổng serial (`sudo usermod -aG dialout $USER` rồi đăng nhập lại).
 
 Nếu `valid` luôn = 0 dù receiver có tín hiệu: kiểm tra `frame_timeout` có quá nhỏ so với tần số frame SBUS thật (thường ~14ms/frame) hoặc `baudrate` sai (một số receiver dùng SBUS đảo cực tính, cần mạch invert phần cứng riêng trước khi vào UART của Pi 5 vì UART Linux mặc định không tự đảo tín hiệu).
 
