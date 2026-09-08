@@ -95,3 +95,10 @@ Nếu `valid=0` và `failsafe=1`: kiểm tra UART có mở được không (log 
 Nếu `valid` luôn = 0 dù receiver có tín hiệu: kiểm tra `frame_timeout` có quá nhỏ so với tần số frame SBUS thật (thường ~14ms/frame) hoặc `baudrate` sai (một số receiver dùng SBUS đảo cực tính, cần mạch invert phần cứng riêng trước khi vào UART của Pi 5 vì UART Linux mặc định không tự đảo tín hiệu).
 
 Nếu `land`/`kill` không đổi dù gạt switch: kiểm tra đúng `land_channel`/`kill_channel` index có khớp với cấu hình kênh thật trên transmitter không — so trực tiếp giá trị PWM trong `/rc/channels_raw` khi gạt switch để xác định đúng index.
+
+Test timeout logic:
+
+```bash
+cd ros2_ws
+colcon test --packages-select rc_parser --ctest-args -R rc_logic_test
+```

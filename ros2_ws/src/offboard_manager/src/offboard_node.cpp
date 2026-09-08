@@ -287,6 +287,17 @@ void OffboardNode::update()
     return;
   }
 
+  if (planner_timeout_) {
+    if (ctx_.offboard_active) {
+      enter_failsafe();
+    } else {
+      reset_engage_sequence();
+    }
+    publish_status();
+    log_debug();
+    return;
+  }
+
   if (!ctx_.offboard_active) {
     engage_request();
   } else {

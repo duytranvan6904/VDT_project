@@ -22,4 +22,8 @@ std::optional<State> evaluate_transition(
   State current, const Counters & counters, const RcInput & rc,
   const SensorInput & s, float land_entry_height);
 
+RcInput effective_rc_input(const RcInput & rc, bool force_land_requested);
+std::optional<State> force_land_transition(State current, bool force_land_requested);
+std::optional<State> planner_timeout_transition(State current, bool planner_timeout);
+
 }  // namespace fsm_state_machine

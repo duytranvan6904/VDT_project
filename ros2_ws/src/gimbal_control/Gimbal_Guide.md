@@ -100,3 +100,10 @@ Nếu góc không đổi dù phase đổi: kiểm tra `input_cache/timeout_flags
 ```bash
 ros2 topic echo /input_cache/timeout_flags
 ```
+
+Test logic finite/anti-windup:
+
+```bash
+cd ros2_ws
+colcon test --packages-select gimbal_control --ctest-args -R gimbal_logic_test
+```

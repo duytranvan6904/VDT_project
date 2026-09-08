@@ -93,4 +93,27 @@ std::optional<State> evaluate_transition(
   }
 }
 
+RcInput effective_rc_input(const RcInput & rc, bool force_land_requested)
+{
+  RcInput effective = rc;
+  effective.land_switch = effective.land_switch || force_land_requested;
+  return effective;
+}
+
+std::optional<State> force_land_transition(State current, bool force_land_requested)
+{
+  if (force_land_requested && current != State::LAND && current != State::COMPLETE) {
+    return State::LAND;
+  }
+  return std::nullopt;
+}
+
+std::optional<State> planner_timeout_transition(State current, bool planner_timeout)
+{
+  if (planner_timeout && (current == State::FOLLOW || current == State::APPROACH)) {
+    return State::SEARCH;
+  }
+  return std::nullopt;
+}
+
 }  // namespace fsm_state_machine

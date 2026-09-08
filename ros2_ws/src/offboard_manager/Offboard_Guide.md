@@ -119,3 +119,12 @@ ros2 topic pub /planner/velocity_setpoint offboard_manager/msg/PlannerOutput \
 Nếu node kẹt mãi ở giai đoạn engage (chưa bao giờ arm): kiểm tra `engage_counter` có tăng đều mỗi chu kỳ không qua log debug — nếu không tăng, khả năng cao timer bị treo hoặc `required_engage_cycles` bị set quá lớn.
 
 Nếu vừa vào OFFBOARD xong lại rớt về failsafe ngay: kiểm tra `watchdog_timeout_sec` có đang đặt quá nhỏ so với chu kỳ timer (50ms) không.
+
+Khi `input_cache/timeout_flags.planner_timeout` là `true`, node không engage lại; nếu đang Offboard, node yêu cầu chuyển HOLD và reset engage sequence.
+
+Test logic:
+
+```bash
+cd ros2_ws
+colcon test --packages-select offboard_manager --ctest-args -R offboard_logic_test
+```

@@ -40,4 +40,10 @@ ament_target_dependencies(fsm_node rclcpp std_msgs nav_msgs)
 
 install(TARGETS fsm_node DESTINATION lib/${PROJECT_NAME})
 
+enable_testing()
+add_executable(fsm_logic_test test/fsm_logic_test.cpp src/fsm_logic.cpp)
+target_include_directories(fsm_logic_test PRIVATE include)
+target_link_libraries(fsm_logic_test "${cpp_typesupport_target}")
+add_test(NAME fsm_logic_test COMMAND fsm_logic_test)
+
 ament_package()

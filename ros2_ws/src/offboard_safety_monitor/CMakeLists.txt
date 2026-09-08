@@ -29,4 +29,9 @@ ament_target_dependencies(safety_monitor_node rclcpp std_msgs px4_msgs offboard_
 
 install(TARGETS safety_monitor_node DESTINATION lib/${PROJECT_NAME})
 
+enable_testing()
+add_executable(safety_logic_test test/safety_logic_test.cpp src/safety_logic.cpp)
+target_include_directories(safety_logic_test PRIVATE include)
+add_test(NAME safety_logic_test COMMAND safety_logic_test)
+
 ament_package()

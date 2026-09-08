@@ -30,6 +30,21 @@ FailsafeLevel check_battery_failsafe(
   return FailsafeLevel::NONE;
 }
 
+bool update_force_land_request(
+  bool current, bool latched, FailsafeLevel level,
+  float remaining_frac, bool battery_fresh, const SafetyThresholds & th)
+{
+  if (level == FailsafeLevel::BATTERY_WARNING) {
+    return true;
+  }
+  if (latched || level != FailsafeLevel::NONE || !battery_fresh ||
+    !std::isfinite(remaining_frac) || remaining_frac < 0.0f || remaining_frac > 1.0f)
+  {
+    return current;
+  }
+  return remaining_frac < th.battery_warning_frac ? current : false;
+}
+
 bool check_ekf_health(bool xy_valid, bool z_valid, bool ekf_fresh)
 {
   if (!ekf_fresh) {

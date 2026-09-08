@@ -327,12 +327,19 @@ Các file trong `PX4_Control/templates` chưa phải patch hoàn chỉnh: chưa 
 
 ## Kiểm thử và validation
 
-Hiện có thể kiểm tra thủ công bằng `ros2 topic pub`, `ros2 topic echo`, debug logs và SITL theo các guide của từng package. Chưa có:
+Hiện có thể kiểm tra thủ công bằng `ros2 topic pub`, `ros2 topic echo`, debug logs và SITL theo các guide của từng package. Đã có unit test C++ cho các logic thuần của FSM, Offboard, Gimbal, Safety và RC; chạy bằng:
 
-- Unit test C++/Python.
+```bash
+cd ros2_ws
+colcon test --packages-select fsm_state_machine offboard_manager gimbal_control offboard_safety_monitor rc_parser
+colcon test-result --verbose
+```
+
+Các phần chưa có:
+
+- Unit test Python cho servo/XRCE/diagnostics.
 - Integration test ROS 2 hoặc launch test.
-- Vector test cho SBUS.
-- Test safety state machine, command acknowledgement và startup timeout.
+- Vector test SBUS đầy đủ, command acknowledgement và startup end-to-end.
 - Test HIL, sample flight log hoặc CI build/lint.
 
 Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup, force-land, kill switch, HOLD/RTL, freshness của `VehicleStatus`/`VehicleLocalPosition`, PX4 mode acknowledgement, planner velocity bounds và behavior khi XRCE/RC bị ngắt.
@@ -341,14 +348,12 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 
 ### Mức cao
 
-1. Bổ sung test FSM để xác nhận `effective_rc` và `safety/force_land` luôn ép chuyển sang `LAND` từ các state đang bay.
-2. Bổ sung launch file, readiness ordering và parameter YAML.
+1. Bổ sung launch file, readiness ordering và parameter YAML.
 
 ### Mức trung bình
 
-- Dùng `planner_timeout` trong Offboard/FSM.
-- Force-land mặc định latch đến khi restart; chỉ dùng `force_land_latched=false` cho bench/test với điều kiện reset rõ ràng.
-- Bổ sung unit/integration tests cho các validation và timeout mới.
+- Force-land mặc định latch đến khi restart; chế độ `force_land_latched=false` chỉ dành cho bench/test với điều kiện reset rõ ràng.
+- Bổ sung integration/HIL tests cho các validation và timeout mới.
 
 ### Mức tài liệu và phát hành
 

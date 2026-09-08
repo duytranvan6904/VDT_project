@@ -8,6 +8,9 @@ bool is_fresh(bool has_data, double last_received_time, double now, double timeo
 
 FailsafeLevel check_battery_failsafe(
   float remaining_frac, bool battery_fresh, const SafetyThresholds & th);
+bool update_force_land_request(
+  bool current, bool latched, FailsafeLevel level,
+  float remaining_frac, bool battery_fresh, const SafetyThresholds & th);
 bool check_ekf_health(bool xy_valid, bool z_valid, bool ekf_fresh);
 bool check_rc_override(bool offboard_active, uint8_t nav_state, uint8_t nav_state_offboard);
 FailsafeLevel offboard_watchdog_escalate(float heartbeat_age_sec, const SafetyThresholds & th);

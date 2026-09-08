@@ -94,14 +94,9 @@ void SafetyMonitorNode::update()
     rc_override, ekf_healthy, battery_level, escalate_level);
 
   ctx_.active_failsafe = level;
-  if (level == FailsafeLevel::BATTERY_WARNING) {
-    ctx_.force_land_requested = true;
-  } else if (!force_land_latched_ && level == FailsafeLevel::NONE && battery_fresh &&
-    std::isfinite(battery_status_.remaining) &&
-    battery_status_.remaining >= thresholds_.battery_warning_frac)
-  {
-    ctx_.force_land_requested = false;
-  }
+  ctx_.force_land_requested = update_force_land_request(
+    ctx_.force_land_requested, force_land_latched_, level,
+    battery_status_.remaining, battery_fresh, thresholds_);
 
   execute_action(level);
   publish_force_land(ctx_.force_land_requested);

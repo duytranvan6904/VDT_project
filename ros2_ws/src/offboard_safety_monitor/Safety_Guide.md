@@ -24,3 +24,10 @@ ros2 run offboard_safety_monitor safety_monitor_node --ros-args -p force_land_la
 | `force_land_latched` | true | Giữ force-land sau battery warning |
 
 Không dùng chế độ non-latched cho chuyến bay thật nếu chưa có cơ chế mission reset và kiểm thử đầy đủ.
+
+## Test logic
+
+```bash
+cd ros2_ws
+colcon test --packages-select offboard_safety_monitor --ctest-args -R safety_logic_test
+```

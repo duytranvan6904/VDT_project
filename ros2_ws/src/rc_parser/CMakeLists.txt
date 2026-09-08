@@ -38,4 +38,10 @@ ament_target_dependencies(rc_node rclcpp fsm_state_machine)
 install(TARGETS rc_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/ DESTINATION include)
 ament_export_include_directories(include)
+
+enable_testing()
+add_executable(rc_logic_test test/rc_logic_test.cpp src/rc_logic.cpp)
+target_include_directories(rc_logic_test PRIVATE include)
+add_test(NAME rc_logic_test COMMAND rc_logic_test)
+
 ament_package()

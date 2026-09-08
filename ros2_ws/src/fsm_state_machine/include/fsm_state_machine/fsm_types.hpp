@@ -40,6 +40,7 @@ struct TimeoutFlags
 {
   bool ekf_timeout = false;
   bool vision_timeout = false;
+  bool planner_timeout = false;
 };
 
 struct FsmContext

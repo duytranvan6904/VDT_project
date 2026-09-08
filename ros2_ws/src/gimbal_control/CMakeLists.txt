@@ -29,4 +29,10 @@ ament_target_dependencies(gimbal_node rclcpp std_msgs nav_msgs fsm_state_machine
 
 install(TARGETS gimbal_node DESTINATION lib/${PROJECT_NAME})
 
+enable_testing()
+add_executable(gimbal_logic_test test/gimbal_logic_test.cpp src/gimbal_logic.cpp)
+target_include_directories(gimbal_logic_test PRIVATE include)
+ament_target_dependencies(gimbal_logic_test fsm_state_machine)
+add_test(NAME gimbal_logic_test COMMAND gimbal_logic_test)
+
 ament_package()

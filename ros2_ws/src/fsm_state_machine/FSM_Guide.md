@@ -30,6 +30,8 @@ Mỗi chu kỳ 100ms:
 6. Gọi `action_*` tương ứng state hiện tại để publish lệnh điều khiển.
 7. Publish `fsm/state` cho các module khác đọc read-only.
 
+`safety/force_land = true` có ưu tiên cao nhất và chuyển trực tiếp SEARCH/FOLLOW/APPROACH sang LAND. Khi `planner_timeout = true`, FSM đưa FOLLOW/APPROACH về SEARCH để không tiếp tục tiến theo planner stale.
+
 | State hiện tại | Điều kiện | State kế tiếp |
 |---|---|---|
 | SEARCH | `marker_stable_count >= 10` | FOLLOW |
@@ -38,6 +40,8 @@ Mỗi chu kỳ 100ms:
 | APPROACH | `!land_switch` | FOLLOW |
 | APPROACH | `marker_lost_time > 3.0` | FOLLOW |
 | APPROACH | `align_error < 0.3 && delta_h < land_entry_height` | LAND |
+| SEARCH/FOLLOW/APPROACH | `safety/force_land == true` | LAND |
+| FOLLOW/APPROACH | `planner_timeout == true` | SEARCH |
 | LAND | `touchdown == true` | COMPLETE |
 
 ## 3. Cách chạy
@@ -114,4 +118,11 @@ Nếu FSM đứng yên ở SEARCH dù marker luôn visible, kiểm tra timeout f
 
 ```bash
 ros2 topic echo /input_cache/timeout_flags
+```
+
+Test logic tự động:
+
+```bash
+cd ros2_ws
+colcon test --packages-select fsm_state_machine --ctest-args -R fsm_logic_test
 ```

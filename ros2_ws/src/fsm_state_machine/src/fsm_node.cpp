@@ -73,6 +73,7 @@ void FsmNode::on_timeout_flags(const msg::TimeoutFlags::SharedPtr msg)
 {
   timeout_flags_.ekf_timeout = msg->ekf_timeout;
   timeout_flags_.vision_timeout = msg->vision_timeout;
+  timeout_flags_.planner_timeout = msg->planner_timeout;
 }
 
 SensorInput FsmNode::build_sensor_input() const
@@ -124,13 +125,14 @@ void FsmNode::update()
   counters_update_marker_stable(ctx_.counters, s.marker_detected);
   counters_update_marker_lost(ctx_.counters, s.marker_detected, dt);
 
-  RcInput effective_rc = rc_input_;
-  effective_rc.land_switch = effective_rc.land_switch || force_land_requested_;
+  const RcInput effective_rc = effective_rc_input(rc_input_, force_land_requested_);
 
   std::optional<State> next_state;
-  if (force_land_requested_ && ctx_.state != State::LAND && ctx_.state != State::COMPLETE) {
-    next_state = State::LAND;
-  } else {
+  next_state = force_land_transition(ctx_.state, force_land_requested_);
+  if (!next_state) {
+    next_state = planner_timeout_transition(ctx_.state, timeout_flags_.planner_timeout);
+  }
+  if (!next_state) {
     next_state = evaluate_transition(
       ctx_.state, ctx_.counters, effective_rc, s, land_entry_height_);
   }
