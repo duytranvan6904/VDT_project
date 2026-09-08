@@ -17,6 +17,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(offboard_manager REQUIRED)
+find_package(launch_testing_ament_cmake REQUIRED)
 
 add_executable(safety_monitor_node
   src/main.cpp
@@ -33,5 +34,8 @@ enable_testing()
 add_executable(safety_logic_test test/safety_logic_test.cpp src/safety_logic.cpp)
 target_include_directories(safety_logic_test PRIVATE include)
 add_test(NAME safety_logic_test COMMAND safety_logic_test)
+
+add_launch_test(test/safety_monitor_integration_test.py)
+install(PROGRAMS test/hil_validation.py DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

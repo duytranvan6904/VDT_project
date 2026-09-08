@@ -31,3 +31,15 @@ Không dùng chế độ non-latched cho chuyến bay thật nếu chưa có cơ
 cd ros2_ws
 colcon test --packages-select offboard_safety_monitor --ctest-args -R safety_logic_test
 ```
+
+Integration test:
+
+```bash
+colcon test --packages-select offboard_safety_monitor --ctest-args -R safety_monitor_integration_test
+```
+
+HIL/SITL runtime check:
+
+```bash
+ros2 run offboard_safety_monitor hil_validation.py --duration 5
+```
