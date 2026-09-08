@@ -1,3 +1,4 @@
 bool ekf_timeout
 bool vision_timeout
 bool alt_timeout
+bool planner_timeout
