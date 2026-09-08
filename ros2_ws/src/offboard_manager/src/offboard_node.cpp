@@ -39,6 +39,11 @@ OffboardNode::OffboardNode()
     "/fmu/in/trajectory_setpoint", qos);
   vehicle_command_pub_ = create_publisher<px4_msgs::msg::VehicleCommand>(
     "/fmu/in/vehicle_command", qos);
+  
+  inhibit_sub_ = create_subscription<std_msgs::msg::Bool>(
+  "safety/inhibit_offboard", 10,
+  std::bind(&OffboardNode::on_inhibit, this, std::placeholders::_1));
+  status_pub_ = create_publisher<msg::OffboardStatus>("offboard/status", 10);
 
   timer_ = create_wall_timer(
     std::chrono::milliseconds(50), std::bind(&OffboardNode::update, this));
@@ -55,6 +60,19 @@ void OffboardNode::on_planner_output(const msg::PlannerOutput::SharedPtr msg)
   planner_output_.vy = msg->vy;
   planner_output_.vz = msg->vz;
   planner_output_.yaw = msg->yaw;
+}
+
+void OffboardNode::on_inhibit(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  inhibited_ = msg->data;
+}
+
+void OffboardNode::publish_status()
+{
+  msg::OffboardStatus msg;
+  msg.offboard_active = ctx_.offboard_active;
+  msg.heartbeat_age_sec = static_cast<float>(this->now().seconds() - ctx_.last_heartbeat_time);
+  status_pub_->publish(msg);
 }
 
 void OffboardNode::send_heartbeat()
@@ -156,6 +174,14 @@ void OffboardNode::log_debug() const
 
 void OffboardNode::update()
 {
+  if (inhibited_) {
+    ctx_.offboard_active = false;
+    ctx_.engage_counter = 0;
+    publish_status();
+    log_debug();
+    return;
+  }
+
   if (!ctx_.offboard_active) {
     engage_request();
   } else {
@@ -166,6 +192,7 @@ void OffboardNode::update()
       publish_setpoint(sp);
     }
   }
+  publish_status();
   log_debug();
 }
 

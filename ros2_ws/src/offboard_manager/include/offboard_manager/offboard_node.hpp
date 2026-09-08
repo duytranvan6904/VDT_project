@@ -4,8 +4,10 @@
 #include <px4_msgs/msg/offboard_control_mode.hpp>
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
+#include <std_msgs/msg/bool.hpp>
 #include "offboard_manager/offboard_types.hpp"
 #include "offboard_manager/msg/planner_output.hpp"
+#include "offboard_manager/msg/offboard_status.hpp"
 
 namespace offboard_manager
 {
@@ -18,7 +20,8 @@ public:
 private:
   void on_fsm_state(const std_msgs::msg::UInt8::SharedPtr msg);
   void on_planner_output(const msg::PlannerOutput::SharedPtr msg);
-
+  void on_inhibit(const std_msgs::msg::Bool::SharedPtr msg);
+  void publish_status();
   void update();
   void send_heartbeat();
   void publish_setpoint(const Setpoint & sp);
@@ -35,6 +38,9 @@ private:
   rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr inhibit_sub_;
+  rclcpp::Publisher<msg::OffboardStatus>::SharedPtr status_pub_;
+  bool inhibited_ = false;
 
   OffboardContext ctx_;
   FsmState fsm_state_ = FsmState::SEARCH;

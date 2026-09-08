@@ -25,6 +25,10 @@ FsmNode::FsmNode()
 
   state_pub_ = create_publisher<std_msgs::msg::UInt8>("fsm/state", 10);
 
+  force_land_sub_ = create_subscription<std_msgs::msg::Bool>(
+  "safety/force_land", 10,
+  std::bind(&FsmNode::on_force_land, this, std::placeholders::_1));
+
   timer_ = create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&FsmNode::update, this));
 }
@@ -37,6 +41,11 @@ void FsmNode::on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg)
 void FsmNode::on_vision(const msg::VisionMarker::SharedPtr msg)
 {
   vision_state_ = *msg;
+}
+
+void FsmNode::on_force_land(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  force_land_requested_ = msg->data;
 }
 
 void FsmNode::on_alt(const msg::AltEstimate::SharedPtr msg)
@@ -100,6 +109,12 @@ void FsmNode::update()
 
   counters_update_marker_stable(ctx_.counters, s.marker_detected);
   counters_update_marker_lost(ctx_.counters, s.marker_detected, dt);
+  
+  RcInput effective_rc = rc_input_;
+  effective_rc.land_switch = effective_rc.land_switch || force_land_requested_;
+
+  const auto next_state = evaluate_transition(
+    ctx_.state, ctx_.counters, effective_rc, s, land_entry_height_);
 
   const auto next_state = evaluate_transition(
     ctx_.state, ctx_.counters, rc_input_, s, land_entry_height_);

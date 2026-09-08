@@ -28,6 +28,9 @@ private:
   SensorInput build_sensor_input() const;
   void publish_state();
   void log_debug(const SensorInput & s, const RcInput & rc) const;
+  void on_force_land(const std_msgs::msg::Bool::SharedPtr msg);
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr force_land_sub_;
+  bool force_land_requested_ = false;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_sub_;
   rclcpp::Subscription<msg::VisionMarker>::SharedPtr vision_sub_;
