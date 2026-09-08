@@ -43,3 +43,5 @@ HIL/SITL runtime check:
 ```bash
 ros2 run offboard_safety_monitor hil_validation.py --duration 5
 ```
+
+Mặc định harness yêu cầu ACK accepted cho chuyển mode/arm, `offboard/status` và `nav_state=OFFBOARD`. Dùng `--skip-command-ack` chỉ khi kiểm tra topic freshness trên bench chưa chạy Offboard manager.

@@ -338,13 +338,18 @@ colcon test-result --verbose
 Các phần chưa có:
 
 - Unit test Python cho servo/XRCE/diagnostics.
-- Vector test SBUS đầy đủ, command acknowledgement và startup end-to-end.
-- Test HIL điều khiển đầy đủ, sample flight log hoặc CI build/lint.
+- Vector test SBUS đầy đủ, sample flight log hoặc CI build/lint.
 
-Integration test của safety monitor đã có và chạy cùng `colcon test`. HIL runtime harness kiểm tra freshness của các topic PX4 và các output safety trên PX4 SITL/HIL hoặc vehicle được cố định:
+Integration test của safety monitor đã có và chạy cùng `colcon test`. HIL runtime harness kiểm tra freshness, `OffboardStatus`, `VehicleCommandAck` accepted cho mode/arm và PX4 xác nhận Offboard trên PX4 SITL/HIL hoặc vehicle được cố định:
 
 ```bash
 ros2 run offboard_safety_monitor hil_validation.py --duration 5
+```
+
+Chỉ bỏ qua ACK khi chạy monitor bench:
+
+```bash
+ros2 run offboard_safety_monitor hil_validation.py --duration 5 --skip-command-ack
 ```
 
 Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup, force-land, kill switch, HOLD/RTL, freshness của `VehicleStatus`/`VehicleLocalPosition`, PX4 mode acknowledgement, planner velocity bounds và behavior khi XRCE/RC bị ngắt.
@@ -354,10 +359,6 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 ### Mức cao
 
 1. Bổ sung launch file, readiness ordering và parameter YAML.
-
-### Mức trung bình
-
-- Mở rộng HIL test để kiểm tra command acknowledgement và toàn bộ startup sequence.
 
 ### Mức tài liệu và phát hành
 
