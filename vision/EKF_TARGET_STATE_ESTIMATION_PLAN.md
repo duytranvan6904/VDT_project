@@ -6,19 +6,20 @@
 
 ## 1. Bối cảnh và quyết định thiết kế
 
-Nhiệm vụ của dự án là bám H-Pad di động, tránh vật cản và hạ cánh chính xác bằng một RealSense D435(i) RGB-D đặt trên gimbal pitch chủ động. Pipeline hiện hữu đã đáp ứng phần đo:
+Nhiệm vụ của dự án là bám H-Pad di động, tránh vật cản và hạ cánh chính xác bằng một RealSense D400-series đặt trên gimbal pitch chủ động. Pipeline hỗ trợ cả camera RGB-D và module depth-only dùng ảnh hồng ngoại IR:
 
-- `vision/realsense_stream.py` lấy RGB, depth **đã align về RGB**, cùng nội tại `K` và distortion từ SDK;
+- `vision/realsense_stream.py` ưu tiên lấy RGB; với module depth-only, lấy IR1 (Y8), depth **đã align về mặt phẳng ảnh đang dùng**, cùng nội tại `K` và distortion từ SDK;
 - `vision/aruco_detector.py` phát hiện ArUco, tinh chỉnh góc bằng sub-pixel và dùng `solvePnP(..., SOLVEPNP_IPPE_SQUARE)` để xuất `tvec = [x_c,y_c,z_c]` (m), orientation, corner và BBox;
+- IR1 được chuyển thành BGR 3 kênh ở biên adapter để giữ nguyên giao diện detector hiện tại; detector đồng thời lấy `z_depth`/`depth_m` median quanh marker khi depth hợp lệ;
 - `vision/depth_masker.py` giãn polygon/BBox 15% rồi loại vùng H-Pad khỏi depth để APF không xem chính đích bám là vật cản.
 
 Vì vậy bộ lọc **không thay thế ArUco/PnP**. Nó biến chuỗi phép đo PnP nhiễu, không đều thành trạng thái mục tiêu nhất quán trong hệ thế giới và tiếp tục dự đoán ngắn hạn khi không có marker.
 
 Đề xuất trong thiết kế IBVS và yêu cầu mới được đưa vào ba hành vi sau:
 
-1. **Short-term dead reckoning:** khi mất ArUco, dự đoán trạng thái 6 biến trong tối đa **1.5 s** để APF và gimbal không ngắt đột ngột.
+1. **Short-term dead reckoning:** khi mất ArUco, dự đoán trạng thái trong tối đa **1.0 s** để APF và gimbal không ngắt đột ngột.
 2. **Active gimbal reacquisition:** chiếu vị trí dự đoán 3D và bất định xuống ảnh; dùng tâm/ROI dự đoán để đặt pitch gimbal hướng về vùng đó và ưu tiên tìm lại marker.
-3. **An toàn/FSM:** quá `T_search` (cấu hình 3 s trong `APPROACH`, 5 s trong `FOLLOW`; có thể giảm theo flight-test), estimator không còn được coi là nguồn dẫn đường hợp lệ; FSM hover an toàn rồi chuyển `SEARCH` thay vì bám mù.
+3. **An toàn/FSM:** sau 1.0 s chuyển sang degraded; quá `T_search` (2 s trong `APPROACH`, 3 s trong `FOLLOW`) estimator không còn được coi là nguồn dẫn đường hợp lệ; FSM hover an toàn rồi chuyển `SEARCH` thay vì bám mù.
 
 ### Lưu ý về tên gọi EKF
 
@@ -32,7 +33,7 @@ Mô hình vận tốc hằng số sau khi phép đo được đổi sang `map` c
 |---|---|---|
 | Bộ lọc, APF phía ROS | `map` ENU | mét; x-East, y-North, z-Up (hoặc quy ước ROS đã chọn, nhưng phải cố định toàn bộ) |
 | Thân drone | `base_link` | pose từ odometry, nội suy đúng `stamp` ảnh |
-| Camera | `camera_color_optical_frame` | chuẩn optical: x sang phải, y xuống, z hướng ra trước |
+| Camera | `camera_image_optical_frame` | chuẩn optical của ảnh đang dùng: RGB hoặc IR1; x sang phải, y xuống, z hướng ra trước |
 | Gimbal | `gimbal_link` | pitch thực đo/ước lượng, có offset cơ khí và giới hạn góc |
 | PX4 | Local NED | chỉ đổi ENU↔NED tại node Offboard, không đổi bên trong EKF |
 
@@ -58,7 +59,7 @@ Giao diện ROS 2 tối thiểu đề xuất:
 | `/hpad/predicted_roi` | tâm pixel dự đoán, ellipse/ROI, depth dự đoán, covariance 2D để detector/gimbal dùng |
 | `/hpad/estimator_diagnostics` | innovation, NIS, phép đo bị loại, latency, số frame mất dấu |
 
-`mode` nên là `UNINITIALIZED`, `TRACKING`, `PREDICTING`, `PREDICTING_DEGRADED`, `EXPIRED`. Chỉ `TRACKING` và `PREDICTING` với `age <= 1.5 s` được cấp cho planner; hai mode sau chỉ phục vụ tìm lại/quan sát và không được dùng dẫn đường.
+`mode` nên là `UNINITIALIZED`, `TRACKING`, `PREDICTING`, `PREDICTING_DEGRADED`, `EXPIRED`. Chỉ `TRACKING` và `PREDICTING` với `age <= 1.0 s` được cấp cho planner; hai mode sau chỉ phục vụ tìm lại/quan sát và không được dùng dẫn đường.
 
 ## 3. Thuật toán ước lượng trạng thái
 
@@ -136,9 +137,9 @@ Phép đo trượt gate bị loại, đếm trong diagnostics và **không reset
 
 | Thời gian từ phép đo hợp lệ cuối | Mode | Hành vi |
 |---:|---|---|
-| 0–1.5 s | `PREDICTING` | CV predict; xuất state + covariance; planner giảm độ tin cậy/không tăng tốc đột ngột |
-| 1.5 s–`T_search` | `PREDICTING_DEGRADED` | chỉ giữ hover hoặc policy an toàn của FSM; vẫn dùng vị trí dự đoán để quét gimbal tìm lại marker |
-| >3 s `APPROACH`, >5 s `FOLLOW` | `EXPIRED` | FSM chuyển FOLLOW hoặc SEARCH theo quy tắc hiện có; không đưa pose dự đoán vào lệnh hạ cánh/bám |
+| 0–1.0 s | `PREDICTING` | CV/CT predict; xuất state + covariance; planner giảm độ tin cậy/không tăng tốc đột ngột |
+| 1.0–`T_search` | `PREDICTING_DEGRADED` | chỉ giữ hover hoặc policy an toàn của FSM; vẫn dùng vị trí dự đoán để quét gimbal tìm lại marker |
+| >2 s `APPROACH`, >3 s `FOLLOW` | `EXPIRED` | FSM chuyển `SEARCH`; không đưa pose dự đoán vào lệnh hạ cánh/bám |
 
 Mỗi tick mất dấu, biến đổi mean và covariance vị trí dự đoán từ `map` về camera ở timestamp hiện tại:
 
@@ -158,7 +159,7 @@ Gimbal nhận **vị trí 3D dự đoán**, không chỉ một pixel: tính góc
 |---|---|---|---|
 | **Dữ liệu mô phỏng tự sinh** | trajectory 3D target, pose drone/gimbal, timestamp, nhiễu PnP, dropout có nhãn ground truth | unit/integration, Monte Carlo, tune `Q/R`, tái lập test | phải mô phỏng đúng latency và bias thực tế |
 | **PX4 SITL + Gazebo hiện có** (`simulation_maps/`) | odometry drone, point cloud/depth, map obstacle; bổ sung model H-Pad động và topic ground truth của nó | kiểm thử ROS 2 end-to-end, latency, FSM, gimbal/FOV và an toàn | cần bổ sung H-Pad/ArUco có chuyển động; Gazebo không thay thế nhiễu camera thật |
-| **RealSense D435(i) + H-Pad thật** | RGB, depth align, PnP và angle servo thật | đo `R`, kiểm tra calibration, blur/ánh sáng/occlusion | chưa có ground truth tuyệt đối nếu chỉ có camera |
+| **RealSense D400/D430 + H-Pad thật** | RGB hoặc IR1, depth align, PnP và angle servo thật | đo `R`, kiểm tra calibration, blur/ánh sáng/occlusion; IR cần kiểm tra ảnh hưởng của ánh sáng môi trường | chưa có ground truth tuyệt đối nếu chỉ có camera |
 | **Vicon/OptiTrack hoặc motion-capture cục bộ** | trajectory 6DoF ground truth H-Pad và drone đồng bộ | đánh giá RMSE cuối cùng, calibration và flight-test | lựa chọn ưu tiên cho KPI định lượng ngoài SITL |
 | **DPJAIT** — [Zenodo 10800806](https://doi.org/10.5281/zenodo.10800806) | real + simulated RGB, Vicon ground truth, intrinsic/extrinsic, các sequence FPV/ArUco | offline replay của transform, đồng bộ timestamp, CV filter và metrics có ground truth | mục tiêu là drone/ArUco bố trí cảnh, **không phải H-Pad động cùng pipeline D435**; dùng benchmark bổ sung, không dùng thay flight test |
 
@@ -183,7 +184,7 @@ Ground truth và estimate phải được nội suy về **cùng timestamp** tr�
 2. **Chuẩn hóa measurement.** Mở rộng kết quả `ArUcoDetector` thành message có `stamp`, `frame_id`, `tvec`, corner, marker ID, reprojection RMS và `z_depth` median. Chỉ publish H-Pad ID; depth masking vẫn nhận detection cần mask. Đo latency capture→PnP và gắn timestamp nguồn, không dùng thời gian publish.
 3. **Tạo lõi độc lập ROS.** Thêm `vision/target_state_ekf.py` với `initialize`, `predict(stamp)`, `try_update(measurement)`, `project_to_camera(...)` và snapshot không mutable. Thêm `vision/measurement_quality.py` cho `R`, depth check, NIS gate. Lõi nhận NumPy/dataclass để test không cần camera/ROS.
 4. **Kiểm thử đơn vị và property test.** Tạo `tests/test_target_state_ekf.py`: ma trận `F/Q`, predict chính xác với vận tốc hằng, update giảm trace(P), Joseph form giữ PSD, gate loại outlier, covariance tăng khi dropout, và projection 3D→pixel/ROI ở các góc ảnh.
-5. **Viết generator/replay offline.** Tạo trajectory thẳng, circle/figure-eight, ziczac, stop–go và đổi hướng; velocity không quá 5 m/s. Tiêm nhiễu đổi theo range, bias, jitter/latency, dropout 0.5/1/1.5/3/5 s và pose drone ±5°. Xuất cùng schema log để cùng một evaluator chạy cho mô phỏng, SITL và real.
+5. **Viết generator/replay offline.** Tạo trajectory thẳng, circle/figure-eight, ziczac, stop–go và đổi hướng; velocity ngang không quá 2 m/s. Tiêm nhiễu đổi theo range, bias, jitter/latency, dropout 0.25/0.5/0.75/1/2 s và pose drone ±5°. Xuất cùng schema log để cùng một evaluator chạy cho mô phỏng, SITL và real.
 6. **Tune theo dữ liệu.** Chia sequence thành tune/validation theo từng trajectory, không tune trên sequence dùng báo cáo. Ước lượng `R` theo bin khoảng cách/góc nghiêng và quét `q_a`, ngưỡng NIS, `alpha_roi`; kiểm tra NIS/NEES để covariance không quá tự tin.
 7. **Bọc ROS 2 node.** Node dùng buffer odometry/gimbal, transform đúng timestamp; publish state, ROI, diagnostics. Khi `PREDICTING`, publish intent gimbal/reacquisition; khi expired, phát event cho FSM, không tự quyết mode bay.
 8. **Tích hợp SITL.** Bổ sung H-Pad/ArUco động có ground-truth topic vào world, replay các kịch bản có obstacle; kiểm tra APF nhận filtered state còn depth vẫn đã mask H-Pad. Sau đó chạy phần cứng trên ground/treo tether trước flight.
@@ -195,13 +196,13 @@ Ground truth và estimate phải được nội suy về **cùng timestamp** tr�
 
 - Deterministic test: không nhiễu, CV đúng → position/velocity phải khớp tolerance số học.
 - Outlier test: một PnP nhảy 2–5 m phải bị NIS gate loại; state không nhảy theo measurement đó.
-- Dropout test: không update → `trace(P)` tăng, mode đổi đúng 1.5 s và expiration đúng ngưỡng FSM.
+- Dropout test: không update → `trace(P)` tăng, mode đổi đúng 1.0 s và expiration đúng ngưỡng FSM.
 - Transform/projection test: target trước camera ra pixel hợp lệ; target sau camera không tạo ROI; đổi yaw/pitch drone đúng hướng projected pixel.
 - Regression: chạy `python3 -m unittest discover -s tests` cùng với test ArUco/masking hiện có.
 
 ### Tầng B — mô phỏng có ground truth (Monte Carlo)
 
-Mỗi trajectory chạy tối thiểu 30 seed, với 5 nhóm: tuyến tính CV, sinusoid/figure-eight, stop–go, đổi hướng mạnh và tốc độ tới 5 m/s. Mỗi nhóm thêm: Gaussian noise, 1–3% outlier, image/odom jitter, occlusion từng đoạn 0.5–5 s và gimbal/drone attitude perturbation. So sánh ba baseline:
+Mỗi trajectory chạy tối thiểu 30 seed, với 5 nhóm: tuyến tính CV, sinusoid/figure-eight, stop–go, đổi hướng mạnh và tốc độ tới 2 m/s. Mỗi nhóm thêm: Gaussian noise, 1–3% outlier, image/odom jitter, occlusion từng đoạn 0.25–2 s và gimbal/drone attitude perturbation. So sánh ba baseline:
 
 1. raw PnP (không filter);
 2. CV KF/EKF chỉ predict khi lost;
@@ -221,7 +222,7 @@ Báo cáo median, mean, P95 và 95% CI theo seed; không chỉ chọn một run 
 |---|---|---|
 | Position RMSE/MAE/P95 | `||p_est(t)-p_gt(t)||` sau đồng bộ thời gian | RMSE FOLLOW < **1.0 m** theo KPI dự án; báo cáo riêng theo range/occlusion |
 | Velocity RMSE | `||v_est-v_gt||`, truth đã lọc/nội suy phù hợp | dùng để tune, chưa đặt ngưỡng trước khi đo động học H-Pad thật |
-| Lỗi trong và sau occlusion | max/RMSE ở 0–1.5 s lost; thời gian hồi phục sau detection | không divergence; state chỉ dùng control trong cửa sổ cho phép |
+| Lỗi trong và sau occlusion | max/RMSE ở 0–1.0 s lost; thời gian hồi phục sau detection | không divergence; state chỉ dùng control trong cửa sổ cho phép |
 | Reacquisition | tỷ lệ tìm lại marker, latency từ loss đến detection, % ROI chứa marker truth | so với full-frame; không được làm giảm safety/FPS |
 | NIS/NEES consistency | distribution innovation/state error so với `P,R` | phần lớn nằm trong confidence đã chọn; dùng để chỉnh `Q/R` |
 | Gimbal/FOV | pixel error, thời gian target ở FOV, rate/pitch saturation | theo KPI IBVS: `|e_u|,|e_v| < 40 px` trong điều kiện công bố |
@@ -239,3 +240,167 @@ Biểu đồ bắt buộc của mỗi run: trajectory XY/XYZ (truth, raw, filter
 5. Calibration/flight-test log có ground truth (mocap nếu khả dụng), bảng tune `Q/R` và báo cáo KPI cuối.
 
 Mọi thông số (`q_a`, `R` theo range, gate, timeouts, ROI scale, limits) phải nằm trong YAML có version và được lưu cùng rosbag/CSV của mỗi run để kết quả tái lập được.
+
+## 8. Quy trình chạy bản mô phỏng đầu tiên (không cần phần cứng)
+
+Phần này là đường chạy chính thức hiện tại. Nó kiểm tra lõi ước lượng trong một `world` frame giả lập; chưa sử dụng RealSense, PnP, TF, gimbal hay PX4. Các lớp đó sẽ được thêm sau dưới dạng adapter, vì vậy kết quả của lõi không phụ thuộc việc đã có phần cứng hay chưa.
+
+### 8.1 Chuẩn bị môi trường
+
+Từ thư mục project:
+
+```bash
+cd /home/duy/VDT_project
+python3 -m venv .venv-ekf
+source .venv-ekf/bin/activate
+python3 -m pip install numpy matplotlib
+```
+
+Chỉ khi chuyển sang tầng Vision/RealSense mới cài toàn bộ `requirements.txt` (có `pyrealsense2`). Nếu môi trường đã có `numpy` và `matplotlib`, có thể bỏ qua bước tạo virtualenv. Không cần kết nối camera và không cần khởi động Gazebo/RViz2 cho tầng này.
+
+### 8.2 Chạy test theo từng tầng
+
+Chạy các test toán học của filter trước:
+
+```bash
+python3 -m unittest tests.test_target_state_ekf -v
+```
+
+Các test này kiểm tra:
+
+- ma trận chuyển trạng thái CV và ma trận `Q(dt)`;
+- predict đúng với vận tốc không đổi;
+- update làm giảm covariance;
+- NIS gate loại outlier nhưng không làm đổi state;
+- covariance tăng khi mất measurement;
+- timestamp không tăng và covariance không hợp lệ bị từ chối.
+
+Tiếp tục kiểm tra bộ sinh quỹ đạo và replay:
+
+```bash
+python3 -m unittest tests.test_target_state_simulation -v
+```
+
+Tầng này kiểm tra 5 quỹ đạo (`straight`, `circle`, `figure8`, `zigzag`, `stop_go`), dropout, outlier, seed tái lập và điều kiện filter phải cải thiện RMSE so với measurement thô.
+
+Cuối cùng chạy toàn bộ regression của project:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Chỉ chuyển sang bước tiếp theo khi toàn bộ test đều `OK`. Lệnh này cũng chạy lại test ArUco/PnP và depth masking hiện có để phát hiện hồi quy ngoài estimator.
+
+### 8.3 Chạy mô phỏng và sinh báo cáo
+
+Chạy một lần để đánh giá **cả ba phương pháp trên cùng một bộ dữ liệu**:
+
+```bash
+python3 -m vision.run_target_state_simulation \
+  --model all \
+  --output-dir simulation_results/target_state_comparison
+```
+
+Mặc định mỗi lần chạy sẽ random lại tham số quỹ đạo (hướng, tốc độ, bán kính, tần số quay, biên độ) nhưng vẫn giới hạn vận tốc ngang không quá `2.0 m/s`. Chương trình sinh measurement một lần rồi đưa đúng chuỗi đó lần lượt vào CV, CT và IMM; vì vậy không phương pháp nào được nhận dữ liệu khác phương pháp khác.
+
+Tất cả năm kịch bản mặc định, kể cả `straight`, đều có một đoạn mất measurement dài đúng 1 giây. `stop_go` dùng các đoạn chuyển vận tốc bằng smoothstep, nên không còn bước nhảy vận tốc vô hạn như phiên bản generator cũ; nó vẫn kiểm tra khả năng bám khi tăng tốc, dừng và đảo chiều có gia tốc hữu hạn.
+
+Outlier measurement vẫn được sinh để kiểm tra NIS/gating, nhưng vector lệch được chuẩn hóa và giới hạn trong bán kính tối đa `0.95 m`; vì vậy các điểm sai không bay quá xa khỏi quỹ đạo chính trên biểu đồ.
+
+Muốn tái lập đúng một lần chạy:
+
+```bash
+python3 -m vision.run_target_state_simulation \
+  --model all \
+  --seed 123 \
+  --output-dir simulation_results/comparison_seed123
+```
+
+Hoặc chạy một kịch bản riêng:
+
+```bash
+python3 -m vision.run_target_state_simulation \
+  --model all \
+  --trajectory circle \
+  --seed 123 \
+  --output-dir simulation_results/comparison_circle
+```
+
+Để so sánh với baseline vận tốc không đổi:
+
+```bash
+python3 -m vision.run_target_state_simulation \
+  --model cv \
+  --trajectory figure8 \
+  --output-dir simulation_results/target_state_cv_figure8
+```
+
+Chạy bộ lọc đa mô hình CV/CT/CA:
+
+```bash
+python3 -m vision.run_target_state_simulation \
+  --model imm \
+  --output-dir simulation_results/target_state_imm
+```
+
+Mỗi lần chạy tạo:
+
+```text
+simulation_results/target_state_comparison/
+├── metrics.json        # kết quả lồng theo model và trajectory
+├── cv/
+│   ├── straight.png
+│   └── ...
+├── ct/
+│   ├── straight.png
+│   └── ...
+└── imm/
+    ├── straight.png
+    └── ...
+```
+
+Ảnh phải được kiểm tra thủ công: đường filtered không được nhảy theo outlier; trong vùng dropout, đường ước lượng tiếp tục liên tục nhưng `trace(P)` phải tăng; sau khi measurement quay lại, state phải hội tụ trở lại. `metrics.json` là kết quả máy dùng cho so sánh, không thay thế việc kiểm tra các biểu đồ.
+
+Nếu muốn dùng lại các quỹ đạo cố định cũ để debug:
+
+```bash
+python3 -m vision.run_target_state_simulation \
+  --model all \
+  --fixed-trajectories \
+  --output-dir simulation_results/comparison_fixed
+```
+
+### 8.4 Tiêu chí chốt phiên bản mô phỏng v0
+
+Một phiên bản chỉ được chốt khi thỏa tất cả điều kiện sau:
+
+1. `python3 -m unittest discover -s tests -v` pass 100%.
+2. Filtered RMSE nhỏ hơn raw RMSE trên cả 5 trajectory với seed mặc định.
+3. Outlier bị NIS gate loại phần lớn và không gây bước nhảy state.
+4. Covariance tăng đơn điệu trong đoạn dropout và giảm lại sau measurement hợp lệ.
+5. Không có `NaN`/`Inf` trong truth, state hợp lệ hoặc covariance.
+6. Kết quả cùng seed tái lập được; thay seed chỉ thay dữ liệu nhiễu, không thay thuật toán.
+7. Không dùng state sau timeout để quyết định LAND; logic timeout/FSM sẽ được kiểm tra ở tầng ROS 2 sau.
+
+### 8.5 Thứ tự mở rộng sau khi v0 đạt
+
+1. Dùng `CoordinatedTurnEKF` với `--model ct` để benchmark các đoạn cong; `--model cv` giữ lại làm baseline.
+2. Chạy `--model imm` để kết hợp CV/CT/CA; giữ CT và CV làm baseline.
+3. Thêm evaluator Monte Carlo (nhiều seed, confidence interval), chưa đưa ROS vào lõi.
+4. Thêm projection 3D→pixel và covariance ROI bằng các pose camera giả lập; đặt prediction budget để reacquire sớm.
+5. Nếu IMM/ROI chưa giữ được lỗi dưới 0.5 m trong toàn bộ cửa sổ mất dấu, ưu tiên rút ngắn reacquisition thay vì thêm model mới.
+6. Đọc ground truth H-Pad từ Gazebo và nối thành ROS 2 topic, vẫn giữ measurement noise/dropout có thể bật/tắt.
+7. Chỉ sau khi SITL/RViz2 pass mới thêm adapter ArUco/PnP, TF thực và gimbal.
+
+### 8.6 Kết quả kiểm tra CT hiện tại
+
+Bản CT-EKF đã được thêm vào `vision/target_state_ct_ekf.py` và dữ liệu mặc định được giới hạn tốc độ ngang không quá **2.0 m/s**. Kết quả chạy hiện tại với dropout 1.0 s cho thấy CT tốt hơn CV trên các đoạn cong, nhưng chưa đủ để chốt yêu cầu 0.5 m cho mọi quỹ đạo:
+
+| Quỹ đạo | CV max (1 s) | CT max (1 s) | IMM max (1 s) |
+|---|---:|---:|---:|
+| circle | ~0.55 m | ~0.47 m | **~0.47 m** |
+| figure8 | ~0.62 m | ~0.55 m | ~0.59 m |
+| zigzag | ~0.30 m | **~0.27 m** | ~0.36 m |
+| stop_go | ~0.42 m | ~0.40 m | **~0.41 m** |
+
+Đây là kết quả có giá trị chẩn đoán: giảm cửa sổ dự đoán xuống 1.0 s đã đưa circle, zigzag và stop-go về gần/dưới 0.5 m. IMM cải thiện circle và stop-go nhưng chưa giải quyết figure-eight; lỗi còn lại đến từ giới hạn quan sát khi không có measurement, không phải do tốc độ target quá cao. Bước tiếp theo bắt buộc là active reacquisition với ROI và đánh giá nhiều seed.

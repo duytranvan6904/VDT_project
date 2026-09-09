@@ -13,20 +13,26 @@ except ImportError:
 
 class RealSenseCamera:
     """
-    Intel RealSense D435 / D435i Camera Manager.
-    Handles pipeline initialization, aligned RGB-D streams, and intrinsic parameters.
+    Intel RealSense RGB-D / depth-only camera manager.
+    Uses color when available, otherwise uses the left infrared stream (IR1)
+    together with depth. The returned image is always BGR so existing ArUco
+    and tracking code can be reused unchanged.
     """
     def __init__(
         self, 
         width: int = 640, 
         height: int = 480, 
         fps: int = 30,
-        enable_depth: bool = True
+        enable_depth: bool = True,
+        infrared_preprocess: bool = True,
+        disable_ir_emitter: bool = False
     ):
         self.width = width
         self.height = height
         self.fps = fps
         self.enable_depth = enable_depth
+        self.infrared_preprocess = infrared_preprocess
+        self.disable_ir_emitter = disable_ir_emitter
         
         self.pipeline = None
         self.config = None
@@ -36,6 +42,10 @@ class RealSenseCamera:
         self.camera_matrix: Optional[np.ndarray] = None
         self.dist_coeffs: Optional[np.ndarray] = None
         self.is_rs_active = False
+        self.device_name: Optional[str] = None
+        self.device_serial: Optional[str] = None
+        self.frame_source = "none"  # "color", "infrared", "opencv", or "synthetic"
+        self.depth_scale_m = 0.001
         
         # Fallback VideoCapture if pyrealsense2 is unavailable or device missing
         self.cap = None
@@ -47,17 +57,55 @@ class RealSenseCamera:
         """
         if PYREALSENSE2_AVAILABLE:
             try:
+                # Prefer RGB, but allow a depth-only module to use its IR image.
+                device = rs.context().query_devices()[0]
+                self.device_name = device.get_info(rs.camera_info.name)
+                self.device_serial = device.get_info(rs.camera_info.serial_number)
+                color_profiles = []
+                infrared_profiles = []
+                for sensor in device.query_sensors():
+                    for profile in sensor.get_stream_profiles():
+                        try:
+                            video = profile.as_video_stream_profile()
+                            if video.stream_type() == rs.stream.color:
+                                color_profiles.append(profile)
+                            elif video.stream_type() == rs.stream.infrared:
+                                infrared_profiles.append(profile)
+                        except RuntimeError:
+                            continue
+                if color_profiles:
+                    self.frame_source = "color"
+                    image_stream = rs.stream.color
+                    image_format = rs.format.bgr8
+                elif infrared_profiles:
+                    self.frame_source = "infrared"
+                    image_stream = rs.stream.infrared
+                    image_format = rs.format.y8
+                    print(
+                        f"[RealSenseCamera] {self.device_name} has no color sensor; "
+                        "using infrared stream 1 for ArUco/PnP."
+                    )
+                else:
+                    raise RuntimeError(
+                        f"SDK device '{self.device_name}' (S/N {self.device_serial}) "
+                        "does not expose color or infrared video streams."
+                    )
+
                 self.pipeline = rs.pipeline()
                 self.config = rs.config()
                 
-                # Enable RGB stream
-                self.config.enable_stream(
-                    rs.stream.color, 
-                    self.width, 
-                    self.height, 
-                    rs.format.bgr8, 
-                    self.fps
-                )
+                # Enable color or IR image stream. IR1 is the left stereo image
+                # and is the correct image plane for depth alignment/PnP.
+                if self.frame_source == "infrared":
+                    self.config.enable_stream(
+                        rs.stream.infrared, 1,
+                        self.width, self.height, image_format, self.fps
+                    )
+                else:
+                    self.config.enable_stream(
+                        image_stream, self.width, self.height,
+                        image_format, self.fps
+                    )
                 
                 # Enable Depth stream if requested
                 if self.enable_depth:
@@ -68,15 +116,33 @@ class RealSenseCamera:
                         rs.format.z16, 
                         self.fps
                     )
-                    # Align depth frame to color frame
-                    self.align = rs.align(rs.stream.color)
+                    # Align depth to the actual image plane (RGB or IR).
+                    self.align = rs.align(image_stream)
                 
                 # Start pipeline
                 self.profile = self.pipeline.start(self.config)
+
+                if self.enable_depth:
+                    try:
+                        depth_sensor = self.profile.get_device().first_depth_sensor()
+                        self.depth_scale_m = float(depth_sensor.get_depth_scale())
+                        if (
+                            self.frame_source == "infrared"
+                            and self.disable_ir_emitter
+                            and depth_sensor.supports(rs.option.emitter_enabled)
+                        ):
+                            depth_sensor.set_option(rs.option.emitter_enabled, 0.0)
+                            print("[RealSenseCamera] IR emitter disabled for cleaner ArUco images; depth may be noisier.")
+                    except Exception:
+                        self.depth_scale_m = 0.001
                 
                 # Extract camera intrinsics directly from SDK
-                color_stream = self.profile.get_stream(rs.stream.color).as_video_stream_profile()
-                intrinsics = color_stream.get_intrinsics()
+                image_stream_profile = self.profile.get_stream(
+                    rs.stream.infrared, 1
+                ).as_video_stream_profile() if self.frame_source == "infrared" else self.profile.get_stream(
+                    rs.stream.color
+                ).as_video_stream_profile()
+                intrinsics = image_stream_profile.get_intrinsics()
                 
                 self.camera_matrix = np.array([
                     [intrinsics.fx, 0, intrinsics.ppx],
@@ -86,12 +152,18 @@ class RealSenseCamera:
                 
                 self.dist_coeffs = np.array(intrinsics.coeffs, dtype=np.float64)
                 self.is_rs_active = True
-                print(f"[RealSenseCamera] Hardware RealSense D435 started successfully ({self.width}x{self.height}@{self.fps}FPS).")
-                print(f"[RealSenseCamera] SDK Intrinsics: fx={intrinsics.fx:.2f}, fy={intrinsics.fy:.2f}, cx={intrinsics.ppx:.2f}, cy={intrinsics.ppy:.2f}")
+                print(f"[RealSenseCamera] Hardware RealSense {self.device_name} started successfully using {self.frame_source} ({self.width}x{self.height}@{self.fps}FPS).")
+                print(f"[RealSenseCamera] SDK Intrinsics ({self.frame_source}): fx={intrinsics.fx:.2f}, fy={intrinsics.fy:.2f}, cx={intrinsics.ppx:.2f}, cy={intrinsics.ppy:.2f}")
                 return True
             except Exception as e:
                 print(f"[RealSenseCamera] RealSense SDK start failed ({e}). Falling back to OpenCV VideoCapture...")
                 self.is_rs_active = False
+                if self.pipeline:
+                    try:
+                        self.pipeline.stop()
+                    except Exception:
+                        pass
+                    self.pipeline = None
 
         # Fallback mode
         return self._start_fallback()
@@ -116,9 +188,11 @@ class RealSenseCamera:
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float64)
         
         if self.cap.isOpened():
+            self.frame_source = "opencv"
             print(f"[RealSenseCamera] Standard OpenCV camera fallback opened on /dev/video0.")
             return True
         else:
+            self.frame_source = "synthetic"
             print(f"[RealSenseCamera] Warning: No camera device opened. Synthetic frame generator mode active.")
             return True
 
@@ -128,7 +202,8 @@ class RealSenseCamera:
         
         Returns:
             Tuple of (success, color_image, depth_frame, depth_image_vis)
-            - color_image: BGR np.ndarray (H, W, 3)
+            - color_image: BGR np.ndarray (H, W, 3); for depth-only devices
+              this is the IR1 grayscale image replicated to three channels
             - depth_frame: rs.depth_frame object (if pyrealsense2 active) else None
             - depth_image_vis: Colorized depth map np.ndarray (H, W, 3) for visualization
         """
@@ -138,13 +213,21 @@ class RealSenseCamera:
                 if self.align:
                     frames = self.align.process(frames)
                     
-                color_frame = frames.get_color_frame()
+                if self.frame_source == "infrared":
+                    image_frame = frames.get_infrared_frame(1)
+                else:
+                    image_frame = frames.get_color_frame()
                 depth_frame = frames.get_depth_frame() if self.enable_depth else None
                 
-                if not color_frame:
+                if not image_frame:
                     return False, np.array([]), None, None
                 
-                color_image = np.asanyarray(color_frame.get_data())
+                image = np.asanyarray(image_frame.get_data())
+                if self.frame_source == "infrared" and self.infrared_preprocess:
+                    # Suppress isolated projector speckles while preserving
+                    # the square black/white cells of an ArUco marker.
+                    image = cv2.medianBlur(image, 3)
+                color_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR) if self.frame_source == "infrared" else image
                 
                 depth_image_vis = None
                 if depth_frame:
@@ -195,6 +278,20 @@ class RealSenseCamera:
             except Exception:
                 return 0.0
         return 0.0
+
+    def depth_to_meters(self, depth_frame: Any) -> Optional[np.ndarray]:
+        """Convert a RealSense depth frame/raw depth image to float meters."""
+        if depth_frame is None:
+            return None
+        try:
+            data = np.asanyarray(depth_frame.get_data()) if hasattr(depth_frame, "get_data") else np.asarray(depth_frame)
+            if data.size == 0:
+                return None
+            if np.issubdtype(data.dtype, np.integer):
+                return data.astype(np.float32) * float(self.depth_scale_m)
+            return data.astype(np.float32, copy=False)
+        except Exception:
+            return None
 
     def stop(self):
         """Release camera resources."""

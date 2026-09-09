@@ -56,8 +56,14 @@ def parse_args():
     parser.add_argument(
         "--dict",
         type=str,
-        default="DICT_4X4_50",
-        help="ArUco dictionary name (default: DICT_4X4_50)"
+        default="DICT_6X6_50",
+        help="ArUco dictionary name (default: DICT_6X6_50 for marker42.png)"
+    )
+    parser.add_argument(
+        "--target-id",
+        type=int,
+        default=42,
+        help="Target marker ID (default: 42 for marker42.png)"
     )
     parser.add_argument(
         "--margin-percent",
@@ -103,6 +109,7 @@ def main():
     print(f" Default Size  : {args.marker_size * 100:.1f} cm ({args.marker_size} m)")
     print(f" Custom Sizes  : {marker_sizes}")
     print(f" Dictionary    : {args.dict}")
+    print(f" Target ID     : {args.target_id}")
     print(f" Mask Margin   : {args.margin_percent * 100:.0f}% expansion")
     print(f" Stream Spec   : {args.width}x{args.height} @ {args.fps} FPS")
     print("==========================================================")
@@ -124,7 +131,8 @@ def main():
         dictionary_name=args.dict,
         marker_size_meters=marker_sizes,
         camera_matrix=camera.camera_matrix,
-        dist_coeffs=camera.dist_coeffs
+        dist_coeffs=camera.dist_coeffs,
+        target_marker_ids=args.target_id
     )
 
     depth_masker = DepthMasker(margin_percent=args.margin_percent)
@@ -152,7 +160,7 @@ def main():
             detector.set_camera_parameters(camera.camera_matrix, camera.dist_coeffs)
 
             # Process frame: Detect ArUco markers & compute PnP Pose Estimation
-            results = detector.process_frame(color_img)
+            results = detector.process_frame(color_img, depth_frame=depth_frame)
 
             # Perform Depth Masking (Task N3): Exclude H-Pad regions from Depth Map
             masked_depth_frame, binary_mask = depth_masker.mask_depth_frame(

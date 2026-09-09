@@ -157,6 +157,20 @@ def write_gazebo_sdf(obstacles, output_file):
       <shadows>false</shadows>
     </scene>
 
+    <gui fullscreen="false">
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui><property type="bool" key="showTitleBar">false</property><property type="string" key="state">docked</property></gz-gui>
+        <engine>ogre2</engine><scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light><background_color>0.7 0.7 0.7</background_color>
+        <camera_pose>10 -14 10 0 0.55 0.55</camera_pose>
+        <camera_clip><near>0.1</near><far>250</far></camera_clip>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager" />
+      <plugin filename="InteractiveViewControl" name="Interactive view control" />
+      <plugin filename="CameraTracking" name="Camera Tracking" />
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu" />
+    </gui>
+
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
@@ -209,6 +223,11 @@ def write_gazebo_sdf(obstacles, output_file):
       <longitude_deg>8.546163739800146</longitude_deg>
       <elevation>0</elevation>
     </spherical_coordinates>
+    <include>
+      <uri>model://arucotag</uri>
+      <name>hpad_aruco</name>
+      <pose>4.00 0.00 0.02 0 0 0</pose>
+    </include>
 {obstacles_sdf}
   </world>
 </sdf>

@@ -47,6 +47,26 @@ Visualization Manager:
       Size (m): 0.05
       Color Transformer: AxisColor
       Axis: Z
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Name: RGB Camera
+      Topic: /camera
+      Queue Size: 2
+      Normalize Range: false
+      Unreliable: false
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Name: Depth Camera (mono8)
+      Topic: /depth_camera/image_mono
+      Queue Size: 2
+      Normalize Range: false
+      Unreliable: false
+      Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
       Name: DroneMarker
@@ -56,12 +76,27 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /drone/marker
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: H-Pad ArUco
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /hpad/marker
   Enabled: true
   Global Options:
     Background Color: 13; 13; 23
     Fixed Frame: world
     Frame Rate: 30
   Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
   Views:
     Current:
       Class: rviz_default_plugins/Orbit

@@ -16,6 +16,7 @@ import time
 import random
 import struct
 import subprocess
+import xml.etree.ElementTree as ET
 
 import rclpy
 from rclpy.node import Node
@@ -32,13 +33,19 @@ NUM_OBS = 15
 MAP_SIZE = 20.0
 MAX_HEIGHT = 4.0
 MODEL_NAME = "x500_depth_0"
+HPAD_MODEL_NAME = "hpad_aruco"
+HPAD_X = 4.0
+HPAD_Y = 0.0
+HPAD_Z = 0.02
+HPAD_MESH = "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/models/arucotag/hpad_aruco.dae"
 
 def generate_obstacles():
     half = MAP_SIZE / 2.0
     obs = []
     for _ in range(NUM_OBS):
         cx, cy = random.uniform(-half, half), random.uniform(-half, half)
-        if math.sqrt(cx**2 + cy**2) < 3.0:
+        # Giữ vùng cất cánh và vùng H-pad không bị vật cản che/mọc đè.
+        if math.sqrt(cx**2 + cy**2) < 3.0 or math.hypot(cx - HPAD_X, cy - HPAD_Y) < 2.0:
             continue
         obs.append({
             'cx': cx, 'cy': cy,
@@ -78,6 +85,24 @@ def write_sdf(obstacles, path):
     <atmosphere type="adiabatic"/>
     <scene><grid>true</grid><ambient>0.4 0.4 0.4 1</ambient>
       <background>0.7 0.7 0.7 1</background><shadows>false</shadows></scene>
+    <gui fullscreen="false">
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.7 0.7 0.7</background_color>
+        <camera_pose>10 -14 10 0 0.55 0.55</camera_pose>
+        <camera_clip><near>0.1</near><far>250</far></camera_clip>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager" />
+      <plugin filename="InteractiveViewControl" name="Interactive view control" />
+      <plugin filename="CameraTracking" name="Camera Tracking" />
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu" />
+    </gui>
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
@@ -105,6 +130,11 @@ def write_sdf(obstacles, path):
       <longitude_deg>8.546163739800146</longitude_deg>
       <elevation>0</elevation>
     </spherical_coordinates>
+    <include>
+      <uri>model://arucotag</uri>
+      <name>{HPAD_MODEL_NAME}</name>
+      <pose>{HPAD_X:.2f} {HPAD_Y:.2f} {HPAD_Z:.2f} 0 0 0</pose>
+    </include>
 {models}
   </world>
 </sdf>
@@ -112,6 +142,35 @@ def write_sdf(obstacles, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         f.write(sdf)
+
+def prepare_world_files():
+    """Generate one random world before Gazebo is started."""
+    obstacles = generate_obstacles()
+    for path in [
+        "/home/duy/VDT_project/simulation_maps/gazebo_worlds/obstacle_avoidance.sdf",
+        "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf",
+    ]:
+        write_sdf(obstacles, path)
+    print(f"World prepared with {len(obstacles)} obstacles and H-pad at ({HPAD_X}, {HPAD_Y}).")
+
+def load_obstacles_from_world(path):
+    """Read the already-loaded SDF so RViz uses exactly Gazebo's map."""
+    root = ET.parse(path).getroot()
+    result = []
+    for model in root.findall('./world/model'):
+        model_name = model.attrib.get('name', '')
+        if not (model_name.startswith('cyl_') or model_name.startswith('cylinder_obs_')):
+            continue
+        pose = model.findtext('pose', '').split()
+        cylinder = model.find('.//cylinder')
+        if len(pose) < 3 or cylinder is None:
+            continue
+        result.append({
+            'cx': float(pose[0]), 'cy': float(pose[1]),
+            'r': float(cylinder.findtext('radius', '0.5')),
+            'h': float(cylinder.findtext('length', '1.0')),
+        })
+    return result
 
 def build_pointcloud(obstacles, res=0.15):
     pts = []
@@ -125,6 +184,21 @@ def build_pointcloud(obstacles, res=0.15):
                 pts.append((cx + r * math.cos(th), cy + r * math.sin(th), z))
             z += res
     return pts
+
+def print_gazebo_topics():
+    """Print the live Gazebo topics before starting the ROS bridges."""
+    try:
+        result = subprocess.run(['gz', 'topic', '-l'], capture_output=True, text=True, timeout=5)
+        topics = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        interesting = [t for t in topics if any(k in t.lower() for k in ('odom', 'camera', 'depth', 'point'))]
+        if interesting:
+            print("      -> Gazebo sensor/odom topics detected:")
+            for topic in interesting:
+                print(f"         {topic}")
+        else:
+            print("[WARN] No camera/odom topic found from `gz topic -l`; ensure Gazebo is already running.")
+    except Exception as exc:
+        print(f"[WARN] Could not inspect Gazebo topics before bridging: {exc}")
 
 class FastTrackerStyleNode(Node):
     def __init__(self, obstacles):
@@ -140,6 +214,7 @@ class FastTrackerStyleNode(Node):
         # Publishers
         self.cloud_pub = self.create_publisher(PointCloud2, '/map_generator/global_cloud', 10)
         self.drone_marker_pub = self.create_publisher(Marker, '/drone/marker', 10)
+        self.hpad_marker_pub = self.create_publisher(Marker, '/hpad/marker', 10)
 
         # TF Broadcasters
         self.static_tf = StaticTransformBroadcaster(self)
@@ -165,7 +240,15 @@ class FastTrackerStyleNode(Node):
         self.create_subscription(Odometry, '/odom', self.odom_callback, sensor_qos)
 
         # Subscribe PointCloud2 từ Depth Camera của Drone
-        self.create_subscription(PointCloud2, '/depth_camera/points', self.sensor_cloud_callback, sensor_qos)
+        # Keep the canonical topic and common scoped Gazebo fallbacks. The
+        # bridge normally exposes /depth_camera/points, but scoped names are
+        # useful when Gazebo was started with a model-scoped sensor topic.
+        for cloud_topic in [
+            '/depth_camera/points',
+            f'/model/{MODEL_NAME}/link/camera_link/sensor/StereoOV7251/points',
+            f'/model/{MODEL_NAME}/link/camera_link/sensor/StereoOV7251/point_cloud',
+        ]:
+            self.create_subscription(PointCloud2, cloud_topic, self.sensor_cloud_callback, sensor_qos)
 
         # Build pointcloud cho bản đồ toàn cục
         self.pc_pts = build_pointcloud(obstacles)
@@ -217,6 +300,18 @@ class FastTrackerStyleNode(Node):
         t.transform.rotation.w = self.drone_quat[3]
         self.tf_broadcaster.sendTransform(t)
 
+        # Camera frame is rigidly mounted on x500_depth at the Oak-D pose.
+        # Publish it under base_link so RViz2 Camera/Image displays can resolve TF.
+        camera_tf = TransformStamped()
+        camera_tf.header.stamp = now
+        camera_tf.header.frame_id = 'base_link'
+        camera_tf.child_frame_id = 'camera_link'
+        camera_tf.transform.translation.x = 0.12
+        camera_tf.transform.translation.y = 0.03
+        camera_tf.transform.translation.z = 0.242
+        camera_tf.transform.rotation.w = 1.0
+        self.tf_broadcaster.sendTransform(camera_tf)
+
         # 2. Phát 3D Drone Visual Marker trong RViz2
         m = Marker()
         m.header.stamp = now
@@ -241,6 +336,30 @@ class FastTrackerStyleNode(Node):
         m.color.a = 0.9
         self.drone_marker_pub.publish(m)
 
+        # Gazebo models are not automatically visible in RViz2. Publish the
+        # same ArUco-textured plane as a mesh in the world frame.
+        hpad = Marker()
+        hpad.header.stamp = now
+        hpad.header.frame_id = 'world'
+        hpad.ns = 'hpad'
+        hpad.id = 0
+        hpad.type = Marker.MESH_RESOURCE
+        hpad.action = Marker.ADD
+        hpad.pose.position.x = HPAD_X
+        hpad.pose.position.y = HPAD_Y
+        hpad.pose.position.z = HPAD_Z + 0.003
+        hpad.pose.orientation.w = 1.0
+        hpad.scale.x = 1.0
+        hpad.scale.y = 1.0
+        hpad.scale.z = 1.0
+        hpad.color.r = 1.0
+        hpad.color.g = 1.0
+        hpad.color.b = 1.0
+        hpad.color.a = 1.0
+        hpad.mesh_resource = f'file://{HPAD_MESH}'
+        hpad.mesh_use_embedded_materials = True
+        self.hpad_marker_pub.publish(hpad)
+
     def log_status(self):
         odom_str = "CONNECTED" if self.has_odom else "WAITING"
         cloud_str = "RECEIVING" if self.has_sensor_cloud else "WAITING"
@@ -252,28 +371,52 @@ def main():
     print("  SIMULATION LAUNCHER (Fast-Tracker & PX4-Avoidance Architecture)")
     print("=" * 70)
 
-    # 1. Sinh bản đồ chướng ngại vật ngẫu nhiên
-    print("[1/4] Generating Obstacle World...")
-    obstacles = generate_obstacles()
-    for p in [
-        "/home/duy/VDT_project/simulation_maps/gazebo_worlds/obstacle_avoidance.sdf",
-        "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf",
-    ]:
-        write_sdf(obstacles, p)
-    print(f"      -> Map generated with {len(obstacles)} obstacles.")
+    # Generate before PX4/Gazebo starts; never overwrite an active world here.
+    if '--generate-world' in sys.argv:
+        prepare_world_files()
+        return
+
+    print("[1/4] Loading the world already used by Gazebo...")
+    world_path = "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf"
+    obstacles = load_obstacles_from_world(world_path)
+    if not obstacles:
+        print("[ERROR] No cylinder obstacles found in the PX4 world.")
+        print("        Run: python3 launch_simulation.py --generate-world")
+        print("        Then restart PX4/Gazebo before launching this node again.")
+        return
+    print(f"      -> Loaded {len(obstacles)} obstacles from {world_path}.")
 
     # 2. Khởi chạy ros_gz_bridge với cú pháp Direction chuẩn ([ = Gazebo -> ROS 2)
     print("[2/4] Starting Gazebo Sim -> ROS 2 Bridge...")
+    print_gazebo_topics()
     odom_gz = f"/model/{MODEL_NAME}/odometry_with_covariance"
-    bridge_cmd = [
+    sensor_bridge_cmd = [
         'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
         '/depth_camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
         '/camera@sensor_msgs/msg/Image[gz.msgs.Image',
-        f'{odom_gz}@nav_msgs/msg/Odometry[gz.msgs.OdometryWithCovariance',
-        f'{odom_gz}@nav_msgs/msg/Odometry@gz.msgs.OdometryWithCovariance'
+        '/depth_camera@sensor_msgs/msg/Image[gz.msgs.Image',
     ]
-    bridge_proc = subprocess.Popen(bridge_cmd)
-    print("      -> Bridge active.")
+    odom_bridge_cmd = [
+        'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
+        f'{odom_gz}@nav_msgs/msg/Odometry[gz.msgs.OdometryWithCovariance',
+    ]
+    print("      -> Sensor bridge:", ' '.join(sensor_bridge_cmd))
+    sensor_bridge_proc = subprocess.Popen(sensor_bridge_cmd)
+    print(f"      -> Sensor bridge started (pid={sensor_bridge_proc.pid}).")
+    print("      -> Odom bridge:", ' '.join(odom_bridge_cmd))
+    odom_bridge_proc = subprocess.Popen(odom_bridge_cmd)
+    print(f"      -> Odom bridge started (pid={odom_bridge_proc.pid}).")
+
+    # Convert Gazebo R_FLOAT32 depth to mono8 for RViz2 Image display.
+    depth_node = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'depth_to_image_node.py')
+    depth_proc = subprocess.Popen([sys.executable, depth_node])
+    time.sleep(1.0)
+    if sensor_bridge_proc.poll() is not None:
+        print("[ERROR] Sensor ros_gz_bridge exited immediately. Check Gazebo sensor topic names.")
+    if odom_bridge_proc.poll() is not None:
+        print("[ERROR] Odom ros_gz_bridge exited immediately. Check OdometryWithCovariance support/topic.")
+    if depth_proc.poll() is not None:
+        print("[ERROR] depth_to_image_node.py exited immediately.")
 
     # 3. Mở RViz2
     print("[3/4] Launching RViz2...")
@@ -297,7 +440,9 @@ def main():
         node.destroy_node()
         rclpy.shutdown()
         try:
-            bridge_proc.terminate()
+            sensor_bridge_proc.terminate()
+            odom_bridge_proc.terminate()
+            depth_proc.terminate()
             rviz_proc.terminate()
         except:
             pass

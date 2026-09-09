@@ -20,8 +20,8 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
         radius = random.uniform(0.3, 0.6)
         height = random.uniform(2.5, max_height)
 
-        # Keep takeoff area (0,0) clear within 3 meters
-        if math.sqrt(cx**2 + cy**2) < 3.0:
+        # Keep takeoff area and H-pad approach corridor clear.
+        if math.sqrt(cx**2 + cy**2) < 3.0 or math.hypot(cx - 4.0, cy) < 2.0:
             continue
 
         r_color = random.uniform(0.2, 0.9)
@@ -81,6 +81,26 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
       <shadows>false</shadows>
     </scene>
 
+    <!-- Explicit Gazebo Sim GUI: keeps orbit/pan/zoom controls available. -->
+    <gui fullscreen="false">
+      <plugin filename="MinimalScene" name="3D View">
+        <gz-gui>
+          <property type="bool" key="showTitleBar">false</property>
+          <property type="string" key="state">docked</property>
+        </gz-gui>
+        <engine>ogre2</engine>
+        <scene>scene</scene>
+        <ambient_light>0.4 0.4 0.4</ambient_light>
+        <background_color>0.7 0.7 0.7</background_color>
+        <camera_pose>10 -14 10 0 0.55 0.55</camera_pose>
+        <camera_clip><near>0.1</near><far>250</far></camera_clip>
+      </plugin>
+      <plugin filename="GzSceneManager" name="Scene Manager" />
+      <plugin filename="InteractiveViewControl" name="Interactive view control" />
+      <plugin filename="CameraTracking" name="Camera Tracking" />
+      <plugin filename="EntityContextMenuPlugin" name="Entity context menu" />
+    </gui>
+
     <!-- Essential Gazebo Sim System Plugins -->
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
@@ -137,6 +157,13 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
       <longitude_deg>8.546163739800146</longitude_deg>
       <elevation>0</elevation>
     </spherical_coordinates>
+
+    <!-- H-pad: the existing PX4 arucotag model is an ArUco image plane. -->
+    <include>
+      <uri>model://arucotag</uri>
+      <name>hpad_aruco</name>
+      <pose>4.00 0.00 0.02 0 0 0</pose>
+    </include>
 {obstacles_sdf}
   </world>
 </sdf>

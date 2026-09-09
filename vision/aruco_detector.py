@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from typing import List, Tuple, Dict, Any, Optional, Union
+from typing import List, Tuple, Dict, Any, Optional, Union, Iterable
 
 from .utils import rvec_to_euler, rvec_to_quaternion, extract_bounding_box, draw_axis_3d
 
@@ -42,10 +42,14 @@ class ArUcoDetector:
     """
     def __init__(
         self,
-        dictionary_name: str = "DICT_4X4_50",
+        # The repository's aruco_marker.png uses 6x6 codes. Keeping the
+        # dictionary aligned with the physical/displayed target is critical:
+        # a wrong dictionary can decode IR/projector noise as false IDs.
+        dictionary_name: str = "DICT_6X6_50",
         marker_size_meters: Union[float, Dict[int, float]] = 0.15,
         camera_matrix: Optional[np.ndarray] = None,
-        dist_coeffs: Optional[np.ndarray] = None
+        dist_coeffs: Optional[np.ndarray] = None,
+        target_marker_ids: Optional[Union[int, Iterable[int]]] = 42
     ):
         """
         Initialize ArUco Detector.
@@ -59,6 +63,12 @@ class ArUcoDetector:
         self.dictionary_name = dictionary_name
         self.camera_matrix = camera_matrix
         self.dist_coeffs = dist_coeffs
+        if target_marker_ids is None:
+            self.target_marker_ids = None
+        elif isinstance(target_marker_ids, (int, np.integer)):
+            self.target_marker_ids = {int(target_marker_ids)}
+        else:
+            self.target_marker_ids = {int(marker_id) for marker_id in target_marker_ids}
 
         if isinstance(marker_size_meters, dict):
             self.marker_sizes = marker_size_meters
@@ -104,7 +114,10 @@ class ArUcoDetector:
         self.parameters.adaptiveThreshWinSizeStep = 4
 
         # Allow smaller markers (down to 1% of image perimeter)
-        self.parameters.minMarkerPerimeterRate = 0.01
+        # IR projector speckles can form tiny quadrilaterals. A slightly
+        # stricter lower bound avoids decoding those as false markers while
+        # retaining normal screen/landing-pad marker sizes.
+        self.parameters.minMarkerPerimeterRate = 0.02
         self.parameters.maxMarkerPerimeterRate = 4.0
 
         # Allow markers near or touching image borders
@@ -209,14 +222,31 @@ class ArUcoDetector:
         self,
         image: np.ndarray,
         camera_matrix: Optional[np.ndarray] = None,
-        dist_coeffs: Optional[np.ndarray] = None
+        dist_coeffs: Optional[np.ndarray] = None,
+        depth_frame: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
-        """Detect markers and calculate PnP pose for each."""
+        """Detect markers, calculate PnP pose, and optionally attach depth.
+
+        ``depth_frame`` must be aligned to ``image``. This is true for the
+        RealSenseCamera IR fallback because it aligns depth to IR1. Depth is
+        sampled from a small patch around each marker center and stored as
+        ``z_depth``/``depth_m`` in meters; invalid depth never discards a
+        valid ArUco/PnP measurement.
+        """
         corners, ids, _ = self.detect(image)
         results = []
 
         if ids is None or len(ids) == 0:
             return results
+
+        # marker42.png is ID 42. Filtering at this boundary prevents IR
+        # projector texture or screen moire from becoming a target track.
+        if self.target_marker_ids is not None:
+            keep = [int(marker_id) in self.target_marker_ids for marker_id in ids.flatten()]
+            corners = [corner for corner, selected in zip(corners, keep) if selected]
+            ids = ids[np.asarray(keep, dtype=bool)].reshape((-1, 1))
+            if ids.size == 0:
+                return results
 
         K = camera_matrix if camera_matrix is not None else self.camera_matrix
         D = dist_coeffs if dist_coeffs is not None else self.dist_coeffs
@@ -232,8 +262,21 @@ class ArUcoDetector:
                 "bbox": bbox,
                 "rvec": None,
                 "tvec": None,
-                "pose": None
+                "pose": None,
+                "z_depth": None,
+                "depth_m": None,
+                "depth_valid": False,
+                "depth_samples": 0
             }
+
+            if depth_frame is not None:
+                depth_m, sample_count = self._sample_depth_at_marker(
+                    depth_frame, item["corners"], image.shape[:2]
+                )
+                item["z_depth"] = depth_m
+                item["depth_m"] = depth_m
+                item["depth_valid"] = depth_m is not None
+                item["depth_samples"] = sample_count
 
             if K is not None and D is not None:
                 success, rvec, tvec, pose_info = self.estimate_pose_pnp(c, mid, K, D)
@@ -246,6 +289,46 @@ class ArUcoDetector:
 
         results.sort(key=lambda x: x["id"])
         return results
+
+    @staticmethod
+    def _sample_depth_at_marker(
+        depth_frame: Any,
+        corners: np.ndarray,
+        image_shape: Tuple[int, int],
+        radius: int = 3
+    ) -> Tuple[Optional[float], int]:
+        """Return robust median depth at a marker center in meters."""
+        h, w = image_shape
+        center = np.mean(corners, axis=0)
+        cx = int(round(float(center[0])))
+        cy = int(round(float(center[1])))
+
+        if hasattr(depth_frame, "get_distance"):
+            values = []
+            for y in range(max(0, cy - radius), min(h, cy + radius + 1)):
+                for x in range(max(0, cx - radius), min(w, cx + radius + 1)):
+                    try:
+                        value = float(depth_frame.get_distance(x, y))
+                    except Exception:
+                        value = 0.0
+                    if np.isfinite(value) and value > 0:
+                        values.append(value)
+        elif isinstance(depth_frame, np.ndarray):
+            patch = depth_frame[
+                max(0, cy - radius):min(h, cy + radius + 1),
+                max(0, cx - radius):min(w, cx + radius + 1)
+            ]
+            values = patch[np.isfinite(patch) & (patch > 0)].astype(float).tolist()
+            # RealSense raw depth arrays are normally uint16 in millimeters;
+            # floating-point arrays are assumed to already be meters.
+            if np.issubdtype(depth_frame.dtype, np.integer):
+                values = [v * 0.001 for v in values]
+        else:
+            values = []
+
+        if not values:
+            return None, 0
+        return float(np.median(values)), len(values)
 
     def draw_results(
         self,
