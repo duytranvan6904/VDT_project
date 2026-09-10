@@ -382,6 +382,53 @@ Checklist trước khi cấp nguồn:
 
 Không thể chứng minh chỉ bằng code rằng Pi sẽ không cháy hoặc hỏng. Việc đó cần xác nhận bằng đo điện áp/dòng, kiểm tra nhiệt độ/throttling, thử tải có giới hạn và bảo vệ phần cứng độc lập.
 
+## Phân tầng thời gian thực và chống quá tải Pi 5
+
+### Phân tầng chức năng
+
+| Tầng | Thành phần | Yêu cầu |
+|---|---|---|
+| Safety-critical | PX4 failsafe/hardware kill, `kill_switch`, `offboard_safety_monitor`, `offboard_manager` | Ưu tiên phản ứng an toàn; không phụ thuộc vào perception để chuyển HOLD/RTL/disarm |
+| Soft real-time | `fsm_state_machine`, `input_state_cache`, `rc_parser`, `gimbal_control`, XRCE monitor | Duy trì chu kỳ và freshness; trễ phải dẫn tới timeout/fallback an toàn |
+| Best effort | Vision, planner, servo UI, `landing_diagnostics`, debug logging | Có thể giảm tần số hoặc dừng khi CPU/RAM thiếu mà không làm mất lớp safety |
+
+Trong code hiện tại, mỗi node C++ dùng `rclcpp::spin()` với executor đơn luồng riêng. Không tự đặt `MultiThreadedExecutor`; tuy nhiên ROS 2/DDS, MicroXRCEAgent, perception và planner vẫn có thread riêng, nên phải đo tổng tải trên Pi thật.
+
+### Nguyên tắc chống over-subscribe
+
+- Không chạy perception, planner và diagnostics với thread pool không giới hạn.
+- Giới hạn thread của OpenCV/BLAS trong module perception nếu có sử dụng.
+- Giữ safety nodes tách process với perception; không gộp chung executor với workload nặng.
+- Chỉ áp dụng CPU affinity/cgroup sau khi đo; dành CPU headroom cho `kill_switch`, safety monitor, Offboard và DDS.
+- Không bật `SCHED_FIFO` tùy tiện. Cấu hình realtime sai có thể làm treo toàn bộ Pi; PX4/hardware kill vẫn là lớp bảo vệ cuối.
+- Khi perception/planner quá tải, các timeout hiện có phải đưa hệ thống về fallback: planner stale không được đưa velocity cũ xuống PX4, safety vẫn có thể inhibit/HOLD/RTL.
+
+### Quy trình proof trên Pi 5
+
+Chạy full pipeline với tải perception/planner cao nhất dự kiến, sau đó đo trong thời gian dài hơn thời gian bay dự kiến:
+
+```bash
+ps -eLf
+htop
+pidstat -t -p <PID> 1
+free -h
+vcgencmd measure_temp
+vcgencmd get_throttled
+ros2 topic hz /fmu/in/offboard_control_mode
+ros2 topic hz /input_cache/timeout_flags
+```
+
+Ghi lại cho từng process: số thread, CPU%, RSS memory, tần số callback và số lần timeout. Chỉ đạt khi:
+
+- Không core nào bị giữ gần `100%` liên tục.
+- RAM còn headroom tối thiểu khoảng `20-30%` trong kịch bản tải xấu nhất.
+- `vcgencmd get_throttled` không báo throttling nhiệt/nguồn.
+- Timer Offboard 50 ms, RC 20 ms và safety 200 ms không miss deadline theo ngưỡng đã chọn.
+- Queue DDS không tăng liên tục và không có message stale ngoài các fallback dự kiến.
+- Khi tắt perception/planner hoặc tạo CPU load, hệ thống vẫn phát hiện timeout và không tiếp tục dùng setpoint cũ nguy hiểm.
+
+Các kết quả đo, nhiệt độ, dòng nguồn và cấu hình Pi phải được lưu cùng phiên bản code. Đây là bằng chứng vận hành trên một cấu hình phần cứng cụ thể, không phải bảo đảm tuyệt đối cho mọi Pi 5, nguồn hoặc tải ngoại vi.
+
 ## Landing diagnostics
 
 `landing_diagnostics` cung cấp pipeline phân tích log:
