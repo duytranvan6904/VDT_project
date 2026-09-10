@@ -23,9 +23,9 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import PointCloud2, PointField
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 from visualization_msgs.msg import Marker
-from std_msgs.msg import Header
+from std_msgs.msg import Float64, Header
 from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
 
 # ── Tham số Map ─────────────────────────────────────────────────────────────
@@ -185,11 +185,12 @@ def build_pointcloud(obstacles, res=0.15):
             z += res
     return pts
 
-def print_gazebo_topics():
-    """Print the live Gazebo topics before starting the ROS bridges."""
+def discover_gazebo_topics():
+    """Return live Gazebo topics and select the x500 camera/odom topics."""
+    topics = []
     try:
         result = subprocess.run(['gz', 'topic', '-l'], capture_output=True, text=True, timeout=5)
-        topics = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        topics = [line.strip() for line in result.stdout.splitlines() if line.strip() and line.startswith('/')]
         interesting = [t for t in topics if any(k in t.lower() for k in ('odom', 'camera', 'depth', 'point'))]
         if interesting:
             print("      -> Gazebo sensor/odom topics detected:")
@@ -199,6 +200,61 @@ def print_gazebo_topics():
             print("[WARN] No camera/odom topic found from `gz topic -l`; ensure Gazebo is already running.")
     except Exception as exc:
         print(f"[WARN] Could not inspect Gazebo topics before bridging: {exc}")
+    return topics
+
+def select_gazebo_topic(topics, exact_names, suffixes, contains=()):
+    """Choose the most specific runtime topic, preferring exact names."""
+    for name in exact_names:
+        if name in topics:
+            return name
+    candidates = []
+    for topic in topics:
+        if suffixes and not any(topic.endswith(suffix) for suffix in suffixes):
+            continue
+        if contains and not all(token in topic for token in contains):
+            continue
+        candidates.append(topic)
+    return sorted(candidates, key=len)[0] if candidates else None
+
+def bridge_argument(gz_topic, ros_type, gz_type, ros_topic, direction='['):
+    """Create a ros_gz_bridge argument and an optional ROS topic remap.
+
+    ``[`` is Gazebo -> ROS 2 only.  For camera sensors we use ``@`` because
+    the installed ros_gz_bridge versions consistently create the Gazebo
+    subscription for the bidirectional form, which is important for lazy
+    sensor publishers.  The ROS side remains read-only in this simulation.
+    """
+    return f'{gz_topic}@{ros_type}{direction}{gz_type}', f'{gz_topic}:={ros_topic}'
+
+def check_ros_gz_backend():
+    """Require the bridge binary to be linked against Gazebo Harmonic.
+
+    ROS Humble also provides a Fortress/Ignition build under the same
+    ``ros_gz_bridge`` package name.  That binary starts successfully against
+    Harmonic but cannot decode ``gz.msgs.*`` traffic, producing ``Unknown
+    message type [8]/[9]`` and no Gazebo subscribers.
+    """
+    try:
+        prefix = subprocess.run(
+            ['ros2', 'pkg', 'prefix', 'ros_gz_bridge'],
+            capture_output=True, text=True, timeout=5, check=True
+        ).stdout.strip()
+        executable = os.path.join(prefix, 'lib', 'ros_gz_bridge', 'parameter_bridge')
+        deps = subprocess.run(
+            ['ldd', executable], capture_output=True, text=True, timeout=5, check=True
+        ).stdout
+    except Exception as exc:
+        print(f"[ERROR] Không kiểm tra được ros_gz_bridge backend: {exc}")
+        return False
+
+    if 'libgz-msgs' not in deps or 'libgz-transport' not in deps:
+        print("[ERROR] ros_gz_bridge hiện là bản Fortress/Ignition, không tương thích Gazebo Harmonic.")
+        print("        Cần cài ros-humble-ros-gzharmonic-bridge (thay thế ros-humble-ros-gz-bridge).")
+        print("        Kiểm tra lại bằng: ldd " + executable + " | grep -E 'gz-(msgs|transport)|ignition-(msgs|transport)'")
+        return False
+
+    print("      -> ros_gz_bridge backend: Gazebo Harmonic (gz-msgs / gz-transport).")
+    return True
 
 class FastTrackerStyleNode(Node):
     def __init__(self, obstacles):
@@ -231,6 +287,8 @@ class FastTrackerStyleNode(Node):
         # Drone State (Cập nhật trực tiếp từ Gazebo Odometry)
         self.drone_pos = [0.0, 0.0, 0.0]
         self.drone_quat = [0.0, 0.0, 0.0, 1.0]
+        self.hpad_pos = [HPAD_X, HPAD_Y, HPAD_Z]
+        self.camera_pitch = 0.0
         self.has_odom = False
         self.has_sensor_cloud = False
 
@@ -238,6 +296,13 @@ class FastTrackerStyleNode(Node):
         odom_topic = f"/model/{MODEL_NAME}/odometry_with_covariance"
         self.create_subscription(Odometry, odom_topic, self.odom_callback, sensor_qos)
         self.create_subscription(Odometry, '/odom', self.odom_callback, sensor_qos)
+        self.create_subscription(PoseStamped, '/hpad/ground_truth', self.hpad_callback, 10)
+        self.create_subscription(
+            Float64,
+            f'/model/{MODEL_NAME}/command/gimbal_pitch',
+            self.gimbal_pitch_callback,
+            10,
+        )
 
         # Subscribe PointCloud2 từ Depth Camera của Drone
         # Keep the canonical topic and common scoped Gazebo fallbacks. The
@@ -269,6 +334,16 @@ class FastTrackerStyleNode(Node):
 
     def sensor_cloud_callback(self, msg: PointCloud2):
         self.has_sensor_cloud = True
+
+    def hpad_callback(self, msg: PoseStamped):
+        p = msg.pose.position
+        self.hpad_pos = [p.x, p.y, p.z]
+
+    def gimbal_pitch_callback(self, msg: Float64):
+        self.camera_pitch = max(
+            -math.pi / 2.0,
+            min(math.radians(15.0), float(msg.data)),
+        )
 
     def publish_global_map(self):
         h = Header(stamp=self.get_clock().now().to_msg(), frame_id='world')
@@ -309,8 +384,25 @@ class FastTrackerStyleNode(Node):
         camera_tf.transform.translation.x = 0.12
         camera_tf.transform.translation.y = 0.03
         camera_tf.transform.translation.z = 0.242
-        camera_tf.transform.rotation.w = 1.0
+        camera_tf.transform.rotation.y = math.sin(self.camera_pitch / 2.0)
+        camera_tf.transform.rotation.w = math.cos(self.camera_pitch / 2.0)
         self.tf_broadcaster.sendTransform(camera_tf)
+
+        # OpenCV PnP coordinates use the ROS optical convention:
+        # x-right, y-down, z-forward. The sensor itself is slightly offset
+        # from camera_link in the Oak-D model.
+        optical_tf = TransformStamped()
+        optical_tf.header.stamp = now
+        optical_tf.header.frame_id = 'camera_link'
+        optical_tf.child_frame_id = 'camera_optical_frame'
+        optical_tf.transform.translation.x = 0.01233
+        optical_tf.transform.translation.y = -0.03
+        optical_tf.transform.translation.z = 0.01878
+        optical_tf.transform.rotation.x = -0.5
+        optical_tf.transform.rotation.y = 0.5
+        optical_tf.transform.rotation.z = -0.5
+        optical_tf.transform.rotation.w = 0.5
+        self.tf_broadcaster.sendTransform(optical_tf)
 
         # 2. Phát 3D Drone Visual Marker trong RViz2
         m = Marker()
@@ -345,9 +437,9 @@ class FastTrackerStyleNode(Node):
         hpad.id = 0
         hpad.type = Marker.MESH_RESOURCE
         hpad.action = Marker.ADD
-        hpad.pose.position.x = HPAD_X
-        hpad.pose.position.y = HPAD_Y
-        hpad.pose.position.z = HPAD_Z + 0.003
+        hpad.pose.position.x = self.hpad_pos[0]
+        hpad.pose.position.y = self.hpad_pos[1]
+        hpad.pose.position.z = self.hpad_pos[2] + 0.003
         hpad.pose.orientation.w = 1.0
         hpad.scale.x = 1.0
         hpad.scale.y = 1.0
@@ -386,35 +478,80 @@ def main():
         return
     print(f"      -> Loaded {len(obstacles)} obstacles from {world_path}.")
 
-    # 2. Khởi chạy ros_gz_bridge với cú pháp Direction chuẩn ([ = Gazebo -> ROS 2)
+    # 2. Khởi chạy ros_gz_bridge.  Each sensor gets its own process so a
+    # malformed/unsupported sensor mapping cannot disable the other sensors.
     print("[2/4] Starting Gazebo Sim -> ROS 2 Bridge...")
-    print_gazebo_topics()
-    odom_gz = f"/model/{MODEL_NAME}/odometry_with_covariance"
-    sensor_bridge_cmd = [
-        'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
-        '/depth_camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
-        '/camera@sensor_msgs/msg/Image[gz.msgs.Image',
-        '/depth_camera@sensor_msgs/msg/Image[gz.msgs.Image',
+    if not check_ros_gz_backend():
+        return
+    gazebo_topics = discover_gazebo_topics()
+    rgb_gz = select_gazebo_topic(gazebo_topics, ['/camera'], ('/camera', '/image'), ('camera',))
+    camera_info_gz = select_gazebo_topic(gazebo_topics, ['/camera_info'], ('/camera_info',), ('camera',))
+    depth_gz = select_gazebo_topic(gazebo_topics, ['/depth_camera'], ('/depth_camera', '/depth_image'), ('depth',))
+    points_gz = select_gazebo_topic(gazebo_topics, ['/depth_camera/points'], ('/depth_camera/points', '/points'), ('point',))
+    odom_gz = select_gazebo_topic(gazebo_topics, [f'/model/{MODEL_NAME}/odometry_with_covariance'], ('/odometry_with_covariance',), (MODEL_NAME,))
+
+    if not all((rgb_gz, depth_gz, points_gz, odom_gz)):
+        print("[ERROR] Không tìm đủ topic runtime cho bridge:")
+        print(f"        RGB={rgb_gz}, CAMERA_INFO={camera_info_gz}, DEPTH={depth_gz}, POINTS={points_gz}, ODOM={odom_gz}")
+        print("        Hãy bảo đảm Gazebo đã spawn x500_depth trước khi chạy launcher.")
+        return
+
+    odom_bridge_cmd = ['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge']
+    odom_arg, odom_remap = bridge_argument(odom_gz, 'nav_msgs/msg/Odometry', 'gz.msgs.OdometryWithCovariance', '/odom')
+    odom_bridge_cmd += [odom_arg, '--ros-args', '-r', odom_remap]
+
+    sensor_bridge_specs = [
+        ('RGB camera', rgb_gz, 'sensor_msgs/msg/Image', 'gz.msgs.Image', '/camera'),
+        ('Depth image', depth_gz, 'sensor_msgs/msg/Image', 'gz.msgs.Image', '/depth_camera'),
+        ('Depth point cloud', points_gz, 'sensor_msgs/msg/PointCloud2', 'gz.msgs.PointCloudPacked', '/depth_camera/points'),
     ]
-    odom_bridge_cmd = [
-        'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge',
-        f'{odom_gz}@nav_msgs/msg/Odometry[gz.msgs.OdometryWithCovariance',
-    ]
-    print("      -> Sensor bridge:", ' '.join(sensor_bridge_cmd))
-    sensor_bridge_proc = subprocess.Popen(sensor_bridge_cmd)
-    print(f"      -> Sensor bridge started (pid={sensor_bridge_proc.pid}).")
+    if camera_info_gz:
+        sensor_bridge_specs.insert(
+            1, ('RGB camera info', camera_info_gz, 'sensor_msgs/msg/CameraInfo', 'gz.msgs.CameraInfo', '/camera_info')
+        )
+    sensor_bridge_procs = []
+    for label, source_topic, ros_type, gz_type, ros_topic in sensor_bridge_specs:
+        # Use the standard bidirectional form for sensors.  It causes
+        # parameter_bridge to subscribe to Gazebo even for lazy publishers.
+        bridge_arg, bridge_remap = bridge_argument(
+            source_topic, ros_type, gz_type, ros_topic, direction='@'
+        )
+        bridge_cmd = ['ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', bridge_arg]
+        if source_topic != ros_topic:
+            bridge_cmd += ['--ros-args', '-r', bridge_remap]
+        print(f"      -> {label} bridge:", ' '.join(bridge_cmd))
+        proc = subprocess.Popen(bridge_cmd)
+        sensor_bridge_procs.append((label, proc))
+        print(f"         started (pid={proc.pid}).")
+
     print("      -> Odom bridge:", ' '.join(odom_bridge_cmd))
     odom_bridge_proc = subprocess.Popen(odom_bridge_cmd)
     print(f"      -> Odom bridge started (pid={odom_bridge_proc.pid}).")
+
+    # ROS -> Gazebo command for the one-axis camera gimbal. The main node also
+    # subscribes to this ROS topic so its TF tree follows the commanded angle.
+    gimbal_bridge_arg = (
+        f'/model/{MODEL_NAME}/command/gimbal_pitch@'
+        'std_msgs/msg/Float64@gz.msgs.Double'
+    )
+    gimbal_bridge_cmd = [
+        'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', gimbal_bridge_arg
+    ]
+    print("      -> Gimbal pitch bridge:", ' '.join(gimbal_bridge_cmd))
+    gimbal_bridge_proc = subprocess.Popen(gimbal_bridge_cmd)
+    print(f"         started (pid={gimbal_bridge_proc.pid}).")
 
     # Convert Gazebo R_FLOAT32 depth to mono8 for RViz2 Image display.
     depth_node = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'depth_to_image_node.py')
     depth_proc = subprocess.Popen([sys.executable, depth_node])
     time.sleep(1.0)
-    if sensor_bridge_proc.poll() is not None:
-        print("[ERROR] Sensor ros_gz_bridge exited immediately. Check Gazebo sensor topic names.")
+    for label, proc in sensor_bridge_procs:
+        if proc.poll() is not None:
+            print(f"[ERROR] {label} ros_gz_bridge exited immediately. Check Gazebo sensor topic names.")
     if odom_bridge_proc.poll() is not None:
         print("[ERROR] Odom ros_gz_bridge exited immediately. Check OdometryWithCovariance support/topic.")
+    if gimbal_bridge_proc.poll() is not None:
+        print("[ERROR] Gimbal ros_gz_bridge exited immediately. Camera pitch ROS command will not reach Gazebo.")
     if depth_proc.poll() is not None:
         print("[ERROR] depth_to_image_node.py exited immediately.")
 
@@ -440,8 +577,10 @@ def main():
         node.destroy_node()
         rclpy.shutdown()
         try:
-            sensor_bridge_proc.terminate()
+            for _, sensor_bridge_proc in sensor_bridge_procs:
+                sensor_bridge_proc.terminate()
             odom_bridge_proc.terminate()
+            gimbal_bridge_proc.terminate()
             depth_proc.terminate()
             rviz_proc.terminate()
         except:
