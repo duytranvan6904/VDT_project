@@ -402,8 +402,18 @@ colcon test-result --verbose
 
 Các phần chưa có:
 
-- Unit test Python cho servo/XRCE/diagnostics.
+- Unit test Python cho servo, XRCE và diagnostics đã có; chạy theo hướng dẫn package/diagnostics.
 - Vector test SBUS đầy đủ, sample flight log hoặc CI build/lint.
+
+Chạy unit test Python:
+
+```bash
+python3 -m pip install pytest
+python3 -m pytest ros2_ws/src/servo_control/test/test_servo_logic.py
+python3 -m pytest ros2_ws/src/xrce_bridge_manager/test/test_xrce_logic.py
+python3 -m pip install -r landing_diagnostics/requirements.txt
+python3 -m pytest landing_diagnostics/test_metrics.py
+```
 
 Integration test của safety monitor đã có và chạy cùng `colcon test`. HIL runtime harness kiểm tra freshness, `OffboardStatus`, `VehicleCommandAck` accepted cho mode/arm và PX4 xác nhận Offboard trên PX4 SITL/HIL hoặc vehicle được cố định:
 

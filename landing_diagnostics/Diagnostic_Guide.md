@@ -61,3 +61,14 @@ param set MPC_XY_VEL_P_ACC <giá_trị_đề_xuất>
 ```
 
 Bay lại kịch bản landing cũ trong SITL, log lại, chạy diagnostics lại — lặp tới khi `mean_err_xy` và `oscillation` giảm rõ rệt thì mới đưa lên phần cứng thật.
+
+## 6. Unit test
+
+Từ thư mục repository:
+
+```bash
+python3 -m pip install -r landing_diagnostics/requirements.txt pytest
+python3 -m pytest landing_diagnostics/test_metrics.py
+```
+
+Test bao phủ schema CSV, dữ liệu LAND ngắn, NaN/vô hạn, timestamp trùng, FFT, phân loại drift và đề xuất tuning.
