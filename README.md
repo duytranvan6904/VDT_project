@@ -353,6 +353,35 @@ ros2 topic echo offboard/status
 ros2 topic echo input_cache/timeout_flags
 ```
 
+## Lưu ý lắp ráp và nối dây Pi 5
+
+Các bước này phải hoàn tất trước khi chạy node thật:
+
+1. **Nguồn:** dùng nguồn USB-C ổn định cho Pi 5, đủ công suất cho Pi và thiết bị USB/UART. Không lấy nguồn servo MG90S trực tiếp từ chân 5 V của Pi nếu servo có thể tải lớn; dùng nguồn 5 V riêng có giới hạn dòng và nối chung `GND` với Pi.
+2. **Mức logic:** GPIO/UART của Pi 5 là 3.3 V. Không đưa tín hiệu 5 V hoặc 6 V trực tiếp vào GPIO/UART; dùng level shifter phù hợp. Không cấp ngược điện áp vào chân GPIO.
+3. **Servo:** mặc định dùng GPIO `18`. Kiểm tra đúng dây signal/5 V/GND, giới hạn cơ khí trước khi lắp linkage, và đặt servo ở home trước khi gắn cơ cấu. Dây nguồn servo nên ngắn, có đầu nối chắc và tách khỏi dây tín hiệu nhạy.
+4. **SBUS/UART:** kiểm tra đúng UART device trong `System_Params.yaml`, cấu hình `100000 baud, 8E2`, và dùng inverter nếu receiver SBUS yêu cầu tín hiệu đảo. Không nối đồng thời nhiều thiết bị vào cùng UART.
+5. **PX4/XRCE:** kiểm tra đúng cổng serial, baudrate `921600`, TX/RX đấu chéo, `GND` chung và mức logic tương thích với flight controller. Không cắm/rút dây tín hiệu khi hệ thống đang cấp nguồn.
+6. **Chống chập và nhiễu:** đo thông mạch, cực tính và điện áp bằng đồng hồ trước khi cắm Pi/PX4. Cố định dây, bọc mối hàn, tránh dây servo/UART chạy sát dây nguồn motor/ESC; thêm strain relief ở đầu nối.
+7. **Tản nhiệt:** lắp heatsink/quạt phù hợp cho Pi 5 trong hộp kín; không đặt Pi sát ESC, regulator hoặc nguồn tỏa nhiệt. Theo dõi nhiệt độ và throttling khi chạy stress test.
+8. **Khởi động an toàn:** lần đầu chạy với `start_servo:=false`, tháo cánh/không nối tải chuyển động, kiểm tra `ros2 topic echo`, rồi mới bật servo và kiểm tra từng actuator ở tốc độ thấp.
+9. **Dừng khẩn:** phải có cách ngắt nguồn phần công suất độc lập với phần mềm. `kill_switch`/force-disarm không thay thế công tắc nguồn, cầu chì hoặc mạch bảo vệ phần cứng.
+
+Checklist trước khi cấp nguồn:
+
+```text
+[ ] Đúng cực tính và điện áp ở từng đầu nối
+[ ] Pi/PX4/servo có GND chung theo sơ đồ
+[ ] Servo dùng nguồn riêng phù hợp, không quá tải rail 5 V của Pi
+[ ] GPIO/UART không nhận tín hiệu vượt 3.3 V
+[ ] SBUS inverter và TX/RX đã xác nhận
+[ ] Cầu chì/ngắt nguồn phần công suất hoạt động
+[ ] Cánh và cơ cấu chuyển động đã tháo hoặc được cố định
+[ ] Có heatsink/quạt và thông gió
+```
+
+Không thể chứng minh chỉ bằng code rằng Pi sẽ không cháy hoặc hỏng. Việc đó cần xác nhận bằng đo điện áp/dòng, kiểm tra nhiệt độ/throttling, thử tải có giới hạn và bảo vệ phần cứng độc lập.
+
 ## Landing diagnostics
 
 `landing_diagnostics` cung cấp pipeline phân tích log:

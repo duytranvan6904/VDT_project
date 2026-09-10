@@ -178,7 +178,5 @@ sub(planner_command_topic, PlannerCommand) -> {
 
 - Xác nhận `rc_parser` (UART SBUS) và `xrce_bridge_manager` (`/dev/ttyAMA0`)
   dùng 2 UART vật lý khác nhau trên Pi 5, không share port.
-- Chưa có launch file / readiness ordering tập trung — cần làm trước khi
-  thêm bridge vào, tránh thứ tự khởi động sai gây race condition.
 - Chưa có load test đo CPU/RAM thực tế khi chạy full pipeline đồng thời — rủi
   ro lớn nhất hiện tại, cần làm trước bất kỳ flight test nào.
