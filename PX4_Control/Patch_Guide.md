@@ -69,3 +69,19 @@ git apply ../patches/001_custom_velocity_term.patch
 # nếu conflict do version khác biệt nhiều:
 git apply --reject ../patches/001_custom_velocity_term.patch
 ```
+
+## 5. Tạo patch có khóa commit/version
+
+Không chỉ lưu file `.patch` đơn lẻ. Dùng [templates/README.md](templates/README.md) và `create_px4_patch.py` để tạo bundle gồm patch, manifest JSON và checksum:
+
+```bash
+python3 PX4_Control/templates/create_px4_patch.py \
+  --px4-dir /path/to/PX4-Autopilot \
+  --output-dir /path/to/patches \
+  --patch-name 001_custom_velocity_pid.patch \
+  --base-ref v1.16.0
+```
+
+Manifest lưu chính xác `HEAD` commit, `git describe`, branch, file thay đổi và SHA-256. `apply_patch.sh` chỉ áp dụng patch khi checkout PX4 đang sạch, đúng commit, checksum đúng và `git apply --check` thành công. Nếu đổi PX4 release/commit, phải tạo patch bundle mới.
+
+Các template trong `templates/` là hướng dẫn chèn code theo anchor, không phải patch hoàn chỉnh cho mọi PX4 version. Luôn review diff và build SITL sau khi áp dụng.
