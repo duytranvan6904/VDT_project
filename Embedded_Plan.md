@@ -4,7 +4,7 @@ Phạm vi: State Machine 4 trạng thái, Gimbal PWM + PID smoothing, Offboard m
 
 ---
 
-## 1. State Machine (FSM 4 states)
+## 1. State Machine (FSM 5 states)
 
 ### 1.1. Data structures
 
@@ -874,11 +874,15 @@ Ghi chú: kill switch chạy trên thread/task riêng, tần số cao hơn main 
 
 ---
 
-## 8. Input State Cache
+## 8. Input State Cache (freshness monitor hiện tại)
 
-Khối này vá 2 lỗ hổng: (1) `ekf_state`/`vision_state`/`alt_estimator` dùng trong `sensor_read` (mục 1.2) chưa có nơi ghi vào; (2) `planner_output` dùng trong `build_setpoint_follow`/`build_setpoint_approach` (mục 4.2) cũng chưa có nơi ghi vào. Cả hai đều là dữ liệu đến qua subscriber của module 5 (micro-XRCE-DDS), cần một tầng cache trung gian trong `mission_manager_node` trước khi các module khác đọc ra.
+Implementation hiện tại không phải central payload cache. Mỗi node tiêu thụ tự subscribe và giữ bản sao payload cần dùng; package `input_state_cache` chỉ subscribe các topic để ghi timestamp nhận gần nhất và publish `TimeoutFlags`. Cách này tránh nhân bản payload trong một node trung tâm và phù hợp với code hiện tại.
 
-### 8.1. Data structures
+Các topic được theo dõi là `hpad/state_filtered`, `hpad/pose`, `alt_estimator/state` và `planner/velocity_setpoint`. `planner_timeout` được FSM và Offboard manager sử dụng để tránh tiếp tục chạy theo planner stale. Safety monitor có freshness riêng cho `VehicleStatus`, `VehicleLocalPosition` và `BatteryStatus`.
+
+Các mục 8.1-8.6 bên dưới giữ lại pseudocode cache payload của thiết kế ban đầu để tham khảo, không phải contract của implementation hiện tại.
+
+### 8.1. Thiết kế cache payload ban đầu (không triển khai)
 
 ```
 struct InputStateCache {
@@ -1122,6 +1126,6 @@ function safety_debug_log(ctx, level)
 - Tất cả module publish debug log qua hàm `*_debug_log` riêng, có thể bật/tắt bằng flag `DEBUG_ENABLED` global.
 - FSM là nguồn state duy nhất, các module gimbal/offboard/planner đọc `ctx.state` read-only, không tự ý đổi state.
 - Kill switch có độ ưu tiên cao nhất; khi `SYSTEM_KILLED = true`, Offboard manager và FSM phải dừng gửi mọi setpoint/lệnh mới.
-- Mọi dữ liệu vào từ topic DDS (EKF, vision, altitude, planner output) đều đi qua Input State Cache (mục 8) trước khi tới FSM/Gimbal/Offboard — không module nào subscribe trực tiếp và tự giữ state riêng.
+- `input_state_cache` chỉ phát hiện freshness và timeout; FSM, Gimbal và Offboard manager vẫn tự subscribe/cache payload của mình. Đây là implementation hiện tại, khác với pseudocode central cache ở mục 8.1.
 - Toàn bộ điều kiện liên quan tới "gần chạm H-Pad" (chuyển APPROACH→LAND ở mục 1.5, nội suy pitch ở mục 3.3) dùng chung hằng số `LAND_ENTRY_HEIGHT` và đều tính theo `delta_h` (chênh cao tới H-Pad), không dùng `altitude` tuyệt đối AGL — vì H-Pad có thể ở độ cao bất kỳ, không cố định sát mặt đất.
 - Module 9 (Safety Monitor) chạy song song, tần số thấp hơn main loop (5Hz), giám sát pin/EKF2 health/RC override/thời gian mất Offboard — độc lập với watchdog cơ bản ở mục 4.5 nhưng dùng chung `offboard_ctx`. Không thay thế Kill switch (mục 7): Safety Monitor xử lý các tình huống còn cứu được (HOLD, RTL, ép LAND sớm), Kill switch chỉ dùng khi cần dừng tuyệt đối ngay lập tức.

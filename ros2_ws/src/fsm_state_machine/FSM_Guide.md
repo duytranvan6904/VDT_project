@@ -1,4 +1,4 @@
-# FSM 4-State — Guide
+# FSM 5-State — Guide
 
 ## 1. Package cần cài đặt ngoài
 

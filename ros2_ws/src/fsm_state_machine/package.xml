@@ -3,7 +3,7 @@
 <package format="3">
   <name>fsm_state_machine</name>
   <version>0.1.0</version>
-  <description>FSM 4 state (SEARCH/FOLLOW/APPROACH/LAND -> COMPLETE) cho mission H-Pad landing</description>
+  <description>FSM 5 state (SEARCH/FOLLOW/APPROACH/LAND/COMPLETE) cho mission H-Pad landing</description>
   <maintainer email="mier@example.com">Mier</maintainer>
   <license>Apache-2.0</license>
 

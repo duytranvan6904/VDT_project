@@ -423,9 +423,7 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 
 ### Mức tài liệu và phát hành
 
-- Đồng bộ tài liệu “4 state” với enum thực tế có 5 state, gồm `COMPLETE`.
 - Khóa phiên bản ROS 2, PX4 và `px4_msgs`.
-- Đồng bộ thiết kế cache trung tâm với implementation thực tế.
 
 ## Tài liệu tham khảo trong repository
 
