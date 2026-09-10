@@ -94,7 +94,7 @@ Launch arguments:
 
 ## Sơ đồ launch
 
-​```text
+```text
 xrce_bridge_node
         |
         v
@@ -129,7 +129,7 @@ input_cache_node + offboard_safety_monitor + fsm_node
 
 offboard_safety_monitor ------------> PX4
 kill_switch_node --------------------> PX4
-​```
+```
 
 Launch sequence theo thời gian là `XRCE -> input cache -> RC/kill -> safety -> FSM/gimbal -> Offboard -> servo`. Đây là thứ tự khởi tạo process; readiness thật vẫn do các node kiểm tra freshness, timeout, health và mode PX4.
 
