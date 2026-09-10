@@ -11,6 +11,8 @@ Workspace prototype cho hệ thống UAV PX4 + ROS 2 thực hiện phát hiện,
 - [ROS 2 packages](#ros-2-packages)
 - [Messages](#messages)
 - [Topics chính](#topics-chính)
+- [Tham số tập trung](#tham-số-tập-trung)
+- [Sơ đồ launch](#sơ-đồ-launch)
 - [Luồng hoạt động](#luồng-hoạt-động)
 - [Cài đặt và build](#cài-đặt-và-build)
 - [Chạy hệ thống](#chạy-hệ-thống)
@@ -65,6 +67,52 @@ Các node tự lưu bản sao payload đầu vào của mình. `input_state_cach
 | `PX4_Architecture.md` | Kiến trúc giao tiếp PX4/ROS 2 |
 | `QGC_Calibration_Guide.md` | Quy trình calibration trên QGroundControl |
 | `References/Link.txt` | Nguồn tham khảo và repository liên quan |
+
+## Tham số tập trung
+
+Các tham số runtime được khai báo trong [System_Params.yaml](System_Params.yaml). Khi chạy bằng `vdt_bringup`, file này được cài vào package và nạp cho mọi node. Giá trị trong launch arguments có thể ghi đè `debug_enabled`, `start_hardware` và `start_servo`.
+
+| Node | Nhóm tham số |
+|---|---|
+| `input_cache_node` | `ekf_timeout_sec=0.5`, `vision_timeout_sec=0.5`, `alt_timeout_sec=0.5`, `planner_timeout_sec=1.0`, `debug_enabled=false` |
+| `fsm_node` | `land_entry_height=0.5`, `yaw_search_rate=0.3`, `land_descent_rate=0.4`, `debug_enabled=false` |
+| `gimbal_node` | `kp=1.0`, `ki=0.0`, `kd=0.1`, `out_min_deg=-90`, `out_max_deg=90`, `max_slew_rate_deg_s=60`, `land_entry_height=0.5`, `debug_enabled=false` |
+| `offboard_node` | `required_engage_cycles=10`, `mode_confirm_timeout_cycles=20`, `health_confirm_timeout_cycles=100`, `data_freshness_timeout_sec=1.0`, `max_horizontal_velocity=2.0`, `max_vertical_velocity=1.0`, `max_yaw=3.14`, `watchdog_timeout_sec=0.5`, `yaw_search_rate=0.3`, `land_descent_rate=0.4`, `debug_enabled=false` |
+| `safety_monitor_node` | `battery_warning_frac=0.3`, `battery_critical_frac=0.15`, `offboard_hold_timeout=1.0`, `offboard_rtl_timeout=5.0`, `data_freshness_timeout_sec=1.0`, `force_land_latched=true`, `debug_enabled=false` |
+| `rc_node` | `serial_device=/dev/ttyUSB0`, `baudrate=100000`, `land_channel=4`, `kill_channel=5`, `low_threshold=1200`, `high_threshold=1800`, `frame_timeout=0.5`, `debug_enabled=false` |
+| `kill_switch_node` | `kill_channel=5`, `low_threshold=1200`, `high_threshold=1800`, `debounce_threshold=3`, `debug_enabled=false` |
+| `servo_node` | `gpio_pin=18`, `pwm_min_us=600`, `pwm_max_us=2400`, `angle_min_deg=0`, `angle_max_deg=180`, `home_angle_deg=90`, `input_timeout_sec=1.0`, `debug_enabled=false` |
+| `xrce_bridge_node` | `serial_port=/dev/ttyAMA0`, `baudrate=921600`, `connection_timeout_sec=2.0`, `debug_enabled=false` |
+
+Launch arguments:
+
+| Argument | Mặc định | Ý nghĩa |
+|---|---:|---|
+| `start_hardware` | `true` | Bật `rc_node` và `kill_switch_node` |
+| `start_servo` | `false` | Bật servo GPIO trên Raspberry Pi |
+| `debug` | `false` | Ghi đè `debug_enabled` cho các node |
+
+## Sơ đồ launch
+
+```mermaid
+flowchart TD
+        XRCE[xrce_bridge_node] --> CACHE[input_cache_node]
+        CACHE --> RC[rc_node]
+        RC --> KILL[kill_switch_node]
+        CACHE --> SAFETY[offboard_safety_monitor]
+        KILL --> FSM[fsm_node]
+        SAFETY --> FSM
+        FSM --> GIMBAL[gimbal_node]
+        FSM --> OFFBOARD[offboard_node]
+        SAFETY --> OFFBOARD
+        CACHE --> OFFBOARD
+        GIMBAL --> SERVO[servo_node optional]
+        OFFBOARD --> PX4[PX4]
+        SAFETY --> PX4
+        KILL --> PX4
+```
+
+Launch sequence theo thời gian là `XRCE -> input cache -> RC/kill -> safety -> FSM/gimbal -> Offboard -> servo`. Đây là thứ tự khởi tạo process; readiness thật vẫn do các node kiểm tra freshness, timeout, health và mode PX4.
 
 ## ROS 2 packages
 
@@ -245,7 +293,7 @@ colcon build
 source install/setup.bash
 ```
 
-Đã có launch file `vdt_bringup`; vẫn chưa có parameter YAML tập trung hoặc CI. Launch file sắp xếp thứ tự khởi động, còn readiness thực tế được kiểm tra trong từng node. Các bước engage/arm cần được kiểm thử với PX4 SITL trước khi dùng phần cứng.
+Đã có launch file `vdt_bringup` và [System_Params.yaml](System_Params.yaml) làm cấu hình tập trung; vẫn chưa có CI. Launch file nạp YAML và sắp xếp thứ tự khởi động, còn readiness thực tế được kiểm tra trong từng node. Các bước engage/arm cần được kiểm thử với PX4 SITL trước khi dùng phần cứng.
 
 ### Build diagnostics
 
@@ -378,7 +426,6 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 - Đồng bộ tài liệu “4 state” với enum thực tế có 5 state, gồm `COMPLETE`.
 - Khóa phiên bản ROS 2, PX4 và `px4_msgs`.
 - Đồng bộ thiết kế cache trung tâm với implementation thực tế.
-- Bổ sung bảng parameter tập trung và sơ đồ launch.
 
 ## Tài liệu tham khảo trong repository
 

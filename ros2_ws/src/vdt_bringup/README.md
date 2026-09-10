@@ -2,6 +2,8 @@
 
 Package này cung cấp launch orchestration cho toàn bộ ROS 2 stack của VDT.
 
+Launch luôn nạp [System_Params.yaml](../../../System_Params.yaml) từ project root; file này được cài cùng package khi build để các node dùng một bộ giá trị thống nhất.
+
 ## Startup order
 
 ```text

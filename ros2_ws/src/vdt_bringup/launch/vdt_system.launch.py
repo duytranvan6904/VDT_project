@@ -3,18 +3,23 @@ from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import PathJoinSubstitution
 
 
 def generate_launch_description():
     start_hardware = LaunchConfiguration('start_hardware')
     start_servo = LaunchConfiguration('start_servo')
     debug = LaunchConfiguration('debug')
+    params_file = PathJoinSubstitution([
+        FindPackageShare('vdt_bringup'), 'System_Params.yaml'
+    ])
 
     xrce = Node(
         package='xrce_bridge_manager',
         executable='xrce_bridge_node',
         name='xrce_bridge_node',
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -22,7 +27,7 @@ def generate_launch_description():
         package='input_state_cache',
         executable='input_cache_node',
         name='input_cache_node',
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -31,7 +36,7 @@ def generate_launch_description():
         executable='rc_node',
         name='rc_node',
         condition=IfCondition(start_hardware),
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -40,7 +45,7 @@ def generate_launch_description():
         executable='kill_switch_node',
         name='kill_switch_node',
         condition=IfCondition(start_hardware),
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -48,7 +53,7 @@ def generate_launch_description():
         package='offboard_safety_monitor',
         executable='safety_monitor_node',
         name='safety_monitor_node',
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -56,7 +61,7 @@ def generate_launch_description():
         package='fsm_state_machine',
         executable='fsm_node',
         name='fsm_node',
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -64,7 +69,7 @@ def generate_launch_description():
         package='gimbal_control',
         executable='gimbal_node',
         name='gimbal_node',
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -72,7 +77,7 @@ def generate_launch_description():
         package='offboard_manager',
         executable='offboard_node',
         name='offboard_node',
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
@@ -81,7 +86,7 @@ def generate_launch_description():
         executable='servo_node',
         name='servo_node',
         condition=IfCondition(start_servo),
-        parameters=[{'debug_enabled': debug}],
+        parameters=[params_file, {'debug_enabled': debug}],
         output='screen',
     )
 
