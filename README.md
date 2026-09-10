@@ -373,10 +373,6 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 
 ## Các vấn đề cần xử lý
 
-### Mức cao
-
-1. Bổ sung launch file, readiness ordering và parameter YAML.
-
 ### Mức tài liệu và phát hành
 
 - Đồng bộ tài liệu “4 state” với enum thực tế có 5 state, gồm `COMPLETE`.
