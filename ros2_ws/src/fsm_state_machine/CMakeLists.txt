@@ -16,12 +16,13 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(rc_parser REQUIRED)
+find_package(input_state_cache REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VisionMarker.msg"
   "msg/AltEstimate.msg"
-  "msg/RcFsmInput.msg"
   "msg/TimeoutFlags.msg"
 )
 
@@ -36,7 +37,7 @@ add_executable(fsm_node
 
 target_include_directories(fsm_node PRIVATE include)
 target_link_libraries(fsm_node "${cpp_typesupport_target}")
-ament_target_dependencies(fsm_node rclcpp std_msgs nav_msgs)
+ament_target_dependencies(fsm_node rclcpp std_msgs nav_msgs rc_parser input_state_cache)
 
 install(TARGETS fsm_node DESTINATION lib/${PROJECT_NAME})
 

@@ -2,7 +2,7 @@
 
 ## 1. Package cần cài đặt ngoài
 
-Không có. Chỉ dùng rclcpp, nav_msgs, và hai package tự viết `fsm_state_machine` (msg `VisionMarker`, `AltEstimate`, `TimeoutFlags`) và `offboard_manager` (msg `PlannerOutput`).
+Không có. `input_state_cache` sở hữu message `TimeoutFlags`. Node dùng generic subscription để theo dõi timestamp của `VisionMarker`, `AltEstimate` và `PlannerOutput` mà không cần phụ thuộc compile-time vào package sở hữu các message đó.
 
 ## 2. Nguyên lý hoạt động
 
@@ -22,7 +22,7 @@ Node chỉ ghi lại **thời điểm nhận message gần nhất** cho từng t
 
 1. So sánh thời gian hiện tại với thời điểm nhận gần nhất của từng topic.
 2. Nếu chênh lệch vượt ngưỡng tương ứng → gắn cờ timeout đó là `true`.
-3. Publish `TimeoutFlags` ra `input_cache/timeout_flags` cho `fsm_node` (đọc ekf + vision), `gimbal_node` (đọc ekf + alt), và tương lai là `offboard_node` (đọc planner) dùng chung.
+3. Publish `input_state_cache/msg/TimeoutFlags` ra `input_cache/timeout_flags` cho `fsm_node`, `gimbal_node` và `offboard_node` dùng chung.
 
 Không có bước "cache dữ liệu ekf/vision/alt/planner" như pseudocode gốc mô tả — vì các node tiêu thụ đã tự giữ bản riêng của chúng, gom lại đây chỉ dư thừa.
 

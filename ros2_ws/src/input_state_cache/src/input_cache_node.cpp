@@ -15,15 +15,17 @@ InputCacheNode::InputCacheNode()
 
   ekf_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "hpad/state_filtered", 10, std::bind(&InputCacheNode::on_ekf, this, std::placeholders::_1));
-  vision_sub_ = create_subscription<fsm_state_machine::msg::VisionMarker>(
-    "hpad/pose", 10, std::bind(&InputCacheNode::on_vision, this, std::placeholders::_1));
-  alt_sub_ = create_subscription<fsm_state_machine::msg::AltEstimate>(
-    "alt_estimator/state", 10, std::bind(&InputCacheNode::on_alt, this, std::placeholders::_1));
-  planner_sub_ = create_subscription<offboard_manager::msg::PlannerOutput>(
-    "planner/velocity_setpoint", 10,
+  vision_sub_ = create_generic_subscription(
+    "hpad/pose", "fsm_state_machine/msg/VisionMarker", rclcpp::QoS(10),
+    std::bind(&InputCacheNode::on_vision, this, std::placeholders::_1));
+  alt_sub_ = create_generic_subscription(
+    "alt_estimator/state", "fsm_state_machine/msg/AltEstimate", rclcpp::QoS(10),
+    std::bind(&InputCacheNode::on_alt, this, std::placeholders::_1));
+  planner_sub_ = create_generic_subscription(
+    "planner/velocity_setpoint", "offboard_manager/msg/PlannerOutput", rclcpp::QoS(10),
     std::bind(&InputCacheNode::on_planner, this, std::placeholders::_1));
 
-  timeout_pub_ = create_publisher<fsm_state_machine::msg::TimeoutFlags>(
+  timeout_pub_ = create_publisher<msg::TimeoutFlags>(
     "input_cache/timeout_flags", 10);
 
   timer_ = create_wall_timer(
@@ -35,17 +37,17 @@ void InputCacheNode::on_ekf(const nav_msgs::msg::Odometry::SharedPtr)
   freshness_.last_ekf_time = this->now().seconds();
 }
 
-void InputCacheNode::on_vision(const fsm_state_machine::msg::VisionMarker::SharedPtr)
+void InputCacheNode::on_vision(const std::shared_ptr<rclcpp::SerializedMessage>)
 {
   freshness_.last_vision_time = this->now().seconds();
 }
 
-void InputCacheNode::on_alt(const fsm_state_machine::msg::AltEstimate::SharedPtr)
+void InputCacheNode::on_alt(const std::shared_ptr<rclcpp::SerializedMessage>)
 {
   freshness_.last_alt_time = this->now().seconds();
 }
 
-void InputCacheNode::on_planner(const offboard_manager::msg::PlannerOutput::SharedPtr)
+void InputCacheNode::on_planner(const std::shared_ptr<rclcpp::SerializedMessage>)
 {
   freshness_.last_planner_time = this->now().seconds();
 }
@@ -58,7 +60,7 @@ void InputCacheNode::update()
   log_debug(flags);
 }
 
-void InputCacheNode::log_debug(const fsm_state_machine::msg::TimeoutFlags & flags) const
+void InputCacheNode::log_debug(const msg::TimeoutFlags & flags) const
 {
   if (!debug_enabled_) {
     return;

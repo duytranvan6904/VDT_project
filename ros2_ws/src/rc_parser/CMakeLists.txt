@@ -19,6 +19,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RcChannelsRaw.msg"
+  "msg/RcFsmInput.msg"
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
@@ -33,7 +34,7 @@ add_executable(rc_node
 
 target_include_directories(rc_node PRIVATE include)
 target_link_libraries(rc_node "${cpp_typesupport_target}")
-ament_target_dependencies(rc_node rclcpp fsm_state_machine)
+ament_target_dependencies(rc_node rclcpp)
 
 install(TARGETS rc_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/ DESTINATION include)

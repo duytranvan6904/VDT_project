@@ -63,7 +63,7 @@ OffboardNode::OffboardNode()
   local_position_sub_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
     "/fmu/out/vehicle_local_position", qos,
     std::bind(&OffboardNode::on_local_position, this, std::placeholders::_1));
-  timeout_sub_ = create_subscription<fsm_state_machine::msg::TimeoutFlags>(
+  timeout_sub_ = create_subscription<input_state_cache::msg::TimeoutFlags>(
   "input_cache/timeout_flags", 10,
   std::bind(&OffboardNode::on_timeout_flags, this, std::placeholders::_1));
   control_mode_pub_ = create_publisher<px4_msgs::msg::OffboardControlMode>(
@@ -121,7 +121,7 @@ void OffboardNode::on_local_position(const px4_msgs::msg::VehicleLocalPosition::
   last_local_position_time_ = this->now().seconds();
 }
 
-void OffboardNode::on_timeout_flags(const fsm_state_machine::msg::TimeoutFlags::SharedPtr msg)
+void OffboardNode::on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg)
 {
   planner_timeout_ = msg->planner_timeout;
 }

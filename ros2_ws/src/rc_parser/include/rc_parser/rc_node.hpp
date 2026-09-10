@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include "fsm_state_machine/msg/rc_fsm_input.hpp"
 #include "rc_parser/msg/rc_channels_raw.hpp"
+#include "rc_parser/msg/rc_fsm_input.hpp"
 #include "rc_parser/rc_types.hpp"
 #include "rc_parser/rc_uart.hpp"
 
@@ -23,7 +23,7 @@ private:
   std::unique_ptr<SbusUart> uart_;
   RcConfig cfg_;
 
-  rclcpp::Publisher<fsm_state_machine::msg::RcFsmInput>::SharedPtr fsm_input_pub_;
+  rclcpp::Publisher<msg::RcFsmInput>::SharedPtr fsm_input_pub_;
   rclcpp::Publisher<msg::RcChannelsRaw>::SharedPtr raw_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 

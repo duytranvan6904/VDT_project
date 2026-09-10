@@ -6,8 +6,8 @@
 #include "fsm_state_machine/fsm_actions.hpp"
 #include "fsm_state_machine/fsm_types.hpp"
 #include "fsm_state_machine/msg/alt_estimate.hpp"
-#include "fsm_state_machine/msg/rc_fsm_input.hpp"
-#include "fsm_state_machine/msg/timeout_flags.hpp"
+#include "rc_parser/msg/rc_fsm_input.hpp"
+#include "input_state_cache/msg/timeout_flags.hpp"
 #include "fsm_state_machine/msg/vision_marker.hpp"
 
 namespace fsm_state_machine
@@ -22,8 +22,8 @@ private:
   void on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg);
   void on_vision(const msg::VisionMarker::SharedPtr msg);
   void on_alt(const msg::AltEstimate::SharedPtr msg);
-  void on_rc(const msg::RcFsmInput::SharedPtr msg);
-  void on_timeout_flags(const msg::TimeoutFlags::SharedPtr msg);
+  void on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg);
+  void on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg);
 
   void update();
   SensorInput build_sensor_input() const;
@@ -40,7 +40,7 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_sub_;
   rclcpp::Subscription<msg::VisionMarker>::SharedPtr vision_sub_;
   rclcpp::Subscription<msg::AltEstimate>::SharedPtr alt_sub_;
-  rclcpp::Subscription<msg::RcFsmInput>::SharedPtr rc_sub_;
+  rclcpp::Subscription<rc_parser::msg::RcFsmInput>::SharedPtr rc_sub_;
   rclcpp::Subscription<msg::TimeoutFlags>::SharedPtr timeout_sub_;
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr state_pub_;
   rclcpp::TimerBase::SharedPtr timer_;

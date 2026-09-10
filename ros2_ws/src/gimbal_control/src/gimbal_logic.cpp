@@ -25,7 +25,7 @@ float lerp(float a, float b, float t)
 }  // namespace
 
 GimbalTelemetry telemetry_validate(
-  GimbalTelemetry t, const fsm_state_machine::msg::TimeoutFlags & flags)
+  GimbalTelemetry t, const input_state_cache::msg::TimeoutFlags & flags)
 {
   if (flags.ekf_timeout || flags.alt_timeout) {
     t.valid = false;

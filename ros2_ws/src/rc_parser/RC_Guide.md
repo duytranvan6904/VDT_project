@@ -2,7 +2,7 @@
 
 ## 1. Package cần cài đặt ngoài
 
-Không có package ROS2 ngoài nào. Chỉ dùng rclcpp và package tự viết `fsm_state_machine` (để publish đúng kiểu `RcFsmInput`). Lưu ý phần cứng: cần RC receiver hỗ trợ output SBUS nối qua UART vào Pi 5 (không phải package phải cài, nhưng bắt buộc về phần cứng để node chạy được).
+Không có package ROS2 ngoài nào. Node tự định nghĩa `RcChannelsRaw` và `RcFsmInput`; `RcFsmInput` được publish cho FSM qua topic `rc/fsm_input`. Lưu ý phần cứng: cần RC receiver hỗ trợ output SBUS nối qua UART vào Pi 5.
 
 ## 2. Nguyên lý hoạt động
 

@@ -876,7 +876,7 @@ Ghi chú: kill switch chạy trên thread/task riêng, tần số cao hơn main 
 
 ## 8. Input State Cache (freshness monitor hiện tại)
 
-Implementation hiện tại không phải central payload cache. Mỗi node tiêu thụ tự subscribe và giữ bản sao payload cần dùng; package `input_state_cache` chỉ subscribe các topic để ghi timestamp nhận gần nhất và publish `TimeoutFlags`. Cách này tránh nhân bản payload trong một node trung tâm và phù hợp với code hiện tại.
+Implementation hiện tại không phải central payload cache. Mỗi node tiêu thụ tự subscribe và giữ bản sao payload cần dùng; package `input_state_cache` sở hữu message `input_state_cache/msg/TimeoutFlags`, chỉ ghi timestamp nhận gần nhất và publish các cờ timeout. Cách này tránh nhân bản payload trong một node trung tâm và không tạo vòng dependency package.
 
 Các topic được theo dõi là `hpad/state_filtered`, `hpad/pose`, `alt_estimator/state` và `planner/velocity_setpoint`. `planner_timeout` được FSM và Offboard manager sử dụng để tránh tiếp tục chạy theo planner stale. Safety monitor có freshness riêng cho `VehicleStatus`, `VehicleLocalPosition` và `BatteryStatus`.
 
@@ -1126,6 +1126,6 @@ function safety_debug_log(ctx, level)
 - Tất cả module publish debug log qua hàm `*_debug_log` riêng, có thể bật/tắt bằng flag `DEBUG_ENABLED` global.
 - FSM là nguồn state duy nhất, các module gimbal/offboard/planner đọc `ctx.state` read-only, không tự ý đổi state.
 - Kill switch có độ ưu tiên cao nhất; khi `SYSTEM_KILLED = true`, Offboard manager và FSM phải dừng gửi mọi setpoint/lệnh mới.
-- `input_state_cache` chỉ phát hiện freshness và timeout; FSM, Gimbal và Offboard manager vẫn tự subscribe/cache payload của mình. Đây là implementation hiện tại, khác với pseudocode central cache ở mục 8.1.
+- `input_state_cache` sở hữu và publish `TimeoutFlags`; FSM, Gimbal và Offboard manager vẫn tự subscribe/cache payload của mình. Các topic chỉ cần theo dõi timestamp dùng generic subscription để tránh dependency cycle.
 - Toàn bộ điều kiện liên quan tới "gần chạm H-Pad" (chuyển APPROACH→LAND ở mục 1.5, nội suy pitch ở mục 3.3) dùng chung hằng số `LAND_ENTRY_HEIGHT` và đều tính theo `delta_h` (chênh cao tới H-Pad), không dùng `altitude` tuyệt đối AGL — vì H-Pad có thể ở độ cao bất kỳ, không cố định sát mặt đất.
 - Module 9 (Safety Monitor) chạy song song, tần số thấp hơn main loop (5Hz), giám sát pin/EKF2 health/RC override/thời gian mất Offboard — độc lập với watchdog cơ bản ở mục 4.5 nhưng dùng chung `offboard_ctx`. Không thay thế Kill switch (mục 7): Safety Monitor xử lý các tình huống còn cứu được (HOLD, RTL, ép LAND sớm), Kill switch chỉ dùng khi cần dừng tuyệt đối ngay lập tức.

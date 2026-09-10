@@ -106,7 +106,7 @@ ros2 topic pub /hpad/pose fsm_state_machine/msg/VisionMarker \
   "{marker_visible: true, pixel_align_error: 0.1}" -r 10
 
 # ép FOLLOW -> APPROACH
-ros2 topic pub /rc/fsm_input fsm_state_machine/msg/RcFsmInput \
+ros2 topic pub /rc/fsm_input rc_parser/msg/RcFsmInput \
   "{land_switch: true, kill_switch: false}" -r 10
 
 # ép LAND -> COMPLETE

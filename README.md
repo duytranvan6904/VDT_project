@@ -245,8 +245,8 @@ Mặc định dùng `/dev/ttyAMA0`, `921600 baud`, timeout kết nối `2.0 s`. 
 |---|---|---|
 | `fsm_state_machine` | `VisionMarker` | `marker_visible`, `pixel_align_error` |
 | `fsm_state_machine` | `AltEstimate` | `altitude`, `touchdown_flag` |
-| `fsm_state_machine` | `RcFsmInput` | `land_switch`, `kill_switch` |
-| `fsm_state_machine` | `TimeoutFlags` | `ekf_timeout`, `vision_timeout`, `alt_timeout`, `planner_timeout` |
+| `rc_parser` | `RcFsmInput` | `land_switch`, `kill_switch` |
+| `input_state_cache` | `TimeoutFlags` | `ekf_timeout`, `vision_timeout`, `alt_timeout`, `planner_timeout` |
 | `rc_parser` | `RcChannelsRaw` | `int16[16] ch`, `valid`, `failsafe` |
 | `offboard_manager` | `PlannerOutput` | `vx`, `vy`, `vz`, `yaw` |
 | `offboard_manager` | `OffboardStatus` | `offboard_active`, `heartbeat_age_sec` |

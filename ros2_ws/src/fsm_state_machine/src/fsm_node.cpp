@@ -17,14 +17,14 @@ FsmNode::FsmNode()
     "hpad/pose", 10, std::bind(&FsmNode::on_vision, this, std::placeholders::_1));
   alt_sub_ = create_subscription<msg::AltEstimate>(
     "alt_estimator/state", 10, std::bind(&FsmNode::on_alt, this, std::placeholders::_1));
-  rc_sub_ = create_subscription<msg::RcFsmInput>(
+  rc_sub_ = create_subscription<rc_parser::msg::RcFsmInput>(
     "rc/fsm_input", 10, std::bind(&FsmNode::on_rc, this, std::placeholders::_1));
   rclcpp::QoS killed_qos(1);
   killed_qos.transient_local();
   killed_sub_ = create_subscription<std_msgs::msg::Bool>(
     "system/killed", killed_qos,
      std::bind(&FsmNode::on_killed, this, std::placeholders::_1));
-  timeout_sub_ = create_subscription<msg::TimeoutFlags>(
+  timeout_sub_ = create_subscription<input_state_cache::msg::TimeoutFlags>(
     "input_cache/timeout_flags", 10,
     std::bind(&FsmNode::on_timeout_flags, this, std::placeholders::_1));
 
@@ -63,13 +63,13 @@ void FsmNode::on_alt(const msg::AltEstimate::SharedPtr msg)
   alt_state_ = *msg;
 }
 
-void FsmNode::on_rc(const msg::RcFsmInput::SharedPtr msg)
+void FsmNode::on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg)
 {
   rc_input_.land_switch = msg->land_switch;
   rc_input_.kill_switch = msg->kill_switch;
 }
 
-void FsmNode::on_timeout_flags(const msg::TimeoutFlags::SharedPtr msg)
+void FsmNode::on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg)
 {
   timeout_flags_.ekf_timeout = msg->ekf_timeout;
   timeout_flags_.vision_timeout = msg->vision_timeout;

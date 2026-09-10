@@ -1,12 +1,12 @@
 #pragma once
 #include "gimbal_control/gimbal_types.hpp"
-#include "fsm_state_machine/msg/timeout_flags.hpp"
+#include "input_state_cache/msg/timeout_flags.hpp"
 
 namespace gimbal_control
 {
 
 GimbalTelemetry telemetry_validate(
-  GimbalTelemetry t, const fsm_state_machine::msg::TimeoutFlags & flags);
+  GimbalTelemetry t, const input_state_cache::msg::TimeoutFlags & flags);
 
 float target_angle_search();
 float target_angle_follow(const GimbalTelemetry & t);

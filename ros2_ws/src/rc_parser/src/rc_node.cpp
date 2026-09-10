@@ -22,7 +22,7 @@ RcNode::RcNode()
     RCLCPP_ERROR(get_logger(), "Khong mo duoc serial device %s", device.c_str());
   }
 
-  fsm_input_pub_ = create_publisher<fsm_state_machine::msg::RcFsmInput>("rc/fsm_input", 10);
+  fsm_input_pub_ = create_publisher<msg::RcFsmInput>("rc/fsm_input", 10);
   raw_pub_ = create_publisher<msg::RcChannelsRaw>("rc/channels_raw", 10);
 
   timer_ = create_wall_timer(std::chrono::milliseconds(20), std::bind(&RcNode::update, this));
@@ -51,7 +51,7 @@ void RcNode::update()
 
 void RcNode::publish_fsm_input(const RcChannels & channels)
 {
-  fsm_state_machine::msg::RcFsmInput msg;
+  msg::RcFsmInput msg;
   msg.land_switch = channels.valid && rc_get_land_trigger(channels, cfg_);
   msg.kill_switch = channels.valid && rc_get_kill_switch(channels, cfg_);
   fsm_input_pub_->publish(msg);
