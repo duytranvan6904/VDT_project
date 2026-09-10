@@ -401,8 +401,6 @@ colcon test-result --verbose
 ```
 
 Các phần chưa có:
-
-- Unit test Python cho servo, XRCE và diagnostics đã có; chạy theo hướng dẫn package/diagnostics.
 - Vector test SBUS đầy đủ, sample flight log hoặc CI build/lint.
 
 Chạy unit test Python:
