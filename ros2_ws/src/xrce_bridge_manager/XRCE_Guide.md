@@ -84,3 +84,12 @@ ros2 topic echo /fmu/out/vehicle_status
 Nếu `connected` cứ nhảy `False` liên tục dù Agent vẫn sống: khả năng cao sai `serial_port`, `baudrate` không khớp cấu hình `uxrce_dds_client`, hoặc `VehicleStatus` publish thưa hơn timeout. Kiểm tra bằng `param show UXRCE_DDS_*` qua QGroundControl/MAVLink console và tăng timeout phù hợp.
 
 Nếu Agent liên tục bị spawn lại (retry_count tăng đều dù dây cắm ổn định): kiểm tra `connection_timeout_sec` có đang đặt quá nhỏ so với tần số publish thật của `vehicle_status` (PX4 mặc định publish khá chậm, thường dưới 1Hz) — nên tăng lên ít nhất 3-5s để tránh false positive.
+
+## Unit test
+
+Test mock `pgrep` và `Popen`, không khởi chạy MicroXRCEAgent thật:
+
+```bash
+python3 -m pip install pytest
+python3 -m pytest ros2_ws/src/xrce_bridge_manager/test/test_xrce_logic.py
+```

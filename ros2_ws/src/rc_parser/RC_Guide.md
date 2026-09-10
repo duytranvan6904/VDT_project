@@ -102,3 +102,11 @@ Test timeout logic:
 cd ros2_ws
 colcon test --packages-select rc_parser --ctest-args -R rc_logic_test
 ```
+
+Chạy toàn bộ test package:
+
+```bash
+cd ros2_ws
+colcon test --packages-select rc_parser
+colcon test-result --verbose
+```

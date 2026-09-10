@@ -81,3 +81,15 @@ ros2 topic hz /hpad/pose
 Nếu một flag cứ đứng yên `true` dù publisher vẫn chạy: kiểm tra đúng tên topic node đó đang publish có khớp với tên node này đang subscribe không (`hpad/state_filtered`, `hpad/pose`, `alt_estimator/state`, `planner/velocity_setpoint`) — sai tên topic là nguyên nhân phổ biến nhất.
 
 Nếu `fsm_node`/`gimbal_node` vẫn báo hành vi như timeout dù `input_cache/timeout_flags` đang toàn `false`: kiểm tra `ekf_timeout_sec`/`alt_timeout_sec` ở đây có đang đặt nhỏ hơn `frame_timeout` tương ứng bên `fsm_node`/`gimbal_node`, gây timeout giả do lệch cấu hình giữa hai bên.
+
+## Test
+
+Package hiện chưa có test executable riêng. Có thể kiểm tra behavior bằng cách tắt từng publisher và quan sát:
+
+```bash
+ros2 topic echo /input_cache/timeout_flags
+ros2 topic hz /hpad/state_filtered
+ros2 topic hz /hpad/pose
+ros2 topic hz /alt_estimator/state
+ros2 topic hz /planner/velocity_setpoint
+```

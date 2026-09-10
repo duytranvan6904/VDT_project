@@ -485,6 +485,70 @@ File `current_params.json` là input tùy chọn và chưa có sẵn trong repos
 
 Các file trong `PX4_Control/templates` chưa phải patch hoàn chỉnh: chưa khóa phiên bản PX4, chưa có patch thực tế, chưa cập nhật đầy đủ header/parameter declaration và chưa có test chứng minh tham số hoạt động.
 
+## Chạy test
+
+Thực hiện trên Linux đã source ROS 2 và workspace:
+
+```bash
+cd ros2_ws
+source /opt/ros/<ros_distro>/setup.bash
+colcon build
+source install/setup.bash
+```
+
+### Unit test C++
+
+Các package có test logic độc lập:
+
+| Package | Nội dung |
+|---|---|
+| `fsm_state_machine` | force-land, effective RC, planner timeout và state transition |
+| `gimbal_control` | finite values, anti-windup và chia cho 0 |
+| `offboard_manager` | planner NaN/Inf và setpoint an toàn |
+| `offboard_safety_monitor` | battery invalid/freshness và force-land latch |
+| `rc_parser` | RC chưa nhận frame và frame stale |
+
+```bash
+colcon test --packages-select \
+     fsm_state_machine offboard_manager gimbal_control \
+     offboard_safety_monitor rc_parser
+colcon test-result --verbose
+```
+
+Chạy riêng một test:
+
+```bash
+colcon test --packages-select fsm_state_machine \
+     --ctest-args -R fsm_logic_test
+```
+
+### Unit test Python
+
+```bash
+python3 -m pip install pytest
+python3 -m pytest ros2_ws/src/servo_control/test/test_servo_logic.py
+python3 -m pytest ros2_ws/src/xrce_bridge_manager/test/test_xrce_logic.py
+python3 -m pip install -r landing_diagnostics/requirements.txt
+python3 -m pytest landing_diagnostics/test_metrics.py
+```
+
+### Integration và HIL
+
+Integration test safety monitor:
+
+```bash
+colcon test --packages-select offboard_safety_monitor \
+     --ctest-args -R safety_monitor_integration_test
+```
+
+HIL/SITL runtime validation:
+
+```bash
+ros2 run offboard_safety_monitor hil_validation.py --duration 5
+```
+
+Chỉ dùng `--skip-command-ack` trên bench khi chưa chạy startup Offboard thật.
+
 ## Kiểm thử và validation
 
 Hiện có thể kiểm tra thủ công bằng `ros2 topic pub`, `ros2 topic echo`, debug logs và SITL theo các guide của từng package. Đã có unit test C++ cho các logic thuần của FSM, Offboard, Gimbal, Safety và RC; chạy bằng:
@@ -497,16 +561,6 @@ colcon test-result --verbose
 
 Các phần chưa có:
 - Vector test SBUS đầy đủ, sample flight log hoặc CI build/lint.
-
-Chạy unit test Python:
-
-```bash
-python3 -m pip install pytest
-python3 -m pytest ros2_ws/src/servo_control/test/test_servo_logic.py
-python3 -m pytest ros2_ws/src/xrce_bridge_manager/test/test_xrce_logic.py
-python3 -m pip install -r landing_diagnostics/requirements.txt
-python3 -m pytest landing_diagnostics/test_metrics.py
-```
 
 Integration test của safety monitor đã có và chạy cùng `colcon test`. HIL runtime harness kiểm tra freshness, `OffboardStatus`, `VehicleCommandAck` accepted cho mode/arm và PX4 xác nhận Offboard trên PX4 SITL/HIL hoặc vehicle được cố định:
 

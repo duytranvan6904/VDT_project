@@ -45,3 +45,11 @@ ros2 run offboard_safety_monitor hil_validation.py --duration 5
 ```
 
 Mặc định harness yêu cầu ACK accepted cho chuyển mode/arm, `offboard/status` và `nav_state=OFFBOARD`. Dùng `--skip-command-ack` chỉ khi kiểm tra topic freshness trên bench chưa chạy Offboard manager.
+
+## Chạy toàn bộ test package
+
+```bash
+cd ros2_ws
+colcon test --packages-select offboard_safety_monitor
+colcon test-result --verbose
+```
