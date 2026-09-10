@@ -57,7 +57,8 @@ Các node tự lưu bản sao payload đầu vào của mình. `input_state_cach
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `ros2_ws/src/` | Chín ROS 2 packages của hệ thống bay |
+| `ros2_ws/src/` | Mười ROS 2 packages của hệ thống bay và bringup |
+| `ros2_ws/src/vdt_bringup/` | Launch orchestration và startup ordering |
 | `landing_diagnostics/` | Ghi log, tính metric và đề xuất tuning từ CSV |
 | `PX4_Control/` | Hướng dẫn và template patch cho PX4 |
 | `Embedded_Plan.md` | Kế hoạch thiết kế embedded tổng thể |
@@ -244,7 +245,7 @@ colcon build
 source install/setup.bash
 ```
 
-Hiện chưa có launch file, parameter YAML tập trung, CI hoặc bộ test tự động. Các bước engage/arm cần được kiểm thử với PX4 SITL trước khi dùng phần cứng.
+Đã có launch file `vdt_bringup`; vẫn chưa có parameter YAML tập trung hoặc CI. Launch file sắp xếp thứ tự khởi động, còn readiness thực tế được kiểm tra trong từng node. Các bước engage/arm cần được kiểm thử với PX4 SITL trước khi dùng phần cứng.
 
 ### Build diagnostics
 
@@ -259,7 +260,23 @@ pip install -r requirements.txt
 
 ## Chạy hệ thống
 
-Chưa có orchestration tự động; các node hiện phải chạy riêng:
+Khuyến nghị dùng launch orchestration:
+
+```bash
+source /opt/ros/<ros_distro>/setup.bash
+source ros2_ws/install/setup.bash
+ros2 launch vdt_bringup vdt_system.launch.py
+```
+
+Các tùy chọn bench:
+
+```bash
+ros2 launch vdt_bringup vdt_system.launch.py start_hardware:=false
+ros2 launch vdt_bringup vdt_system.launch.py start_servo:=true
+ros2 launch vdt_bringup vdt_system.launch.py debug:=true
+```
+
+Launch sequence là XRCE → input cache → RC/kill → safety → FSM/gimbal → Offboard → servo. Delay chỉ điều phối startup; readiness safety vẫn được kiểm tra trong node. Có thể chạy từng node riêng khi debug:
 
 ```bash
 source /opt/ros/<ros_distro>/setup.bash
@@ -364,7 +381,6 @@ Trước khi bay nên kiểm tra tối thiểu: FSM transitions, timeout startup
 
 - Đồng bộ tài liệu “4 state” với enum thực tế có 5 state, gồm `COMPLETE`.
 - Khóa phiên bản ROS 2, PX4 và `px4_msgs`.
-- Tạo patch PX4 có thể áp dụng và ghi rõ commit/version.
 - Đồng bộ thiết kế cache trung tâm với implementation thực tế.
 - Bổ sung bảng parameter tập trung và sơ đồ launch.
 

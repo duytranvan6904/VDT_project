@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>vdt_bringup</name>
+  <version>0.1.0</version>
+  <description>Launch orchestration and startup ordering for the VDT PX4 ROS 2 stack</description>
+  <maintainer email="mier@example.com">Mier</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>xrce_bridge_manager</exec_depend>
+  <exec_depend>input_state_cache</exec_depend>
+  <exec_depend>rc_parser</exec_depend>
+  <exec_depend>kill_switch</exec_depend>
+  <exec_depend>offboard_safety_monitor</exec_depend>
+  <exec_depend>fsm_state_machine</exec_depend>
+  <exec_depend>gimbal_control</exec_depend>
+  <exec_depend>offboard_manager</exec_depend>
+  <exec_depend>servo_control</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
