@@ -3,15 +3,17 @@
 <package format="3">
   <name>input_state_cache</name>
   <version>0.1.0</version>
-  <description>Theo doi do tuoi cua du lieu EKF/vision/alt/planner, publish timeout flags dung chung</description>
+  <description>Dong bo va dong goi snapshot trang thai cam bien EKF/vision/altimeter</description>
   <maintainer email="mier@example.com">Mier</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>nav_msgs</depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <depend>fsm_state_machine</depend>
+
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 

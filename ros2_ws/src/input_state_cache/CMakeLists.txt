@@ -15,13 +15,16 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(fsm_state_machine REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TimeoutFlags.msg"
+  "msg/InputSnapshot.msg"
 )
 
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 add_executable(input_cache_node
   src/main.cpp
   src/input_cache_node.cpp
@@ -30,7 +33,7 @@ add_executable(input_cache_node
 
 target_include_directories(input_cache_node PRIVATE include)
 target_link_libraries(input_cache_node "${cpp_typesupport_target}")
-ament_target_dependencies(input_cache_node rclcpp nav_msgs)
+ament_target_dependencies(input_cache_node rclcpp nav_msgs fsm_state_machine)
 
 install(TARGETS input_cache_node DESTINATION lib/${PROJECT_NAME})
 

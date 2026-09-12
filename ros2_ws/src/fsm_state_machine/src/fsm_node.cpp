@@ -11,28 +11,25 @@ FsmNode::FsmNode()
   land_entry_height_ = declare_parameter<float>("land_entry_height", 0.5f);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
 
-  ekf_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-    "hpad/state_filtered", 10, std::bind(&FsmNode::on_ekf, this, std::placeholders::_1));
-  vision_sub_ = create_subscription<msg::VisionMarker>(
-    "hpad/pose", 10, std::bind(&FsmNode::on_vision, this, std::placeholders::_1));
-  alt_sub_ = create_subscription<msg::AltEstimate>(
-    "alt_estimator/state", 10, std::bind(&FsmNode::on_alt, this, std::placeholders::_1));
+  snapshot_sub_ = create_subscription<input_state_cache::msg::InputSnapshot>(
+    "input_cache/snapshot", 10,
+    std::bind(&FsmNode::on_snapshot, this, std::placeholders::_1));
+
   rc_sub_ = create_subscription<rc_parser::msg::RcFsmInput>(
-    "rc/fsm_input", 10, std::bind(&FsmNode::on_rc, this, std::placeholders::_1));
+    "rc/fsm_input", 10,
+    std::bind(&FsmNode::on_rc, this, std::placeholders::_1));
+
   rclcpp::QoS killed_qos(1);
   killed_qos.transient_local();
   killed_sub_ = create_subscription<std_msgs::msg::Bool>(
     "system/killed", killed_qos,
-     std::bind(&FsmNode::on_killed, this, std::placeholders::_1));
-  timeout_sub_ = create_subscription<input_state_cache::msg::TimeoutFlags>(
-    "input_cache/timeout_flags", 10,
-    std::bind(&FsmNode::on_timeout_flags, this, std::placeholders::_1));
-
-  state_pub_ = create_publisher<std_msgs::msg::UInt8>("fsm/state", 10);
+    std::bind(&FsmNode::on_killed, this, std::placeholders::_1));
 
   force_land_sub_ = create_subscription<std_msgs::msg::Bool>(
-  "safety/force_land", 10,
-  std::bind(&FsmNode::on_force_land, this, std::placeholders::_1));
+    "safety/force_land", 10,
+    std::bind(&FsmNode::on_force_land, this, std::placeholders::_1));
+
+  state_pub_ = create_publisher<std_msgs::msg::UInt8>("fsm/state", 10);
 
   timer_ = create_wall_timer(
     std::chrono::milliseconds(100), std::bind(&FsmNode::update, this));
@@ -43,24 +40,9 @@ void FsmNode::on_killed(const std_msgs::msg::Bool::SharedPtr msg)
   killed_ = msg->data;
 }
 
-void FsmNode::on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg)
-{
-  ekf_state_ = *msg;
-}
-
-void FsmNode::on_vision(const msg::VisionMarker::SharedPtr msg)
-{
-  vision_state_ = *msg;
-}
-
 void FsmNode::on_force_land(const std_msgs::msg::Bool::SharedPtr msg)
 {
   force_land_requested_ = msg->data;
-}
-
-void FsmNode::on_alt(const msg::AltEstimate::SharedPtr msg)
-{
-  alt_state_ = *msg;
 }
 
 void FsmNode::on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg)
@@ -69,24 +51,23 @@ void FsmNode::on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg)
   rc_input_.kill_switch = msg->kill_switch;
 }
 
-void FsmNode::on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg)
+void FsmNode::on_snapshot(const input_state_cache::msg::InputSnapshot::SharedPtr msg)
 {
-  timeout_flags_.ekf_timeout = msg->ekf_timeout;
-  timeout_flags_.vision_timeout = msg->vision_timeout;
-  timeout_flags_.planner_timeout = msg->planner_timeout;
+  latest_snapshot_ = *msg;
+  has_snapshot_ = true;
+  last_snapshot_time_ = this->now().seconds();
 }
 
 SensorInput FsmNode::build_sensor_input() const
 {
   SensorInput s;
-  s.marker_detected = vision_state_.marker_visible;
-  s.align_error = vision_state_.pixel_align_error;
-  s.altitude = alt_state_.altitude;
-  s.delta_h = static_cast<float>(ekf_state_.pose.pose.position.z) - alt_state_.altitude;
-  s.d_horiz = std::hypot(
-    ekf_state_.pose.pose.position.x, ekf_state_.pose.pose.position.y);
-  s.touchdown = alt_state_.touchdown_flag;
-  s.valid = true;
+  s.marker_detected = latest_snapshot_.marker_detected;
+  s.align_error = latest_snapshot_.align_error;
+  s.altitude = latest_snapshot_.altitude;
+  s.delta_h = latest_snapshot_.delta_h;
+  s.d_horiz = latest_snapshot_.d_horiz;
+  s.touchdown = latest_snapshot_.touchdown;
+  s.valid = latest_snapshot_.valid;
   return s;
 }
 
@@ -114,23 +95,31 @@ void FsmNode::update()
   if (killed_) {
     return;
   }
-  
+
   const double now_sec = this->now().seconds();
   const float dt = last_update_time_ > 0.0 ?
     static_cast<float>(now_sec - last_update_time_) : 0.0f;
   last_update_time_ = now_sec;
 
-  const SensorInput s = sensor_validate(build_sensor_input(), timeout_flags_);
+  const bool snapshot_timeout = (!has_snapshot_) || ((now_sec - last_snapshot_time_) > 0.2);
+
+  SensorInput s = build_sensor_input();
+  if (snapshot_timeout) {
+    s.valid = false;
+    s.marker_detected = false;
+  }
 
   counters_update_marker_stable(ctx_.counters, s.marker_detected);
   counters_update_marker_lost(ctx_.counters, s.marker_detected, dt);
 
   const RcInput effective_rc = effective_rc_input(rc_input_, force_land_requested_);
 
+  const bool planner_timeout = snapshot_timeout || latest_snapshot_.planner_timeout;
+
   std::optional<State> next_state;
   next_state = force_land_transition(ctx_.state, force_land_requested_);
   if (!next_state) {
-    next_state = planner_timeout_transition(ctx_.state, timeout_flags_.planner_timeout);
+    next_state = planner_timeout_transition(ctx_.state, planner_timeout);
   }
   if (!next_state) {
     next_state = evaluate_transition(
@@ -164,4 +153,4 @@ void FsmNode::update()
   log_debug(s, effective_rc);
 }
 
-}  // namespace fsm_state_machine
+}

@@ -30,30 +30,18 @@ PX4 / Vision / Altimeter / Planner / RC
                   v
           ROS 2 qua Micro XRCE-DDS
                   |
-       +----------+-----------+
-       |                      |
-       v                      v
-input_state_cache       FSM + Gimbal
-       |                      |
-       +----------+-----------+
                   v
-          Offboard manager
+          input_state_cache (State Aggregator & Watchdog)
                   |
-                  v
-             PX4 /fmu/in/*
-
-PX4 status + battery + local position + offboard status
-                  |
-                  v
-        offboard_safety_monitor
-          |                  |
-          v                  v
-   safety/inhibit       safety/force_land
+                  ├──────(input_cache/snapshot)──────► FSM + Gimbal
+                  │                                          │
+                  ▼                                          ▼
+       offboard_safety_monitor ──────────────► Offboard manager
+                  |                                          |
+                  v                                          v
+          safety/inhibit + safety/force_land            PX4 /fmu/in/*
 
 RC SBUS -> rc_parser -> kill_switch -> force disarm + system/killed
-```
-
-Các node tự lưu bản sao payload đầu vào của mình. `input_state_cache` chỉ lưu thời điểm nhận message và phát cờ timeout, không phải bộ nhớ payload trung tâm.
 
 ## Cấu trúc repository
 
@@ -144,7 +132,8 @@ SEARCH -> FOLLOW -> APPROACH -> LAND -> COMPLETE
 ```
 
 - Timer 10 Hz.
-- Nhận odometry, marker vision, altitude, RC, timeout flags và yêu cầu force-land.
+- Nhận `InputSnapshot` (từ `input_cache/snapshot`), RC (`rc/fsm_input`), yêu cầu `safety/force_land` và cờ ngắt `system/killed`.
+- Tích hợp Watchdog: Tự động kích hoạt an toàn nếu mất kết nối với `input_state_cache` quá 200 ms.
 - Phát state, mode planner, yaw rate, descent rate, gimbal request và disarm request.
 - `SEARCH -> FOLLOW` sau 10 chu kỳ marker ổn định.
 - Mất marker đưa `FOLLOW -> SEARCH` sau 5 giây và `APPROACH -> FOLLOW` sau 3 giây.
@@ -240,35 +229,30 @@ MicroXRCEAgent serial --dev <serial_port> -b <baudrate>
 Mặc định dùng `/dev/ttyAMA0`, `921600 baud`, timeout kết nối `2.0 s`. Trạng thái connected yêu cầu Agent còn sống và `/fmu/out/vehicle_status` còn fresh; process chết hoặc status stale đều kích hoạt reconnect. Xem [XRCE_Guide.md](ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md).
 
 ## Messages
-
 | Package | Message | Trường |
 |---|---|---|
+| `input_state_cache` | `InputSnapshot` | `valid`, `marker_detected`, `align_error`, `altitude`, `delta_h`, `d_horiz`, `touchdown`, `planner_timeout` |
+| `input_state_cache` | `TimeoutFlags` | `ekf_timeout`, `vision_timeout`, `alt_timeout`, `planner_timeout` |
 | `fsm_state_machine` | `VisionMarker` | `marker_visible`, `pixel_align_error` |
 | `fsm_state_machine` | `AltEstimate` | `altitude`, `touchdown_flag` |
 | `rc_parser` | `RcFsmInput` | `land_switch`, `kill_switch` |
-| `input_state_cache` | `TimeoutFlags` | `ekf_timeout`, `vision_timeout`, `alt_timeout`, `planner_timeout` |
 | `rc_parser` | `RcChannelsRaw` | `int16[16] ch`, `valid`, `failsafe` |
 | `offboard_manager` | `PlannerOutput` | `vx`, `vy`, `vz`, `yaw` |
 | `offboard_manager` | `OffboardStatus` | `offboard_active`, `heartbeat_age_sec` |
-
 Repository hiện không định nghĩa service hoặc action interface.
 
 ## Topics chính
 
 ### Input của FSM
-
 | Topic | Type |
 |---|---|
-| `hpad/state_filtered` | `nav_msgs/msg/Odometry` |
-| `hpad/pose` | `fsm_state_machine/msg/VisionMarker` |
-| `alt_estimator/state` | `fsm_state_machine/msg/AltEstimate` |
-| `rc/fsm_input` | `fsm_state_machine/msg/RcFsmInput` |
-| `input_cache/timeout_flags` | `fsm_state_machine/msg/TimeoutFlags` |
+| `input_cache/snapshot` | `input_state_cache/msg/InputSnapshot` |
+| `rc/fsm_input` | `rc_parser/msg/RcFsmInput` |
 | `safety/force_land` | `std_msgs/msg/Bool` |
+| `system/killed` | `std_msgs/msg/Bool` |
 
 ### Output nội bộ
-
-`fsm/state`, `cmd/yaw_rate`, `gimbal/state_request`, `planner/mode`, `planner/apf_gain`, `gimbal/align_error_cmd`, `cmd/vertical_descent_rate`, `cmd/disarm_request`, `gimbal/target_angle_deg`, `rc/fsm_input`, `rc/channels_raw`, `offboard/status`, `safety/inhibit_offboard`, `safety/force_land`, `system/killed`.
+`input_cache/snapshot`, `input_cache/timeout_flags`, `fsm/state`, `cmd/yaw_rate`, `gimbal/state_request`, `planner/mode`, `planner/apf_gain`, `gimbal/align_error_cmd`, `cmd/vertical_descent_rate`, `cmd/disarm_request`, `gimbal/target_angle_deg`, `rc/fsm_input`, `rc/channels_raw`, `offboard/status`, `safety/inhibit_offboard`, `safety/force_land`, `system/killed`.
 
 ### Giao tiếp PX4
 
@@ -281,12 +265,8 @@ Tên topic và message PX4 còn phụ thuộc phiên bản `px4_msgs`, firmware 
 
 1. `xrce_bridge_manager` kết nối ROS 2 với PX4 qua Micro XRCE-DDS.
 2. Vision, estimator, planner và RC đưa dữ liệu vào ROS 2.
-3. `input_state_cache` phát các cờ timeout khi nguồn dữ liệu không còn mới.
-4. FSM quyết định phase bay và phát lệnh cho planner, gimbal và Offboard manager.
-5. Gimbal tính góc camera; `servo_control` biến góc điều khiển thành góc servo vật lý.
-6. Offboard manager phát heartbeat và velocity setpoint đến PX4.
-7. Safety monitor có thể yêu cầu HOLD, RTL, force-land hoặc inhibit Offboard.
-8. Kill switch hoạt động độc lập để force disarm.
+3. `input_state_cache` tập hợp dữ liệu cảm biến, tính toán hình học tương đối, kiểm tra độ tươi và phát `InputSnapshot` đồng bộ.
+4. FSM nhận `InputSnapshot` trạng thái, cập nhật bộ đếm và phát lệnh cho planner, gimbal và Offboard manager.
 
 ## Cài đặt và build
 
@@ -366,6 +346,7 @@ Một số lệnh kiểm tra thủ công hữu ích:
 
 ```bash
 ros2 topic list
+ros2 topic echo /input_cache/snapshot
 ros2 topic echo /fmu/out/vehicle_status
 ros2 topic echo /fmu/out/battery_status
 ros2 topic echo offboard/status

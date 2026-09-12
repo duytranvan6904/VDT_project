@@ -1,14 +1,11 @@
 #pragma once
 #include <rclcpp/rclcpp.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <std_msgs/msg/u_int8.hpp>
 #include <std_msgs/msg/bool.hpp>
-#include "fsm_state_machine/fsm_actions.hpp"
+#include <std_msgs/msg/u_int8.hpp>
 #include "fsm_state_machine/fsm_types.hpp"
-#include "fsm_state_machine/msg/alt_estimate.hpp"
+#include "fsm_state_machine/fsm_actions.hpp"
+#include "input_state_cache/msg/input_snapshot.hpp"
 #include "rc_parser/msg/rc_fsm_input.hpp"
-#include "input_state_cache/msg/timeout_flags.hpp"
-#include "fsm_state_machine/msg/vision_marker.hpp"
 
 namespace fsm_state_machine
 {
@@ -19,44 +16,36 @@ public:
   FsmNode();
 
 private:
-  void on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void on_vision(const msg::VisionMarker::SharedPtr msg);
-  void on_alt(const msg::AltEstimate::SharedPtr msg);
+  void on_snapshot(const input_state_cache::msg::InputSnapshot::SharedPtr msg);
   void on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg);
-  void on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg);
+  void on_killed(const std_msgs::msg::Bool::SharedPtr msg);
+  void on_force_land(const std_msgs::msg::Bool::SharedPtr msg);
 
   void update();
   SensorInput build_sensor_input() const;
   void publish_state();
   void log_debug(const SensorInput & s, const RcInput & rc) const;
-  void on_force_land(const std_msgs::msg::Bool::SharedPtr msg);
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr force_land_sub_;
-  bool force_land_requested_ = false;
 
-  void on_killed(const std_msgs::msg::Bool::SharedPtr msg);
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr killed_sub_;
-  bool killed_ = false;
-
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_sub_;
-  rclcpp::Subscription<msg::VisionMarker>::SharedPtr vision_sub_;
-  rclcpp::Subscription<msg::AltEstimate>::SharedPtr alt_sub_;
+  rclcpp::Subscription<input_state_cache::msg::InputSnapshot>::SharedPtr snapshot_sub_;
   rclcpp::Subscription<rc_parser::msg::RcFsmInput>::SharedPtr rc_sub_;
-  rclcpp::Subscription<msg::TimeoutFlags>::SharedPtr timeout_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr killed_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr force_land_sub_;
+
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr state_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   FsmActuators actuators_;
   FsmContext ctx_;
-
-  nav_msgs::msg::Odometry ekf_state_;
-  msg::VisionMarker vision_state_;
-  msg::AltEstimate alt_state_;
   RcInput rc_input_;
-  TimeoutFlags timeout_flags_;
+  input_state_cache::msg::InputSnapshot latest_snapshot_;
 
-  float land_entry_height_;
-  double last_update_time_;
-  bool debug_enabled_;
+  bool has_snapshot_ = false;
+  double last_snapshot_time_ = -1.0;
+  bool killed_ = false;
+  bool force_land_requested_ = false;
+  float land_entry_height_ = 0.5f;
+  double last_update_time_ = -1.0;
+  bool debug_enabled_ = false;
 };
 
-}  // namespace fsm_state_machine
+}
