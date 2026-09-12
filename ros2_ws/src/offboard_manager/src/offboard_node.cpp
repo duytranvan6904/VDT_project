@@ -157,7 +157,7 @@ void OffboardNode::send_heartbeat()
 {
   px4_msgs::msg::OffboardControlMode mode_msg;
   mode_msg.timestamp = this->get_clock()->now().nanoseconds() / 1000;
-  mode_msg.position = true;
+  mode_msg.position = false;
   mode_msg.velocity = true;
   control_mode_pub_->publish(mode_msg);
   ctx_.last_heartbeat_time = this->now().seconds();
