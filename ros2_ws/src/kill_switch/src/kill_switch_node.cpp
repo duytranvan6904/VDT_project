@@ -47,7 +47,12 @@ void KillSwitchNode::on_rc_channels(const rc_parser::msg::RcChannelsRaw::SharedP
 
 void KillSwitchNode::update()
 {
-  if (!has_channels_ || ctx_.triggered) {
+  if (!has_channels_) {
+    return;
+  }
+
+  if (ctx_.triggered) {
+    publish_disarm_command();
     return;
   }
 

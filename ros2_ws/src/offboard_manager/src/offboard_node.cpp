@@ -132,6 +132,7 @@ void OffboardNode::reset_engage_sequence()
   ctx_.engage_counter = 0;
   engage_phase_ = EngagePhase::WAIT_SETPOINT_STREAM;
   phase_cycle_count_ = 0;
+  arm_command_sent_ = false;
 }
 
 bool OffboardNode::is_vehicle_status_fresh() const
@@ -231,14 +232,24 @@ void OffboardNode::engage_request()
       break;
 
     case EngagePhase::WAIT_HEALTH_CONFIRM:
-      if (is_px4_ready()) {
-        publish_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0f);
-        ctx_.offboard_active = true;
-        ctx_.armed = true;
-      } else if (phase_cycle_count_ >= health_confirm_timeout_cycles_) {
-        reset_engage_sequence();
+      if (!arm_command_sent_) {
+        if (is_px4_ready()) {
+          publish_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0f);
+          arm_command_sent_ = true;
+          phase_cycle_count_ = 0;
+        } else if (phase_cycle_count_ >= health_confirm_timeout_cycles_) {
+          reset_engage_sequence();
+        }
+      } else {
+        if (is_vehicle_status_fresh() &&
+          vehicle_status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED) {
+          ctx_.offboard_active = true;
+          ctx_.armed = true;
+        } else if (phase_cycle_count_ >= health_confirm_timeout_cycles_) {
+          reset_engage_sequence();
+        }
       }
-      break;
+    break;
   }
 }
 

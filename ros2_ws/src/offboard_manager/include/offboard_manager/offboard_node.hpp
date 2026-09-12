@@ -73,6 +73,7 @@ private:
 
   EngagePhase engage_phase_ = EngagePhase::WAIT_SETPOINT_STREAM;
   int phase_cycle_count_ = 0;
+  bool arm_command_sent_ = false;
 
   int required_engage_cycles_;
   int mode_confirm_timeout_cycles_;
