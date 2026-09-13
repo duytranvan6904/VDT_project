@@ -32,7 +32,8 @@ class TestArUcoDetector(unittest.TestCase):
             dictionary_name=self.dict_name,
             marker_size_meters=self.marker_size,
             camera_matrix=self.camera_matrix,
-            dist_coeffs=self.dist_coeffs
+            dist_coeffs=self.dist_coeffs,
+            target_marker_ids=None
         )
 
     def test_synthetic_aruco_detection_and_pnp(self):

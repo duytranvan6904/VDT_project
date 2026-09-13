@@ -13,10 +13,11 @@ except ImportError:
 
 class RealSenseCamera:
     """
-    Intel RealSense RGB-D / depth-only camera manager.
-    Uses color when available, otherwise uses the left infrared stream (IR1)
-    together with depth. The returned image is always BGR so existing ArUco
-    and tracking code can be reused unchanged.
+    Intel RealSense D430 Depth Module manager.
+    Defaults to RealSense D430: Left Infrared (IR1) + Depth.
+    The returned image is always BGR (IR1 converted to 3-channel BGR) so existing ArUco
+    and tracking code can be reused unchanged without requiring an RGB sensor.
+    Supports live hardware streaming, raw .bag recording, and .bag playback.
     """
     def __init__(
         self, 
@@ -25,7 +26,11 @@ class RealSenseCamera:
         fps: int = 30,
         enable_depth: bool = True,
         infrared_preprocess: bool = True,
-        disable_ir_emitter: bool = False
+        disable_ir_emitter: bool = False,
+        prefer_infrared: bool = True,
+        record_to_file: Optional[str] = None,
+        playback_bag_file: Optional[str] = None,
+        repeat_playback: bool = True
     ):
         self.width = width
         self.height = height
@@ -33,18 +38,24 @@ class RealSenseCamera:
         self.enable_depth = enable_depth
         self.infrared_preprocess = infrared_preprocess
         self.disable_ir_emitter = disable_ir_emitter
+        self.prefer_infrared = prefer_infrared
+        self.record_to_file = record_to_file
+        self.playback_bag_file = playback_bag_file
+        self.repeat_playback = repeat_playback
         
         self.pipeline = None
         self.config = None
         self.align = None
         self.profile = None
+        self.playback_dev = None
         
         self.camera_matrix: Optional[np.ndarray] = None
         self.dist_coeffs: Optional[np.ndarray] = None
         self.is_rs_active = False
+        self.is_playback = False
         self.device_name: Optional[str] = None
         self.device_serial: Optional[str] = None
-        self.frame_source = "none"  # "color", "infrared", "opencv", or "synthetic"
+        self.frame_source = "none"  # "infrared", "color", "opencv", or "synthetic"
         self.depth_scale_m = 0.001
         
         # Fallback VideoCapture if pyrealsense2 is unavailable or device missing
@@ -52,15 +63,104 @@ class RealSenseCamera:
 
     def start(self) -> bool:
         """
-        Start camera stream. Attempts pyrealsense2 hardware connection first.
-        Falls back to cv2.VideoCapture(0) if hardware pipeline fails.
+        Start camera stream.
+        1. If playback_bag_file is set, plays back recorded .bag data.
+        2. Otherwise, attempts pyrealsense2 hardware connection (RealSense D430: IR1 + Depth).
+           If record_to_file is set, records raw stream into .bag file.
+        3. Falls back to cv2.VideoCapture(0) or synthetic stream if hardware pipeline fails.
         """
+        # ----------------------------------------------------
+        # Mode A: Playback from recorded .bag file
+        # ----------------------------------------------------
+        if self.playback_bag_file:
+            if not PYREALSENSE2_AVAILABLE:
+                print("[RealSenseCamera] ERROR: pyrealsense2 is required to playback .bag files.")
+                return False
+            import os
+            if not os.path.exists(self.playback_bag_file):
+                print(f"[RealSenseCamera] ERROR: Playback bag file not found: {self.playback_bag_file}")
+                return False
+            try:
+                self.pipeline = rs.pipeline()
+                self.config = rs.config()
+                print(f"[RealSenseCamera] Configuring playback from bag: {self.playback_bag_file} (repeat={self.repeat_playback})")
+                self.config.enable_device_from_file(self.playback_bag_file, repeat_playback=self.repeat_playback)
+                self.profile = self.pipeline.start(self.config)
+                device = self.profile.get_device()
+                self.playback_dev = device.as_playback()
+                self.device_name = f"Playback ({os.path.basename(self.playback_bag_file)})"
+                self.device_serial = "BAG_PLAYBACK"
+                self.is_playback = True
+
+                # Discover streams inside the bag file
+                bag_streams = self.profile.get_streams()
+                infrared_profiles = []
+                color_profiles = []
+                for st in bag_streams:
+                    try:
+                        v = st.as_video_stream_profile()
+                        if v.stream_type() == rs.stream.infrared:
+                            infrared_profiles.append(v)
+                        elif v.stream_type() == rs.stream.color:
+                            color_profiles.append(v)
+                    except RuntimeError:
+                        continue
+
+                # Prioritize IR1 for D430; fallback to color if only color present
+                if infrared_profiles:
+                    self.frame_source = "infrared"
+                    image_stream = rs.stream.infrared
+                    image_stream_profile = self.profile.get_stream(rs.stream.infrared, 1).as_video_stream_profile()
+                elif color_profiles:
+                    self.frame_source = "color"
+                    image_stream = rs.stream.color
+                    image_stream_profile = self.profile.get_stream(rs.stream.color).as_video_stream_profile()
+                else:
+                    raise RuntimeError("Bag file contains neither infrared nor color streams.")
+
+                self.width = image_stream_profile.width()
+                self.height = image_stream_profile.height()
+                self.fps = image_stream_profile.fps()
+
+                if self.enable_depth:
+                    try:
+                        self.align = rs.align(image_stream)
+                        depth_sensor = device.first_depth_sensor()
+                        self.depth_scale_m = float(depth_sensor.get_depth_scale())
+                    except Exception:
+                        self.depth_scale_m = 0.001
+
+                intrinsics = image_stream_profile.get_intrinsics()
+                self.camera_matrix = np.array([
+                    [intrinsics.fx, 0, intrinsics.ppx],
+                    [0, intrinsics.fy, intrinsics.ppy],
+                    [0, 0, 1]
+                ], dtype=np.float64)
+                self.dist_coeffs = np.array(intrinsics.coeffs, dtype=np.float64)
+                self.is_rs_active = True
+                print(f"[RealSenseCamera] Bag playback active: {self.frame_source} ({self.width}x{self.height}@{self.fps}FPS).")
+                print(f"[RealSenseCamera] Intrinsics: fx={intrinsics.fx:.2f}, fy={intrinsics.fy:.2f}, cx={intrinsics.ppx:.2f}, cy={intrinsics.ppy:.2f}")
+                return True
+            except Exception as e:
+                print(f"[RealSenseCamera] Bag playback initialization failed: {e}")
+                self.is_rs_active = False
+                if self.pipeline:
+                    try:
+                        self.pipeline.stop()
+                    except Exception:
+                        pass
+                    self.pipeline = None
+                return False
+
+        # ----------------------------------------------------
+        # Mode B: Live RealSense Hardware (Default D430)
+        # ----------------------------------------------------
         if PYREALSENSE2_AVAILABLE:
             try:
-                # Prefer RGB, but allow a depth-only module to use its IR image.
                 device = rs.context().query_devices()[0]
                 self.device_name = device.get_info(rs.camera_info.name)
                 self.device_serial = device.get_info(rs.camera_info.serial_number)
+                
                 color_profiles = []
                 infrared_profiles = []
                 for sensor in device.query_sensors():
@@ -73,7 +173,18 @@ class RealSenseCamera:
                                 infrared_profiles.append(profile)
                         except RuntimeError:
                             continue
-                if color_profiles:
+
+                # D430 DEFAULT POLICY: Prioritize Infrared Stream 1 (IR1).
+                # D430 has no RGB sensor. If infrared is present, use IR1.
+                if self.prefer_infrared and infrared_profiles:
+                    self.frame_source = "infrared"
+                    image_stream = rs.stream.infrared
+                    image_format = rs.format.y8
+                    print(
+                        f"[RealSenseCamera] Using RealSense D430 configuration: "
+                        f"Infrared Stream 1 ({self.device_name}, S/N {self.device_serial})."
+                    )
+                elif color_profiles:
                     self.frame_source = "color"
                     image_stream = rs.stream.color
                     image_format = rs.format.bgr8
@@ -81,21 +192,25 @@ class RealSenseCamera:
                     self.frame_source = "infrared"
                     image_stream = rs.stream.infrared
                     image_format = rs.format.y8
-                    print(
-                        f"[RealSenseCamera] {self.device_name} has no color sensor; "
-                        "using infrared stream 1 for ArUco/PnP."
-                    )
                 else:
                     raise RuntimeError(
-                        f"SDK device '{self.device_name}' (S/N {self.device_serial}) "
-                        "does not expose color or infrared video streams."
+                        f"Device '{self.device_name}' (S/N {self.device_serial}) "
+                        "does not expose infrared or color video streams."
                     )
 
                 self.pipeline = rs.pipeline()
                 self.config = rs.config()
                 
-                # Enable color or IR image stream. IR1 is the left stereo image
-                # and is the correct image plane for depth alignment/PnP.
+                # If record_to_file is requested, write uncompressed raw stream to .bag
+                if self.record_to_file:
+                    import os
+                    record_dir = os.path.dirname(self.record_to_file)
+                    if record_dir:
+                        os.makedirs(record_dir, exist_ok=True)
+                    print(f"[RealSenseCamera] Recording uncompressed raw stream to: {self.record_to_file}")
+                    self.config.enable_record_to_file(self.record_to_file)
+
+                # Enable primary stream (IR1 for D430)
                 if self.frame_source == "infrared":
                     self.config.enable_stream(
                         rs.stream.infrared, 1,
@@ -107,7 +222,7 @@ class RealSenseCamera:
                         image_format, self.fps
                     )
                 
-                # Enable Depth stream if requested
+                # Enable Depth stream
                 if self.enable_depth:
                     self.config.enable_stream(
                         rs.stream.depth, 
@@ -116,7 +231,7 @@ class RealSenseCamera:
                         rs.format.z16, 
                         self.fps
                     )
-                    # Align depth to the actual image plane (RGB or IR).
+                    # Align depth to the active image plane (IR1 for D430)
                     self.align = rs.align(image_stream)
                 
                 # Start pipeline
@@ -152,7 +267,7 @@ class RealSenseCamera:
                 
                 self.dist_coeffs = np.array(intrinsics.coeffs, dtype=np.float64)
                 self.is_rs_active = True
-                print(f"[RealSenseCamera] Hardware RealSense {self.device_name} started successfully using {self.frame_source} ({self.width}x{self.height}@{self.fps}FPS).")
+                print(f"[RealSenseCamera] Hardware RealSense D430 {self.device_name} started successfully using {self.frame_source} ({self.width}x{self.height}@{self.fps}FPS).")
                 print(f"[RealSenseCamera] SDK Intrinsics ({self.frame_source}): fx={intrinsics.fx:.2f}, fy={intrinsics.fy:.2f}, cx={intrinsics.ppx:.2f}, cy={intrinsics.ppy:.2f}")
                 return True
             except Exception as e:
@@ -240,7 +355,10 @@ class RealSenseCamera:
                     
                 return True, color_image, depth_frame, depth_image_vis
             except Exception as e:
-                print(f"[RealSenseCamera] Frame capture error: {e}")
+                if self.is_playback and not self.repeat_playback:
+                    print("[RealSenseCamera] End of bag recording reached (EOF).")
+                else:
+                    print(f"[RealSenseCamera] Frame capture error: {e}")
                 return False, np.array([]), None, None
             
         elif self.cap and self.cap.isOpened():
@@ -298,7 +416,12 @@ class RealSenseCamera:
         if self.is_rs_active and self.pipeline:
             try:
                 self.pipeline.stop()
-                print("[RealSenseCamera] RealSense pipeline stopped.")
+                if self.record_to_file:
+                    print(f"[RealSenseCamera] Recorded data saved cleanly to: {self.record_to_file}")
+                elif self.playback_bag_file:
+                    print(f"[RealSenseCamera] Playback from {self.playback_bag_file} stopped.")
+                else:
+                    print("[RealSenseCamera] RealSense pipeline stopped.")
             except Exception:
                 pass
         if self.cap and self.cap.isOpened():

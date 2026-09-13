@@ -39,7 +39,7 @@ def parse_marker_sizes_arg(arg_str: str, default_size: float):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="RealSense D435 ArUco Detection, PnP Pose Estimation & Depth Masking"
+        description="RealSense D430 ArUco Detection, PnP Pose Estimation & Depth Masking"
     )
     parser.add_argument(
         "--marker-size",
@@ -69,7 +69,7 @@ def parse_args():
         "--margin-percent",
         type=float,
         default=0.15,
-        help="Depth Mask expansion margin (default: 0.15 = 15%)"
+        help="Depth Mask expansion margin (default: 0.15 = 15%%)"
     )
     parser.add_argument(
         "--width",
@@ -90,6 +90,23 @@ def parse_args():
         help="Camera FPS (default: 30)"
     )
     parser.add_argument(
+        "--bag",
+        type=str,
+        default="",
+        help="Path to .bag file to playback recorded RealSense D430 data"
+    )
+    parser.add_argument(
+        "--record-bag",
+        type=str,
+        default="",
+        help="Path to .bag file to record live RealSense D430 data to"
+    )
+    parser.add_argument(
+        "--no-repeat-bag",
+        action="store_true",
+        help="Stop after reaching the end of .bag playback instead of looping"
+    )
+    parser.add_argument(
         "--no-display",
         action="store_true",
         help="Run in headless mode without GUI window"
@@ -103,7 +120,7 @@ def main():
     marker_sizes = parse_marker_sizes_arg(args.marker_sizes, args.marker_size)
 
     print("==========================================================")
-    print(" Quadrotor H-Pad Vision Pipeline - Task Vision Lead (Duy)")
+    print(" Quadrotor H-Pad Vision Pipeline - RealSense D430")
     print(" ArUco Detection, PnP Estimation & Depth Masking (N3)")
     print("==========================================================")
     print(f" Default Size  : {args.marker_size * 100:.1f} cm ({args.marker_size} m)")
@@ -112,14 +129,22 @@ def main():
     print(f" Target ID     : {args.target_id}")
     print(f" Mask Margin   : {args.margin_percent * 100:.0f}% expansion")
     print(f" Stream Spec   : {args.width}x{args.height} @ {args.fps} FPS")
+    if args.bag:
+        print(f" Bag Playback  : {args.bag} (loop={not args.no_repeat_bag})")
+    if args.record_bag:
+        print(f" Bag Recording : {args.record_bag}")
     print("==========================================================")
 
-    # 1. Initialize RealSense Camera
+    # 1. Initialize RealSense Camera (Default D430: IR1 + Depth)
     camera = RealSenseCamera(
         width=args.width,
         height=args.height,
         fps=args.fps,
-        enable_depth=True
+        enable_depth=True,
+        prefer_infrared=True,
+        record_to_file=args.record_bag if args.record_bag else None,
+        playback_bag_file=args.bag if args.bag else None,
+        repeat_playback=not args.no_repeat_bag
     )
 
     if not camera.start():
@@ -154,6 +179,9 @@ def main():
             ret, color_img, depth_frame, depth_vis = camera.get_frame()
 
             if not ret or color_img is None or color_img.size == 0:
+                if camera.is_playback and not camera.repeat_playback:
+                    print("[INFO] Reached end of bag playback.")
+                    break
                 time.sleep(0.01)
                 continue
 
@@ -196,7 +224,8 @@ def main():
             )
 
             # Overlay HUD Header
-            status_text = f"FPS: {fps:.1f} | Detected: {len(results)} markers | Dict: {args.dict}"
+            source_tag = f"[{camera.frame_source.upper()}]"
+            status_text = f"{source_tag} FPS: {fps:.1f} | Detected: {len(results)} | Dict: {args.dict}"
             cv2.rectangle(annotated_frame, (10, 10), (450, 40), (0, 0, 0), -1)
             cv2.putText(annotated_frame, status_text, (15, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
@@ -209,10 +238,10 @@ def main():
 
             # Display windows (unless running headless)
             if not args.no_display:
-                cv2.imshow("RealSense D435 - ArUco PnP Pose Estimation", annotated_frame)
+                cv2.imshow("RealSense D430 - ArUco PnP Pose Estimation", annotated_frame)
 
                 if depth_masked_vis is not None:
-                    cv2.imshow("RealSense D435 - Masked Depth Stream (Task N3)", depth_masked_vis)
+                    cv2.imshow("RealSense D430 - Masked Depth Stream (Task N3)", depth_masked_vis)
 
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q') or key == 27:
