@@ -2,7 +2,7 @@
  Hệ thống bám mục tiêu động thời gian thực và tránh vật cản tự động cho Quadrotors sử dụng ROS 2, PX4 Autopilot, YOLO + ByteTrack, EKF và Modified APF.
 # APF Planner for 1 Quadrotor
 
-Hàm `APF_Planner` sử dụng phương pháp **Artificial Potential Field (APF)** để tạo lệnh vận tốc cho UAV 3D, dựa trên vị trí hiện tại, vị trí đích và vị trí các vật cản.
+Hàm `APFplanner_1_Obstacle` sử dụng phương pháp **Artificial Potential Field (APF)** để tạo lệnh vận tốc cho UAV 2D, dựa trên vị trí hiện tại, vị trí đích và vị trí các vật cản.
 
 ## Cú pháp
 
