@@ -14,8 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .target_state_ekf import TargetStateEKF
-from .target_state_ct_ekf import CoordinatedTurnEKF
-from .target_state_imm import TargetStateIMM
 from .target_state_simulation import (
     SimulationConfig,
     calculate_metrics,
@@ -88,7 +86,7 @@ def _dropout_blocks(timestamps: np.ndarray, detected: np.ndarray) -> list[tuple[
 def main() -> None:
     parser = argparse.ArgumentParser(description="Verify the hardware-independent target-state EKF")
     parser.add_argument("--trajectory", choices=("all", "straight", "circle", "figure8", "zigzag", "stop_go"), default="all")
-    parser.add_argument("--model", choices=("cv", "ct", "imm", "all"), default="all", help="model to run (default: all three)")
+    parser.add_argument("--model", choices=("cv",), default="cv", help="model to run (only CV EKF is supported)")
     parser.add_argument("--output-dir", default="simulation_results/target_state_comparison")
     parser.add_argument("--seed", type=int, default=None, help="optional seed; omit for new random trajectories each run")
     random_group = parser.add_mutually_exclusive_group()
@@ -102,7 +100,7 @@ def main() -> None:
     scenarios = list(iter_default_scenarios(randomize=args.random_trajectories, seed=args.seed))
     if args.trajectory != "all":
         scenarios = [(name, config) for name, config in scenarios if name == args.trajectory]
-    model_names = ("cv", "ct", "imm") if args.model == "all" else (args.model,)
+    model_names = (args.model,)
     report = {model_name: {} for model_name in model_names}
     measurement_covariance = np.diag((0.10, 0.10, 0.08)) ** 2
     for name, config in scenarios:
@@ -110,12 +108,7 @@ def main() -> None:
         # that exact data to every model so no method gets a different draw.
         data = simulate_measurements(name, config)
         for model_name in model_names:
-            if model_name == "ct":
-                estimator = CoordinatedTurnEKF(acceleration_variance=(0.8, 0.8, 0.4), turn_rate_variance=0.08)
-            elif model_name == "imm":
-                estimator = TargetStateIMM()
-            else:
-                estimator = TargetStateEKF(process_accel_variance=(1.0, 1.0, 0.5))
+            estimator = TargetStateEKF(process_accel_variance=(1.0, 1.0, 0.5))
             replay = replay_estimator(data, estimator=estimator, measurement_covariance=measurement_covariance)
             metrics = calculate_metrics(data, replay)
             report[model_name][name] = metrics

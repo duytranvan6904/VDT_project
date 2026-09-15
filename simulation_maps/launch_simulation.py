@@ -555,17 +555,55 @@ def main():
     if depth_proc.poll() is not None:
         print("[ERROR] depth_to_image_node.py exited immediately.")
 
-    # 3. Mở RViz2
-    print("[3/4] Launching RViz2...")
+    # ── Autonomous nodes (optional) ──────────────────────────────────────
+    autonomous = '--autonomous' in sys.argv
+    auto_procs = []
+    if autonomous:
+        print("[3/5] Launching Autonomous Pipeline nodes...")
+        sim_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file = os.path.join(sim_dir, 'config', 'mission_params.yaml')
+
+        auto_nodes = [
+            ('EKF Adapter', [sys.executable, os.path.join(sim_dir, 'ekf_ros_adapter.py')]),
+            ('APF Planner', [
+                sys.executable, os.path.join(sim_dir, 'apf_planner.py'),
+                '--ros-args', '-p', f'world_sdf:={world_path}',
+            ]),
+            ('IBVS Controller', [sys.executable, os.path.join(sim_dir, 'ibvs_controller.py')]),
+            ('Mission FSM', [sys.executable, os.path.join(sim_dir, 'mission_fsm_node.py')]),
+            ('Offboard Commander', [sys.executable, os.path.join(sim_dir, 'offboard_commander.py')]),
+        ]
+
+        for label, cmd in auto_nodes:
+            proc = subprocess.Popen(cmd)
+            auto_procs.append((label, proc))
+            print(f"      -> {label} started (pid={proc.pid}).")
+
+        time.sleep(1.0)
+        for label, proc in auto_procs:
+            if proc.poll() is not None:
+                print(f"[ERROR] {label} exited immediately (code={proc.returncode}).")
+    else:
+        print("[INFO] Manual mode (no --autonomous). Use QGC for drone control.")
+
+    # 4. Mở RViz2
+    step = "4/5" if autonomous else "3/4"
+    print(f"[{step}] Launching RViz2...")
     cfg_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apf_simulation.rviz')
     if os.path.exists(cfg_file):
         rviz_proc = subprocess.Popen(['rviz2', '-d', cfg_file])
     else:
         rviz_proc = subprocess.Popen(['rviz2'])
 
-    # 4. Spin ROS 2 Node
-    print("[4/4] Starting Main ROS 2 Node...")
+    # 5. Spin ROS 2 Node
+    step = "5/5" if autonomous else "4/4"
+    print(f"[{step}] Starting Main ROS 2 Node...")
     print("=" * 70)
+    if autonomous:
+        print("  AUTONOMOUS MODE ACTIVE")
+        print("  Drone sẽ tự động: IDLE → SEARCH → FOLLOW → APPROACH → LAND")
+        print("  Publish Bool(data=true) to /operator/land_command để bắt đầu hạ cánh")
+        print("=" * 70)
 
     rclpy.init()
     node = FastTrackerStyleNode(obstacles)
@@ -583,8 +621,11 @@ def main():
             gimbal_bridge_proc.terminate()
             depth_proc.terminate()
             rviz_proc.terminate()
+            for label, proc in auto_procs:
+                proc.terminate()
         except:
             pass
 
 if __name__ == '__main__':
     main()
+

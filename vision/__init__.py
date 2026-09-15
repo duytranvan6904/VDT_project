@@ -1,6 +1,6 @@
 """
 Vision Package for Quadrotor H-Pad Tracking & Pose Estimation
-Submodule developed for Intel RealSense D435 / D435i camera.
+Submodule developed for Intel RealSense D430 depth camera.
 """
 
 from .realsense_stream import RealSenseCamera
@@ -13,9 +13,7 @@ from .utils import (
     draw_axis_3d
 )
 from .target_state_ekf import EstimatorSnapshot, TargetStateEKF
-from .target_state_ct_ekf import CTStateSnapshot, CoordinatedTurnEKF
 from .target_tracking_policy import TrackingMode, classify_tracking_mode
-from .target_state_imm import TargetStateIMM
 
 __all__ = [
     'RealSenseCamera',
@@ -27,9 +25,6 @@ __all__ = [
     'draw_axis_3d',
     'EstimatorSnapshot',
     'TargetStateEKF',
-    'CTStateSnapshot',
-    'CoordinatedTurnEKF',
     'TrackingMode',
     'classify_tracking_mode',
-    'TargetStateIMM',
 ]

@@ -6,7 +6,6 @@ import unittest
 import numpy as np
 
 from vision.target_state_ekf import TargetStateEKF
-from vision.target_state_ct_ekf import CoordinatedTurnEKF
 from vision.target_state_simulation import (
     MAX_SIMULATION_SPEED_MPS,
     MAX_OUTLIER_DISTANCE_M,
@@ -101,16 +100,6 @@ class TestTargetStateSimulation(unittest.TestCase):
         self.assertGreater(np.count_nonzero(outlier_indices), 0)
         self.assertGreater(calculate_metrics(data, replay)["outlier_rejection_rate"], 0.5)
 
-    def test_coordinated_turn_improves_circle_dropout_over_cv(self):
-        data = simulate_measurements(
-            "circle",
-            SimulationConfig(duration_s=12.0, dropout_intervals_s=((4.0, 5.0),), seed=21),
-        )
-        cv = replay_estimator(data, TargetStateEKF(process_accel_variance=(1.0, 1.0, 0.5)))
-        ct = replay_estimator(data, CoordinatedTurnEKF(acceleration_variance=(0.8, 0.8, 0.4)))
-        cv_metrics = calculate_metrics(data, cv)
-        ct_metrics = calculate_metrics(data, ct)
-        self.assertLess(ct_metrics["max_error_during_dropout_m"], cv_metrics["max_error_during_dropout_m"])
 
 
 if __name__ == "__main__":
