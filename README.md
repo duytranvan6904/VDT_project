@@ -122,649 +122,572 @@ V_cmd   [1×3]
 yaw_cmd [1×1]
 Stop    [1×1]
 ```
-Improved APF Planner for UAV 3D (IAPF_Planner_3D_MultiObs.m)
-1. Mục tiêu
-README này mô tả thuật toán Improved Artificial Potential Field (IAPF) được triển khai trong MATLAB/Simulink cho UAV 3D.
-Thuật toán hiện tại tập trung vào ba vấn đề chính:
-Goal Non-Reachable with Obstacle Nearby (GNRON): cải tiến lực đẩy để UAV vẫn có thể tiến tới goal khi goal nằm gần obstacle.
-Local Minimum: chỉ kích hoạt cơ chế thoát bằng vector tiếp tuyến động khi tổng lực APF nhỏ hơn một ngưỡng.
-Local Path Oscillation: hạn chế thay đổi hướng đột ngột bằng directional weighting và cơ chế forward-looking tham khảo từ bài báo.
-Phần vector tiếp tuyến động, tangent memory và hysteresis là phần mở rộng của implementation hiện tại; bài báo gốc dùng local exploration factor cho local minimum.
----
-2. Hàm MATLAB
+APF Planner for UAV 3D
+Hàm `APF\\\_Planner` triển khai phương pháp Improved Artificial Potential Field (IAPF) để tạo lệnh vận tốc cho UAV trong không gian 3D.
+Thuật toán hiện tại gồm ba phần chính:
+Cải tiến lực đẩy để giảm hiện tượng Goal Non-Reachable with Obstacle Nearby (GNRON).
+Phát hiện local minimum và chỉ kích hoạt vector tiếp tuyến động khi tổng lực APF nhỏ hơn một ngưỡng.
+Giảm local path oscillation bằng directional weighting và cơ chế forward-looking tham khảo từ bài báo.
+> Lưu ý: phần dynamic tangent search, tangent memory và hysteresis là phần mở rộng của implementation hiện tại. Bài báo gốc sử dụng local exploration factor để xử lý local minimum.
+Cú pháp
 ```matlab
-function [V_cmd, yaw_cmd, Stop] = APF_Planner( ...
-    pos, goal, obs, katt, krep, d0, v_max, numobs)
+\\\[V\\\_cmd, yaw\\\_cmd, Stop] = APF\\\_Planner( ...
+    pos, goal, obs, katt, krep, d0, v\\\_max, numobs)
 ```
-Input
-Biến	Kích thước	Ý nghĩa
-`pos`	`1x3`	Vị trí hiện tại UAV `[N E D]`
-`goal`	`1x3`	Vị trí đích `[N E D]`
-`obs`	`Nx3`	Tọa độ các obstacle `[N E D]`
-`katt`	scalar	Hệ số attractive force
-`krep`	scalar	Hệ số repulsive force
-`d0`	scalar	Khoảng cách ảnh hưởng của obstacle
-`v_max`	scalar	Vận tốc cực đại
-`numobs`	scalar	Số obstacle đang xét
-Output
-Biến	Kích thước	Ý nghĩa
-`V_cmd`	`1x3`	Vận tốc đặt `[VN VE VD]`
-`yaw_cmd`	scalar	Góc yaw đặt
-`Stop`	scalar	`1` nếu đã tới goal, ngược lại `0`
----
-3. Hệ tọa độ
-Thuật toán dùng hệ tọa độ NED:
-```text
-N : North
-E : East
-D : Down
-```
-Do đó:
+Đầu vào
+Tên	Kích thước	Mô tả	Đơn vị
+`pos`	`1×3`	Vị trí hiện tại của UAV `\\\[N E D]`	m
+`goal`	`1×3`	Vị trí đích `\\\[N E D]`	m
+`obs`	`N×3`	Tọa độ các vật cản `\\\[N E D]`	m
+`katt`	`1×1`	Hệ số lực hút	-
+`krep`	`1×1`	Hệ số lực đẩy	-
+`d0`	`1×1`	Khoảng cách ảnh hưởng của vật cản	m
+`v\\\_max`	`1×1`	Vận tốc cực đại của UAV	m/s
+`numobs`	`1×1`	Số lượng vật cản được xét	-
+Trong đó:
+`N`: số lượng vật cản.
+Hệ tọa độ sử dụng là NED (North-East-Down).
+`obs(i,:)` là tọa độ tâm của vật cản thứ `i`.
+Ví dụ:
 ```matlab
-V_cmd = [VN VE VD];
-yaw_cmd = atan2(V_cmd(2), V_cmd(1));
+pos  = \\\[0 0 0];
+goal = \\\[20 10 -5];
+
+obs = \\\[
+     5  2  0;
+    10  5 -2;
+    15  8 -3
+];
+
+katt   = 10;
+krep   = 100;
+d0     = 5;
+v\\\_max  = 2;
+numobs = 3;
 ```
----
-4. Cấu trúc tổng thể
+Đầu ra
+Tên	Kích thước	Mô tả	Đơn vị
+`V\\\_cmd`	`1×3`	Lệnh vận tốc `\\\[VN VE VD]`	m/s
+`yaw\\\_cmd`	`1×1`	Góc yaw mong muốn	rad
+`Stop`	`1×1`	Cờ báo UAV đã đến đích	-
+`V\\\_cmd`
 ```text
-UAV position
-    |
-    v
-Attractive force
-    |
-    v
-Improved repulsive force
-    |
-    v
-F_total = F_att + F_rep
-    |
-    +-----------------------------+
-    |                             |
-||F_total|| < F_enter ?           |
-    |                             |
-   Yes                            No
-    |                             |
-    v                             |
-Dynamic tangent search            |
-Forward-looking                   |
-    |                             |
-F_cmd_raw = F_total + F_tan       |
-    |                             |
-    +--------------+--------------+
-                   |
-                   v
-        Oscillation suppression
-        Directional weighting
-                   |
-                   v
-             move_direction
-                   |
-                   v
-            Speed scheduling
-                   |
-                   v
-          V_cmd, yaw_cmd, Stop
+V\\\_cmd = \\\[VN VE VD]
 ```
----
-5. Attractive Force
+Trong đó:
+`VN`: vận tốc theo hướng North.
+`VE`: vận tốc theo hướng East.
+`VD`: vận tốc theo hướng Down.
+`yaw\\\_cmd`
+Góc yaw được tính từ hướng chuyển động ngang:
+```matlab
+yaw\\\_cmd = atan2(V\\\_cmd(2), V\\\_cmd(1));
+```
+`Stop`
+```text
+Stop = 0  -> UAV chưa đến đích
+Stop = 1  -> UAV đã đến đích
+```
+UAV được xem là đến đích khi:
+```text
+d\\\_goal <= goal\\\_tol
+```
+Trong code hiện tại:
+```matlab
+goal\\\_tol = 0.30;    % m
+```
+Tham số chính
+```matlab
+goal\\\_tol      = 0.30;    % Ngưỡng xác định UAV đã tới goal (m)
+
+F\\\_enter       = 0.10;    % Ngưỡng bật tangent
+F\\\_exit        = 0.30;    % Ngưỡng tắt tangent
+goal\\\_min\\\_dist = 0.50;    % Khoảng cách tối thiểu tới goal để xét local minimum (m)
+
+k\\\_tan         = 1.0;     % Hệ số tangential force
+N\\\_tangent     = 12;      % Số tangent candidate
+N\\\_pred        = 3;       % Số bước dự đoán forward-looking
+
+w\\\_goal        = 1.0;     % Trọng số hướng về goal
+w\\\_clear       = 1.0;     % Trọng số khoảng trống phía trước
+w\\\_prev        = 0.60;    % Trọng số duy trì tangent trước
+```
+1. Attractive Force
 Vector từ UAV tới goal:
-[
-\mathbf d_g = X_g-X
-]
+```text
+goal\\\_vec = goal - pos
+```
 Khoảng cách tới goal:
-[
-d_g=|X_g-X|
-]
-Vector đơn vị hướng về goal:
-[
-\hat{\mathbf g}
-\frac{X_g-X}{|X_g-X|}
-]
-Potential attractive:
-[
-U_{att}=k_{att}d_g^2
-]
-Lực attractive:
-[
-\boxed{
-F_{att}=2k_{att}(X_g-X)
-}
-]
-Trong code:
-```matlab
-goal_vec = g - p;
-F_att = 2.0 * katt * goal_vec;
+```text
+d\\\_goal = norm(goal - pos)
 ```
----
-6. Improved Repulsive Force để xử lý GNRON
-Trong APF truyền thống, nếu goal nằm gần obstacle, repulsive force có thể vẫn mạnh khi UAV đã ở gần goal. Khi đó UAV có thể không tới được đích.
-Thuật toán hiện tại dùng lực đẩy cải tiến theo ý tưởng Eq. (8) và Eq. (9) của bài báo:
-[
-\boxed{
-F_{rep}=F_{rep1}+F_{rep2}
-}
-]
-6.1 Vector từ obstacle tới UAV
-Với obstacle thứ (i):
-[
-r_i=X-X_{o,i}
-]
-Khoảng cách:
-[
-d_i=|X-X_{o,i}|
-]
-Vector đơn vị hướng ra khỏi obstacle:
-[
-\boxed{
-\hat n_i=
-\frac{X-X_{o,i}}
-{|X-X_{o,i}|}
-}
-]
-Trong code:
-```matlab
-obs_vec = p - obs_i;
-d_obs = norm(obs_vec);
-dir_away = obs_vec / d_obs;
+Lực hút được tính:
+```text
+F\\\_att = 2 \\\* katt \\\* (goal - pos)
 ```
-6.2 Thành phần (F_{rep1})
-Trong implementation hiện tại:
-[
-F_{rep1}
-2k_{rep}
-\left(
-\frac{1}{d_i}-\frac{1}{d_0}
-\right)
-\frac{1}{d_i^2}
-w_g
-\hat n_i
-]
-với:
-[
-w_g=
-\frac{1}{1+e^{-d_g}}-\frac12
-]
-Khi:
-[
-d_g\rightarrow0
-]
+Trong MATLAB:
+```matlab
+goal\\\_vec = g - p;
+F\\\_att = 2.0 \\\* katt \\\* goal\\\_vec;
+```
+`F\\\_att` luôn có xu hướng đưa UAV về phía goal.
+2. Improved Repulsive Force cho GNRON
+Trong APF truyền thống, khi goal nằm gần vật cản, lực đẩy có thể vẫn lớn ngay cả khi UAV đã gần goal. Khi đó UAV có thể không tới được đích.
+Thuật toán sử dụng hai thành phần lực đẩy:
+```text
+F\\\_rep = F\\\_rep1 + F\\\_rep2
+```
+`F\\\_rep1`
+`F\\\_rep1` là thành phần lực đẩy chính, có hướng ra xa vật cản.
+Với vật cản thứ `i`:
+```text
+obs\\\_vec = pos - obs(i,:)
+d\\\_obs   = norm(obs\\\_vec)
+dir\\\_away = obs\\\_vec / d\\\_obs
+```
+Hệ số phụ thuộc khoảng cách tới goal:
+```text
+weight\\\_rep = 1/(1 + exp(-d\\\_goal)) - 0.5
+```
+Lực đẩy:
+```text
+F\\\_rep1 =
+    2 \\\* krep
+    \\\* (1/d\\\_obs - 1/d0)
+    \\\* (1/d\\\_obs^2)
+    \\\* weight\\\_rep
+    \\\* dir\\\_away
+```
+Khi UAV tiến gần goal:
+```text
+d\\\_goal -> 0
+```
 thì:
-[
-w_g\rightarrow0
-]
-nên ảnh hưởng của lực đẩy chính giảm khi UAV tiến gần goal.
-6.3 Thành phần (F_{rep2})
-[
-F_{rep2}
-k_{rep}
-\left(
-\frac{1}{d_i}-\frac{1}{d_0}
-\right)^2
-\frac{e^{-d_g}}
-{(1+e^{-d_g})^2}
-\hat g
-]
-Trong code:
-```matlab
-sigmoid_derivative = ...
-    exp_goal / ((1.0 + exp_goal)^2);
-
-coeff2 = ...
-    krep ...
-    * (1.0/d_safe - 1.0/d0)^2 ...
-    * sigmoid_derivative;
-
-F_rep2 = coeff2 * dir_goal;
+```text
+weight\\\_rep -> 0
 ```
-6.4 Tổng lực APF
-[
-F_{rep}
-\sum_i
-(F_{rep1,i}+F_{rep2,i})
-]
-và:
-[
-\boxed{
-F_{total}=F_{att}+F_{rep}
-}
-]
----
-7. Phát hiện Local Minimum
-Local minimum được xem là xuất hiện khi attractive force và repulsive force gần như triệt tiêu:
-[
-F_{att}+F_{rep}\approx0
-]
-hay:
-[
-\boxed{
-|F_{total}|\approx0
-}
-]
-Tangent chỉ được kích hoạt khi:
-[
-\boxed{
-|F_{total}|<F_{enter}
-}
-]
-đồng thời:
-[
-d_{goal}>goal_min_dist
-]
-và obstacle gần nhất vẫn nằm trong vùng ảnh hưởng:
-[
-d_{obs}<d_0
-]
+do đó ảnh hưởng của `F\\\_rep1` giảm dần.
+`F\\\_rep2`
+`F\\\_rep2` là thành phần có hướng về goal:
+```text
+F\\\_rep2 =
+    krep
+    \\\* (1/d\\\_obs - 1/d0)^2
+    \\\* exp(-d\\\_goal)/(1 + exp(-d\\\_goal))^2
+    \\\* dir\\\_goal
+```
+Trong đó:
+```text
+dir\\\_goal = (goal - pos) / norm(goal - pos)
+```
+Tổng lực đẩy từ tất cả vật cản:
+```text
+F\\\_rep = sum(F\\\_rep1 + F\\\_rep2)
+```
+Tổng lực APF:
+```text
+F\\\_total = F\\\_att + F\\\_rep
+```
+Vật cản chỉ tạo lực đẩy khi:
+```text
+d\\\_obs <= d0
+```
+3. Phát hiện Local Minimum
+Local minimum xuất hiện khi lực hút và lực đẩy gần như triệt tiêu nhau:
+```text
+F\\\_att + F\\\_rep \\\~= 0
+```
+Trong implementation, local minimum được phát hiện dựa trên độ lớn của tổng lực:
+```text
+norm(F\\\_total) < F\\\_enter
+```
+Tangent chỉ được kích hoạt khi đồng thời thỏa mãn:
+```text
+norm(F\\\_total) < F\\\_enter
+d\\\_goal > goal\\\_min\\\_dist
+min\\\_obs\\\_dist < d0
+```
 Trong code:
 ```matlab
-if (F_total_norm < F_enter) && ...
-   (d_goal > goal_min_dist) && ...
-   obstacle_near
+if (F\\\_total\\\_norm < F\\\_enter) \\\&\\\& ...
+   (d\\\_goal > goal\\\_min\\\_dist) \\\&\\\& ...
+   obstacle\\\_near
 
-    tangent_active = true;
+    tangent\\\_active = true;
 end
 ```
----
-8. Hysteresis
-Hai ngưỡng:
+4. Hysteresis
+Để tránh tangent liên tục bật và tắt quanh ngưỡng local minimum, thuật toán sử dụng hai ngưỡng:
 ```matlab
-F_enter = 0.10;
-F_exit  = 0.30;
+F\\\_enter = 0.10;
+F\\\_exit  = 0.30;
 ```
-được dùng để tránh tangent bật/tắt liên tục.
 Logic:
 ```text
-||F_total|| < F_enter
+norm(F\\\_total) < F\\\_enter
         |
         v
-  Tangent ON
+   Tangent ON
         |
         v
-F_enter < ||F_total|| < F_exit
+F\\\_enter <= norm(F\\\_total) <= F\\\_exit
         |
         v
-  Tangent vẫn ON
+   Tangent vẫn ON
         |
         v
-||F_total|| > F_exit
+norm(F\\\_total) > F\\\_exit
         |
         v
-  Tangent OFF
+   Tangent OFF
 ```
-Vì:
-[
-F_{exit}>F_{enter}
-]
-nên hệ thống có vùng hysteresis.
----
-9. Vector pháp tuyến obstacle
-Với obstacle gần nhất có tâm (X_o), vector pháp tuyến được lấy:
-[
-\boxed{
-n=
-\frac{X-X_o}
-{|X-X_o|}
-}
-]
-Nó hướng từ obstacle ra UAV.
-Nếu obstacle được mô hình hóa như hình cầu thì đây chính là pháp tuyến bề mặt tại hướng UAV.
-Nếu obstacle là cuboid hoặc hình dạng phức tạp, nên thay tâm obstacle bằng điểm gần UAV nhất trên bề mặt.
----
-10. Tangent Plane
-Mọi vector tiếp tuyến (t) phải thỏa:
-[
-\boxed{
-t^Tn=0
-}
-]
-Trong 3D, điều kiện này tạo thành một mặt phẳng tiếp tuyến chứ không tạo ra một tangent duy nhất.
-Thuật toán vì vậy tạo nhiều candidate và chọn hướng tốt nhất.
----
-11. Xây dựng cơ sở tangent plane
-Chọn một vector tham chiếu `ref` ít song song nhất với (n).
-Sau đó:
-[
-e_1=n\times ref
-]
-[
-e_2=n\times e_1
-]
-Hai vector (e_1,e_2) vuông góc nhau và cùng nằm trên tangent plane.
----
-12. Sinh các tangent candidate
+Điều kiện quan trọng:
+```text
+F\\\_exit > F\\\_enter
+```
+5. Vector pháp tuyến của vật cản
+Với vật cản gần nhất có tâm `obs\\\_near`, vector từ tâm vật cản tới UAV là:
+```text
+normal\\\_vec = pos - obs\\\_near
+```
+Vector pháp tuyến đơn vị:
+```text
+n = normal\\\_vec / norm(normal\\\_vec)
+```
+Hay:
+```text
+n = (pos - obs\\\_near) / norm(pos - obs\\\_near)
+```
+`n` có hướng:
+```text
+Obstacle  -------->  UAV
+            n
+```
+Nếu vật cản được mô hình hóa như hình cầu, `n` cũng chính là hướng pháp tuyến bề mặt.
+6. Mặt phẳng tiếp tuyến
+Vector tiếp tuyến `t` phải vuông góc với vector pháp tuyến `n`:
+```text
+dot(t, n) = 0
+```
+Trong không gian 3D có vô số vector thỏa mãn điều kiện này, vì vậy thuật toán không sử dụng một tangent cố định mà tìm tangent tốt nhất trên toàn mặt phẳng tiếp tuyến.
+7. Xây dựng Tangent Plane
+Đầu tiên chọn một vector tham chiếu `ref` ít song song nhất với `n`.
+Sau đó tạo hai vector cơ sở:
+```text
+e1 = cross(n, ref)
+e2 = cross(n, e1)
+```
+`e1` và `e2`:
+Vuông góc với `n`.
+Vuông góc với nhau.
+Cùng nằm trên tangent plane.
+8. Sinh các Tangent Candidate
 Số candidate:
 ```matlab
-N_tangent = 12;
+N\\\_tangent = 12;
 ```
-Candidate thứ (k):
-[
-\boxed{
-t_k=
-\cos\theta_k e_1+
-\sin\theta_k e_2
-}
-]
+Mỗi candidate được tạo bởi:
+```text
+t\\\_candidate =
+    cos(theta) \\\* e1
+    + sin(theta) \\\* e2
+```
 với:
-[
-\theta_k=
-\frac{2\pi(k-1)}
-{N_{tangent}}
-]
-Nếu:
-[
-N_{tangent}=12
-]
-thì góc giữa hai candidate liên tiếp là:
-[
-30^\circ
-]
-Như vậy thuật toán tìm kiếm toàn bộ 360° trên tangent plane.
----
-13. Hàm đánh giá tangent
-Mỗi tangent được đánh giá bằng:
-[
-\boxed{
-J=
-w_{goal}J_{goal}
-+
-w_{clear}J_{clear}
-+
-w_{prev}J_{prev}
-}
-]
-13.1 Goal score
-[
-\boxed{
-J_{goal}=t_k^T\hat g
-}
-]
-Gần `1`: hướng tốt về goal.
-Gần `0`: gần vuông góc goal.
-Âm: đi ngược goal.
-13.2 Previous tangent score
-Tangent trước được lưu trong:
-```matlab
-tangent_prev
+```text
+theta = 2\\\*pi\\\*(k-1)/N\\\_tangent
 ```
-Score:
-[
-\boxed{
-J_{prev}=t_k^Tt_{prev}
-}
-]
-Mục đích là ngăn việc đổi liên tục:
+Khi `N\\\_tangent = 12`, khoảng cách góc giữa hai candidate liên tiếp là:
+```text
+360 deg / 12 = 30 deg
+```
+Như vậy thuật toán kiểm tra toàn bộ 360 độ trên tangent plane.
+9. Hàm đánh giá Tangent
+Mỗi tangent được đánh giá theo ba tiêu chí:
+```text
+score =
+    w\\\_goal  \\\* goal\\\_score
+    + w\\\_clear \\\* clear\\\_score
+    + w\\\_prev  \\\* prev\\\_score
+```
+`goal\\\_score`
+```text
+goal\\\_score = dot(t\\\_candidate, dir\\\_goal)
+```
+Ý nghĩa:
+```text
+goal\\\_score \\\~  1  -> hướng tốt về goal
+goal\\\_score \\\~  0  -> gần vuông góc goal
+goal\\\_score <  0  -> có xu hướng đi ngược goal
+```
+`prev\\\_score`
+```text
+prev\\\_score = dot(t\\\_candidate, tangent\\\_prev)
+```
+Mục đích là hạn chế việc đổi phía vật cản liên tục:
 ```text
 +t -> -t -> +t -> -t
 ```
-13.3 Forward-looking clearance
-Với:
+Candidate gần với tangent trước sẽ có score lớn hơn.
+`clear\\\_score`
+Thuật toán dự đoán một số điểm phía trước theo candidate đang xét.
 ```matlab
-N_pred = 3;
+N\\\_pred = 3;
 ```
-thuật toán kiểm tra nhiều điểm phía trước:
-[
-X_{pred,h}
-X+
-\frac{h}{N_{pred}}
-L_{look}
-t_k
-]
-với:
-[
-h=1,...,N_{pred}
-]
-Tại mỗi điểm dự đoán, tính khoảng cách tới tất cả obstacle.
-Giá trị nhỏ nhất:
-[
-d_{min,pred}
-]
-được chuẩn hóa:
-[
-\boxed{
-J_{clear}
-\frac{d_{min,pred}}{d_0}
-}
-]
-Candidate có clearance lớn hơn sẽ được ưu tiên.
----
-14. Chọn tangent tối ưu
+Vị trí dự đoán:
+```text
+p\\\_test =
+    pos
+    + (h/N\\\_pred)
+    \\\* look\\\_ahead
+    \\\* t\\\_candidate
+```
+Tại mỗi điểm dự đoán, khoảng cách tới tất cả vật cản được tính.
+Khoảng cách nhỏ nhất:
+```text
+min\\\_pred\\\_dist
+```
+được dùng để đánh giá clearance:
+```text
+clear\\\_score = min\\\_pred\\\_dist / d0
+```
+Candidate có vùng phía trước thoáng hơn sẽ được ưu tiên.
+10. Chọn Tangent Tốt Nhất
 Sau khi đánh giá tất cả candidate:
-[
-\boxed{
-t^*
-\arg\max_{t_k}J(t_k)
-}
-]
-Sau đó lưu:
-```matlab
-tangent_prev = best_tangent;
+```text
+best\\\_tangent = candidate có score lớn nhất
 ```
----
-15. Tangential Force
-[
-\boxed{
-F_{tan}=k_{tan}t^*
-}
-]
-Nếu local minimum đang active:
-[
-\boxed{
-F_{cmd,raw}=F_{total}+F_{tan}
-}
-]
-Nếu không:
-[
-\boxed{
-F_{cmd,raw}=F_{total}
-}
-]
-Điểm quan trọng: tangent không được cộng liên tục, chỉ hoạt động khi thuật toán phát hiện local minimum.
----
-16. Xử lý Oscillation
-Từ:
-[
-F_{cmd,raw}
-]
-ta tạo hướng mới:
-[
-w_{new}
-\frac{F_{cmd,raw}}
-{|F_{cmd,raw}|}
-]
-Hướng bước trước:
-[
-w_{prev}
-]
-Góc thay đổi hướng:
-[
-\boxed{
-\Delta\alpha
-\cos^{-1}
-(w_{prev}^T w_{new})
-}
-]
-Cơ chế này tham khảo directional weighting trong Eq. (10)-(11) của bài báo.
----
-17. Directional Weighting
-Bài báo chia (\Delta\alpha) thành ba vùng.
-17.1 Góc nhỏ
-[
-0\leq\Delta\alpha\leq30^\circ
-]
-Implementation:
-```matlab
-m_prev = 0.50;
-m_new  = 0.50;
+Hay:
+```text
+best\\\_tangent = arg max(score)
 ```
-[
-w_{cmd}
-0.5w_{prev}
-+
-0.5w_{new}
-]
-17.2 Góc trung bình
-[
-30^\circ<\Delta\alpha\leq60^\circ
-]
-Implementation:
+Tangent được lưu lại:
 ```matlab
-m_prev = 0.70;
-m_new  = 0.30;
+tangent\\\_prev = best\\\_tangent;
 ```
-[
-w_{cmd}
-0.7w_{prev}
-+
-0.3w_{new}
-]
-17.3 Góc lớn
-[
-\Delta\alpha>60^\circ
-]
-Implementation:
+để sử dụng ở bước tiếp theo.
+11. Tangential Force
+Lực tiếp tuyến:
+```text
+F\\\_tan = k\\\_tan \\\* best\\\_tangent
+```
+Nếu đang ở local minimum:
+```text
+F\\\_cmd\\\_raw = F\\\_total + F\\\_tan
+```
+Nếu không có local minimum:
+```text
+F\\\_cmd\\\_raw = F\\\_total
+```
+Do đó vector tiếp tuyến không được cộng liên tục vào APF.
+12. Giảm Local Path Oscillation
+Sau khi có `F\\\_cmd\\\_raw`, hướng mới được chuẩn hóa:
+```text
+w\\\_new = F\\\_cmd\\\_raw / norm(F\\\_cmd\\\_raw)
+```
+Hướng điều khiển ở bước trước được lưu trong:
+```text
+prev\\\_move\\\_dir
+```
+Góc thay đổi hướng được tính:
+```text
+delta\\\_alpha = acos(dot(prev\\\_move\\\_dir, w\\\_new))
+```
+Thuật toán chia thành ba trường hợp.
+Góc thay đổi nhỏ
+```text
+0 deg <= delta\\\_alpha <= 30 deg
+```
+Sử dụng:
 ```matlab
-m_prev = 0.90;
-m_new  = 0.10;
+m\\\_prev = 0.50;
+m\\\_new  = 0.50;
 ```
-[
-w_{cmd}
-0.9w_{prev}
-+
-0.1w_{new}
-]
-Khi hướng mới thay đổi quá mạnh, thuật toán ưu tiên hướng cũ nhiều hơn để giảm zig-zag.
-> Lưu ý: bài báo chỉ nêu quan hệ giữa các trọng số:
->
-> \[
-> m_i=m_i',\quad
-> m_i>m_i',\quad
-> m_i\gg m_i'
-> \]
->
-> Các giá trị `0.5/0.5`, `0.7/0.3`, `0.9/0.1` là lựa chọn của implementation hiện tại, không phải số được công bố trực tiếp trong bài báo.
----
-18. Speed Scheduling
-Sau khi tìm được hướng điều khiển, thuật toán tính độ lớn vận tốc.
-18.1 Gần goal
-[
-k_g=
-\frac{d_{goal}}{d_0}
-]
-giới hạn:
-[
-0.15\leq k_g\leq1
-]
-18.2 Gần obstacle
-[
-k_o=
-\frac{d_{obs,min}}{d_0}
-]
-giới hạn:
-[
-0.25\leq k_o\leq1
-]
-18.3 Vận tốc cuối
-[
-\boxed{
-v_{cmd}
-v_{max}k_gk_o
-}
-]
-Nếu đang thoát local minimum:
-[
-v_{cmd}\geq0.35v_{max}
-]
-Cuối cùng:
-[
-\boxed{
-V_{cmd}=v_{cmd}w_{cmd}
-}
-]
----
-19. Yaw Command
-Trong NED:
-[
-\boxed{
-\psi_{cmd}
-\operatorname{atan2}(V_E,V_N)
-}
-]
-Trong MATLAB:
+Hướng lệnh:
+```text
+w\\\_cmd = 0.50\\\*w\\\_prev + 0.50\\\*w\\\_new
+```
+Góc thay đổi trung bình
+```text
+30 deg < delta\\\_alpha <= 60 deg
+```
+Sử dụng:
 ```matlab
-yaw_cmd = atan2(V_cmd(2), V_cmd(1));
+m\\\_prev = 0.70;
+m\\\_new  = 0.30;
 ```
----
-20. Các parameter chính
-Parameter	Giá trị khởi tạo	Chức năng
-`goal_tol`	`0.30 m`	Ngưỡng coi UAV đã tới goal
-`F_enter`	`0.10`	Kích hoạt tangent
-`F_exit`	`0.30`	Tắt tangent
-`goal_min_dist`	`0.50 m`	Tránh coi vùng sát goal là local minimum
-`k_tan`	`1.0`	Cường độ tangential force
-`N_tangent`	`12`	Số tangent candidate
-`N_pred`	`3`	Số bước forward-looking
-`look_ahead`	`0.25*d0`	Khoảng nhìn trước
-`w_goal`	`1.0`	Trọng số hướng về goal
-`w_clear`	`1.0`	Trọng số clearance
-`w_prev`	`0.60`	Trọng số giữ tangent cũ
-`theta_small`	`30°`	Ngưỡng đổi hướng nhỏ
-`theta_large`	`60°`	Ngưỡng đổi hướng lớn
----
-21. Gợi ý tuning
-UAV không thoát local minimum
+Hướng lệnh:
+```text
+w\\\_cmd = 0.70\\\*w\\\_prev + 0.30\\\*w\\\_new
+```
+Góc thay đổi lớn
+```text
+delta\\\_alpha > 60 deg
+```
+Sử dụng:
+```matlab
+m\\\_prev = 0.90;
+m\\\_new  = 0.10;
+```
+Hướng lệnh:
+```text
+w\\\_cmd = 0.90\\\*w\\\_prev + 0.10\\\*w\\\_new
+```
+Khi APF đột ngột yêu cầu thay đổi hướng lớn, thuật toán giữ ảnh hưởng của hướng trước nhiều hơn để hạn chế zig-zag.
+> Các giá trị `0.50/0.50`, `0.70/0.30` và `0.90/0.10` là lựa chọn của implementation hiện tại. Bài báo chỉ mô tả quan hệ giữa các trọng số, không công bố trực tiếp các giá trị số này.
+13. Speed Scheduling
+Sau khi xác định hướng bay, thuật toán tính độ lớn vận tốc.
+Giảm tốc khi gần goal:
+```text
+goal\\\_speed\\\_factor = d\\\_goal / d0
+```
+Giới hạn:
+```text
+0.15 <= goal\\\_speed\\\_factor <= 1
+```
+Giảm tốc khi gần vật cản:
+```text
+obs\\\_speed\\\_factor = min\\\_obs\\\_dist / d0
+```
+Giới hạn:
+```text
+0.25 <= obs\\\_speed\\\_factor <= 1
+```
+Vận tốc cuối:
+```text
+v\\\_cmd\\\_mag =
+    v\\\_max
+    \\\* goal\\\_speed\\\_factor
+    \\\* obs\\\_speed\\\_factor
+```
+Khi đang thoát local minimum:
+```text
+v\\\_cmd\\\_mag >= 0.35 \\\* v\\\_max
+```
+Lệnh vận tốc:
+```text
+V\\\_cmd = v\\\_cmd\\\_mag \\\* move\\\_dir
+```
+14. Yaw Command
+Yaw được tính từ thành phần vận tốc North và East:
+```matlab
+yaw\\\_cmd = atan2(V\\\_cmd(2), V\\\_cmd(1));
+```
+Tương đương:
+```text
+yaw\\\_cmd = atan2(VE, VN)
+```
+15. Luồng xử lý tổng quát
+```text
+Input:
+pos, goal, obs
+katt, krep, d0
+v\\\_max, numobs
+
+        |
+        v
+
+Calculate attractive force
+
+        |
+        v
+
+Calculate improved repulsive force
+
+        |
+        v
+
+F\\\_total = F\\\_att + F\\\_rep
+
+        |
+        v
+
+Check local minimum
+
+        |
+        +--------------------+
+        |                    |
+       Yes                   No
+        |                    |
+        v                    |
+Find dynamic tangent         |
+Forward-looking search       |
+        |                    |
+        v                    |
+F\\\_total + F\\\_tan              |
+        |                    |
+        +---------+----------+
+                  |
+                  v
+
+Oscillation suppression
+
+                  |
+                  v
+
+Speed scheduling
+
+                  |
+                  v
+
+Output:
+V\\\_cmd
+yaw\\\_cmd
+Stop
+```
+16. Gợi ý tuning
+UAV không thoát được local minimum
 Tăng:
 ```matlab
-k_tan
+k\\\_tan
 ```
-hoặc:
+hoặc tăng:
 ```matlab
-F_enter
+F\\\_enter
 ```
 Tangent kích hoạt quá sớm
 Giảm:
 ```matlab
-F_enter
+F\\\_enter
 ```
 Tangent bật/tắt liên tục
-Tăng khoảng hysteresis, ví dụ:
+Tăng khoảng cách giữa hai ngưỡng:
 ```matlab
-F_enter = 0.10;
-F_exit  = 0.50;
+F\\\_enter = 0.10;
+F\\\_exit  = 0.50;
 ```
-UAV đổi phía obstacle liên tục
+UAV đổi phía vật cản liên tục
 Tăng:
 ```matlab
-w_prev
+w\\\_prev
 ```
 UAV vòng quá xa goal
 Tăng:
 ```matlab
-w_goal
+w\\\_goal
 ```
 hoặc giảm:
 ```matlab
-w_clear
+w\\\_clear
 ```
-UAV vẫn zig-zag
-Tăng ảnh hưởng hướng trước:
+UAV vẫn oscillation
+Tăng ảnh hưởng của hướng trước:
 ```matlab
-m_prev_2 = 0.80;
-m_new_2  = 0.20;
+m\\\_prev\\\_2 = 0.80;
+m\\\_new\\\_2  = 0.20;
 
-m_prev_3 = 0.95;
-m_new_3  = 0.05;
+m\\\_prev\\\_3 = 0.95;
+m\\\_new\\\_3  = 0.05;
 ```
-UAV quay quá chậm
-Giảm `m_prev_2`, `m_prev_3` hoặc tăng `m_new_2`, `m_new_3`.
----
-22. Khác biệt so với bài báo
+UAV đổi hướng quá chậm
+Giảm `m\\\_prev\\\_2`, `m\\\_prev\\\_3` hoặc tăng `m\\\_new\\\_2`, `m\\\_new\\\_3`.
+17. Khác biệt so với bài báo
 GNRON
-Phần improved repulsive force dùng ý tưởng Eq. (8)-(9) của bài báo.
-Local minimum
-Bài báo dùng local exploration factor (
-arepsilon):
-[
-X_{new}=X+\varepsilon
-]
+Improved repulsive force sử dụng ý tưởng của Eq. (8) và Eq. (9) trong bài báo.
+Local Minimum
+Bài báo sử dụng local exploration factor:
+```text
+X\\\_new = X + epsilon
+```
 Implementation hiện tại thay bằng:
 ```text
 Detect local minimum
@@ -773,113 +696,29 @@ Detect local minimum
 Find nearest obstacle
         |
         v
+Calculate obstacle normal
+        |
+        v
 Construct tangent plane
         |
         v
 Generate tangent candidates
         |
         v
-Evaluate goal + clearance + previous tangent
+Evaluate:
+goal + clearance + previous tangent
         |
         v
 Select best tangent
         |
         v
-Add F_tan
+Add F\\\_tan
 ```
-Dynamic tangent search là phần mở rộng của thuật toán hiện tại.
 Oscillation
-Directional weighting và forward-looking được tham khảo từ Eq. (10)-(13) của bài báo.
-Các trọng số số học cụ thể trong code là lựa chọn implementation và cần được tune theo mô hình UAV.
----
-23. Pseudocode
+Directional weighting và forward-looking được xây dựng dựa trên ý tưởng của Eq. (10) đến Eq. (13) trong bài báo.
+18. Tài liệu tham khảo
+Qiang Han, Xingyuan Ma, Hanlin Liu, Yibo Xu, Yunxiang Xie, Qianguo Yang, Fanqin Meng, “Improved Artificial Potential Field Method for UAV Path Planning,” IEEE Access, 2025.
+DOI:
 ```text
-INPUT:
-    pos
-    goal
-    obs
-
-1. Calculate vector/distance to goal
-
-2. Calculate attractive force
-
-3. For each obstacle:
-       Calculate obstacle distance
-
-       If obstacle inside influence distance:
-           Calculate Frep1
-           Calculate Frep2
-           Accumulate repulsive force
-
-4. F_total = F_att + F_rep
-
-5. Detect local minimum
-
-       If |F_total| < F_enter:
-           tangent_active = true
-
-       If tangent_active and |F_total| > F_exit:
-           tangent_active = false
-
-6. If tangent_active:
-
-       Find nearest obstacle
-       Calculate normal vector
-       Construct tangent plane
-       Generate N tangent candidates
-
-       For each candidate:
-           Calculate goal score
-           Calculate previous tangent score
-           Predict several points ahead
-           Calculate clearance score
-
-       Select tangent with maximum score
-
-       F_cmd_raw = F_total + F_tan
-
-   Else:
-
-       F_cmd_raw = F_total
-
-7. Normalize F_cmd_raw -> w_new
-
-8. If obstacle nearby:
-       Calculate delta_alpha
-       Select directional weights
-       Blend w_prev and w_new
-
-   Else:
-       w_cmd = w_new
-
-9. Calculate speed from:
-       distance to goal
-       distance to nearest obstacle
-
-10. V_cmd = speed * w_cmd
-
-11. yaw_cmd = atan2(VE, VN)
-
-OUTPUT:
-       V_cmd
-       yaw_cmd
-       Stop
+10.1109/ACCESS.2025.3620220
 ```
----
-24. Tài liệu tham khảo
-Qiang Han, Xingyuan Ma, Hanlin Liu, Yibo Xu, Yunxiang Xie, Qianguo Yang, Fanqin Meng,  
-“Improved Artificial Potential Field Method for UAV Path Planning,”  
-IEEE Access, 2025.  
-DOI: `10.1109/ACCESS.2025.3620220`
-Các ý tưởng được tham khảo:
-Target distance-weighted repulsive field
-(F_{rep1}), (F_{rep2}) cho GNRON
-Local-minimum detection
-Directional weighting
-Forward-looking decision mechanism
-Local path oscillation suppression
-Implementation hiện tại bổ sung:
-Dynamic tangent search
-Tangent memory
-Hysteresis
-Candidate scoring theo goal, clearance và hướng trước
