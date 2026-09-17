@@ -121,10 +121,27 @@ class MissionFSMNode(Node):
             Float64, '/mission/yaw_setpoint', 10,
         )
 
-        # ── Main FSM timer (20 Hz) ──────────────────────────────────────
+        # ── Main FSM timer (20 Hz) & Diagnostic timer (1 Hz) ───────────
         self.create_timer(0.05, self.fsm_update)
+        self.create_timer(1.0, self.status_log_update)
 
         self.get_logger().info('Mission FSM ready. Starting in IDLE phase.')
+
+    def status_log_update(self):
+        """In log chẩn đoán trạng thái định kỳ 1 giây/lần để người dùng theo dõi."""
+        if not self.has_odom:
+            return
+        dist_str = "N/A"
+        if self.has_target:
+            d = np.linalg.norm(self.drone_pos - self.target_pos)
+            dist_str = f"{d:.2f}m"
+        self.get_logger().info(
+            f"[STATUS] Phase: {self.phase.value:<7} | "
+            f"Drone: ({self.drone_pos[0]:.1f}, {self.drone_pos[1]:.1f}, {self.drone_pos[2]:.1f})m | "
+            f"Target: ({self.target_pos[0]:.1f}, {self.target_pos[1]:.1f}) | "
+            f"Dist: {dist_str} | "
+            f"EKF: {self.tracking_mode} | Det: {self.detected}"
+        )
 
     # ── Input callbacks ──────────────────────────────────────────────────
 
@@ -195,27 +212,34 @@ class MissionFSMNode(Node):
         # ── Publish phase ────────────────────────────────────────────────
         self.phase_pub.publish(String(data=self.phase.value))
 
-        # ── Publish setpoints ────────────────────────────────────────────
+        # ── Publish setpoints ────────────────────────────────────
         self._publish_setpoints()
 
     def _handle_idle(self):
-        """Wait for takeoff. Transition when drone reaches 80% of takeoff_alt."""
+        """Wait for takeoff. Chuyển pha khi drone lên trên 2.5m (gần hoàn tất cất cánh)."""
         if not self.has_odom:
             return
-        if self.drone_pos[2] > self.takeoff_alt * 0.8:
-            self.phase = MissionPhase.SEARCH
-            self.get_logger().info(
-                f'Drone at altitude {self.drone_pos[2]:.2f} m, '
-                f'starting SEARCH phase.'
-            )
+        if self.drone_pos[2] >= 2.5:
+            if self.consecutive_detections >= 5:
+                self.phase = MissionPhase.FOLLOW
+                self.get_logger().info(
+                    f'Drone cất cánh đạt độ cao {self.drone_pos[2]:.2f}m và thấy mục tiêu! '
+                    f'Chuyển IDLE → FOLLOW.'
+                )
+            else:
+                self.phase = MissionPhase.SEARCH
+                self.get_logger().info(
+                    f'Drone cất cánh đạt độ cao {self.drone_pos[2]:.2f}m. '
+                    f'Bắt đầu quét tìm kiếm SEARCH.'
+                )
 
     def _handle_search(self):
         """Rotate yaw, wait for stable ArUco detection."""
-        if self.consecutive_detections >= self.detection_confirm:
+        if self.consecutive_detections >= 5:
             self.phase = MissionPhase.FOLLOW
             self.get_logger().info(
                 f'Target confirmed after {self.consecutive_detections} '
-                f'consecutive detections.'
+                f'consecutive detections. Bắt đầu FOLLOW.'
             )
 
     def _handle_follow(self):
@@ -300,15 +324,21 @@ class MissionFSMNode(Node):
 
         elif self.phase == MissionPhase.APPROACH:
             # APF velocity (reduced gain handled by APF node) + descent
-            vel.linear.x = float(self.apf_velocity[0])
-            vel.linear.y = float(self.apf_velocity[1])
-            # Gradual descent toward target altitude
-            alt_error = self.drone_pos[2] - self.target_pos[2] if self.has_target else 0.0
-            if alt_error > 0.2:
-                vel.linear.z = float(-self.descent_speed)
+            tracking_active = self.tracking_mode in ('TRACKING', 'PREDICTING')
+            if tracking_active:
+                vel.linear.x = float(self.apf_velocity[0])
+                vel.linear.y = float(self.apf_velocity[1])
+                # Gradual descent toward target altitude
+                alt_error = self.drone_pos[2] - self.target_pos[2] if self.has_target else 0.0
+                if alt_error > 0.2:
+                    vel.linear.z = float(-self.descent_speed)
+                else:
+                    vel.linear.z = float(self.apf_velocity[2])
+                yaw.data = float(self.ibvs_yaw)
             else:
-                vel.linear.z = float(self.apf_velocity[2])
-            yaw.data = float(self.ibvs_yaw)
+                # Never continue descending on a stale target estimate.
+                # Wait for reacquisition or let the timeout return to FOLLOW.
+                yaw.data = float(self.drone_yaw)
 
         elif self.phase == MissionPhase.LAND:
             # Straight down, lock yaw

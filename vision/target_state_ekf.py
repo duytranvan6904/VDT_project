@@ -42,15 +42,19 @@ class TargetStateEKF:
         self,
         process_accel_variance: Sequence[float] = (1.0, 1.0, 0.5),
         gate_threshold: float = 16.27,
+        v_max: float = 2.5,
     ) -> None:
         q_accel = np.asarray(process_accel_variance, dtype=float)
         if q_accel.shape != (3,) or np.any(q_accel <= 0.0):
             raise ValueError("process_accel_variance must contain three positive values")
         if gate_threshold <= 0.0:
             raise ValueError("gate_threshold must be positive")
+        if v_max <= 0.0:
+            raise ValueError("v_max must be positive")
 
         self._q_accel = q_accel
         self.gate_threshold = float(gate_threshold)
+        self.v_max = float(v_max)
         self._state = np.zeros(self.STATE_DIM, dtype=float)
         self._covariance = np.eye(self.STATE_DIM, dtype=float)
         self._timestamp: Optional[float] = None
@@ -99,8 +103,19 @@ class TargetStateEKF:
 
         self._state = np.concatenate((pos, vel))
         self._covariance = np.diag(np.concatenate((pos_var, vel_var)))
+        self._clamp_velocity()
         self._timestamp = float(timestamp)
         self._initialized = True
+
+    def _clamp_velocity(self) -> None:
+        """Clamp horizontal velocity to physical vehicle limits."""
+        v_xy = float(np.hypot(self._state[3], self._state[4]))
+        if v_xy > self.v_max:
+            scale = self.v_max / v_xy
+            self._state[3] *= scale
+            self._state[4] *= scale
+        if abs(self._state[5]) > 1.5:
+            self._state[5] = float(np.clip(self._state[5], -1.5, 1.5))
 
     @staticmethod
     def transition_matrix(dt: float) -> Array:
@@ -139,6 +154,7 @@ class TargetStateEKF:
 
         f = self.transition_matrix(dt)
         self._state = f @ self._state
+        self._clamp_velocity()
         self._covariance = f @ self._covariance @ f.T + self.process_covariance(dt)
         self._covariance = self._symmetrize(self._covariance)
         self._timestamp = float(timestamp)
@@ -174,6 +190,7 @@ class TargetStateEKF:
 
         kalman_gain = np.linalg.solve(innovation_covariance, h @ self._covariance).T
         self._state = self._state + kalman_gain @ innovation
+        self._clamp_velocity()
         identity = np.eye(self.STATE_DIM)
         residual_map = identity - kalman_gain @ h
         self._covariance = residual_map @ self._covariance @ residual_map.T + kalman_gain @ r @ kalman_gain.T

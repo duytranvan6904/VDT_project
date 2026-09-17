@@ -14,14 +14,57 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
     obstacles_sdf = ""
     count = 0
 
+    # ── 1. Đặt các chướng ngại vật kiểm thử CỐ ĐỊNH ngay trên hành lang Drone -> H-Pad ──
+    # Drone ở (0, 0), H-Pad ở (4.0, -2.0). Đặt 1 trụ ngay giữa đường (4.0, -0.75) để test APF né:
+    test_obstacles = [
+        {"cx": 4.0, "cy": -0.75, "radius": 0.40, "height": 3.8, "r": 0.9, "g": 0.2, "b": 0.2},
+    ]
+
+    for obs in test_obstacles:
+        count += 1
+        obstacles_sdf += f"""
+    <!-- Corridor Test Obstacle {count} -->
+    <model name="cylinder_obs_{count}">
+      <static>true</static>
+      <pose>{obs['cx']:.2f} {obs['cy']:.2f} {obs['height']/2.0:.2f} 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>{obs['radius']:.2f}</radius>
+              <length>{obs['height']:.2f}</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>{obs['radius']:.2f}</radius>
+              <length>{obs['height']:.2f}</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>{obs['r']:.2f} {obs['g']:.2f} {obs['b']:.2f} 1</ambient>
+            <diffuse>{obs['r']:.2f} {obs['g']:.2f} {obs['b']:.2f} 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+"""
+
+    # ── 2. Sinh ngẫu nhiên các trụ chướng ngại vật khác xung quanh ──
     for i in range(num_obs):
         cx = random.uniform(-half_size, half_size)
         cy = random.uniform(-half_size, half_size)
-        radius = random.uniform(0.3, 0.6)
+        radius = random.uniform(0.3, 0.5)
         height = random.uniform(2.5, max_height)
 
-        # Keep takeoff area and H-pad approach corridor clear.
-        if math.sqrt(cx**2 + cy**2) < 3.0 or math.hypot(cx - 4.0, cy) < 2.0:
+        # Chỉ chừa bán kính nhỏ 1.2m quanh vị trí drone cất cánh (0, 0)
+        # và 0.8m quanh H-Pad (5.0, 0.0)
+        if math.hypot(cx, cy) < 4.0 or math.hypot(cx - 5.0, cy) < 2.0:
+            continue
+        # Tránh đè lên 2 trụ test cố định
+        if math.hypot(cx - 2.2, cy - 0.35) < 1.0 or math.hypot(cx - 3.6, cy + 0.30) < 1.0:
             continue
 
         r_color = random.uniform(0.2, 0.9)
@@ -162,7 +205,7 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
     <include>
       <uri>model://arucotag</uri>
       <name>hpad_aruco</name>
-      <pose>4.00 0.00 0.02 0 0 0</pose>
+      <pose>4.00 -2.00 0.02 0 0 0</pose>
     </include>
 {obstacles_sdf}
   </world>

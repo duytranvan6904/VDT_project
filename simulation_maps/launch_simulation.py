@@ -31,11 +31,11 @@ from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
 # ── Tham số Map ─────────────────────────────────────────────────────────────
 NUM_OBS = 15
 MAP_SIZE = 20.0
-MAX_HEIGHT = 4.0
+MAX_HEIGHT = 3.5
 MODEL_NAME = "x500_depth_0"
 HPAD_MODEL_NAME = "hpad_aruco"
-HPAD_X = 4.0
-HPAD_Y = 0.0
+HPAD_X = 5.0
+HPAD_Y = 2.0
 HPAD_Z = 0.02
 HPAD_MESH = "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/models/arucotag/hpad_aruco.dae"
 
@@ -44,12 +44,19 @@ def generate_obstacles():
     obs = []
     for _ in range(NUM_OBS):
         cx, cy = random.uniform(-half, half), random.uniform(-half, half)
-        # Giữ vùng cất cánh và vùng H-pad không bị vật cản che/mọc đè.
-        if math.sqrt(cx**2 + cy**2) < 3.0 or math.hypot(cx - HPAD_X, cy - HPAD_Y) < 2.0:
+        # Giữ vùng cất cánh (bán kính 4.5m) và vùng H-pad (bán kính 3m) hoàn toàn thông thoáng
+        if math.sqrt(cx**2 + cy**2) < 4.5 or math.hypot(cx - HPAD_X, cy - HPAD_Y) < 3.0:
             continue
+        # Giữ toàn bộ hành lang thẳng giữa Drone (0, 0) và H-Pad (HPAD_X, HPAD_Y) thông thoáng (bán kính 2.5m)
+        t = (cx * HPAD_X + cy * HPAD_Y) / max(1e-3, HPAD_X**2 + HPAD_Y**2)
+        if 0.0 <= t <= 1.0:
+            proj_x = t * HPAD_X
+            proj_y = t * HPAD_Y
+            if math.hypot(cx - proj_x, cy - proj_y) < 2.5:
+                continue
         obs.append({
             'cx': cx, 'cy': cy,
-            'r': random.uniform(0.35, 0.65),
+            'r': random.uniform(0.35, 0.5),
             'h': random.uniform(2.5, MAX_HEIGHT),
             'color': (random.uniform(0.2, 0.9), random.uniform(0.2, 0.9), random.uniform(0.2, 0.9))
         })
@@ -288,9 +295,16 @@ class FastTrackerStyleNode(Node):
         self.drone_pos = [0.0, 0.0, 0.0]
         self.drone_quat = [0.0, 0.0, 0.0, 1.0]
         self.hpad_pos = [HPAD_X, HPAD_Y, HPAD_Z]
-        self.camera_pitch = 0.0
+        self.camera_pitch = -math.radians(20.0)
         self.has_odom = False
         self.has_sensor_cloud = False
+
+        # Publisher để khởi tạo góc gimbal chúc -30° ngay khi mở mô phỏng
+        self.gimbal_init_pub = self.create_publisher(
+            Float64, f'/model/{MODEL_NAME}/command/gimbal_pitch', 10
+        )
+        self.init_pitch_count = 0
+        self.gimbal_init_timer = self.create_timer(1.0, self._send_initial_gimbal_pitch)
 
         # Subscribe Odometry từ Gazebo
         odom_topic = f"/model/{MODEL_NAME}/odometry_with_covariance"
@@ -339,6 +353,15 @@ class FastTrackerStyleNode(Node):
         p = msg.pose.position
         self.hpad_pos = [p.x, p.y, p.z]
 
+    def _send_initial_gimbal_pitch(self):
+        """Gửi lệnh chúc camera -30° (0.52 rad) khi khởi động mô phỏng."""
+        msg = Float64()
+        msg.data = float(self.camera_pitch)
+        self.gimbal_init_pub.publish(msg)
+        self.init_pitch_count += 1
+        if self.init_pitch_count >= 2:
+            self.gimbal_init_timer.cancel()
+
     def gimbal_pitch_callback(self, msg: Float64):
         self.camera_pitch = max(
             -math.pi / 2.0,
@@ -381,11 +404,16 @@ class FastTrackerStyleNode(Node):
         camera_tf.header.stamp = now
         camera_tf.header.frame_id = 'base_link'
         camera_tf.child_frame_id = 'camera_link'
-        camera_tf.transform.translation.x = 0.12
+        camera_tf.transform.translation.x = 0.20
         camera_tf.transform.translation.y = 0.03
         camera_tf.transform.translation.z = 0.242
-        camera_tf.transform.rotation.y = math.sin(self.camera_pitch / 2.0)
-        camera_tf.transform.rotation.w = math.cos(self.camera_pitch / 2.0)
+        # CameraJoint in x500_depth/model.sdf uses axis <xyz>0 -1 0</xyz>.
+        # Therefore, negative pitch command tilts camera down in Gazebo.
+        # In ROS FLU (REP-103), rotation about +Y by positive angle tilts camera down.
+        # We negate self.camera_pitch so TF matches Gazebo joint orientation.
+        pitch_tf = -self.camera_pitch
+        camera_tf.transform.rotation.y = math.sin(pitch_tf / 2.0)
+        camera_tf.transform.rotation.w = math.cos(pitch_tf / 2.0)
         self.tf_broadcaster.sendTransform(camera_tf)
 
         # OpenCV PnP coordinates use the ROS optical convention:
@@ -563,15 +591,29 @@ def main():
         sim_dir = os.path.dirname(os.path.abspath(__file__))
         config_file = os.path.join(sim_dir, 'config', 'mission_params.yaml')
 
+        params_args = ['--ros-args', '--params-file', config_file]
         auto_nodes = [
-            ('EKF Adapter', [sys.executable, os.path.join(sim_dir, 'ekf_ros_adapter.py')]),
+            ('EKF Adapter', [
+                sys.executable, os.path.join(sim_dir, 'ekf_ros_adapter.py'),
+                *params_args,
+            ]),
             ('APF Planner', [
                 sys.executable, os.path.join(sim_dir, 'apf_planner.py'),
-                '--ros-args', '-p', f'world_sdf:={world_path}',
+                *params_args,
+                '-p', f'world_sdf:={world_path}',
             ]),
-            ('IBVS Controller', [sys.executable, os.path.join(sim_dir, 'ibvs_controller.py')]),
-            ('Mission FSM', [sys.executable, os.path.join(sim_dir, 'mission_fsm_node.py')]),
-            ('Offboard Commander', [sys.executable, os.path.join(sim_dir, 'offboard_commander.py')]),
+            ('IBVS Controller', [
+                sys.executable, os.path.join(sim_dir, 'ibvs_controller.py'),
+                *params_args,
+            ]),
+            ('Mission FSM', [
+                sys.executable, os.path.join(sim_dir, 'mission_fsm_node.py'),
+                *params_args,
+            ]),
+            ('Offboard Commander', [
+                sys.executable, os.path.join(sim_dir, 'offboard_commander.py'),
+                *params_args,
+            ]),
         ]
 
         for label, cmd in auto_nodes:
@@ -628,4 +670,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

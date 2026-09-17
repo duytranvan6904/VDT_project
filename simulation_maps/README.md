@@ -58,7 +58,7 @@ graph TD
 
 ### Nguyên lý hoạt động các pha:
 1. **IDLE / SEARCH**: Drone cất cánh lên độ cao mặc định 3.0 m. Gimbal pitch giữ ngang (-15°). Drone xoay chậm quanh trục Yaw tìm kiếm H-Pad.
-2. **FOLLOW**: Khi phát hiện ArUco ≥ 5 frame liên tiếp, EKF chuyển sang trạng thái TRACKING. APF tính toán vận tốc tổng hợp (Lực hút hướng về H-Pad tại cự ly an toàn $d_{follow} = 3.5$ m, Lực đẩy từ các trụ vật cản). IBVS tự động điều khiển gimbal pitch chúi xuống (khoảng -30° đến -60°) và xoay yaw drone để giữ marker luôn ở trung tâm ảnh.
+2. **FOLLOW**: Khi phát hiện ArUco ≥ 5 frame liên tiếp, EKF chuyển sang trạng thái TRACKING. APF hút drone về điểm đứng cách H-Pad $d_{follow}=3.5$ m theo phương ngang (không bay vào tâm H-Pad), đồng thời giữ độ cao hiện tại; lực đẩy từ các trụ được cộng để né vật cản. IBVS điều khiển gimbal pitch và yaw có giới hạn tốc độ để giữ marker trong FOV.
 3. **APPROACH**: Nhận lệnh hạ cánh từ Operator (`/operator/land_command`), FSM giảm dần độ cao drone từ 3.0 m xuống 0.5 m, lực né vật cản được giảm dần để ưu tiên tiếp cận bãi đáp.
 4. **LAND**: Khi drone cách H-Pad $< 0.3$ m, drone hạ cánh thẳng đứng lên bề mặt H-Pad và ngắt động cơ (Disarm).
 
@@ -70,7 +70,7 @@ Thư mục `simulation_maps/` chứa toàn bộ mã nguồn phục vụ mô ph�
 
 | Tên File | Vai Trò & Chức Năng Chi Tiết | Đầu Vào (Inputs) | Đầu Ra (Outputs) |
 |---|---|---|---|
-| **`config/mission_params.yaml`** | File tham số cấu hình tập trung cho toàn bộ hệ thống: cự ly bám $d_{follow}=3.5$ m, vận tốc tối đa $v_{max}=2.0$ m/s, hệ số APF ($k_{att}, k_{rep}, d_0$), camera FOV, ngưỡng FSM, timeout mất dấu. | File YAML tĩnh | Được nạp bởi tất cả các ROS 2 node |
+| **`config/mission_params.yaml`** | File tham số ROS 2 tập trung cho toàn bộ hệ thống: cự ly bám $d_{follow}=3.5$ m, giữ độ cao FOLLOW, vận tốc tối đa, hệ số APF ($k_{att}, k_{rep}, d_0$), camera FOV, ngưỡng FSM, timeout mất dấu. | File YAML tĩnh | Được launcher nạp cho từng ROS 2 node |
 | **`apf_planner.py`** | Bộ quy hoạch quỹ đạo Artificial Potential Field (APF 3D) chuẩn hóa từ thuật toán gốc MATLAB (`Avoidance/APFplanner_1_Obstacle.m`). Tính toán lực hút mục tiêu, lực đẩy vật cản hình trụ nạp từ SDF, bão hòa vận tốc $v_{max}$, và cơ chế chống kẹt bẫy cục bộ (Local Minima Escape). | `/ekf/target_state`<br>`/odom`<br>World SDF obstacles | `/apf/velocity_cmd`<br>`/apf/target_position`<br>`/apf/forces_debug` |
 | **`ekf_ros_adapter.py`** | Cầu nối ước lượng trạng thái: Lấy tọa độ tương đối từ camera, tra cứu TF2 (`world -> camera_optical_frame`) chuyển sang tọa độ toàn cục `world`, đưa vào bộ lọc Kalman mở rộng EKF 6-state ($x, y, z, v_x, v_y, v_z$). Tự động chạy chế độ Dead Reckoning (dự đoán quán tính) khi mục tiêu bị che khuất tạm thời. | `/hpad/position_camera`<br>`/hpad/detected`<br>TF2 Transform | `/ekf/target_state`<br>`/ekf/tracking_mode`<br>`/ekf/predicted_marker` |
 | **`ibvs_controller.py`** | Bộ điều khiển thị giác hình ảnh (Image-Based Visual Servoing): Điều khiển góc pitch của camera gimbal thông qua topic Gazebo và tốc độ quay Yaw của drone nhằm triệt tiêu độ lệch pixel của marker so với tâm ảnh ($e_u, e_v \to 0$). | `/hpad/bbox`<br>`/hpad/position_camera` | `/ibvs/gimbal_pitch`<br>`/ibvs/yaw_cmd`<br>`/ibvs/tracking_error` |
@@ -126,7 +126,7 @@ export GZ_PARTITION=vdt_harmonic
 export GZ_SIM_RESOURCE_PATH="$PWD/Tools/simulation/gz/models:${GZ_SIM_RESOURCE_PATH:-}"
 PX4_GZ_WORLD=obstacle_avoidance make px4_sitl gz_x500_depth
 ```
-> *Chờ cửa sổ Gazebo mở hoàn tất, model chiếc drone `x500_depth_0` xuất hiện ở tọa độ `(0, 0, 0)` và H-Pad xuất hiện ở `(4, 0, 0.02)`.*
+> *Chờ cửa sổ Gazebo mở hoàn tất, model chiếc drone `x500_depth_0` xuất hiện ở tọa độ `(0, 0, 0)` và H-Pad xuất hiện ở `(5.0, 2.0, 0.02)`. Giữa drone và H-Pad đã có sẵn các trụ chướng ngại vật đỏ/xanh để kiểm thử né vật cản ngay lập tức.*
 
 #### Bước 2: Khởi động Master Launcher với chế độ tự hành
 ```bash
@@ -137,18 +137,34 @@ python3 /home/duy/VDT_project/simulation_maps/launch_simulation.py --autonomous
 ```
 > **Dấu hiệu thành công tại Terminal 2**:
 > - Khởi động đồng thời: TF broadcaster, `ros_gz_bridge`, RViz2.
+> - Camera tự động chúc xuống **-30°** ngay khi khởi tạo.
 > - Khởi động 5 node con: `[AUTONOMOUS] Started ekf_ros_adapter`, `apf_planner`, `ibvs_controller`, `mission_fsm`, `offboard_commander`.
-> - Định kỳ mỗi 3s in log chẩn đoán trạng thái hệ thống: `[STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING]`.
+> - `offboard_commander` kết nối MAVLink UDP tới PX4 SITL (`udp:127.0.0.1:14540`).
+> - Định kỳ mỗi giây in log EKF & FSM: `[STATUS] Phase: SEARCH/FOLLOW | Drone: (...) | Target: (...) | Dist: ...`.
 
-#### Bước 3: Mở QGroundControl và cất cánh Drone
-```bash
-# Terminal 3
-~/QGroundControl.AppImage
-```
-> **Thao tác trên QGC**:
-> 1. Chờ QGC báo *Connected to Vehicle 1*.
-> 2. Gạt công tắc hoặc nhấn nút **Takeoff**, xác nhận cho drone bay lên độ cao mặc định (khoảng 2.5 - 3.0 m).
-> 3. Drone giữ vị trí hover ổn định trên không.
+#### Bước 3: Cất cánh Drone lên độ cao 3.0 m (Khuyên dùng script hoặc PX4 Shell)
+Do giao diện thanh trượt Takeoff của QGroundControl bị **hardcode chặn cứng mức tối thiểu là 10.0m** trong mã nguồn QML để an toàn ngoài đời thực, bạn hãy dùng 1 trong 2 cách sau để cất cánh chuẩn 3.0m:
+
+* **Cách A (Thuận tiện nhất - Chạy script Python MAVLink)**:
+  Mở terminal và chạy:
+  ```bash
+  python3 /home/duy/VDT_project/simulation_maps/takeoff.py --alt 3.0
+  ```
+  *(Script sẽ tự động Arm động cơ và ra lệnh cho drone bay lên đúng 3.0m rồi hover ổn định).*
+
+* **Cách B (Gõ trực tiếp vào Terminal 1 - PX4 Shell)**:
+  Ngay tại terminal đang chạy PX4 SITL (Terminal 1), tại dấu nhắc lệnh `pxh>`, gõ:
+  ```text
+  param set MIS_TAKEOFF_ALT 3.0
+  commander takeoff
+  ```
+
+* **Giám sát trên QGroundControl (Terminal 3)**:
+  ```bash
+  # Terminal 3 (Chỉ dùng để quan sát thông số và hình ảnh 3D)
+  ~/QGroundControl.AppImage
+  ```
+  *(Drone bay lên $> 1.8$m $\to$ Camera $-30^\circ$ thấy bãi đáp $\to$ Mission FSM tự chuyển sang `FOLLOW` và `offboard_commander` tự động chiếm quyền OFFBOARD điều khiển APF né vật cản).*
 
 #### Bước 4: Khởi động Node nhận diện thị giác ArUco
 ```bash
@@ -233,20 +249,23 @@ cd /home/duy/VDT_project
 
 # 1. Test toàn bộ giải thuật APF (Lực hút, Lực đẩy, Bão hòa vận tốc, Nạp vật cản từ SDF)
 python3 -c "
-from simulation_maps.apf_planner import APFCore3D, load_obstacles_from_sdf
+from simulation_maps.apf_planner import (
+    APFCore, APFParams, cylinder_nearest_point,
+    load_cylinder_obstacles_from_sdf, make_follow_goal,
+)
 import numpy as np
 
-planner = APFCore3D(d_follow=3.5, v_max=2.0, k_att=1.0, k_rep=3.0, d0=2.0)
-obs = load_obstacles_from_sdf('/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf')
+planner = APFCore(APFParams(d0=2.0, v_max=1.5, k_att=10.0, k_rep=250.0))
+raw_obs = load_cylinder_obstacles_from_sdf('/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf')
+obs = [cylinder_nearest_point(np.array([2.0, 0.0, 3.0]), *o) for o in raw_obs]
 print(f'✅ Nạp thành công {len(obs)} chướng ngại vật từ file world SDF!')
 
-# Test né vật cản
-v_cmd = planner.compute_velocity(
-    p_drone=np.array([2.0, 0.0, 3.0]),
-    p_target=np.array([6.0, 0.0, 0.0]),
-    obstacles=[{'center': np.array([3.0, 0.0]), 'radius': 0.4}]
-)
-print(f'✅ Vận tốc né vật cản APF: {np.round(v_cmd, 3)} m/s (Lực đẩy làm lệch quỹ đạo thành công)')
+# Test né vật cản và giữ độ cao FOLLOW
+p_drone = np.array([2.0, 0.0, 3.0])
+p_target = np.array([6.0, 0.0, 0.0])
+p_follow = make_follow_goal(p_drone, p_target, follow_distance=3.5)
+result = planner.compute(p_drone, p_follow, obs)
+print(f'✅ APF velocity: {np.round(result.velocity, 3)} m/s; z={result.velocity[2]:.3f}')
 "
 
 # 2. Test thuật toán EKF Core
@@ -338,3 +357,18 @@ world
      ros2 topic pub --once /model/x500_depth_0/command/gimbal_pitch std_msgs/msg/Float64 "{data: -0.5}"
      ```
   3. Quan sát topic `/hpad/annotated` trên RViz2 để xem trực tiếp khung hình nhận diện.
+
+### 5. Drone quay liên tục hoặc mất tracking trong FOLLOW
+- APF hiện bám một điểm cách H-Pad 3.5 m, không hút drone đi xuyên vào target.
+- Yaw FOLLOW đi theo sai số góc ngắn nhất và bị giới hạn tốc độ `yaw_rate_limit=0.6 rad/s`, tránh bước nhảy tại biên `+/-π`.
+- Kiểm tra đồng thời:
+  ```bash
+  ros2 topic echo /apf/velocity_cmd
+  ros2 topic echo /ibvs/yaw_cmd
+  ros2 topic echo /ekf/tracking_mode
+  ```
+  Nếu `/ibvs/yaw_cmd` thay đổi đều nhưng `/ekf/tracking_mode` chuyển `EXPIRED`, giảm `ibvs.yaw_rate_limit` hoặc kiểm tra lại FOV/gimbal. Nếu `/apf/velocity_cmd` có `linear.z` khác 0 trong FOLLOW, kiểm tra `hold_follow_altitude` trong `mission_params.yaml`.
+
+### 6. APF làm thay đổi độ cao trước khi landing
+- Trong FOLLOW, điểm đích APF được đặt tại cùng độ cao hiện tại của drone; pha APPROACH mới cho phép lệnh hạ độ cao.
+- Đây là giữ độ cao đối với lực hút target. Lực đẩy vật cản 3D vẫn có thể tạo thành phần `z` nếu drone ở sát phần trên của trụ; hãy kiểm tra `linear.z` trên `/apf/velocity_cmd` khi bắt đầu test vật cản.

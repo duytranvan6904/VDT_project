@@ -181,7 +181,7 @@ class ArucoSimulationNode(Node):
             pose_info = result.get('pose')
             if pose_info is not None:
                 pose = PoseStamped()
-                pose.header = msg.header
+                pose.header.stamp = self.get_clock().now().to_msg()
                 # OpenCV PnP uses x-right, y-down, z-forward. This is the
                 # ROS optical-frame convention, not Gazebo camera_link.
                 pose.header.frame_id = 'camera_optical_frame'

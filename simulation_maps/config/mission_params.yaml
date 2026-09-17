@@ -1,43 +1,52 @@
 # ============================================================================
 # Mission Parameters — APF + IBVS + EKF Simulation
 # ============================================================================
-# Dùng chung cho tất cả autonomous nodes. Sửa ở đây để tune toàn hệ thống.
+# ROS 2 parameter-file format.  The launcher passes this file to every
+# autonomous node, so changing a value here affects the actual simulation.
 
-# ---------- APF Obstacle Avoidance ----------
-apf:
-  d0: 5.0                      # Khoảng cách ảnh hưởng vật cản (m)
-  v_max: 2.0                   # Vận tốc tối đa (m/s)
-  k_att: 10.0                  # Hệ số lực hút (attractive gain)
-  k_rep: 90000.0               # Hệ số lực đẩy (repulsive gain)
-  k_rep_approach: 45000.0      # Lực đẩy giảm 50% trong APPROACH phase
-  goal_threshold: 0.15         # Khoảng cách coi là "tới đích" (m)
+apf_planner:
+  ros__parameters:
+    d0: 2.5
+    v_max: 2.0
+    k_att: 15.0
+    k_rep: 2500.0
+    k_rep_approach: 125.0
+    goal_threshold: 0.20
+    follow_distance: 3.5
+    hold_follow_altitude: true
 
-# ---------- IBVS Visual Servoing ----------
-ibvs:
-  K_pitch: 0.8                 # Proportional gain cho gimbal pitch
-  K_yaw: 0.5                   # Proportional gain cho drone yaw
-  search_yaw_rate: 0.2618      # Yaw rate trong SEARCH phase (15 deg/s → rad)
-  pitch_rate_limit: 3.1416     # Giới hạn tốc độ pitch (180 deg/s → rad)
-  pitch_ema_alpha: 0.25        # EMA filter coefficient cho gimbal pitch
+ekf_ros_adapter:
+  ros__parameters:
+    process_accel_variance: [1.0, 1.0, 0.5]
+    gate_threshold: 16.27
+    predict_rate_hz: 50.0
+    source_frame: camera_optical_frame
+    target_frame: world
+    max_target_speed: 2.5
+    min_marker_distance: 1.5
 
-# ---------- EKF Target Estimation ----------
-ekf:
-  process_accel_variance: [1.0, 1.0, 0.5]
-  gate_threshold: 16.27
-  predict_rate_hz: 50.0        # Tần suất EKF predict khi mất measurement
+ibvs_controller:
+  ros__parameters:
+    K_pitch: 0.8
+    K_yaw: 0.5
+    search_yaw_rate: 0.2618
+    pitch_rate_limit: 3.1416
+    pitch_ema_alpha: 0.25
+    yaw_rate_limit: 0.6
+    drone_model: x500_depth_0
 
-# ---------- Mission State Machine ----------
-mission:
-  detection_confirm_frames: 10  # Số frame detect liên tiếp để xác nhận target
-  follow_distance: 3.5          # Khoảng cách camera-target mong muốn (m)
-  alignment_threshold: 0.3      # Ngưỡng alignment cho LAND (m)
-  land_altitude: 0.5            # Độ cao chuyển LAND (m)
-  search_timeout: 3.0           # Mất target > 3s trong FOLLOW → SEARCH (s)
-  approach_timeout: 3.0         # Mất target > 3s trong APPROACH → FOLLOW (s)
-  takeoff_altitude: 3.0         # Độ cao cất cánh (m)
-  land_descent_speed: 0.3       # Tốc độ hạ cánh (m/s)
+mission_fsm:
+  ros__parameters:
+    detection_confirm_frames: 3
+    follow_distance: 3.5
+    alignment_threshold: 0.3
+    land_altitude: 0.5
+    search_timeout: 3.0
+    approach_timeout: 3.0
+    takeoff_altitude: 3.0
+    land_descent_speed: 0.3
 
-# ---------- World File (Simulation Only) ----------
-simulation:
-  world_sdf: "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf"
-  drone_model: "x500_depth_0"
+offboard_commander:
+  ros__parameters:
+    auto_arm: true
+    auto_offboard: true

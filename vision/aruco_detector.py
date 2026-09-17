@@ -120,8 +120,8 @@ class ArUcoDetector:
         self.parameters.minMarkerPerimeterRate = 0.02
         self.parameters.maxMarkerPerimeterRate = 4.0
 
-        # Allow markers near or touching image borders
-        self.parameters.minDistanceToBorder = 0
+        # Require at least 3px margin from image border to avoid boundary-clipping distortions
+        self.parameters.minDistanceToBorder = 3
 
         # Corner subpixel refinement for accurate PnP pose estimation
         if hasattr(cv2.aruco, "CORNER_REFINE_SUBPIX"):

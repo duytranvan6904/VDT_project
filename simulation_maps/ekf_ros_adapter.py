@@ -93,17 +93,22 @@ class EKFRosAdapter(Node):
         self.declare_parameter('predict_rate_hz', 50.0)
         self.declare_parameter('source_frame', 'camera_optical_frame')
         self.declare_parameter('target_frame', 'world')
+        self.declare_parameter('max_target_speed', 2.5)
+        self.declare_parameter('min_marker_distance', 1.5)
 
         accel_var = self.get_parameter('process_accel_variance').value
         gate = self.get_parameter('gate_threshold').value
         predict_hz = self.get_parameter('predict_rate_hz').value
         self.source_frame = self.get_parameter('source_frame').value
         self.target_frame = self.get_parameter('target_frame').value
+        self.max_target_speed = float(self.get_parameter('max_target_speed').value)
+        self.min_marker_distance = float(self.get_parameter('min_marker_distance').value)
 
         # ── Core EKF ─────────────────────────────────────────────────────
         self.ekf = TargetStateEKF(
             process_accel_variance=tuple(accel_var),
             gate_threshold=gate,
+            v_max=self.max_target_speed,
         )
 
         # ── TF2 ──────────────────────────────────────────────────────────
@@ -112,10 +117,17 @@ class EKFRosAdapter(Node):
 
         # ── State ────────────────────────────────────────────────────────
         self.last_detection_time = 0.0       # monotonic timestamp of last True detection
+        self.last_valid_meas_time: float | None = None  # timestamp of last accepted measurement
         self.last_ekf_time = None            # last timestamp fed to EKF (for dt calc)
+        self.last_diag_time = 0.0
         self.detected = False
         self.detection_count = 0             # consecutive detection counter
         self.phase = 'FOLLOW'                # current mission phase (for tracking policy)
+        self.candidate_pos: np.ndarray | None = None
+        self.candidate_time = 0.0
+        self.candidate_count = 0
+        self.candidate_first_pos: np.ndarray | None = None
+        self.candidate_first_time = 0.0
 
         # ── Measurement covariance ───────────────────────────────────────
         # Position measurement noise (PnP + TF uncertainty)
@@ -153,7 +165,7 @@ class EKFRosAdapter(Node):
 
         self.get_logger().info(
             f'EKF ROS Adapter ready: {self.source_frame} → {self.target_frame}, '
-            f'predict at {predict_hz:.0f} Hz'
+            f'predict at {predict_hz:.0f} Hz, max_speed={self.max_target_speed:.1f} m/s'
         )
 
     # ── Callbacks ────────────────────────────────────────────────────────
@@ -177,44 +189,129 @@ class EKFRosAdapter(Node):
         if not self.detected:
             return
 
-        # Transform camera → world via TF2
         camera_pos = np.array([msg.point.x, msg.point.y, msg.point.z])
+        camera_dist = float(np.linalg.norm(camera_pos))
+
+        # 1. Sanity check: reject impossible close-range detections (PnP ambiguity/clipping artifact)
+        if camera_dist < self.min_marker_distance:
+            self.get_logger().warning(
+                f'[OUTLIER REJECTED] Marker distance {camera_dist:.2f}m < {self.min_marker_distance:.2f}m '
+                f'(likely PnP boundary/ambiguity glitch)',
+                throttle_duration_sec=1.0,
+            )
+            return
+
+        # Transform camera → world via TF2
         world_pos = self._transform_to_world(camera_pos, msg.header)
         if world_pos is None:
             return
 
-        # Compute dt
         now = time.monotonic()
-        if self.last_ekf_time is not None:
-            dt = now - self.last_ekf_time
-            dt = max(0.001, min(dt, 1.0))  # clamp to [1ms, 1s]
+        if not self.ekf.initialized:
+            self.ekf.initialize(world_pos, now)
+            self.last_ekf_time = now
+            self.last_valid_meas_time = now
+            self._publish_state()
+            return
+
+        # 2. Advance EKF prediction to current measurement time
+        if self.last_ekf_time is not None and now > self.last_ekf_time:
+            self.ekf.predict(now)
+            self.last_ekf_time = now
+
+        # 3. Kinematic Gating against PREDICTED trajectory
+        # For continuous tracking, predicted state moves with target -> innovation is tiny (~0.05m).
+        # During dropout, gate opens up proportionally to time elapsed since LAST VALID MEASUREMENT.
+        time_since_last_valid = (
+            now - self.last_valid_meas_time if self.last_valid_meas_time is not None else 999.0
+        )
+        predicted_pos = self.ekf.snapshot().state[:2]
+
+        dt_gap = max(0.02, min(1.5, time_since_last_valid))
+        # Gate expands with physical motion budget during dropout, capped at 2.0m
+        max_allowed_dist = min(
+            2.00,
+            max(0.60, 0.5 * 2.0 * dt_gap**2 + 0.30 * self.max_target_speed * dt_gap + 0.40)
+        )
+        innov_dist = float(np.linalg.norm(world_pos[:2] - predicted_pos))
+
+        if innov_dist <= max_allowed_dist:
+            # Measurement passed kinematic gate: valid target confirmed
+            self.candidate_pos = None
+            self.candidate_count = 0
+
+            self.ekf.update(world_pos, self.R)
+            self.last_valid_meas_time = now
+            self._publish_state()
+            return
+
+        # 4. Out-of-Gate: Could be an outlier glitch OR a maneuvering/moving target after dropout.
+        # Evaluate consistency across consecutive frames (3 frames within 0.35s = ~100ms confirmation)
+        is_consistent = False
+        if self.candidate_pos is not None:
+            dt_cand = now - self.candidate_time
+            if dt_cand < 0.35:
+                cand_dist = float(np.linalg.norm(world_pos[:2] - self.candidate_pos[:2]))
+                max_step = max(0.40, self.max_target_speed * dt_cand + 0.15)
+                if cand_dist <= max_step:
+                    is_consistent = True
+
+        if is_consistent:
+            self.candidate_count += 1
+            self.candidate_pos = world_pos.copy()
+            self.candidate_time = now
+            if self.candidate_count >= 3:
+                # Confirmed 3 consecutive frames: re-acquire track immediately!
+                dt_total = now - self.candidate_first_time
+                vel_est = (world_pos - self.candidate_first_pos) / max(dt_total, 0.001)
+                v_xy = float(np.hypot(vel_est[0], vel_est[1]))
+                if v_xy > self.max_target_speed:
+                    vel_est[:2] *= (self.max_target_speed / v_xy)
+                vel_est[2] = float(np.clip(vel_est[2], -1.0, 1.0))
+
+                self.get_logger().info(
+                    f'[EKF RE-ACQUIRED] Re-acquired target at ({world_pos[0]:.2f}, {world_pos[1]:.2f})m '
+                    f'with vel ({vel_est[0]:.2f}, {vel_est[1]:.2f}) m/s after dropout/maneuver'
+                )
+                self.ekf.initialize(world_pos, now, velocity=vel_est)
+                self.candidate_pos = None
+                self.candidate_count = 0
+                self.last_ekf_time = now
+                self.last_valid_meas_time = now
+                self._publish_state()
+                return
         else:
-            dt = 1.0 / 30.0  # initial guess
-        self.last_ekf_time = now
+            self.candidate_pos = world_pos.copy()
+            self.candidate_time = now
+            self.candidate_first_pos = world_pos.copy()
+            self.candidate_first_time = now
+            self.candidate_count = 1
 
-        # EKF predict + update
-        self.ekf.predict(dt)
-        self.ekf.update(world_pos, self.R)
-
-        # Publish updated state
-        self._publish_state()
+        self.get_logger().warning(
+            f'[KINEMATIC GATE] Rejected jump {innov_dist:.2f}m > {max_allowed_dist:.2f}m '
+            f'(Measured: ({world_pos[0]:.2f}, {world_pos[1]:.2f}) vs Predicted: ({predicted_pos[0]:.2f}, {predicted_pos[1]:.2f}), '
+            f'Candidate: {self.candidate_count}/3)',
+            throttle_duration_sec=0.5,
+        )
 
     def predict_timer_cb(self):
         """Fixed-rate EKF predict for smooth state estimation when no measurements."""
-        if self.last_ekf_time is None:
-            return  # not initialized yet
-
-        snap = self.ekf.snapshot(time.monotonic())
-        if not snap.initialized:
+        if not self.ekf.initialized:
             return
 
         now = time.monotonic()
-        dt = now - self.last_ekf_time
-        dt = max(0.001, min(dt, 1.0))
+        if self.last_ekf_time is None or now <= self.last_ekf_time:
+            return
 
         # Only predict (no update) — the measurement path handles updates
         if not self.detected:
-            self.ekf.predict(dt)
+            # During extended dropout (> 1.0s without detection), gently decay velocity towards 0
+            # to prevent runaway linear projection indefinitely if target stopped out of view
+            time_since_meas = now - self.last_valid_meas_time if self.last_valid_meas_time is not None else 999.0
+            if time_since_meas > 1.0:
+                self.ekf._state[3:] *= 0.985
+
+            self.ekf.predict(now)
             self.last_ekf_time = now
             self._publish_state()
 
@@ -246,7 +343,7 @@ class EKFRosAdapter(Node):
     def _publish_state(self):
         """Publish current EKF state as Odometry + tracking mode as String."""
         now_mono = time.monotonic()
-        snap = self.ekf.snapshot(now_mono)
+        snap = self.ekf.snapshot()
 
         if not snap.initialized:
             return
@@ -295,6 +392,14 @@ class EKFRosAdapter(Node):
         msg.twist.covariance = twist_cov.tolist()
 
         self.state_pub.publish(msg)
+
+        if now_mono - self.last_diag_time > 1.5:
+            self.get_logger().info(
+                f"[EKF Output] Target: ({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f})m | "
+                f"Vel: ({state[3]:.2f}, {state[4]:.2f}) m/s | "
+                f"Mode: {mode.value:<10} | Age: {age:.2f}s"
+            )
+            self.last_diag_time = now_mono
 
 
 # ---------------------------------------------------------------------------
