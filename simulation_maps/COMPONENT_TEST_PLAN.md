@@ -597,7 +597,116 @@ Không cho phép APF velocity tham gia, để loại bỏ chuyển động ngang
 
 ---
 
-## 9. Bảng chẩn đoán nhanh
+## 9. Test nhóm E — Bay thực tế kiểm thử độc lập thuật toán APF (Không dùng Vision/IBVS)
+
+**Mục tiêu bài test:**
+Kiểm thử vòng lặp kín (Closed-Loop Flight) giữa **Thuật toán APF 3D** và **Bộ điều khiển bay PX4 trong Gazebo** mà **HOÀN TOÀN KHÔNG CẦN Vision (ArUco detector)**, **KHÔNG CẦN Gimbal Servo (IBVS)**, và không phụ thuộc vào điều kiện ánh sáng camera. 
+
+Vị trí Target được cấp cố định từ trước vào map. Drone sẽ cất cánh từ vị trí ban đầu cho trước, đọc Odometry thật từ Gazebo, dùng APF tính vector vận tốc bay tới mục tiêu (đồng thời né chướng ngại vật từ file SDF) và điều khiển drone thực sự bay trong Gazebo + RViz2 để đánh giá độ ổn định.
+
+---
+
+### 1. Thông số không gian định trước (Known Coordinates Setup)
+
+- **Vị trí Drone ban đầu:**
+  - Trên mặt đất Gazebo: $(x = 0.0,\ y = 0.0,\ z = 0.0)$.
+  - Sau khi cất cánh Takeoff: $(x = 0.0,\ y = 0.0,\ z = 3.0\text{ m})$ (hover ổn định).
+- **Vị trí Target cố định (Pre-fed Target):**
+  - Tọa độ: $(x = 5.00,\ y = 2.00,\ z = 0.02\text{ m})$ (hoặc tọa độ tùy chọn bạn muốn cấp).
+- **Vật cản tĩnh (Known Obstacles từ SDF):** 10 trụ cố định từ file `obstacle_avoidance.sdf`.
+- **Khoảng cách bám mong muốn ($d_{\text{follow}}$):** $3.5\text{ m}$ (khoảng cách 3D từ drone tới Target).
+- **Điểm Goal bám 3D (Stand-off Goal):**
+  $$R_{xy} = \sqrt{3.5^2 - (3.0 - 0.02)^2} \approx 1.836\text{ m} \implies (x_{\text{goal}} \approx 3.30,\ y_{\text{goal}} \approx 1.32,\ z_{\text{goal}} = 3.00\text{ m})$$
+
+---
+
+### 2. Trình tự khởi động các Terminal
+
+#### Terminal 1: Khởi động PX4 SITL & Gazebo Harmonic
+```bash
+cd /home/duy/VDT_project/PX4-Autopilot
+export GZ_PARTITION=vdt_harmonic
+export GZ_SIM_RESOURCE_PATH="$PWD/Tools/simulation/gz/models:${GZ_SIM_RESOURCE_PATH:-}"
+PX4_GZ_WORLD=obstacle_avoidance make px4_sitl gz_x500_depth
+```
+*(Chờ Gazebo mở: Drone xuất hiện tại `(0, 0, 0)`, bãi đáp tại `(5.0, 2.0)` và 10 cột trụ cản xung quanh)*.
+
+#### Terminal 2: Cầu nối Odometry & Mở RViz2 (Không bật autonomous pipeline)
+```bash
+cd /home/duy/VDT_project
+source /opt/ros/humble/setup.bash
+export GZ_PARTITION=vdt_harmonic
+python3 simulation_maps/launch_simulation.py
+```
+*(Lệnh này chỉ chạy Bridge `/odom`, broadcast TF và mở RViz2 hiển thị 3D; KHÔNG khởi chạy Vision hay IBVS)*.
+
+* **Giám sát trên QGroundControl (Terminal 2)**:
+```bash
+~/QGroundControl.AppImage
+```
+
+#### Terminal 3: Khởi động APF Planner với map Gazebo
+```bash
+cd /home/duy/VDT_project
+source /opt/ros/humble/setup.bash
+python3 simulation_maps/apf_planner.py \
+  --ros-args \
+  --params-file simulation_maps/config/mission_params.yaml \
+  -p world_sdf:=simulation_maps/gazebo_worlds/obstacle_avoidance.sdf
+```
+*(Node nạp 10 trụ cản, tính toán vận tốc và góc yaw điều khiển bay)*.
+
+#### Terminal 4: Khởi động Offboard Commander (Nối trực tiếp với APF)
+```bash
+cd /home/duy/VDT_project
+source /opt/ros/humble/setup.bash
+python3 simulation_maps/offboard_commander.py \
+  --ros-args \
+  -r /mission/velocity_setpoint:=/apf/velocity_cmd \
+  -r /mission/yaw_setpoint:=/apf/yaw_cmd
+```
+*(Offboard Commander nhận trực tiếp lệnh vận tốc và góc yaw từ APF, kết nối MAVLink UDP tới PX4)*.
+
+#### Terminal 5: Cấp vị trí Target cố định vào map
+```bash
+cd /home/duy/VDT_project
+source /opt/ros/humble/setup.bash
+python3 simulation_maps/mock_target_publisher.py --x 5.0 --y 2.0 --z 0.02
+```
+*(Node cấp vị trí Target `(5.0, 2.0, 0.02)`, đồng thời kích hoạt phase `FOLLOW` & mode `TRACKING`)*.
+
+#### Terminal 6: Ra lệnh Cất cánh Drone lên độ cao 3.0 m
+```bash
+python3 /home/duy/VDT_project/simulation_maps/takeoff.py --alt 3.0
+```
+
+---
+
+### 3. Diễn biến quan sát & Tiêu chuẩn đánh giá ổn định (PASS Criteria)
+
+1. **Cất cánh mượt mà:** Drone arm động cơ, bay thẳng đứng từ mặt đất lên $z = 3.0\text{ m} \pm 0.15\text{ m}$ và hover thăng bằng.
+2. **Kích hoạt bay theo APF:**
+   - Ngay khi ở trên không, `offboard_commander` tự động nhận diện phase `FOLLOW` và chiếm quyền `OFFBOARD` trên PX4.
+   - Vector APF (mũi tên xanh dương trên RViz2) chỉ thẳng về phía điểm bám $(3.30, 1.32, 3.0)$.
+   - **Drone trong Gazebo thực sự nghiêng thân và bay lướt đi trong không gian**, tịnh tiến thẳng về điểm bám với tốc độ $\le 2.0\text{ m/s}$.
+3. **Dừng chính xác & Hover ổn định:**
+   - Khi áp sát cự ly $3.5\text{ m}$ so với Target (tọa độ $(3.30, 1.32)$), vector vận tốc APF tự động triệt tiêu dần về 0.
+   - Drone giảm tốc êm ái, dừng lại và **hover thăng bằng cực kỳ ổn định tại $(3.30, 1.32, 3.0\text{ m})$**, mũi drone xoay yaw hướng thẳng về phía Target!
+   - Không bị hiện tượng dao động lố (overshoot) hay rung giật qua lại quanh đích.
+
+---
+
+### 4. Thử nghiệm đổi vị trí Target hoặc kiểm tra né vật cản
+Trong khi drone đang hover ổn định, tại **Terminal 5**, bạn có thể bấm `Ctrl+C` và đổi tọa độ Target sang một vị trí khác (ví dụ ra sau lưng một cột trụ cụ thể để xem drone lượn vòng né trụ):
+```bash
+# Đổi Target ra tọa độ mới (10.0, 3.64) nằm ngay sau trụ cyl_1:
+python3 simulation_maps/mock_target_publisher.py --x 10.0 --y 3.64 --z 0.02
+```
+👉 Drone trong Gazebo sẽ lập tức nhận lệnh mới từ APF, cất cánh bay tiếp, gặp trụ `cyl_1` chắn đường sẽ tự động lượn vòng né sang sườn và bay tới vị trí mới một cách trơn tru!
+
+---
+
+## 10. Bảng chẩn đoán nhanh
 
 | Quan sát | Nguyên nhân ưu tiên |
 |---|---|
@@ -612,15 +721,12 @@ Không cho phép APF velocity tham gia, để loại bỏ chuyển động ngang
 
 ---
 
-## 10. Thứ tự thực hiện đề xuất
+## 11. Thứ tự thực hiện đề xuất
 
 1. **Test 0.2** — xác nhận dấu pitch Gazebo ↔ TF.
 2. **Test 0.3/C2** — target world-frame phải đứng yên khi target thật đứng yên.
 3. **Test A** — APF core offline.
-4. **Test B** — APF ROS node với topic giả.
+4. **Test B** — APF ROS node với topic giả và quan sát vector trực quan trên RViz2.
 5. **Test C3** — IBVS yaw open-loop.
 6. **Test D** — yaw servo/PX4 với velocity bằng 0.
-7. Chỉ sau khi tất cả PASS mới chạy `--autonomous`.
-8. Cuối cùng mới thêm H-Pad di động và obstacle.
-
-Nếu chỉ được chọn một việc để kiểm tra trước, hãy chạy **Test 0.2 và C2**. Dấu pitch ngược hoặc target world-frame nhảy theo chuyển động của camera sẽ giải thích đồng thời cả hai hiện tượng: APF kéo sai vị trí và drone quay vòng.
+7. **Test E** — Chạy `--autonomous` với drone thật cất cánh, bay bám H-Pad và né vật cản trong Gazebo + RViz2.

@@ -32,11 +32,14 @@ import numpy as np
 @dataclass
 class APFParams:
     """Tunable APF parameters."""
-    d0: float = 3.0          # Obstacle influence distance (m)
-    v_max: float = 2.0       # Maximum velocity (m/s)
-    k_att: float = 10.0      # Attractive gain
-    k_rep: float = 2500.0   # Repulsive gain
-    goal_threshold: float = 0.15  # Stop distance near goal (m)
+    d0: float = 3.0               # Obstacle influence distance (m)
+    v_max: float = 1.5            # Maximum velocity (m/s)
+    d_slow: float = 1.5           # Deceleration distance to goal (m)
+    k_att: float = 10.0           # Attractive gain
+    k_rep: float = 2500.0         # Repulsive gain
+    goal_threshold: float = 0.20  # Stop distance near goal (m)
+    k_z: float = 0.6              # Altitude P gain (1/s)
+    vz_max: float = 0.5           # Max vertical velocity (m/s)
 
 
 @dataclass
@@ -56,20 +59,18 @@ def make_follow_goal(
     follow_distance: float,
     *,
     hold_altitude: bool = True,
+    cruise_altitude: float = 3.0,
     is_3d_distance: bool = True,
 ) -> np.ndarray:
     """Return the horizontal stand-off point used during FOLLOW.
 
     APF attracts the drone to a stand-off point behind/towards the target,
-    not to the target itself. The altitude is projected onto the current
-    drone altitude during FOLLOW; the landing phase owns vertical descent.
+    not to the target itself. The altitude is held at cruise_altitude during FOLLOW.
 
     When ``is_3d_distance`` is True (default), ``follow_distance`` represents the
     desired 3D Euclidean slant range from the drone to the physical ground marker.
     By the Pythagorean theorem, the horizontal stand-off distance is:
         R_xy = sqrt(max(0, follow_distance^2 - (z_drone - z_target)^2))
-    If the vertical difference exceeds follow_distance, R_xy collapses to 0
-    (drone positions directly overhead).
     """
     drone = np.asarray(drone_pos, dtype=float)
     target = np.asarray(target_pos, dtype=float)
@@ -93,25 +94,18 @@ def make_follow_goal(
         if distance_xy > 1e-6:
             direction_to_target = delta_xy / distance_xy
         else:
-            # Deterministic fallback prevents the stand-off goal collapsing
-            # onto the target when both XY positions temporarily coincide.
             direction_to_target = np.array([1.0, 0.0])
         goal[:2] = target[:2] - direction_to_target * standoff_xy
     else:
         goal[:2] = target[:2]
 
     if hold_altitude:
-        goal[2] = drone[2]
+        goal[2] = cruise_altitude
     return goal
 
 
 class APFCore:
-    """Pure-Python APF planner — no ROS dependency.
-
-    Directly mirrors the MATLAB logic in ``APFplanner_1_Obstacle.m`` with the
-    addition of tangential force to avoid local minima, and per-obstacle
-    cylinder-surface nearest-point computation.
-    """
+    """Pure-Python APF planner with smooth deceleration, altitude regulation, and target-locked yaw."""
 
     def __init__(self, params: Optional[APFParams] = None) -> None:
         self.params = params or APFParams()
@@ -123,6 +117,7 @@ class APFCore:
         obstacles: List[Tuple[float, float, float]],
         *,
         k_rep_override: Optional[float] = None,
+        target_pos: Optional[np.ndarray] = None,
     ) -> APFResult:
         """Compute velocity command given drone position, goal, and obstacles.
 
@@ -130,12 +125,13 @@ class APFCore:
         ----------
         pos : (3,) drone position [x, y, z] ENU
         goal : (3,) target/goal position [x, y, z] ENU
-        obstacles : list of (x, y, z) obstacle center positions ENU
+        obstacles : list of (x, y, z) obstacle surface positions ENU
         k_rep_override : if set, overrides self.params.k_rep (for APPROACH)
+        target_pos : optional physical target position for camera heading lock
 
         Returns
         -------
-        APFResult with velocity command and debug forces
+        APFResult with velocity command, smooth deceleration, active altitude holding, and target-locked yaw
         """
         p = self.params
         k_rep = k_rep_override if k_rep_override is not None else p.k_rep
@@ -143,67 +139,83 @@ class APFCore:
         pos = np.asarray(pos, dtype=float)
         goal = np.asarray(goal, dtype=float)
 
-        # --- Distance to goal ---
-        d_goal_vec = goal - pos
-        d_goal_mag = np.linalg.norm(d_goal_vec)
+        # --- 2D Horizontal distance to goal ---
+        d_goal_xy = goal[:2] - pos[:2]
+        d_goal_mag = float(np.linalg.norm(d_goal_xy))
 
-        # --- Attractive force ---
-        f_att = 2.0 * p.k_att * d_goal_vec
+        # --- Horizontal Attractive force ---
+        f_att_xy = 2.0 * p.k_att * d_goal_xy
+        f_att = np.array([f_att_xy[0], f_att_xy[1], 0.0])
 
-        # --- Repulsive force (sum over all obstacles) ---
+        # --- Horizontal Repulsive force (sum over all obstacles) ---
         f_rep = np.zeros(3)
-        # GNRON resolution: do not let obstacles farther than goal repel vehicle away from goal
         effective_d0 = min(p.d0, max(0.4, d_goal_mag))
 
         for obs in obstacles:
             obs_pos = np.asarray(obs, dtype=float)
-            d_vec = pos - obs_pos          # vector from obstacle to drone
-            d = np.linalg.norm(d_vec)
+            d_vec_xy = pos[:2] - obs_pos[:2]
+            d = float(np.linalg.norm(d_vec_xy))
 
             if d < 1e-6:
                 d = 1e-6                   # avoid division by zero
             if d > effective_d0:
                 continue                   # outside influence zone
 
-            # Unit vector away from obstacle
-            grad_d = d_vec / d
-
-            # Repulsive magnitude (from MATLAB)
+            grad_d = d_vec_xy / d
             rep_mag = 2.0 * k_rep * (1.0 / d - 1.0 / effective_d0) * (1.0 / (d * d))
 
-            # Tangential component to avoid local minima (directed towards goal)
-            tan_dir = np.cross(np.array([0.0, 0.0, 1.0]), grad_d)
-            tan_norm = np.linalg.norm(tan_dir)
-            if tan_norm > 1e-3:
-                tan_dir = tan_dir / tan_norm
-            else:
-                tan_dir = np.array([0.0, 1.0, 0.0])
-            if np.dot(tan_dir, d_goal_vec) < 0:
+            # Tangential component (horizontal 2D perpendicular)
+            tan_dir = np.array([-grad_d[1], grad_d[0]])
+            if np.dot(tan_dir, d_goal_xy) < 0:
                 tan_dir = -tan_dir
             f_tan = 0.8 * rep_mag * tan_dir
 
-            f_rep += rep_mag * grad_d + f_tan
+            f_rep[:2] += rep_mag * grad_d + f_tan
 
-        # --- Total force ---
-        f_total = f_att + f_rep
-        f_norm = np.linalg.norm(f_total)
+        # --- Total horizontal force ---
+        f_total_xy = f_att_xy + f_rep[:2]
+        f_norm_xy = float(np.linalg.norm(f_total_xy))
+        f_total = np.array([f_total_xy[0], f_total_xy[1], 0.0])
 
-        # --- Velocity command ---
+        # --- Horizontal Velocity with smooth deceleration ramp ---
         at_goal = d_goal_mag < p.goal_threshold
 
-        if at_goal:
-            velocity = np.zeros(3)
-        elif f_norm > 1e-4:
-            velocity = p.v_max * f_total / f_norm
+        if at_goal or f_norm_xy < 1e-4:
+            vx, vy = 0.0, 0.0
         else:
-            velocity = np.zeros(3)
+            u_dir = f_total_xy / f_norm_xy
+            # Deceleration scaling: ramps down linearly between d_slow and goal_threshold
+            d_slow = max(p.d_slow, p.goal_threshold + 0.1)
+            speed_scale = min(1.0, max(0.0, (d_goal_mag - p.goal_threshold) / (d_slow - p.goal_threshold)))
+            speed = p.v_max * speed_scale
+            vx = speed * u_dir[0]
+            vy = speed * u_dir[1]
 
-        # --- Yaw command (heading toward velocity direction) ---
-        v_horizontal = math.sqrt(velocity[0] ** 2 + velocity[1] ** 2)
-        if v_horizontal > 0.05:
-            yaw_cmd = math.atan2(velocity[1], velocity[0])
+        # --- Vertical velocity (closed-loop altitude regulation with deadband) ---
+        # A deadband of 8cm prevents altitude porpoising/hunting during bank turns
+        dz = goal[2] - pos[2]
+        deadband = 0.08
+        if abs(dz) <= deadband or (at_goal and abs(dz) < 0.15):
+            vz = 0.0
         else:
-            yaw_cmd = 0.0
+            eff_dz = dz - math.copysign(deadband, dz)
+            vz = float(np.clip(p.k_z * eff_dz, -p.vz_max, p.vz_max))
+
+        velocity = np.array([vx, vy, vz])
+
+        # --- Yaw command: Lock heading to target if target_pos is given ---
+        if target_pos is not None:
+            d_target_xy = np.asarray(target_pos[:2], dtype=float) - pos[:2]
+            if np.linalg.norm(d_target_xy) > 0.1:
+                yaw_cmd = float(math.atan2(d_target_xy[1], d_target_xy[0]))
+            else:
+                yaw_cmd = 0.0
+        else:
+            d_goal = goal[:2] - pos[:2]
+            if np.linalg.norm(d_goal) > 0.1:
+                yaw_cmd = float(math.atan2(d_goal[1], d_goal[0]))
+            else:
+                yaw_cmd = 0.0
 
         return APFResult(
             velocity=velocity,
@@ -286,7 +298,7 @@ def _create_ros_node():
     from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
     from geometry_msgs.msg import Point, Twist, Vector3, TransformStamped
     from nav_msgs.msg import Odometry
-    from std_msgs.msg import String
+    from std_msgs.msg import Float64, String
     from tf2_ros import StaticTransformBroadcaster
     from visualization_msgs.msg import Marker, MarkerArray
 
@@ -305,19 +317,26 @@ def _create_ros_node():
             self.declare_parameter('world_sdf', '')
             self.declare_parameter('d0', 2.0)
             self.declare_parameter('v_max', 1.5)
+            self.declare_parameter('d_slow', 1.5)
             self.declare_parameter('k_att', 10.0)
             self.declare_parameter('k_rep', 250.0)
             self.declare_parameter('k_rep_approach', 125.0)
             self.declare_parameter('goal_threshold', 0.20)
             self.declare_parameter('follow_distance', 3.5)
             self.declare_parameter('hold_follow_altitude', True)
+            self.declare_parameter('target_altitude', 3.0)
+            self.declare_parameter('k_z', 0.6)
+            self.declare_parameter('vz_max', 0.5)
 
             params = APFParams(
                 d0=self.get_parameter('d0').value,
                 v_max=self.get_parameter('v_max').value,
+                d_slow=self.get_parameter('d_slow').value,
                 k_att=self.get_parameter('k_att').value,
                 k_rep=self.get_parameter('k_rep').value,
                 goal_threshold=self.get_parameter('goal_threshold').value,
+                k_z=self.get_parameter('k_z').value,
+                vz_max=self.get_parameter('vz_max').value,
             )
             self.apf = APFCore(params)
             self.k_rep_approach = self.get_parameter('k_rep_approach').value
@@ -325,6 +344,7 @@ def _create_ros_node():
             self.hold_follow_altitude = bool(
                 self.get_parameter('hold_follow_altitude').value
             )
+            self.target_altitude = float(self.get_parameter('target_altitude').value)
 
             # ── State ────────────────────────────────────────────────────
             self.drone_pos = np.zeros(3)
@@ -366,6 +386,7 @@ def _create_ros_node():
 
             # ── Publishers ───────────────────────────────────────────────
             self.vel_pub = self.create_publisher(Twist, '/apf/velocity_cmd', 10)
+            self.yaw_pub = self.create_publisher(Float64, '/apf/yaw_cmd', 10)
             self.marker_pub = self.create_publisher(
                 MarkerArray, '/apf/force_markers', 10,
             )
@@ -420,6 +441,7 @@ def _create_ros_node():
                         self.goal_pos,
                         self.follow_distance,
                         hold_altitude=self.hold_follow_altitude,
+                        cruise_altitude=self.target_altitude,
                     )
 
             # Check if APF can compute active flight commands
@@ -452,6 +474,7 @@ def _create_ros_node():
             result = self.apf.compute(
                 self.drone_pos, target_goal, obstacle_points,
                 k_rep_override=k_rep_override,
+                target_pos=self.goal_pos,
             )
 
             # Publish velocity command
@@ -460,6 +483,7 @@ def _create_ros_node():
             cmd.linear.y = float(result.velocity[1])
             cmd.linear.z = float(result.velocity[2])
             self.vel_pub.publish(cmd)
+            self.yaw_pub.publish(Float64(data=float(result.yaw_cmd)))
 
             # Publish debug markers with arrows
             self._publish_force_markers(result, target_goal)

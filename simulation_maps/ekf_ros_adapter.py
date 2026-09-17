@@ -322,12 +322,25 @@ class EKFRosAdapter(Node):
     ) -> np.ndarray | None:
         """Transform a point from camera_optical_frame to world using TF2."""
         try:
-            tf_msg = self.tf_buffer.lookup_transform(
-                self.target_frame,
-                self.source_frame,
-                rclpy.time.Time(),  # latest available
-                timeout=rclpy.duration.Duration(seconds=0.1),
+            lookup_time = (
+                header.stamp
+                if (header.stamp.sec > 0 or header.stamp.nanosec > 0)
+                else rclpy.time.Time()
             )
+            try:
+                tf_msg = self.tf_buffer.lookup_transform(
+                    self.target_frame,
+                    self.source_frame,
+                    lookup_time,
+                    timeout=rclpy.duration.Duration(seconds=0.05),
+                )
+            except (tf2_ros.ExtrapolationException, tf2_ros.LookupException):
+                tf_msg = self.tf_buffer.lookup_transform(
+                    self.target_frame,
+                    self.source_frame,
+                    rclpy.time.Time(),
+                    timeout=rclpy.duration.Duration(seconds=0.05),
+                )
             return _transform_point_manual(camera_pos, tf_msg)
         except (
             tf2_ros.LookupException,

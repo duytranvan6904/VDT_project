@@ -7,8 +7,10 @@
 apf_planner:
   ros__parameters:
     d0: 2.5
-    v_max: 2.0
-    k_att: 15.0
+    v_max: 1.5
+    d_slow: 1.5
+    target_altitude: 3.0
+    k_att: 10.0
     k_rep: 2500.0
     k_rep_approach: 125.0
     goal_threshold: 0.20
@@ -23,7 +25,12 @@ ekf_ros_adapter:
     source_frame: camera_optical_frame
     target_frame: world
     max_target_speed: 2.5
-    min_marker_distance: 1.5
+    min_marker_distance: 2.2
+
+aruco_sim_node:
+  ros__parameters:
+    marker_size_m: 0.895
+    min_detection_distance_m: 2.2
 
 ibvs_controller:
   ros__parameters:
@@ -50,3 +57,5 @@ offboard_commander:
   ros__parameters:
     auto_arm: true
     auto_offboard: true
+    min_offboard_alt: 2.0
+    max_accel: 2.0

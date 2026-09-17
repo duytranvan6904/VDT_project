@@ -43,13 +43,16 @@ class ArucoSimulationNode(Node):
         super().__init__('aruco_sim_node')
 
         self.declare_parameter('marker_id', 42)
-        # marker42.png contains a 30 px title strip above the 371 px code.
-        # The 0.90 m H-pad therefore gives an ArUco code side of about
-        # 0.90 * 371 / 411 = 0.812 m for PnP scale estimation.
-        self.declare_parameter('marker_size_m', 0.812)
+        # In arucotag/model.sdf, the plane geometry is 0.90m x 0.90m.
+        # The calibrated physical dimension of the detected outer square is 0.895m,
+        # which correctly maps the estimated 3D position to the Gazebo ground-truth
+        # target coordinates (5.0, 2.0, 0.02)m without 10% distance shrinkage.
+        self.declare_parameter('marker_size_m', 0.895)
         self.declare_parameter('dictionary', 'DICT_6X6_50')
+        self.declare_parameter('min_detection_distance_m', 2.2)
         self.marker_id = int(self.get_parameter('marker_id').value)
         self.marker_size = float(self.get_parameter('marker_size_m').value)
+        self.min_detection_distance = float(self.get_parameter('min_detection_distance_m').value)
         dictionary = str(self.get_parameter('dictionary').value)
 
         sensor_qos = QoSProfile(
@@ -171,17 +174,28 @@ class ArucoSimulationNode(Node):
             return
 
         self.frame_count += 1
-        results = self.detector.process_frame(image)
-        found = bool(results)
+        raw_results = self.detector.process_frame(image)
+        # Filter candidate detections: reject close-range false positives (e.g. ground texture / drone legs at ~1.5m)
+        valid_results = [
+            r for r in raw_results
+            if r.get('pose') is not None
+            and r['pose'].get('distance', 999.0) >= self.min_detection_distance
+            and r['pose'].get('z', 999.0) >= 1.8
+        ]
+        found = bool(valid_results)
         self.detected_pub.publish(Bool(data=found))
 
         if found:
             self.detect_count += 1
-            result = results[0]
+            result = valid_results[0]
             pose_info = result.get('pose')
             if pose_info is not None:
                 pose = PoseStamped()
-                pose.header.stamp = self.get_clock().now().to_msg()
+                # Propagate image timestamp for exact TF temporal synchronization
+                if msg.header.stamp.sec > 0 or msg.header.stamp.nanosec > 0:
+                    pose.header.stamp = msg.header.stamp
+                else:
+                    pose.header.stamp = self.get_clock().now().to_msg()
                 # OpenCV PnP uses x-right, y-down, z-forward. This is the
                 # ROS optical-frame convention, not Gazebo camera_link.
                 pose.header.frame_id = 'camera_optical_frame'
@@ -236,7 +250,7 @@ class ArucoSimulationNode(Node):
                     pose_info['z_depth'] = float(np.median(valid))
 
         annotated = self.detector.draw_results(
-            image, results, draw_axes=True, draw_bbox_mask=True, draw_summary_table=True
+            image, valid_results, draw_axes=True, draw_bbox_mask=True, draw_summary_table=True
         )
         out = Image()
         out.header = msg.header

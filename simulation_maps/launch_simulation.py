@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
-from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs.msg import PointCloud2, PointField, JointState
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from visualization_msgs.msg import Marker
@@ -198,7 +198,7 @@ def discover_gazebo_topics():
     try:
         result = subprocess.run(['gz', 'topic', '-l'], capture_output=True, text=True, timeout=5)
         topics = [line.strip() for line in result.stdout.splitlines() if line.strip() and line.startswith('/')]
-        interesting = [t for t in topics if any(k in t.lower() for k in ('odom', 'camera', 'depth', 'point'))]
+        interesting = [t for t in topics if any(k in t.lower() for k in ('odom', 'camera', 'depth', 'point', 'joint'))]
         if interesting:
             print("      -> Gazebo sensor/odom topics detected:")
             for topic in interesting:
@@ -295,7 +295,9 @@ class FastTrackerStyleNode(Node):
         self.drone_pos = [0.0, 0.0, 0.0]
         self.drone_quat = [0.0, 0.0, 0.0, 1.0]
         self.hpad_pos = [HPAD_X, HPAD_Y, HPAD_Z]
-        self.camera_pitch = -math.radians(20.0)
+        self.camera_pitch = -math.radians(30.0)
+        self.actual_camera_pitch = self.camera_pitch
+        self.has_joint_feedback = False
         self.has_odom = False
         self.has_sensor_cloud = False
 
@@ -316,6 +318,13 @@ class FastTrackerStyleNode(Node):
             f'/model/{MODEL_NAME}/command/gimbal_pitch',
             self.gimbal_pitch_callback,
             10,
+        )
+        # Closed-loop: Subscribe JointState from Gazebo for actual gimbal angle
+        self.create_subscription(
+            JointState, '/joint_states', self.joint_state_callback, sensor_qos
+        )
+        self.create_subscription(
+            JointState, f'/model/{MODEL_NAME}/joint_state', self.joint_state_callback, sensor_qos
         )
 
         # Subscribe PointCloud2 từ Depth Camera của Drone
@@ -368,6 +377,14 @@ class FastTrackerStyleNode(Node):
             min(math.radians(15.0), float(msg.data)),
         )
 
+    def joint_state_callback(self, msg: JointState):
+        """Receive actual joint angles from Gazebo for closed-loop TF accuracy."""
+        if 'CameraJoint' in msg.name:
+            idx = msg.name.index('CameraJoint')
+            if idx < len(msg.position):
+                self.actual_camera_pitch = float(msg.position[idx])
+                self.has_joint_feedback = True
+
     def publish_global_map(self):
         h = Header(stamp=self.get_clock().now().to_msg(), frame_id='world')
         fields = [
@@ -410,8 +427,10 @@ class FastTrackerStyleNode(Node):
         # CameraJoint in x500_depth/model.sdf uses axis <xyz>0 -1 0</xyz>.
         # Therefore, negative pitch command tilts camera down in Gazebo.
         # In ROS FLU (REP-103), rotation about +Y by positive angle tilts camera down.
-        # We negate self.camera_pitch so TF matches Gazebo joint orientation.
-        pitch_tf = -self.camera_pitch
+        # Closed-loop: use actual measured joint position from Gazebo if available,
+        # fallback to commanded pitch if joint state has not been received yet.
+        pitch_val = self.actual_camera_pitch if self.has_joint_feedback else self.camera_pitch
+        pitch_tf = -pitch_val
         camera_tf.transform.rotation.y = math.sin(pitch_tf / 2.0)
         camera_tf.transform.rotation.w = math.cos(pitch_tf / 2.0)
         self.tf_broadcaster.sendTransform(camera_tf)
@@ -483,8 +502,16 @@ class FastTrackerStyleNode(Node):
     def log_status(self):
         odom_str = "CONNECTED" if self.has_odom else "WAITING"
         cloud_str = "RECEIVING" if self.has_sensor_cloud else "WAITING"
+        joint_str = (
+            f"ACTUAL {math.degrees(self.actual_camera_pitch):.1f}°"
+            if self.has_joint_feedback
+            else f"CMD {math.degrees(self.camera_pitch):.1f}°"
+        )
         pos_str = f"({self.drone_pos[0]:.2f}, {self.drone_pos[1]:.2f}, {self.drone_pos[2]:.2f})"
-        self.get_logger().info(f"[STATUS] Gazebo Odom: [{odom_str}] | Camera PointCloud2: [{cloud_str}] | Drone Pos: {pos_str}")
+        self.get_logger().info(
+            f"[STATUS] Gazebo Odom: [{odom_str}] | Camera PointCloud2: [{cloud_str}] | "
+            f"CameraPitch: [{joint_str}] | Drone Pos: {pos_str}"
+        )
 
 def main():
     print("=" * 70)
@@ -569,6 +596,24 @@ def main():
     gimbal_bridge_proc = subprocess.Popen(gimbal_bridge_cmd)
     print(f"         started (pid={gimbal_bridge_proc.pid}).")
 
+    # Joint state feedback bridge (Gazebo -> ROS 2)
+    joint_candidates = [
+        f'/model/{MODEL_NAME}/joint_state',
+        f'/world/obstacle_avoidance/model/{MODEL_NAME}/joint_state',
+    ]
+    joint_gz = select_gazebo_topic(
+        gazebo_topics, joint_candidates, ('/joint_state',), ('joint',)
+    ) or joint_candidates[0]
+    joint_bridge_arg = f'{joint_gz}@sensor_msgs/msg/JointState[gz.msgs.Model'
+    joint_bridge_cmd = [
+        'ros2', 'run', 'ros_gz_bridge', 'parameter_bridge', joint_bridge_arg,
+        '--ros-args', '-r', f'{joint_gz}:=/joint_states'
+    ]
+    print("      -> Joint state bridge:", ' '.join(joint_bridge_cmd))
+    joint_bridge_proc = subprocess.Popen(joint_bridge_cmd)
+    sensor_bridge_procs.append(('Joint state', joint_bridge_proc))
+    print(f"         started (pid={joint_bridge_proc.pid}).")
+
     # Convert Gazebo R_FLOAT32 depth to mono8 for RViz2 Image display.
     depth_node = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'depth_to_image_node.py')
     depth_proc = subprocess.Popen([sys.executable, depth_node])
@@ -593,6 +638,10 @@ def main():
 
         params_args = ['--ros-args', '--params-file', config_file]
         auto_nodes = [
+            ('ArUco Detector', [
+                sys.executable, os.path.join(sim_dir, 'aruco_sim_node.py'),
+                *params_args,
+            ]),
             ('EKF Adapter', [
                 sys.executable, os.path.join(sim_dir, 'ekf_ros_adapter.py'),
                 *params_args,

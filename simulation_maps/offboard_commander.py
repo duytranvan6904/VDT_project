@@ -28,6 +28,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
 
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 from std_msgs.msg import Float64, String
 
 # ---------------------------------------------------------------------------
@@ -102,15 +103,24 @@ class OffboardCommander(Node):
 
         self.declare_parameter('auto_arm', True)
         self.declare_parameter('auto_offboard', True)
+        self.declare_parameter('min_offboard_alt', 2.0)
+        self.declare_parameter('max_accel', 2.0)
         self.auto_arm = self.get_parameter('auto_arm').value
         self.auto_offboard = self.get_parameter('auto_offboard').value
+        self.min_offboard_alt = float(self.get_parameter('min_offboard_alt').value)
+        self.max_accel = float(self.get_parameter('max_accel').value)
 
         # ── State ────────────────────────────────────────────────────────
         self.velocity_enu = [0.0, 0.0, 0.0]
         self.yaw_enu = 0.0
         self.phase = 'IDLE'
+        self.current_alt = 0.0
+        self.has_odom = False
         self.armed = False
         self.offboard_active = False
+        self.offboard_engaged = False
+        self.current_cmd_ned = [0.0, 0.0, 0.0]
+        self.last_setpoint_time = 0.0
         self.arm_sent = False
         self.offboard_sent = False
         self.last_log_time = 0.0
@@ -126,6 +136,12 @@ class OffboardCommander(Node):
             depth=1,
         )
 
+        sensor_qos = QoSProfile(
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=5,
+        )
+
         # ── Subscribers ──────────────────────────────────────────────────
         self.create_subscription(
             Twist, '/mission/velocity_setpoint',
@@ -138,6 +154,10 @@ class OffboardCommander(Node):
         self.create_subscription(
             String, '/mission/phase',
             self.phase_cb, 10,
+        )
+        self.create_subscription(
+            Odometry, '/odom',
+            self.odom_cb, sensor_qos,
         )
 
         # ── PX4 Publishers (hoặc MAVLink UDP connection) ────────────────
@@ -183,6 +203,10 @@ class OffboardCommander(Node):
 
     # ── Callbacks ────────────────────────────────────────────────────────
 
+    def odom_cb(self, msg: Odometry):
+        self.current_alt = float(msg.pose.pose.position.z)
+        self.has_odom = True
+
     def velocity_cb(self, msg: Twist):
         self.velocity_enu = [msg.linear.x, msg.linear.y, msg.linear.z]
 
@@ -193,17 +217,33 @@ class OffboardCommander(Node):
         prev_phase = self.phase
         self.phase = msg.data
 
-        # Tự động kích hoạt OFFBOARD mode khi bước vào pha FOLLOW để APF lái drone
+        # Reset latch on touchdown / disarm
+        if self.phase in ('IDLE', 'LAND') and self.current_alt < 0.5:
+            self.offboard_engaged = False
+
+        # Tự động kích hoạt OFFBOARD mode khi bước vào pha FOLLOW để APF lái drone (nếu đã đủ độ cao)
         if self.phase in ('FOLLOW', 'APPROACH') and prev_phase in ('IDLE', 'SEARCH'):
-            self._send_offboard_mode()
+            if self.current_alt >= self.min_offboard_alt:
+                self.offboard_engaged = True
+                self._send_offboard_mode()
 
     # ── PX4 Communication ────────────────────────────────────────────────
 
     def heartbeat_cb(self):
         """Publish OffboardControlMode at 10 Hz (DDS) or MAVLink companion heartbeat + mode enforce."""
         now = time.monotonic()
+
+        # Kiểm tra điều kiện chốt kích hoạt OFFBOARD mode
+        if not self.offboard_engaged:
+            if self.phase in ('FOLLOW', 'APPROACH') and self.current_alt >= self.min_offboard_alt:
+                self.offboard_engaged = True
+                self.get_logger().info(
+                    f'✅ Drone đạt độ cao an toàn ({self.current_alt:.2f}m >= {self.min_offboard_alt:.1f}m)! '
+                    f'Kích hoạt chốt OFFBOARD mode.'
+                )
+
         if HAS_PX4_MSGS and self.offboard_pub is not None:
-            if self.phase == 'IDLE':
+            if not self.offboard_engaged:
                 return
             msg = OffboardControlMode()
             msg.position = False
@@ -238,20 +278,41 @@ class OffboardCommander(Node):
             except Exception:
                 pass
 
-            # 3. Khi ở pha FOLLOW/APPROACH mà PX4 chưa ở OFFBOARD (mode 6), liên tục yêu cầu OFFBOARD
-            if self.phase in ('FOLLOW', 'APPROACH'):
+            # 3. Khi đã chốt OFFBOARD mode, liên tục duy trì yêu cầu OFFBOARD nếu bị rớt mode
+            if self.offboard_engaged:
                 if self.px4_current_main_mode != 6 and (now - self.last_mode_req_time >= 1.0):
                     self._send_offboard_mode()
                     self.last_mode_req_time = now
 
     def publish_setpoint(self):
-        """Publish TrajectorySetpoint with velocity + yaw in NED."""
-        if self.phase in ('IDLE',):
+        """Publish TrajectorySetpoint with velocity + yaw in NED with smooth slew-rate limiting."""
+        # SAFETY GUARD: Chỉ phát setpoint sau khi OFFBOARD đã được chốt kích hoạt an toàn!
+        if not self.offboard_engaged:
             return
 
+        now = time.monotonic()
+        dt = 0.05
+        if self.last_setpoint_time > 0.0:
+            dt = max(0.01, min(0.2, now - self.last_setpoint_time))
+        self.last_setpoint_time = now
+
         # Convert ENU → NED
-        vn, ve, vd = _enu_to_ned_velocity(*self.velocity_enu)
+        raw_vn, raw_ve, raw_vd = _enu_to_ned_velocity(*self.velocity_enu)
         yaw_ned = _enu_yaw_to_ned(self.yaw_enu)
+
+        # Slew-rate limiter (acceleration clamping)
+        max_dv_xy = self.max_accel * dt
+        max_dv_z = 0.8 * dt  # Gentler vertical acceleration limit (0.8 m/s^2) to prevent altitude wobbling
+        def slew(curr: float, target: float, limit: float) -> float:
+            diff = target - curr
+            if abs(diff) > limit:
+                return curr + math.copysign(limit, diff)
+            return target
+
+        vn = slew(self.current_cmd_ned[0], raw_vn, max_dv_xy)
+        ve = slew(self.current_cmd_ned[1], raw_ve, max_dv_xy)
+        vd = slew(self.current_cmd_ned[2], raw_vd, max_dv_z)
+        self.current_cmd_ned = [vn, ve, vd]
 
         if HAS_PX4_MSGS and self.setpoint_pub is not None:
             msg = TrajectorySetpoint()
@@ -281,7 +342,6 @@ class OffboardCommander(Node):
             except Exception:
                 pass
 
-            now = time.monotonic()
             if now - self.last_log_time > 2.0:
                 mode_str = "OFFBOARD" if self.px4_current_main_mode == 6 else f"PX4_Mode_{self.px4_current_main_mode}"
                 self.get_logger().info(
