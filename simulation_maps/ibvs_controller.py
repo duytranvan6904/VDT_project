@@ -26,6 +26,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import CameraInfo
 from std_msgs.msg import Bool, Float64, String
 from vision_msgs.msg import BoundingBox2D
 
@@ -63,14 +64,15 @@ class IBVSController(Node):
         # ── Parameters ───────────────────────────────────────────────────
         self.declare_parameter('K_pitch', 0.8)
         self.declare_parameter('K_yaw', 0.5)
-        self.declare_parameter('focal_x', 380.0)
-        self.declare_parameter('focal_y', 380.0)
+        self.declare_parameter('focal_x', 466.0)
+        self.declare_parameter('focal_y', 466.0)
         self.declare_parameter('u0', 320.0)
         self.declare_parameter('v0', 240.0)
         self.declare_parameter('search_yaw_rate', 0.2618)   # 15 deg/s
         self.declare_parameter('pitch_rate_limit', 3.1416)  # 180 deg/s
         self.declare_parameter('pitch_ema_alpha', 0.25)
-        self.declare_parameter('yaw_rate_limit', 0.6)        # rad/s
+        self.declare_parameter('pitch_pixel_trim_gain', 0.5)
+        self.declare_parameter('yaw_rate_limit', 0.35)       # rad/s (~20 deg/s max)
 
         self.K_pitch = self.get_parameter('K_pitch').value
         self.K_yaw = self.get_parameter('K_yaw').value
@@ -81,6 +83,9 @@ class IBVSController(Node):
         self.search_yaw_rate = self.get_parameter('search_yaw_rate').value
         self.pitch_rate_limit = self.get_parameter('pitch_rate_limit').value
         self.ema_alpha = self.get_parameter('pitch_ema_alpha').value
+        self.pitch_pixel_trim_gain = float(
+            self.get_parameter('pitch_pixel_trim_gain').value
+        )
         self.yaw_rate_limit = float(self.get_parameter('yaw_rate_limit').value)
 
         self.declare_parameter('drone_model', 'x500_depth_0')
@@ -99,14 +104,16 @@ class IBVSController(Node):
         self.last_update_time = time.monotonic()
         self.last_pixel_u = self.u0    # last known pixel x
         self.last_pixel_v = self.v0    # last known pixel y
+        self.target_vel = [0.0, 0.0, 0.0]  # EKF target velocity (world frame)
+        self.last_eu_sign = 0.0        # hướng pixel cuối cùng (-1 trái, +1 phải)
 
         # ── Phase-dependent pitch limits ─────────────────────────────────
         # pitch ≤ 0 means pointing downward (negative = down)
         self.pitch_limits = {
             'IDLE':     (math.radians(-30), math.radians(-10)),
-            'SEARCH':   (math.radians(-30), math.radians(-10)),  # chúc -20° quét mặt đất
-            'FOLLOW':   (math.radians(-80), math.radians(-10)),  # bám theo target linh hoạt
-            'APPROACH': (math.radians(-85), math.radians(-20)),
+            'SEARCH':   (math.radians(-60), math.radians(-10)),  # nới rộng để không bị kẹt khi mất dấu gần
+            'FOLLOW':   (math.radians(-88), math.radians(-10)),  # bám theo target linh hoạt đến gần thẳng đứng
+            'APPROACH': (math.radians(-88), math.radians(-20)),
             'LAND':     (math.radians(-90), math.radians(-60)),  # chúi thẳng xuống H-pad
         }
 
@@ -117,6 +124,11 @@ class IBVSController(Node):
         )
         self.drone_pos = [0.0, 0.0, 0.0]
         self.target_pos = None
+
+        self.create_subscription(
+            CameraInfo, '/camera_info',
+            self.camera_info_cb, 10,
+        )
 
         self.create_subscription(
             BoundingBox2D, '/hpad/bbox',
@@ -157,6 +169,13 @@ class IBVSController(Node):
 
     # ── Callbacks ────────────────────────────────────────────────────────
 
+    def camera_info_cb(self, msg: CameraInfo):
+        if msg.k[0] > 0.0:
+            self.fx = float(msg.k[0])
+            self.fy = float(msg.k[4])
+            self.u0 = float(msg.k[2])
+            self.v0 = float(msg.k[5])
+
     def detected_cb(self, msg: Bool):
         self.detected = msg.data
 
@@ -164,7 +183,19 @@ class IBVSController(Node):
         self.tracking_mode = msg.data
 
     def phase_cb(self, msg: String):
+        previous_phase = self.phase
         self.phase = msg.data
+        if previous_phase == 'SEARCH' and self.phase == 'FOLLOW' and self.have_odom:
+            # Do not carry the accumulated SEARCH sweep command into FOLLOW.
+            # The FSM has already confirmed a stable reacquisition; start the
+            # visual servo loop from the actual vehicle yaw and let the next
+            # bbox update generate the correction.
+            self.yaw_cmd = self.drone_yaw
+            self.last_update_time = time.monotonic()
+            self.get_logger().info(
+                f'[IBVS] SEARCH->FOLLOW: reset yaw_cmd to '
+                f'{math.degrees(self.drone_yaw):.1f}°'
+            )
 
     def odom_cb(self, msg: Odometry):
         p = msg.pose.pose.position
@@ -177,16 +208,20 @@ class IBVSController(Node):
     def target_cb(self, msg: Odometry):
         p = msg.pose.pose.position
         self.target_pos = [p.x, p.y, p.z]
+        v = msg.twist.twist.linear
+        self.target_vel = [v.x, v.y, v.z]
 
     def bbox_cb(self, msg: BoundingBox2D):
         """Event-driven: compute IBVS outputs from ArUco bounding box center."""
-        if self.phase in ('IDLE',):
-            return
-
+        # Keep the newest image error while FSM is IDLE.  Mission FSM still
+        # overrides the yaw setpoint in IDLE, but FOLLOW must not start from
+        # a fake centered pixel after the first detection.
         u = msg.center.position.x
         v = msg.center.position.y
         self.last_pixel_u = u
         self.last_pixel_v = v
+        if self.phase in ('IDLE',):
+            return
 
         now = time.monotonic()
         dt = now - self.last_update_time
@@ -218,32 +253,47 @@ class IBVSController(Node):
             return
 
         if self.phase in ('FOLLOW', 'APPROACH'):
-            # 1. Tính góc pitch và yaw hình học trực tiếp từ vị trí 3D của EKF target
             target_is_usable = (
                 self.target_pos is not None
-                and self.tracking_mode in ('TRACKING', 'PREDICTING')
+                and self.tracking_mode in ('TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED')
             )
+            has_pixel = (u is not None and v is not None and self.detected)
+
+            # ── Pre-compute 3D geometry when EKF target is available ──
+            dx = dy = dz = dist_h = 0.0
             if target_is_usable:
                 dx = self.target_pos[0] - self.drone_pos[0]
                 dy = self.target_pos[1] - self.drone_pos[1]
                 dz = max(0.1, self.drone_pos[2] - self.target_pos[2])
                 dist_h = math.hypot(dx, dy)
-                target_pitch = - math.atan2(dz, max(0.2, dist_h))
-                target_yaw = math.atan2(dy, dx)
-            else:
-                # Do not keep commanding a stale target after EKF expiry.
-                target_pitch = self.gimbal_pitch_filtered
-                target_yaw = self.drone_yaw
 
-            # 2. Tinh chỉnh bằng độ lệch pixel IBVS khi có detection
-            # eu > 0 nghĩa là mục tiêu lệch sang phải ảnh -> drone cần quay sang phải (giảm yaw ENU)
-            if u is not None and v is not None and self.detected:
-                eu = u - self.u0
+            # ── PITCH: 3D geometry feedforward + soft pixel trim ──
+            if target_is_usable:
+                target_pitch = -math.atan2(dz, max(0.2, dist_h))
+                # Khi có pixel, thêm trim nhỏ để bù sai số EKF
+                if has_pixel:
+                    ev = v - self.v0
+                    # Positive image error means the marker is below center.
+                    # With this camera/gimbal convention, use a less-negative
+                    # pitch correction; the previous sign reinforced the
+                    # vertical drift observed in testB_yaw_align_02.
+                    target_pitch += (
+                        self.K_pitch
+                        * (ev / self.fy)
+                        * self.pitch_pixel_trim_gain
+                    )
+            elif has_pixel:
                 ev = v - self.v0
-                target_pitch -= self.K_pitch * (ev / self.fy) * 0.15
-                target_yaw -= self.K_yaw * (eu / self.fx) * 0.15
+                target_pitch = (
+                    self.gimbal_pitch_filtered
+                    + self.K_pitch
+                    * (ev / self.fy)
+                    * self.pitch_pixel_trim_gain
+                )
+            else:
+                target_pitch = self.gimbal_pitch_filtered
 
-            # Giới hạn góc và lọc mượt
+            # Pitch clamping + rate-limit + EMA
             self.gimbal_pitch = max(pitch_min, min(pitch_max, target_pitch))
             max_pitch_delta = self.pitch_rate_limit * dt
             self.gimbal_pitch = max(
@@ -255,18 +305,47 @@ class IBVSController(Node):
                 + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
             )
 
-            # The previous implementation published atan2() directly.  A
-            # noisy EKF estimate or a +/-pi crossing then looked like a large
-            # yaw step, making PX4 spin and causing the camera to lose the
-            # marker.  Follow the shortest angular error at a bounded rate.
-            if target_is_usable:
+            # ── YAW: Proportional pixel IBVS + clamped velocity feedforward ──
+            #
+            # Proportional (KHÔNG tích phân): desired_yaw tính trực tiếp từ
+            # drone_yaw hiện tại, rồi slew yaw_cmd đến đó.
+            # → Ổn định hơn incremental vì không tích lũy sai số.
+            #
+            # Velocity feedforward: bù trước cho target di chuyển, nhưng
+            # CLAMP ±0.3 rad/s để tránh EKF velocity noise gây giật.
+            yaw_ff = 0.0
+            if target_is_usable and dist_h > 1.0:
+                vx, vy = self.target_vel[0], self.target_vel[1]
+                v_tan = (-dy * vx + dx * vy) / dist_h
+                raw_ff = v_tan / dist_h  # angular rate (rad/s)
+                yaw_ff = max(-0.3, min(0.3, raw_ff))
+
+            if has_pixel:
+                eu = u - self.u0
+                self.last_eu_sign = 1.0 if eu >= 0 else -1.0
+                # Bù perspective khi gimbal nghiêng sâu:
+                # eu/fx đo góc trên ảnh, nhưng khi pitch = -60° thì
+                # cùng eu tương ứng góc yaw thực nhỏ hơn cos(pitch) lần
+                pitch_cos = max(0.3, math.cos(self.gimbal_pitch_filtered))
+                # Proportional: yaw mong muốn = heading hiện tại - pixel offset
+                # K_yaw < 1 → nhắm 50% quãng đường, tránh overshoot do delay
+                desired_yaw = self.drone_yaw - self.K_yaw * (eu / self.fx) * pitch_cos
                 self.yaw_cmd = _slew_angle(
-                    self.yaw_cmd,
-                    target_yaw,
-                    self.yaw_rate_limit * dt,
+                    self.yaw_cmd, desired_yaw, self.yaw_rate_limit * dt,
                 )
-            else:
-                self.yaw_cmd = self.drone_yaw
+                # Feedforward: anticipate target motion (cộng riêng biệt)
+                if abs(yaw_ff) > 0.01:
+                    self.yaw_cmd = _wrap_angle(self.yaw_cmd + yaw_ff * dt)
+            elif target_is_usable and dist_h > 0.3:
+                # Không có pixel → slew về hướng predicted bearing
+                pred_dx = dx + self.target_vel[0] * 0.3
+                pred_dy = dy + self.target_vel[1] * 0.3
+                target_yaw = math.atan2(pred_dy, pred_dx)
+                self.yaw_cmd = _slew_angle(
+                    self.yaw_cmd, target_yaw, self.yaw_rate_limit * dt,
+                )
+            # else: giữ nguyên yaw_cmd
+
             self._publish_commands()
 
     def _publish_commands(self):
@@ -290,7 +369,10 @@ class IBVSController(Node):
 
         if self.phase == 'SEARCH':
             self.gimbal_pitch = self.default_pitch
-            self.gimbal_pitch_filtered = self.default_pitch
+            # Chuyển dần về default_pitch mượt mà, không giật nảy đột ngột
+            self.gimbal_pitch_filtered = (
+                0.05 * self.default_pitch + 0.95 * self.gimbal_pitch_filtered
+            )
             self.yaw_cmd = _wrap_angle(
                 self.yaw_cmd + self.search_yaw_rate * dt
             )

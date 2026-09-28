@@ -533,43 +533,87 @@ Nếu fail, ưu tiên sửa theo thứ tự:
 
 ### C3. IBVS open-loop bằng target giả
 
-Không chạy APF, FSM hoặc Offboard. Chạy IBVS:
+**Mục tiêu bài test:**
+Kiểm tra độc lập logic điều khiển của [ibvs_controller.py](file:///home/duy/VDT_project/simulation_maps/ibvs_controller.py) khi nhận vị trí Target 3D giả lập (`/ekf/target_state`), vị trí Drone (`/odom`), Phase (`/mission/phase`) và Mode (`/ekf/tracking_mode`). 
+Bài test này **KHÔNG CẦN bật Gazebo, PX4 SITL, RViz2 hay Camera**, hoàn toàn là kiểm thử phần mềm (unit/component test).
 
-```bash
-python3 simulation_maps/ibvs_controller.py
-```
+---
 
-Publish:
+#### Cách 1: Chạy tự động (Khuyến nghị — Đúng 2 Terminal)
 
-```bash
-ros2 topic pub -r 10 /mission/phase std_msgs/msg/String "{data: FOLLOW}"
-ros2 topic pub -r 10 /ekf/tracking_mode std_msgs/msg/String "{data: TRACKING}"
-ros2 topic pub -r 10 /odom nav_msgs/msg/Odometry \
-  "{pose: {pose: {position: {x: 0.0, y: 0.0, z: 3.0}}}}"
-```
+Đã có sẵn script test tự động [test_c3_ibvs.py](file:///home/duy/VDT_project/simulation_maps/test_c3_ibvs.py). Script này sẽ tự động publish tất cả các topic đầu vào (10 Hz), lần lượt chuyển đổi 4 hướng mục tiêu cardinal (Đông, Bắc, Tây, Nam), kích hoạt bài test wrap-around biên (+179° sang -179°), đồng thời đọc `/ibvs/yaw_cmd` và `/ibvs/gimbal_pitch` để tự động đối chiếu và chấm điểm **PASS/FAIL**.
 
-Lần lượt publish target world ở `[5,0,0]`, `[0,5,0]`, `[-5,0,0]`, `[0,-5,0]`. Quan sát:
+- **Terminal 1 (Chạy node IBVS):**
+  ```bash
+  source /opt/ros/humble/setup.bash
+  python3 simulation_maps/ibvs_controller.py
+  ```
 
-```bash
-ros2 topic echo /ibvs/yaw_cmd
-ros2 topic echo /ibvs/gimbal_pitch
-```
+- **Terminal 2 (Chạy bộ kiểm thử tự động):**
+  ```bash
+  source /opt/ros/humble/setup.bash
+  python3 simulation_maps/test_c3_ibvs.py
+  ```
 
-Kỳ vọng yaw world gần `0`, `+pi/2`, `pi`, `-pi/2`. Khi target chuyển từ `+179°` sang `-179°`, yaw command chỉ được đi qua sai số ngắn khoảng `2°`, không nhảy gần `358°`.
+*Tiêu chí PASS tự động:* 
+- Hướng Đông `[5, 0, 0]`: Yaw $\approx 0^\circ$ ($0\text{ rad}$), Pitch $\approx -31^\circ$ (chúc xuống).
+- Hướng Bắc `[0, 5, 0]`: Yaw $\approx +90^\circ$ ($+1.57\text{ rad}$), Pitch $\approx -31^\circ$.
+- Hướng Tây `[-5, 0, 0]`: Yaw $\approx 180^\circ$ ($\pm 3.14\text{ rad}$), Pitch $\approx -31^\circ$.
+- Hướng Nam `[0, -5, 0]`: Yaw $\approx -90^\circ$ ($-1.57\text{ rad}$), Pitch $\approx -31^\circ$.
+- Test Wrap-around: Khi target nhảy từ $+179.4^\circ$ sang $-179.4^\circ$, lệnh `yaw_cmd` chỉ xoay qua sai số góc ngắn nhất $\approx 2^\circ$, tuyệt đối **không được quay vòng ngược $358^\circ$**.
 
-Đây là test logic yaw, chưa chứng minh PX4 quay đúng chiều.
+---
+
+#### Cách 2: Chạy thủ công bằng ROS 2 CLI
+
+> [!NOTE]
+> Nếu gõ lệnh tay trực tiếp qua CLI, các lệnh `ros2 topic pub -r 10` sẽ chiếm dụng (block) terminal để duy trì tần số phát 10 Hz. Do đó:
+> - Nếu mở mỗi lệnh 1 terminal riêng biệt, bạn sẽ cần **6 đến 7 terminal**.
+> - Để gom gọn trong **2 terminal**, ta đẩy các publisher nền vào background bằng dấu `&`.
+
+- **Terminal 1:** Chạy node IBVS:
+  ```bash
+  source /opt/ros/humble/setup.bash
+  python3 simulation_maps/ibvs_controller.py
+  ```
+
+- **Terminal 2:** Thiết lập môi trường và chạy thử:
+  ```bash
+  source /opt/ros/humble/setup.bash
+
+  # 1. Phát các topic tiền đề ở chế độ nền (background):
+  ros2 topic pub -r 10 /mission/phase std_msgs/msg/String "{data: FOLLOW}" &
+  ros2 topic pub -r 10 /ekf/tracking_mode std_msgs/msg/String "{data: TRACKING}" &
+  ros2 topic pub -r 10 /odom nav_msgs/msg/Odometry "{pose: {pose: {position: {x: 0.0, y: 0.0, z: 3.0}}}}" &
+
+  # 2. Lần lượt phát vị trí target giả lập:
+  # Hướng Đông [5, 0, 0]:
+  ros2 topic pub /ekf/target_state nav_msgs/msg/Odometry "{pose: {pose: {position: {x: 5.0, y: 0.0, z: 0.0}}}}" -1
+
+  # Đọc kết quả đầu ra:
+  ros2 topic echo /ibvs/yaw_cmd --once
+  ros2 topic echo /ibvs/gimbal_pitch --once
+  ```
+
+  Thay đổi tọa độ trong `x, y` của `/ekf/target_state` lần lượt thành `[0, 5, 0]`, `[-5, 0, 0]`, `[0, -5, 0]` để kiểm tra các hướng còn lại. Khi kết thúc test, chạy `killall ros2` để tắt các tiến trình publish nền.
+
+Đây là test logic yaw, chưa chứng minh PX4 quay đúng chiều (sẽ được kiểm chứng ở Test Nhóm D).
 
 ---
 
 ## 8. Test nhóm D — Servo thực tế nhưng không APF
 
-Sau khi C3 PASS, thêm một relay rất đơn giản:
+> [!TIP]
+> Hướng dẫn chạy từng bước chi tiết (bao gồm cả điều khiển bàn phím H-pad và tiêu chuẩn đánh giá) đã được biên soạn đầy đủ tại [IBVS_TESTING_GUIDE.md](IBVS_TESTING_GUIDE.md).
+> Lưu ý: Node `offboard_commander.py` hiện đã được nâng cấp tự động lắng nghe `/ibvs/yaw_cmd` khi FSM không chạy, đồng thời tích hợp **Altitude Hold Loop** giữ cố định độ cao 3.0m khi không có lệnh vận tốc leo/hạ.
+
+Sau khi C3 PASS, chỉ cần chạy `offboard_commander.py` (tự động nhận `/ibvs/yaw_cmd`):
 
 ```text
-/ibvs/yaw_cmd → /mission/yaw_setpoint
+/ibvs/yaw_cmd → (auto-fallback) → offboard_commander → PX4 yaw
 ```
 
-và publish velocity bằng 0. Chỉ chạy `offboard_commander.py`, không chạy FSM. Mục tiêu là kiểm tra riêng:
+và publish velocity bằng 0. Mục tiêu là kiểm tra riêng:
 
 ```text
 IBVS yaw world ENU → ENU/NED conversion → PX4 yaw → drone yaw
@@ -589,7 +633,7 @@ Nếu `/ibvs/yaw_cmd` đúng nhưng drone quay ngược hoặc dừng ở hướ
 Trong test này phải kiểm tra cả:
 
 ```bash
-ros2 topic echo /mission/yaw_setpoint
+ros2 topic echo /ibvs/yaw_cmd
 ros2 topic echo /odom
 ```
 

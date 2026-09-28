@@ -36,6 +36,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import Twist, Vector3
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, Float64, String
+from vision_msgs.msg import BoundingBox2D
 
 
 class MissionPhase(str, Enum):
@@ -44,6 +45,10 @@ class MissionPhase(str, Enum):
     FOLLOW = 'FOLLOW'
     APPROACH = 'APPROACH'
     LAND = 'LAND'
+
+
+def _wrap_angle(angle: float) -> float:
+    return (angle + math.pi) % (2.0 * math.pi) - math.pi
 
 
 class MissionFSMNode(Node):
@@ -61,6 +66,20 @@ class MissionFSMNode(Node):
         self.declare_parameter('approach_timeout', 3.0)
         self.declare_parameter('takeoff_altitude', 3.0)
         self.declare_parameter('land_descent_speed', 0.3)
+        self.declare_parameter('yaw_align_enable', True)
+        self.declare_parameter('yaw_align_enter_deg', 15.0)
+        self.declare_parameter('yaw_align_exit_deg', 7.0)
+        self.declare_parameter('yaw_align_u0_px', 320.0)
+        self.declare_parameter('yaw_align_v0_px', 240.0)
+        self.declare_parameter('yaw_align_u_tolerance_px', 35.0)
+        self.declare_parameter('yaw_align_u_stop_px', 220.0)
+        self.declare_parameter('yaw_align_min_speed_scale', 0.20)
+        self.declare_parameter('yaw_align_speed_filter_alpha', 0.20)
+        self.declare_parameter('reacquire_confirm_time', 0.80)
+        self.declare_parameter('reacquire_hold_timeout', 2.50)
+        self.declare_parameter('reacquire_lost_timeout', 0.45)
+        self.declare_parameter('reacquire_bbox_max_step_px', 35.0)
+        self.declare_parameter('reacquire_bbox_timeout', 1.0)
 
         self.detection_confirm = self.get_parameter('detection_confirm_frames').value
         self.follow_dist = self.get_parameter('follow_distance').value
@@ -70,6 +89,45 @@ class MissionFSMNode(Node):
         self.approach_timeout = self.get_parameter('approach_timeout').value
         self.takeoff_alt = self.get_parameter('takeoff_altitude').value
         self.descent_speed = self.get_parameter('land_descent_speed').value
+        self.yaw_align_enable = bool(self.get_parameter('yaw_align_enable').value)
+        self.yaw_align_enter = math.radians(
+            float(self.get_parameter('yaw_align_enter_deg').value)
+        )
+        self.yaw_align_exit = math.radians(
+            float(self.get_parameter('yaw_align_exit_deg').value)
+        )
+        self.yaw_align_u0 = float(self.get_parameter('yaw_align_u0_px').value)
+        self.yaw_align_v0 = float(self.get_parameter('yaw_align_v0_px').value)
+        self.yaw_align_u_tol = float(
+            self.get_parameter('yaw_align_u_tolerance_px').value
+        )
+        self.yaw_align_u_stop = max(
+            self.yaw_align_u_tol + 1.0,
+            float(self.get_parameter('yaw_align_u_stop_px').value),
+        )
+        self.yaw_align_min_speed = float(np.clip(
+            self.get_parameter('yaw_align_min_speed_scale').value,
+            0.0, 1.0,
+        ))
+        self.yaw_align_filter_alpha = float(np.clip(
+            self.get_parameter('yaw_align_speed_filter_alpha').value,
+            0.0, 1.0,
+        ))
+        self.reacquire_confirm_time = float(
+            self.get_parameter('reacquire_confirm_time').value
+        )
+        self.reacquire_hold_timeout = float(
+            self.get_parameter('reacquire_hold_timeout').value
+        )
+        self.reacquire_lost_timeout = float(
+            self.get_parameter('reacquire_lost_timeout').value
+        )
+        self.reacquire_bbox_max_step = float(
+            self.get_parameter('reacquire_bbox_max_step_px').value
+        )
+        self.reacquire_bbox_timeout = float(
+            self.get_parameter('reacquire_bbox_timeout').value
+        )
 
         # ── State ────────────────────────────────────────────────────────
         self.phase = MissionPhase.IDLE
@@ -87,6 +145,21 @@ class MissionFSMNode(Node):
         # APF + IBVS outputs
         self.apf_velocity = np.zeros(3)
         self.ibvs_yaw = 0.0
+        self.yaw_align_active = False
+        self.xy_speed_scale = 0.0
+        self.has_bbox = False
+        self.bbox_u = self.yaw_align_u0
+        self.bbox_v = self.yaw_align_v0
+        self.last_bbox_time = 0.0
+        self.bbox_sequence = 0
+        self.reacquire_active = False
+        self.reacquire_started = 0.0
+        self.reacquire_stable_since = 0.0
+        self.reacquire_last_detection = 0.0
+        self.reacquire_last_bbox_sequence = 0
+        self.reacquire_prev_u = self.yaw_align_u0
+        self.reacquire_prev_v = self.yaw_align_v0
+        self.follow_entry_hold_until = 0.0
 
         # ── Subscribers ──────────────────────────────────────────────────
         sensor_qos = QoSProfile(
@@ -99,6 +172,7 @@ class MissionFSMNode(Node):
             Odometry, '/ekf/target_state', self.target_cb, 10,
         )
         self.create_subscription(Bool, '/hpad/detected', self.detected_cb, 10)
+        self.create_subscription(BoundingBox2D, '/hpad/bbox', self.bbox_cb, 10)
         self.create_subscription(
             String, '/ekf/tracking_mode', self.tracking_mode_cb, 10,
         )
@@ -135,12 +209,18 @@ class MissionFSMNode(Node):
         if self.has_target:
             d = np.linalg.norm(self.drone_pos - self.target_pos)
             dist_str = f"{d:.2f}m"
+        bbox_str = (
+            f"({self.bbox_u:.0f},{self.bbox_v:.0f})"
+            if self.has_bbox else "N/A"
+        )
         self.get_logger().info(
             f"[STATUS] Phase: {self.phase.value:<7} | "
             f"Drone: ({self.drone_pos[0]:.1f}, {self.drone_pos[1]:.1f}, {self.drone_pos[2]:.1f})m | "
             f"Target: ({self.target_pos[0]:.1f}, {self.target_pos[1]:.1f}) | "
             f"Dist: {dist_str} | "
-            f"EKF: {self.tracking_mode} | Det: {self.detected}"
+            f"EKF: {self.tracking_mode} | Det: {self.detected} | "
+            f"BBox: {bbox_str} | XY scale: {self.xy_speed_scale:.2f} | "
+            f"Reacq: {self.reacquire_active}"
         )
 
     # ── Input callbacks ──────────────────────────────────────────────────
@@ -166,6 +246,15 @@ class MissionFSMNode(Node):
             self.last_detection_time = time.monotonic()
         else:
             self.consecutive_detections = 0
+            self.has_bbox = False
+
+    def bbox_cb(self, msg: BoundingBox2D):
+        """Keep image alignment independent from the yaw command topic."""
+        self.bbox_u = float(msg.center.position.x)
+        self.bbox_v = float(msg.center.position.y)
+        self.last_bbox_time = time.monotonic()
+        self.bbox_sequence += 1
+        self.has_bbox = True
 
     def tracking_mode_cb(self, msg: String):
         self.tracking_mode = msg.data
@@ -220,26 +309,96 @@ class MissionFSMNode(Node):
         if not self.has_odom:
             return
         if self.drone_pos[2] >= 2.5:
-            if self.consecutive_detections >= 5:
-                self.phase = MissionPhase.FOLLOW
-                self.get_logger().info(
-                    f'Drone cất cánh đạt độ cao {self.drone_pos[2]:.2f}m và thấy mục tiêu! '
-                    f'Chuyển IDLE → FOLLOW.'
-                )
-            else:
-                self.phase = MissionPhase.SEARCH
-                self.get_logger().info(
-                    f'Drone cất cánh đạt độ cao {self.drone_pos[2]:.2f}m. '
-                    f'Bắt đầu quét tìm kiếm SEARCH.'
-                )
+            # Always enter SEARCH first.  Initial detection must use the same
+            # stable reacquisition handshake as a target found after loss.
+            self.phase = MissionPhase.SEARCH
+            self.get_logger().info(
+                f'Drone cất cánh đạt độ cao {self.drone_pos[2]:.2f}m. '
+                f'Bắt đầu SEARCH và xác nhận mục tiêu ổn định.'
+            )
 
     def _handle_search(self):
-        """Rotate yaw, wait for stable ArUco detection."""
-        if self.consecutive_detections >= 5:
-            self.phase = MissionPhase.FOLLOW
+        """Search, then stop rotation and confirm a stable reacquisition."""
+        now = time.monotonic()
+
+        # A raw detector hit is only a trigger to stop the search sweep.  It
+        # is not yet permission to enter FOLLOW: the target can be crossing
+        # the image while the vehicle is still rotating.
+        if self.detected and not self.reacquire_active:
+            self.reacquire_active = True
+            self.reacquire_started = now
+            self.reacquire_stable_since = 0.0
+            self.reacquire_last_detection = now
+            self.reacquire_last_bbox_sequence = self.bbox_sequence
+            self.reacquire_prev_u = self.bbox_u
+            self.reacquire_prev_v = self.bbox_v
             self.get_logger().info(
-                f'Target confirmed after {self.consecutive_detections} '
-                f'consecutive detections. Bắt đầu FOLLOW.'
+                f'[REACQUIRE] detection trigger; hold search yaw '
+                f'| bbox=({self.bbox_u:.0f},{self.bbox_v:.0f})'
+            )
+
+        if not self.reacquire_active:
+            return
+
+        if self.detected:
+            self.reacquire_last_detection = now
+        elif now - self.reacquire_last_detection > self.reacquire_lost_timeout:
+            self.reacquire_active = False
+            self.reacquire_stable_since = 0.0
+            self.get_logger().info(
+                '[REACQUIRE] detection lost before confirmation; resume SEARCH'
+            )
+            return
+
+        if now - self.reacquire_started > self.reacquire_hold_timeout:
+            self.reacquire_active = False
+            self.reacquire_stable_since = 0.0
+            self.get_logger().warning(
+                '[REACQUIRE] confirmation timeout; resume SEARCH sweep'
+            )
+            return
+
+        # Require a fresh bbox after the trigger and reject a bbox that is
+        # still moving rapidly across the image.  This prevents the exact
+        # SEARCH->FOLLOW->EXPIRED loop seen in testB_yaw_align_04.
+        if self.bbox_sequence > self.reacquire_last_bbox_sequence:
+            du = self.bbox_u - self.reacquire_prev_u
+            dv = self.bbox_v - self.reacquire_prev_v
+            step = math.hypot(du, dv)
+            self.reacquire_prev_u = self.bbox_u
+            self.reacquire_prev_v = self.bbox_v
+            self.reacquire_last_bbox_sequence = self.bbox_sequence
+
+            bbox_fresh = now - self.last_bbox_time <= self.reacquire_bbox_timeout
+            bbox_in_roi = (
+                40.0 <= self.bbox_u <= 600.0
+                and 40.0 <= self.bbox_v <= 440.0
+            )
+            tracking_ok = self.tracking_mode == 'TRACKING'
+            step_ok = step <= self.reacquire_bbox_max_step
+
+            if bbox_fresh and bbox_in_roi and tracking_ok and step_ok:
+                if self.reacquire_stable_since <= 0.0:
+                    self.reacquire_stable_since = now
+            else:
+                self.reacquire_stable_since = 0.0
+
+        confirmed = (
+            self.reacquire_stable_since > 0.0
+            and self.tracking_mode == 'TRACKING'
+            and self.detected
+            and now - self.reacquire_stable_since >= self.reacquire_confirm_time
+            and now - self.last_bbox_time <= self.reacquire_bbox_timeout
+        )
+        if confirmed:
+            self.reacquire_active = False
+            self.phase = MissionPhase.FOLLOW
+            self.follow_entry_hold_until = now + 0.30
+            self.get_logger().info(
+                f'[REACQUIRE] confirmed after '
+                f'{now - self.reacquire_started:.2f}s '
+                f'| bbox=({self.bbox_u:.0f},{self.bbox_v:.0f}) '
+                f'| EKF={self.tracking_mode}; entering FOLLOW'
             )
 
     def _handle_follow(self):
@@ -302,6 +461,75 @@ class MissionFSMNode(Node):
 
     # ── Setpoint composition ─────────────────────────────────────────────
 
+    def _translation_speed_scale(self) -> float:
+        """Smoothly scale APF translation while IBVS aligns the view.
+
+        IBVS owns yaw and gimbal pitch; APF owns world-frame translation.
+        A hard zero-velocity gate can deadlock the system because vertical
+        image error is primarily corrected by the gimbal, not by yaw/APF.
+        Invalid tracking is still an immediate safety stop.
+        """
+        valid_tracking = (
+            self.has_odom
+            and self.detected
+            and self.tracking_mode == 'TRACKING'
+            and self.has_bbox
+        )
+        if not valid_tracking:
+            self.xy_speed_scale = 0.0
+            self.yaw_align_active = True
+            return 0.0
+
+        if not self.yaw_align_enable:
+            raw_scale = 1.0
+        else:
+            eu = abs(self.bbox_u - self.yaw_align_u0)
+            if eu <= self.yaw_align_u_tol:
+                pixel_scale = 1.0
+            elif eu >= self.yaw_align_u_stop:
+                pixel_scale = self.yaw_align_min_speed
+            else:
+                span = self.yaw_align_u_stop - self.yaw_align_u_tol
+                progress = (eu - self.yaw_align_u_tol) / span
+                pixel_scale = 1.0 - progress * (
+                    1.0 - self.yaw_align_min_speed
+                )
+
+            yaw_error = abs(_wrap_angle(self.ibvs_yaw - self.drone_yaw))
+            if yaw_error <= self.yaw_align_exit:
+                yaw_scale = 1.0
+            elif yaw_error >= self.yaw_align_enter:
+                yaw_scale = self.yaw_align_min_speed
+            else:
+                span = self.yaw_align_enter - self.yaw_align_exit
+                progress = (yaw_error - self.yaw_align_exit) / span
+                yaw_scale = 1.0 - progress * (
+                    1.0 - self.yaw_align_min_speed
+                )
+
+            raw_scale = min(pixel_scale, yaw_scale)
+
+        # Smooth only valid-operation changes. A tracking loss must stop
+        # translation immediately, above.
+        alpha = self.yaw_align_filter_alpha
+        self.xy_speed_scale = (
+            alpha * raw_scale + (1.0 - alpha) * self.xy_speed_scale
+        )
+        self.xy_speed_scale = float(np.clip(self.xy_speed_scale, 0.0, 1.0))
+
+        alignment_limited = self.xy_speed_scale < 0.995
+        if alignment_limited != self.yaw_align_active:
+            self.yaw_align_active = alignment_limited
+            self.get_logger().info(
+                f'[YAW_ALIGN] {"LIMIT XY" if alignment_limited else "FULL XY"} '
+                f'| scale={self.xy_speed_scale:.2f} '
+                f'| tracking={self.tracking_mode} | detected={self.detected} '
+                f'| yaw_err={math.degrees(_wrap_angle(self.ibvs_yaw - self.drone_yaw)):.1f}° '
+                f'| pixel_err=({self.bbox_u - self.yaw_align_u0:.0f},'
+                f'{self.bbox_v - self.yaw_align_v0:.0f})'
+            )
+        return self.xy_speed_scale
+
     def _publish_setpoints(self):
         """Compose final velocity and yaw setpoints based on current phase."""
         vel = Twist()
@@ -313,14 +541,27 @@ class MissionFSMNode(Node):
 
         elif self.phase == MissionPhase.SEARCH:
             # Hover + IBVS provides yaw rotation
-            yaw.data = float(self.ibvs_yaw)
+            # During reacquisition, stop the search sweep and hold the
+            # current vehicle yaw so the image can settle.
+            yaw.data = float(
+                self.drone_yaw if self.reacquire_active else self.ibvs_yaw
+            )
 
         elif self.phase == MissionPhase.FOLLOW:
-            # APF velocity + IBVS yaw
-            vel.linear.x = float(self.apf_velocity[0])
-            vel.linear.y = float(self.apf_velocity[1])
+            # IBVS owns yaw/gimbal and APF owns translation. During visual
+            # alignment, smoothly reduce APF speed instead of freezing XY.
+            # Invalid tracking remains an immediate zero-velocity condition.
+            speed_scale = self._translation_speed_scale()
+            vel.linear.x = float(self.apf_velocity[0] * speed_scale)
+            vel.linear.y = float(self.apf_velocity[1] * speed_scale)
+            # Keep APF/offboard altitude regulation independent from the
+            # horizontal visual-alignment scale.
             vel.linear.z = float(self.apf_velocity[2])
-            yaw.data = float(self.ibvs_yaw)
+            yaw.data = float(
+                self.drone_yaw
+                if time.monotonic() < self.follow_entry_hold_until
+                else (self.ibvs_yaw if self.detected else self.drone_yaw)
+            )
 
         elif self.phase == MissionPhase.APPROACH:
             # APF velocity (reduced gain handled by APF node) + descent

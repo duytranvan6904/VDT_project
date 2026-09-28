@@ -81,9 +81,9 @@ class ArucoSimulationNode(Node):
         self.create_subscription(Image, '/depth_camera', self.depth_cb, sensor_qos)
         self.create_subscription(Image, '/camera', self.image_cb, sensor_qos)
 
-        # Oak-D-Lite SDF fallback: 1920x1080, horizontal FOV 1.204 rad.
-        self.image_width = 1920
-        self.image_height = 1080
+        # Oak-D-Lite SDF fallback: 640x480, horizontal FOV 1.204 rad.
+        self.image_width = 640
+        self.image_height = 480
         self.camera_matrix = self.fallback_camera_matrix(self.image_width, self.image_height)
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float64)
         self.detector = ArUcoDetector(
@@ -172,6 +172,12 @@ class ArucoSimulationNode(Node):
         if image is None:
             self.get_logger().warning(f'Unsupported RGB encoding: {msg.encoding}')
             return
+
+        if (msg.width != self.image_width or msg.height != self.image_height) and self.camera_info is None:
+            self.image_width = msg.width
+            self.image_height = msg.height
+            self.camera_matrix = self.fallback_camera_matrix(self.image_width, self.image_height)
+            self.detector.set_camera_parameters(self.camera_matrix, self.dist_coeffs)
 
         self.frame_count += 1
         raw_results = self.detector.process_frame(image)

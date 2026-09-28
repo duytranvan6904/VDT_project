@@ -33,8 +33,8 @@ import numpy as np
 class APFParams:
     """Tunable APF parameters."""
     d0: float = 3.0               # Obstacle influence distance (m)
-    v_max: float = 1.5            # Maximum velocity (m/s)
-    d_slow: float = 1.5           # Deceleration distance to goal (m)
+    v_max: float = 0.4            # Conservative diagnostic maximum velocity (m/s)
+    d_slow: float = 1.0           # Deceleration distance to goal (m)
     k_att: float = 10.0           # Attractive gain
     k_rep: float = 2500.0         # Repulsive gain
     goal_threshold: float = 0.20  # Stop distance near goal (m)
@@ -316,8 +316,8 @@ def _create_ros_node():
             # ── Parameters ───────────────────────────────────────────────
             self.declare_parameter('world_sdf', '')
             self.declare_parameter('d0', 2.0)
-            self.declare_parameter('v_max', 1.5)
-            self.declare_parameter('d_slow', 1.5)
+            self.declare_parameter('v_max', 0.4)
+            self.declare_parameter('d_slow', 1.0)
             self.declare_parameter('k_att', 10.0)
             self.declare_parameter('k_rep', 250.0)
             self.declare_parameter('k_rep_approach', 125.0)
@@ -449,7 +449,9 @@ def _create_ros_node():
                 self.has_odom
                 and self.goal_pos is not None
                 and self.phase in ('FOLLOW', 'APPROACH')
-                and self.tracking_mode in ('TRACKING', 'PREDICTING')
+                # Do not continue translating on a predicted/degraded target.
+                # Mission FSM will hold XY until a fresh TRACKING state exists.
+                and self.tracking_mode == 'TRACKING'
             )
 
             if not can_compute_apf:

@@ -20,8 +20,6 @@ from __future__ import annotations
 import math
 import os
 import sys
-import time
-
 import numpy as np
 
 # Ensure project root is on sys.path for vision package imports.
@@ -116,10 +114,14 @@ class EKFRosAdapter(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         # ── State ────────────────────────────────────────────────────────
-        self.last_detection_time = 0.0       # monotonic timestamp of last True detection
-        self.last_valid_meas_time: float | None = None  # timestamp of last accepted measurement
-        self.last_ekf_time = None            # last timestamp fed to EKF (for dt calc)
+        # All estimator timing uses ROS time so sensor stamps, TF stamps,
+        # prediction and replay remain in one clock domain (including sim time).
+        self.last_detection_time = 0.0
+        self.last_valid_meas_time: float | None = None
+        self.last_ekf_time: float | None = None
         self.last_diag_time = 0.0
+        self.last_world_meas_log_time = 0.0
+        self.tf_reject_count = 0
         self.detected = False
         self.detection_count = 0             # consecutive detection counter
         self.phase = 'FOLLOW'                # current mission phase (for tracking policy)
@@ -170,10 +172,18 @@ class EKFRosAdapter(Node):
 
     # ── Callbacks ────────────────────────────────────────────────────────
 
+    def _ros_time_sec(self) -> float:
+        return self.get_clock().now().nanoseconds * 1e-9
+
+    @staticmethod
+    def _stamp_sec(stamp, fallback: float) -> float:
+        value = stamp.sec + stamp.nanosec * 1e-9
+        return float(value) if value > 0.0 else float(fallback)
+
     def detected_cb(self, msg: Bool):
         self.detected = msg.data
         if msg.data:
-            self.last_detection_time = time.monotonic()
+            self.last_detection_time = self._ros_time_sec()
             self.detection_count += 1
         else:
             self.detection_count = 0
@@ -206,7 +216,19 @@ class EKFRosAdapter(Node):
         if world_pos is None:
             return
 
-        now = time.monotonic()
+        now = self._stamp_sec(msg.header.stamp, self._ros_time_sec())
+
+        # Do not feed delayed/out-of-order measurements into a chronological
+        # EKF.  In particular, this prevents a late camera frame from being
+        # fused after the timer has already advanced the filter.
+        if self.last_ekf_time is not None and now < self.last_ekf_time - 1e-3:
+            self.get_logger().warning(
+                f'[MEASUREMENT REJECTED] Out-of-order stamp={now:.3f} '
+                f'< filter={self.last_ekf_time:.3f}',
+                throttle_duration_sec=1.0,
+            )
+            return
+
         if not self.ekf.initialized:
             self.ekf.initialize(world_pos, now)
             self.last_ekf_time = now
@@ -246,13 +268,13 @@ class EKFRosAdapter(Node):
             return
 
         # 4. Out-of-Gate: Could be an outlier glitch OR a maneuvering/moving target after dropout.
-        # Evaluate consistency across consecutive frames (3 frames within 0.35s = ~100ms confirmation)
+        # Evaluate consistency across consecutive frames (2 frames within 1.0s)
         is_consistent = False
         if self.candidate_pos is not None:
             dt_cand = now - self.candidate_time
-            if dt_cand < 0.35:
+            if dt_cand < 1.0:
                 cand_dist = float(np.linalg.norm(world_pos[:2] - self.candidate_pos[:2]))
-                max_step = max(0.40, self.max_target_speed * dt_cand + 0.15)
+                max_step = max(0.50, self.max_target_speed * dt_cand + 0.30)
                 if cand_dist <= max_step:
                     is_consistent = True
 
@@ -260,8 +282,8 @@ class EKFRosAdapter(Node):
             self.candidate_count += 1
             self.candidate_pos = world_pos.copy()
             self.candidate_time = now
-            if self.candidate_count >= 3:
-                # Confirmed 3 consecutive frames: re-acquire track immediately!
+            if self.candidate_count >= 2:
+                # Confirmed 2 consecutive frames: re-acquire track immediately!
                 dt_total = now - self.candidate_first_time
                 vel_est = (world_pos - self.candidate_first_pos) / max(dt_total, 0.001)
                 v_xy = float(np.hypot(vel_est[0], vel_est[1]))
@@ -290,7 +312,7 @@ class EKFRosAdapter(Node):
         self.get_logger().warning(
             f'[KINEMATIC GATE] Rejected jump {innov_dist:.2f}m > {max_allowed_dist:.2f}m '
             f'(Measured: ({world_pos[0]:.2f}, {world_pos[1]:.2f}) vs Predicted: ({predicted_pos[0]:.2f}, {predicted_pos[1]:.2f}), '
-            f'Candidate: {self.candidate_count}/3)',
+            f'Candidate: {self.candidate_count}/2)',
             throttle_duration_sec=0.5,
         )
 
@@ -299,7 +321,7 @@ class EKFRosAdapter(Node):
         if not self.ekf.initialized:
             return
 
-        now = time.monotonic()
+        now = self._ros_time_sec()
         if self.last_ekf_time is None or now <= self.last_ekf_time:
             return
 
@@ -320,49 +342,74 @@ class EKFRosAdapter(Node):
     def _transform_to_world(
         self, camera_pos: np.ndarray, header,
     ) -> np.ndarray | None:
-        """Transform a point from camera_optical_frame to world using TF2."""
+        """Transform a point using TF2 at the image capture timestamp.
+
+        A latest-TF fallback is deliberately forbidden here.  It produces a
+        geometrically plausible but temporally wrong target whenever the
+        vehicle or gimbal is moving.
+        """
         try:
-            lookup_time = (
-                header.stamp
-                if (header.stamp.sec > 0 or header.stamp.nanosec > 0)
-                else rclpy.time.Time()
+            if header.stamp.sec <= 0 and header.stamp.nanosec <= 0:
+                self.get_logger().warning(
+                    '[TF REJECTED] Measurement has no valid timestamp; '
+                    'refusing latest-TF fallback',
+                    throttle_duration_sec=2.0,
+                )
+                return None
+
+            lookup_time = rclpy.time.Time.from_msg(header.stamp)
+            tf_msg = self.tf_buffer.lookup_transform(
+                self.target_frame,
+                self.source_frame,
+                lookup_time,
+                timeout=rclpy.duration.Duration(seconds=0.05),
             )
-            try:
-                tf_msg = self.tf_buffer.lookup_transform(
-                    self.target_frame,
-                    self.source_frame,
-                    lookup_time,
-                    timeout=rclpy.duration.Duration(seconds=0.05),
+
+            tf_stamp = self._stamp_sec(tf_msg.header.stamp, 0.0)
+            meas_stamp = self._stamp_sec(header.stamp, 0.0)
+            now = self._ros_time_sec()
+            world_pos = _transform_point_manual(camera_pos, tf_msg)
+            if now - self.last_world_meas_log_time > 1.0:
+                self.get_logger().info(
+                    f'[WORLD_MEAS] cam_stamp={meas_stamp:.3f} '
+                    f'tf_stamp={tf_stamp:.3f} '
+                    f'pos=({camera_pos[0]:.2f},{camera_pos[1]:.2f},{camera_pos[2]:.2f}) '
+                    f'world=({world_pos[0]:.2f},{world_pos[1]:.2f},{world_pos[2]:.2f})'
                 )
-            except (tf2_ros.ExtrapolationException, tf2_ros.LookupException):
-                tf_msg = self.tf_buffer.lookup_transform(
-                    self.target_frame,
-                    self.source_frame,
-                    rclpy.time.Time(),
-                    timeout=rclpy.duration.Duration(seconds=0.05),
-                )
-            return _transform_point_manual(camera_pos, tf_msg)
+                self.last_world_meas_log_time = now
+            return world_pos
         except (
             tf2_ros.LookupException,
             tf2_ros.ConnectivityException,
             tf2_ros.ExtrapolationException,
         ) as exc:
+            self.tf_reject_count += 1
             self.get_logger().warning(
-                f'TF2 lookup failed ({self.source_frame} → {self.target_frame}): {exc}',
+                f'[TF REJECTED #{self.tf_reject_count}] '
+                f'{self.source_frame} → {self.target_frame} at '
+                f'{header.stamp.sec + header.stamp.nanosec * 1e-9:.3f}: {exc}',
                 throttle_duration_sec=2.0,
             )
             return None
 
     def _publish_state(self):
         """Publish current EKF state as Odometry + tracking mode as String."""
-        now_mono = time.monotonic()
+        now_ros = self._ros_time_sec()
         snap = self.ekf.snapshot()
 
         if not snap.initialized:
             return
 
         # --- Tracking mode ---
-        age = now_mono - self.last_detection_time if self.last_detection_time > 0 else 999.0
+        # Tracking age must be based on the last measurement accepted by the
+        # EKF, not merely on the raw detector Bool.  A raw detection can still
+        # fail distance, TF or kinematic validation.
+        age = (
+            now_ros - self.last_valid_meas_time
+            if self.last_valid_meas_time is not None
+            else 999.0
+        )
+        age = max(0.0, age)
         mode = classify_tracking_mode(
             detected=self.detected,
             age_since_measurement_s=age,
@@ -406,13 +453,13 @@ class EKFRosAdapter(Node):
 
         self.state_pub.publish(msg)
 
-        if now_mono - self.last_diag_time > 1.5:
+        if now_ros - self.last_diag_time > 1.5:
             self.get_logger().info(
                 f"[EKF Output] Target: ({state[0]:.2f}, {state[1]:.2f}, {state[2]:.2f})m | "
                 f"Vel: ({state[3]:.2f}, {state[4]:.2f}) m/s | "
                 f"Mode: {mode.value:<10} | Age: {age:.2f}s"
             )
-            self.last_diag_time = now_mono
+            self.last_diag_time = now_ros
 
 
 # ---------------------------------------------------------------------------

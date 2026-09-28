@@ -6,9 +6,10 @@
 
 apf_planner:
   ros__parameters:
+    use_sim_time: true
     d0: 2.5
-    v_max: 1.5
-    d_slow: 1.5
+    v_max: 1.0
+    d_slow: 1.0
     target_altitude: 3.0
     k_att: 10.0
     k_rep: 2500.0
@@ -19,6 +20,7 @@ apf_planner:
 
 ekf_ros_adapter:
   ros__parameters:
+    use_sim_time: true
     process_accel_variance: [1.0, 1.0, 0.5]
     gate_threshold: 16.27
     predict_rate_hz: 50.0
@@ -29,21 +31,29 @@ ekf_ros_adapter:
 
 aruco_sim_node:
   ros__parameters:
+    use_sim_time: true
     marker_size_m: 0.895
     min_detection_distance_m: 2.2
 
 ibvs_controller:
   ros__parameters:
+    use_sim_time: true
     K_pitch: 0.8
     K_yaw: 0.5
+    focal_x: 466.0
+    focal_y: 466.0
+    u0: 320.0
+    v0: 240.0
     search_yaw_rate: 0.2618
     pitch_rate_limit: 3.1416
     pitch_ema_alpha: 0.25
-    yaw_rate_limit: 0.6
+    pitch_pixel_trim_gain: 0.5
+    yaw_rate_limit: 0.35
     drone_model: x500_depth_0
 
 mission_fsm:
   ros__parameters:
+    use_sim_time: true
     detection_confirm_frames: 3
     follow_distance: 3.5
     alignment_threshold: 0.3
@@ -52,10 +62,28 @@ mission_fsm:
     approach_timeout: 3.0
     takeoff_altitude: 3.0
     land_descent_speed: 0.3
+    yaw_align_enable: true
+    yaw_align_enter_deg: 15.0
+    yaw_align_exit_deg: 7.0
+    yaw_align_u0_px: 320.0
+    yaw_align_v0_px: 240.0
+    yaw_align_u_tolerance_px: 35.0
+    yaw_align_u_stop_px: 220.0
+    yaw_align_min_speed_scale: 0.20
+    yaw_align_speed_filter_alpha: 0.20
+    reacquire_confirm_time: 0.80
+    reacquire_hold_timeout: 2.50
+    reacquire_lost_timeout: 0.45
+    reacquire_bbox_max_step_px: 35.0
+    reacquire_bbox_timeout: 1.0
 
 offboard_commander:
   ros__parameters:
+    use_sim_time: true
     auto_arm: true
     auto_offboard: true
     min_offboard_alt: 2.0
-    max_accel: 2.0
+    max_accel: 0.5
+    enable_alt_hold: true
+    target_altitude: 3.0
+    alt_hold_kp: 1.0

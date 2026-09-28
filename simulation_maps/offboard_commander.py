@@ -104,11 +104,17 @@ class OffboardCommander(Node):
         self.declare_parameter('auto_arm', True)
         self.declare_parameter('auto_offboard', True)
         self.declare_parameter('min_offboard_alt', 2.0)
-        self.declare_parameter('max_accel', 2.0)
+        self.declare_parameter('max_accel', 0.4)
+        self.declare_parameter('enable_alt_hold', True)
+        self.declare_parameter('target_altitude', 3.0)
+        self.declare_parameter('alt_hold_kp', 1.0)
         self.auto_arm = self.get_parameter('auto_arm').value
         self.auto_offboard = self.get_parameter('auto_offboard').value
         self.min_offboard_alt = float(self.get_parameter('min_offboard_alt').value)
         self.max_accel = float(self.get_parameter('max_accel').value)
+        self.enable_alt_hold = bool(self.get_parameter('enable_alt_hold').value)
+        self.target_altitude = float(self.get_parameter('target_altitude').value)
+        self.alt_hold_kp = float(self.get_parameter('alt_hold_kp').value)
 
         # ── State ────────────────────────────────────────────────────────
         self.velocity_enu = [0.0, 0.0, 0.0]
@@ -116,6 +122,8 @@ class OffboardCommander(Node):
         self.phase = 'IDLE'
         self.current_alt = 0.0
         self.has_odom = False
+        self.has_fsm_yaw = False
+        self.last_fsm_yaw_time = 0.0
         self.armed = False
         self.offboard_active = False
         self.offboard_engaged = False
@@ -150,6 +158,10 @@ class OffboardCommander(Node):
         self.create_subscription(
             Float64, '/mission/yaw_setpoint',
             self.yaw_cb, 10,
+        )
+        self.create_subscription(
+            Float64, '/ibvs/yaw_cmd',
+            self.ibvs_yaw_cb, 10,
         )
         self.create_subscription(
             String, '/mission/phase',
@@ -212,6 +224,13 @@ class OffboardCommander(Node):
 
     def yaw_cb(self, msg: Float64):
         self.yaw_enu = msg.data
+        self.has_fsm_yaw = True
+        self.last_fsm_yaw_time = time.monotonic()
+
+    def ibvs_yaw_cb(self, msg: Float64):
+        # Automatically use IBVS yaw if FSM is not actively publishing /mission/yaw_setpoint
+        if not self.has_fsm_yaw or (time.monotonic() - self.last_fsm_yaw_time > 1.0):
+            self.yaw_enu = msg.data
 
     def phase_cb(self, msg: String):
         prev_phase = self.phase
@@ -225,6 +244,8 @@ class OffboardCommander(Node):
         if self.phase in ('FOLLOW', 'APPROACH') and prev_phase in ('IDLE', 'SEARCH'):
             if self.current_alt >= self.min_offboard_alt:
                 self.offboard_engaged = True
+                if self.enable_alt_hold:
+                    self.target_altitude = max(self.target_altitude, self.current_alt)
                 self._send_offboard_mode()
 
     # ── PX4 Communication ────────────────────────────────────────────────
@@ -237,9 +258,11 @@ class OffboardCommander(Node):
         if not self.offboard_engaged:
             if self.phase in ('FOLLOW', 'APPROACH') and self.current_alt >= self.min_offboard_alt:
                 self.offboard_engaged = True
+                if self.enable_alt_hold:
+                    self.target_altitude = max(self.target_altitude, self.current_alt)
                 self.get_logger().info(
                     f'✅ Drone đạt độ cao an toàn ({self.current_alt:.2f}m >= {self.min_offboard_alt:.1f}m)! '
-                    f'Kích hoạt chốt OFFBOARD mode.'
+                    f'Kích hoạt chốt OFFBOARD mode (Hold altitude: {self.target_altitude:.1f}m).'
                 )
 
         if HAS_PX4_MSGS and self.offboard_pub is not None:
@@ -297,7 +320,19 @@ class OffboardCommander(Node):
         self.last_setpoint_time = now
 
         # Convert ENU → NED
-        raw_vn, raw_ve, raw_vd = _enu_to_ned_velocity(*self.velocity_enu)
+        cmd_vx = self.velocity_enu[0]
+        cmd_vy = self.velocity_enu[1]
+        cmd_vz = self.velocity_enu[2]
+
+        # Closed-loop Altitude Hold when no active climb/descent command is present
+        # (e.g. isolated IBVS test, APF vz=0 in FOLLOW, hover)
+        if self.enable_alt_hold and self.has_odom and self.phase != 'LAND':
+            if abs(cmd_vz) < 0.05:
+                alt_error = self.target_altitude - self.current_alt
+                # P-controller for altitude with output clamped to [-0.8, 0.8] m/s
+                cmd_vz = float(max(-0.8, min(0.8, self.alt_hold_kp * alt_error)))
+
+        raw_vn, raw_ve, raw_vd = _enu_to_ned_velocity(cmd_vx, cmd_vy, cmd_vz)
         yaw_ned = _enu_yaw_to_ned(self.yaw_enu)
 
         # Slew-rate limiter (acceleration clamping)
@@ -344,8 +379,9 @@ class OffboardCommander(Node):
 
             if now - self.last_log_time > 2.0:
                 mode_str = "OFFBOARD" if self.px4_current_main_mode == 6 else f"PX4_Mode_{self.px4_current_main_mode}"
+                alt_str = f"alt={self.current_alt:.2f}m (tgt={self.target_altitude:.1f}m)" if self.enable_alt_hold else f"alt={self.current_alt:.2f}m"
                 self.get_logger().info(
-                    f'[MAVLink Offboard] State={mode_str} | Phase={self.phase:<7} | '
+                    f'[MAVLink Offboard] State={mode_str} | Phase={self.phase:<7} | {alt_str} | '
                     f'vel_NED=[{vn:.2f}, {ve:.2f}, {vd:.2f}] m/s | '
                     f'yaw_NED={math.degrees(yaw_ned):.1f}°'
                 )

@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import PointCloud2, PointField, JointState
 from nav_msgs.msg import Odometry
@@ -266,6 +267,14 @@ def check_ros_gz_backend():
 class FastTrackerStyleNode(Node):
     def __init__(self, obstacles):
         super().__init__('fast_tracker_style_node')
+
+        # This node is not launched with mission_params.yaml, but it stamps
+        # odom-derived TF and camera/gimbal transforms.  Force the same clock
+        # domain as Gazebo before any publisher/timer starts, otherwise a
+        # runtime parameter change leaves wall-time TF entries in the buffer.
+        self.set_parameters([
+            Parameter('use_sim_time', Parameter.Type.BOOL, True),
+        ])
 
         # Best Effort QoS cho sensor data
         sensor_qos = QoSProfile(
@@ -636,7 +645,10 @@ def main():
         sim_dir = os.path.dirname(os.path.abspath(__file__))
         config_file = os.path.join(sim_dir, 'config', 'mission_params.yaml')
 
-        params_args = ['--ros-args', '--params-file', config_file]
+        params_args = [
+            '--ros-args', '--params-file', config_file,
+            '-p', 'use_sim_time:=true',
+        ]
         auto_nodes = [
             ('ArUco Detector', [
                 sys.executable, os.path.join(sim_dir, 'aruco_sim_node.py'),
