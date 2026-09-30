@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 
 from vision.realsense_stream import RealSenseCamera
-from main_aruco_detector import parse_args as parse_detector_args
+from hardware.main_aruco_detector import parse_args as parse_detector_args
 from vision.record_bag import parse_args as parse_recorder_args
 
 

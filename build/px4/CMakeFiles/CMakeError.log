@@ -1,0 +1,25 @@
+Performing C++ SOURCE FILE Test ABSL_INTERNAL_AT_LEAST_CXX20 failed with the following output:
+Change Dir: /home/duy/VDT_project/build/px4/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_b168f/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b168f.dir/build.make CMakeFiles/cmTC_b168f.dir/build
+gmake[1]: Entering directory '/home/duy/VDT_project/build/px4/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_b168f.dir/src.cxx.o
+/usr/bin/c++ -DABSL_INTERNAL_AT_LEAST_CXX20  -std=gnu++17 -o CMakeFiles/cmTC_b168f.dir/src.cxx.o -c /home/duy/VDT_project/build/px4/CMakeFiles/CMakeTmp/src.cxx
+/home/duy/VDT_project/build/px4/CMakeFiles/CMakeTmp/src.cxx:6:4: error: #error "The compiler defaults or is configured for C++ < 20"
+    6 | #  error "The compiler defaults or is configured for C++ < 20"
+      |    ^~~~~
+gmake[1]: *** [CMakeFiles/cmTC_b168f.dir/build.make:78: CMakeFiles/cmTC_b168f.dir/src.cxx.o] Error 1
+gmake[1]: Leaving directory '/home/duy/VDT_project/build/px4/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_b168f/fast] Error 2
+
+
+Source file was:
+#ifdef _MSC_VER
+#  if _MSVC_LANG < 202002L
+#    error "The compiler defaults or is configured for C++ < 20"
+#  endif
+#elif __cplusplus < 202002L
+#  error "The compiler defaults or is configured for C++ < 20"
+#endif
+int main() { return 0; }
+

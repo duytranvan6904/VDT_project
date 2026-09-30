@@ -1,0 +1,33 @@
+[0.008s] Invoking command in '/home/duy/VDT_project/build/map_generator': /usr/bin/cmake /home/duy/VDT_project/simulation_maps/fast_tracker_map_generator -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/duy/VDT_project/install/map_generator
+[0.100s] -- The C compiler identification is GNU 11.4.0
+[0.194s] -- The CXX compiler identification is GNU 11.4.0
+[0.203s] -- Detecting C compiler ABI info
+[0.264s] -- Detecting C compiler ABI info - done
+[0.273s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.274s] -- Detecting C compile features
+[0.275s] -- Detecting C compile features - done
+[0.279s] -- Detecting CXX compiler ABI info
+[0.351s] -- Detecting CXX compiler ABI info - done
+[0.356s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.357s] -- Detecting CXX compile features
+[0.357s] -- Detecting CXX compile features - done
+[0.366s] -- Configuring incomplete, errors occurred!
+[0.366s] See also "/home/duy/VDT_project/build/map_generator/CMakeFiles/CMakeOutput.log".
+[0.366s] [31mCMake Error at CMakeLists.txt:4 (find_package):
+[0.367s]   By not providing "Findcatkin.cmake" in CMAKE_MODULE_PATH this project has
+[0.367s]   asked CMake to find a package configuration file provided by "catkin", but
+[0.367s]   CMake did not find one.
+[0.367s] 
+[0.367s]   Could not find a package configuration file provided by "catkin" with any
+[0.367s]   of the following names:
+[0.367s] 
+[0.367s]     catkinConfig.cmake
+[0.367s]     catkin-config.cmake
+[0.367s] 
+[0.367s]   Add the installation prefix of "catkin" to CMAKE_PREFIX_PATH or set
+[0.367s]   "catkin_DIR" to a directory containing one of the above files.  If "catkin"
+[0.367s]   provides a separate development package or SDK, be sure it has been
+[0.367s]   installed.
+[0.367s] 
+[0.367s] [0m
+[0.369s] Invoked command in '/home/duy/VDT_project/build/map_generator' returned '1': /usr/bin/cmake /home/duy/VDT_project/simulation_maps/fast_tracker_map_generator -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/duy/VDT_project/install/map_generator

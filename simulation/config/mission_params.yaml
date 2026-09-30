@@ -1,0 +1,95 @@
+# ============================================================================
+# Mission Parameters — APF + IBVS + EKF Simulation
+# ============================================================================
+# ROS 2 parameter-file format.  The launcher passes this file to every
+# autonomous node, so changing a value here affects the actual simulation.
+
+apf_planner:
+  ros__parameters:
+    use_sim_time: true
+    d0: 2.5
+    v_max: 1.5
+    d_slow: 1.2
+    target_altitude: 3.0
+    k_att: 10.0
+    k_rep: 2500.0
+    k_rep_approach: 125.0
+    goal_threshold: 0.20
+    follow_distance: 3.5
+    hold_follow_altitude: true
+    target_lead_time: 0.35
+    max_target_lead: 1.0
+    target_velocity_alpha: 0.35
+    target_velocity_deadband: 0.18
+
+ekf_ros_adapter:
+  ros__parameters:
+    use_sim_time: true
+    process_accel_variance: [1.0, 1.0, 0.5]
+    gate_threshold: 16.27
+    predict_rate_hz: 50.0
+    source_frame: camera_optical_frame
+    target_frame: world
+    max_target_speed: 2.5
+    min_marker_distance: 2.2
+
+aruco_sim_node:
+  ros__parameters:
+    use_sim_time: true
+    marker_size_m: 0.895
+    min_detection_distance_m: 2.2
+
+ibvs_controller:
+  ros__parameters:
+    use_sim_time: true
+    K_pitch: 0.8
+    K_yaw: 0.85
+    focal_x: 466.0
+    focal_y: 466.0
+    u0: 320.0
+    v0: 240.0
+    search_yaw_rate: 0.20
+    pitch_rate_limit: 1.8
+    pitch_ema_alpha: 0.30
+    pitch_pixel_trim_gain: 0.6
+    yaw_rate_limit: 0.45
+    drone_model: x500_depth_0
+
+mission_fsm:
+  ros__parameters:
+    use_sim_time: true
+    follow_distance: 3.5
+    alignment_threshold: 0.3
+    land_altitude: 0.5
+    search_timeout: 3.0
+    approach_timeout: 3.0
+    takeoff_altitude: 3.0
+    land_descent_speed: 0.3
+    yaw_align_enable: true
+    yaw_align_enter_deg: 25.0
+    yaw_align_exit_deg: 10.0
+    yaw_align_u0_px: 320.0
+    yaw_align_v0_px: 240.0
+    yaw_align_u_tolerance_px: 50.0
+    yaw_align_u_stop_px: 250.0
+    yaw_align_min_speed_scale: 0.60
+    yaw_align_speed_filter_alpha: 0.35
+    reacquire_confirm_time: 0.35
+    reacquire_hold_timeout: 4.0
+    reacquire_lost_timeout: 1.5
+    reacquire_bbox_timeout: 0.8
+    reacquire_max_yaw_rate_deg: 12.0
+    follow_entry_hold_time: 0.25
+    search_entry_hold_time: 0.30
+
+offboard_commander:
+  ros__parameters:
+    use_sim_time: true
+    auto_arm: true
+    auto_offboard: true
+    min_offboard_alt: 2.0
+    max_accel: 0.8
+    max_yaw_rate: 0.80
+    enable_alt_hold: true
+    target_altitude: 3.0
+    alt_hold_kp: 1.0
