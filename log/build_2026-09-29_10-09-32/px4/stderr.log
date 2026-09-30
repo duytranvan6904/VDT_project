@@ -1,0 +1,6 @@
+[31mCMake Error at cmake/package.cmake:104 (target_compile_definitions):
+  target_compile_definitions called with non-compilable target type
+Call Stack (most recent call first):
+  CMakeLists.txt:532 (include)
+
+[0m

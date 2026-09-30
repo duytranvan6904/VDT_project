@@ -1,0 +1,2 @@
+Invoking command in '/home/duy/VDT_project/build/map_generator': /usr/bin/cmake /home/duy/VDT_project/simulation_maps/fast_tracker_map_generator -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/duy/VDT_project/install/map_generator
+Invoked command in '/home/duy/VDT_project/build/map_generator' returned '1': /usr/bin/cmake /home/duy/VDT_project/simulation_maps/fast_tracker_map_generator -DCATKIN_INSTALL_INTO_PREFIX_ROOT=0 -DCMAKE_INSTALL_PREFIX=/home/duy/VDT_project/install/map_generator

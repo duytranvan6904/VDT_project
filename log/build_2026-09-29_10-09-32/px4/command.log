@@ -1,0 +1,1 @@
+Invoking command in '/home/duy/VDT_project/build/px4': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/duy/VDT_project/PX4-Autopilot -DCMAKE_INSTALL_PREFIX=/home/duy/VDT_project/install/px4

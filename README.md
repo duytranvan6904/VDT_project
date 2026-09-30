@@ -1,503 +1,558 @@
-# PROJECT SCOPE — Quadrotor H-Pad Tracking, Obstacle Avoidance & Precision Landing
+# VDT Quadrotor Autonomous Tracking System
 
-> **Phiên bản**: 3.0 — 26/08/2026  
-> **Nhóm**: Duy (Vision/Estimation) · Tuân (Control/Planning) · Việt Anh (Embedded/Integration)  
-> **Thời gian**: 9 tuần (24/08 → 25/10/2026)
-
----
-
-## 1. Phạm Vi Bài Toán (Scope)
-
-### 1.1. Tên đề tài
-
-**"Bám Bãi Đáp Di Động, Tránh Vật Cản và Hạ Cánh Chính Xác Theo Lệnh Sử Dụng Một Camera Độ Sâu Duy Nhất với Gimbal Chủ Động trên Quadrotor"**
-
-*(Autonomous Dynamic H-Pad Following, Obstacle Avoidance, and Operator-Commanded Precision Landing Using a Single Active-Gimbal Depth Camera on a Quadrotor)*
-
-### 1.2. Phạm vi triển khai
-
-| Hạng mục | Phạm vi |
-|----------|---------|
-| **Nền tảng bay** | Quadrotor duy nhất (Holybro S500 V2), sử dụng PX4 Autopilot (Pixhawk 6C), companion computer Raspberry Pi 5 (8GB RAM) |
-| **Cảm biến** | 1 camera RGB-D duy nhất gắn trên gimbal 1-axis Pitch servo (kết hợp Yaw Quadrotor) |
-| **Mục tiêu bám** | H-Pad (bãi đáp) được dán ArUco marker, gắn trên platform di động (xe đẩy / xe robot) di chuyển |
-| **Nhiệm vụ** | Pipeline 4 pha liên tục: **SEARCH → FOLLOW → APPROACH → LAND** |
-| **Phần mềm** | ROS 2 Humble, PX4 SITL + Gazebo (mô phỏng), PX4 Offboard (thực nghiệm) |
-| **Trigger hạ cánh** | Manual bởi Operator qua RC Switch (Human-in-the-Loop) |
+> **Dự án**: Quadrotor H-Pad Tracking, Obstacle Avoidance & Precision Landing  
+> **Cảm biến**: Intel RealSense D430 (Depth + IR Stereo) + Gimbal 1-trục (Pitch)  
+> **Môi trường mô phỏng**: Ubuntu 22.04 LTS · ROS 2 Humble · PX4 Autopilot v1.14+ · Gazebo Harmonic  
+> **Cập nhật**: 09/2026
 
 ---
 
-## 2. Mô Tả Bài Toán
+## 📑 Mục lục
 
-### 2.1. Tổng quan
-
-Quadrotor thực hiện **nhiệm vụ liên tục 4 pha** — cất cánh, tìm kiếm và bám theo bãi đáp H-Pad di động, né vật cản trên đường bay, và hạ cánh chính xác lên H-Pad khi Operator ra lệnh — **chỉ sử dụng duy nhất một camera RGB-D** gắn trên gimbal chủ động.
-
-Ý tưởng cốt lõi là **chia sẻ luồng dữ liệu từ một cảm biến duy nhất** cho đồng thời hai tác vụ: (1) nhận diện và theo dõi mục tiêu qua luồng RGB, (2) nhận diện vật cản qua luồng Depth — và **kết hợp hai luồng thông tin này** trong một bộ planner thống nhất để tạo ra quỹ đạo bay an toàn, liên tục.
-
-### 2.2. Pha SEARCH — Tìm kiếm mục tiêu
-
-**Ý tưởng**: Sau khi cất cánh và hover ổn định, drone quay chậm quanh trục Yaw để quét trường nhìn 360°. Gimbal giữ ngang (pitch 0°) để tối đa hóa tầm nhìn ngang. Khi ArUco marker trên H-Pad được phát hiện ổn định (≥ 10 frame liên tiếp), drone chuyển sang bám theo.
-
-**Đầu vào**: RGB frame từ camera  
-**Đầu ra**: Tín hiệu "mục tiêu tìm thấy" + tọa độ 3D ban đầu của H-Pad
-
-### 2.3. Pha FOLLOW — Bám mục tiêu & né vật cản
-
-**Ý tưởng**: Đây là pha chính và phức tạp nhất. Drone duy trì khoảng cách theo dõi ($d_{follow}$ ≈ 3-5m) với H-Pad di động, đồng thời liên tục né vật cản trên đường bay.
-
-- **Luồng RGB** → ArUco detection → pose estimation → EKF smoother → vị trí + vận tốc mượt của H-Pad → **lực hấp dẫn** (attractive force) trong trường lực
-- **Luồng Depth** → loại bỏ vùng H-Pad (masking) → phát hiện vật cản thực → **lực đẩy** (repulsive force) trong trường lực
-- Tổng hợp lực → velocity setpoint → PX4 Offboard
-
-Gimbal tự động tilt nhẹ xuống khi drone bay phía trên H-Pad để giữ marker trong FOV.
-
-**Đầu vào**: RGB + Depth frame, Drone odometry  
-**Đầu ra**: Velocity setpoint, Gimbal angle
-
-### 2.4. Pha APPROACH — Tiếp cận bãi đáp
-
-**Ý tưởng**: Khi Operator nhấn RC Switch "LAND NOW", drone bắt đầu giảm dần khoảng cách và độ cao tới H-Pad. Gimbal tilt xuống sâu hơn để duy trì marker trong FOV. Cơ chế tránh vật cản vẫn hoạt động nhưng với gain giảm (ưu tiên hội tụ về đích).
-
-Drone căn chỉnh tâm marker với tâm camera frame, đảm bảo alignment trước khi chuyển sang hạ cánh. Nếu marker bị mất > 3s hoặc Operator tắt switch → quay lại FOLLOW.
-
-**Đầu vào**: RGB + Depth frame, RC Switch, Drone state  
-**Đầu ra**: Position setpoint, Gimbal angle
-
-### 2.5. Pha LAND — Hạ cánh chính xác
-
-**Ý tưởng**: Khi alignment đạt ngưỡng (error < 0.3m) và altitude < 0.5m, drone hạ thẳng đứng. Gimbal nhìn thẳng xuống (pitch −90°). Disarm motor khi phát hiện touchdown (gia tốc kế spike hoặc altitude ≈ 0).
-
-**Đầu vào**: ArUco fine pose  
-**Đầu ra**: Land command → PX4
+1. [Tổng quan hệ thống](#1-tổng-quan-hệ-thống)
+2. [Cấu trúc thư mục](#2-cấu-trúc-thư-mục)
+3. [Yêu cầu hệ thống & Cài đặt](#3-yêu-cầu-hệ-thống--cài-đặt)
+4. [Hướng dẫn chạy Simulation (Gazebo)](#4-hướng-dẫn-chạy-simulation-gazebo)
+5. [Hướng dẫn triển khai Hardware](#5-hướng-dẫn-triển-khai-hardware)
+6. [Cấu hình tham số](#6-cấu-hình-tham-số)
+7. [Xác nhận & Tiêu chí nghiệm thu](#7-xác-nhận--tiêu-chí-nghiệm-thu)
+8. [Troubleshooting](#8-troubleshooting)
 
 ---
 
-## 3. Điều Kiện Biên, Phần Cứng Thực Nghiệm và KPI Nghiệm Thu
+## 1. Tổng quan hệ thống
 
-### 3.1. Điều kiện biên (Constraints)
+Hệ thống điều khiển tự hành theo kiến trúc phân tầng, cho phép Quadrotor:
+- **Phát hiện** mục tiêu di động (tấm H-Pad ArUco) bằng camera onboard
+- **Bám mục tiêu** (IBVS + EKF) kể cả khi mất tín hiệu tạm thời
+- **Tránh vật cản** theo thời gian thực (APF 3D)
+- **Hạ cánh chính xác** lên bề mặt H-Pad khi nhận lệnh Operator
 
-| Ràng buộc | Giá trị | Ghi chú |
-|-----------|---------|---------|
-| Vận tốc platform di động | ≤ 5.0 m/s | Tương đương đi bộ / xe đẩy chậm |
-| Khoảng cách giữa các vật cản | ≥ 1.5 m | Đảm bảo quadrotor có lối đi |
-| Độ cao bay follow | 3 - 4 m | Đủ cao để FOV nhìn rộng, đủ thấp để detect marker |
-| Khoảng cách follow (horizontal) | 2 - 3 m so với target | |
-| Camera duy nhất | 1 × Depth Camera (RGB-D) | D435i |
-| Tốc độ bay tối đa drone | ≤ 10.0 m/s | Giới hạn an toàn ngoài trời |
-| Wind condition | ≤ Beaufort 3 (≤ 3.4 m/s) | Bay ngoài trời điều kiện gió nhẹ |
-| Trigger hạ cánh | Manual or QGC | Human-in-the-Loop |
+### Kiến trúc phân tầng
 
-### 3.2. Phần cứng thực nghiệm
-
-| Thành phần | Thiết bị | Vai trò |
-|------------|----------|---------|
-| **Frame** | Holybro S500 V2 | Quadrotor frame tiêu chuẩn PX4 |
-| **Flight Controller** | Pixhawk 6C (PX4 v1.14+) | Autopilot, IMU, barometer |
-| **Companion Computer** | Raspberry Pi 5 (4GB RAM) | Chạy ROS 2, vision pipeline,planner |
-| **Camera** | Intel RealSense D435i | RGB + Depth stream |
-| **Gimbal** | 1-axis Pitch servo (1× MG90S + giá đỡ) | Tilt camera (gập lên/xuống); hướng ngang Pan điều khiển qua góc Yaw của Quadrotor |
-| **Landing Platform** | H-Pad (50×50cm) với ArUco marker trên xe đẩy / xe RC | Mục tiêu di động |
-| **Battery** | LiPo 4S 5200mAh | Thời gian bay ≥ 10 phút |
-| **Giao tiếp PX4 ↔ Pi** | UART / micro-XRCE-DDS | ROS 2 – PX4 bridge |
-
-
-### 3.3. KPI Nghiệm Thu
-
-| # | Metric | Target | Phương pháp đo |
-|---|--------|--------|-----------------|
-| 1 | **Tracking error** (pha FOLLOW) | < 1.0 m (RMSE) | Log pose error từ EKF vs. ground truth (GPS hoặc Optitrack nếu có) |
-| 2 | **Min obstacle clearance** | > 0.8 m | Đo khoảng cách gần nhất từ drone tới vật cản trong mỗi flight |
-| 3 | **Landing accuracy** (tâm marker) | < 30 cm | Đo khoảng cách giữa tâm drone và tâm H-Pad sau touchdown |
-| 4 | **End-to-end latency** (sensor → cmd) | < 500 ms | Timestamp đo trên ROS 2 topic chain |
-| 5 | **Follow duration** (continuous) | ≥ 60 s | Thời gian duy trì FOLLOW liên tục không mất target |
-| 6 | **Mission success rate** | ≥ 70% | Trên ≥ 5 lần bay: SEARCH → FOLLOW → APPROACH → LAND thành công |
-| 7 | **APF computation time** | < 20 ms / cycle | Benchmark VO-APF node trên Pi 5 |
-
----
-
-## 4. Framework Bài Toán / State Machine Chi Tiết
-
-### 4.1. Kiến trúc phần mềm (ROS 2 Nodes)
+> Sơ đồ dưới áp dụng cho cả **Simulation và Hardware** — sự khác biệt chỉ nằm ở nguồn ảnh đầu vào và kênh kết nối PX4.
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     ROS 2 HUMBLE NODE GRAPH                        │
-│                                                                     │
-│  ┌────────────────┐     /camera/color/image_raw                    │
-│  │  realsense2_   │────────────────────────┐                       │
-│  │  camera_node   │     /camera/depth/      │                       │
-│  │  (or depthai)  │───── image_rect_raw ──┐ │                       │
-│  └────────────────┘                       │ │                       │
-│                                           │ │                       │
-│  ┌────────────────────────────────────────▼─▼──────────┐           │
-│  │  /vision_node (Duy)                                  │           │
-│  │  ├── ArUco detect → /hpad/pose [PoseStamped]        │           │
-│  │  ├── ArUco BBox → /hpad/bbox [BoundingBox2D]        │           │
-│  │  └── Depth masking → /obstacles/depth [Image]        │           │
-│  └──────────┬────────────────────┬──────────────────────┘           │
-│             │                    │                                   │
-│  ┌──────────▼──────────┐  ┌─────▼──────────────────────┐           │
-│  │  /ekf_node (Duy)    │  │  /apf_planner_node (Tuân)  │           │
-│  │  State: [x,y,z,     │  │  ├── Subscribe:            │           │
-│  │   vx,vy,vz]         │  │  │   /hpad/pose (attract)  │           │
-│  │  Pub: /hpad/         │  │  │   /obstacles/depth      │           │
-│  │   state_filtered     │  │  │   /ekf/state            │           │
-│  └──────────┬──────────┘  │  │   /drone/odom            │           │
-│             │              │  ├── Compute VO-APF         │           │
-│             └──────────────│  ├── Follow guidance law    │           │
-│                            │  ├── Landing visual servo   │           │
-│                            │  └── Pub: /cmd/velocity     │           │
-│                            └─────────┬─────────────────┘           │
-│                                      │                              │
-│  ┌──────────────────┐    ┌───────────▼──────────────────┐          │
-│  │ /rc_input_node   │    │ /mission_manager_node (V.Anh)│          │
-│  │ (PX4 RC channel) │───►│ ├── State Machine (4 states) │          │
-│  │ /rc/channels     │    │ ├── Gimbal servo PWM control │          │
-│  └──────────────────┘    │ ├── Offboard mode manager    │          │
-│                          │ └── Pub: /cmd/offboard        │          │
-│                          └───────────┬──────────────────┘          │
-│                                      │                              │
-│                          ┌───────────▼──────────────────┐          │
-│                          │  px4_ros_com / micro_xrce_dds│          │
-│                          │  → PX4 Autopilot (Pixhawk)   │          │
-│                          └──────────────────────────────┘          │
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────────── TẦNG NHẬN THỨC (Perception) ───────────────────┐
+│  Camera source:                                                  │
+│    [Sim] Gazebo ─► ros_gz_bridge ─► /camera topic               │
+│    [HW]  RealSense D430/D435i SDK trực tiếp                     │
+│                       │                                          │
+│                       ▼                                          │
+│           ArUco Detector ──────────────► EKF Adapter            │
+│       (aruco_sim_node / aruco_detector)  (ekf_ros_adapter)      │
+│                    │                          │                  │
+│              /hpad/bbox              /ekf/target_state           │
+└────────────────────┼──────────────────────────┼─────────────────┘
+                     │                          │
+┌────────────────────▼── TẦNG ĐIỀU KHIỂN (Control) ─────────────┐
+│                                               │                  │
+│  ibvs_controller ◄────────────────────────────┤                 │
+│       │ /ibvs/yaw_cmd                  apf_planner              │
+│       │                             /apf/velocity_cmd            │
+│       └──────────────► mission_fsm_node ◄──────────┘            │
+│                              │ /mission/velocity_setpoint        │
+└──────────────────────────────┼──────────────────────────────────┘
+                               │
+┌──────────────── TẦNG CHẤP HÀNH (Actuation) ────────────────────┐
+│              offboard_commander  (ENU → NED)                     │
+│                              │                                   │
+│    [Sim]  PX4 SITL ◄── UDP :14540                               │
+│    [HW]   PX4 FC   ◄── UART /dev/ttyTHS1                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2. Data Flow — Xử lý luồng dữ liệu song song từ 1 camera
+### Pipeline trạng thái FSM
 
 ```
-                    ┌──────────────────┐
-                    │   1 × RGB-D      │
-                    │   Camera         │
-                    └────┬────────┬────┘
-                         │        │
-                    RGB Stream   Depth Stream
-                         │        │
-                         ▼        │
-              ┌──────────────┐    │
-              │ ArUco Detect │    │
-              │ (cv2.aruco)  │    │
-              └───┬──────┬───┘    │
-                  │      │        │
-             Pose 3D   BBox      │
-             (x,y,z,   (u,v,    │
-              R,P,Y)   w,h)     │
-                  │      │        │
-                  │      │        ▼
-                  │      │   ┌──────────────┐
-                  │      └──►│ Depth Masking │  ← Dilate BBox 15%
-                  │          │ Set H-Pad     │     rồi zero-out
-                  │          │ region = 0    │     vùng H-Pad
-                  │          └──────┬───────┘
-                  │                 │
-                  ▼                 ▼
-           ┌──────────┐    Filtered Depth
-           │   EKF    │    (chỉ vật cản thực)
-           │ Smoother │           │
-           └────┬─────┘           │
-                │                 │
-     [x,y,z,vx,vy,vz]           │
-      (H-Pad filtered)           │
-                │                 │
-                ▼                 ▼
-         ┌────────────────────────────┐
-         │        VO-APF Engine       │  ← + drone odometry
-         │                            │
-         │  F_att = f(H-Pad state)    │  ← Lực hấp dẫn tới H-Pad
-         │  F_rep = Σ f_VO(obs_i)     │  ← Lực đẩy từ vật cản
-         │  F_total = F_att + F_rep   │
-         └────────────┬───────────────┘
-                      │
-                      ▼
-            ┌──────────────────┐
-            │ Guidance Law /   │  ← Tuỳ state: Follow / Approach / Land
-            │ Landing Servo    │
-            └────────┬─────────┘
-                     │
-                     ▼
-          Velocity/Position Setpoint
-                     │
-                     ▼
-            PX4 Offboard Mode
-```
-
-**Điểm then chốt**: Hai luồng RGB và Depth chạy **song song nhưng phối hợp** — BBox từ ArUco detection (RGB) được dùng để mask vùng H-Pad ra khỏi Depth map trước khi đưa vào APF. Nhờ đó, H-Pad **không bị coi là vật cản** mặc dù xuất hiện trong depth frame.
-
-### 4.3. State Machine — Bảng trạng thái
-
-| State | Entry Condition | Exit Condition | Hành vi chính | Gimbal |
-|-------|----------------|----------------|---------------|--------|
-| **SEARCH** | Takeoff hoàn tất | ArUco detected liên tục ≥ 10 frames | Hover tại chỗ, quay Yaw 360° chậm tìm marker | Pitch 0° |
-| **FOLLOW** | ArUco detected ổn định | (1) Operator nhấn "LAND" → APPROACH (2) Marker lost > 5s → SEARCH | Bám H-Pad ở khoảng cách $d_{follow}$, VO-APF né vật cản liên tục | Pitch: $-\arctan(\Delta h / d)$ |
-| **APPROACH** | Operator nhấn RC Switch + Marker visible | (1) Aligned + alt < 0.5m → LAND (2) Marker lost > 3s → FOLLOW (3) Operator cancel → FOLLOW | Giảm khoảng cách + altitude dần, align tâm marker, APF giảm gain | Pitch tilt xuống dần |
-| **LAND** | Aligned (err < 0.3m) + alt < 0.5m | Touchdown detected (acc spike) hoặc alt ≈ 0 | Hạ thẳng đứng, disarm khi chạm | Pitch −90° |
-
-### 4.4. Sơ đồ chuyển trạng thái
-
-```
-                     ┌──────────────────────────────────┐
-                     │           TAKEOFF                 │
-                     └──────────────┬───────────────────┘
-                                    │ Takeoff complete
-                     ┌──────────────▼───────────────────┐
-                ┌───►│           SEARCH                  │
-                │    │  • Hover + quay Yaw tìm marker    │
-                │    └──────────────┬───────────────────┘
-                │                   │ ArUco detected ≥ 10 frames
-                │    ┌──────────────▼───────────────────┐
-                │    │           FOLLOW                  │
-                ├────│  • Bám H-Pad ở d_follow           │◄─────────┐
-                │    │  • VO-APF né vật cản              │          │
-           Lost │    │  • EKF smooth vị trí/vận tốc      │          │
-           > 5s │    └──────────────┬───────────────────┘          │
-                │                   │                               │
-                │                   │ Operator nhấn                 │
-                │                   │ RC Switch "LAND"              │ Lost > 3s
-                │                   │ + Marker visible              │ OR Cancel
-                │    ┌──────────────▼───────────────────┐          │
-                │    │          APPROACH                  │──────────┘
-                │    │  • Giảm distance + altitude       │
-                │    │  • Gimbal tilt xuống               │
-                │    │  • Align tâm marker                │
-                │    │  • VO-APF gain giảm 50%            │
-                │    └──────────────┬───────────────────┘
-                │                   │ Aligned + alt < 0.5m
-                │    ┌──────────────▼───────────────────┐
-                │    │            LAND                   │
-                │    │  • Hạ thẳng đứng                  │
-                │    │  • Gimbal pitch −90°               │
-                │    │  • Disarm khi touchdown             │
-                │    └──────────────┬───────────────────┘
-                │                   │ Touchdown confirmed
-                │    ┌──────────────▼───────────────────┐
-                │    │          COMPLETE                  │
-                │    └──────────────────────────────────┘
-```
-
-### 4.5. Gimbal Servo Control — Điều khiển theo State
-
-| State | Gimbal Pitch | Công thức | Mục đích |
-|-------|-------------|-----------|----------|
-| SEARCH | $0°$ | Cố định | Quét ngang tìm marker |
-| FOLLOW | $0° \to -20°$ | $\theta_g = -\arctan({\Delta h}/{d_{horiz}})$ | Giữ H-Pad trong FOV khi bay trên |
-| APPROACH | $-20° \to -60°$ | $\theta_g = -\arctan({d_{horiz}}/{h_{alt}})$ | Nhìn xuống dần khi tiếp cận |
-| LAND | $-60° \to -90°$ | Tuyến tính theo altitude | Nhìn thẳng xuống |
-
----
-
-## 5. Phương Án Triển Khai Thuật Toán
-
-### 5.1. Tổng quan tài liệu tham khảo
-
-Dự án tham khảo 8 công trình nghiên cứu liên quan, được phân tích trong bảng dưới đây:
-
-| # | Bài báo | Phương pháp chính | Gap so với dự án |
-|---|---------|-------------------|------------------|
-| [1] | Łuczak & Granosik, 2025 — *Autonomous UAV Landing & Collision Avoidance w/ Depth Camera + Active Gimbal* | Gimbal chủ động + depth camera cho landing trên terrain lạ; PX4 + Jetson Nano | Chỉ landing, không có pha follow/tracking target di động |
-| [2] | Keipour et al., 2022 — *Visual Servoing Approach to UAV Landing on Moving Vehicle* | Visual servoing trong image space, velocity cmd 3D trực tiếp | Không depth-based obstacle avoidance; chỉ landing |
-| [3] | Han et al., 2021 — *Fast-Tracker: Robust Aerial System for Tracking Agile Target* | Target motion prediction + kinodynamic search + trajectory optimizer | Dùng riêng D435 mapping + camera mono tracking; không có landing |
-| [4] | Ji et al., 2021 — *Elastic Tracker: Spatio-temporal Trajectory Planner for Aerial Tracking* | Occlusion-aware path finding, visibility cost, B-spline optimizer | Camera mapping & tracking tách biệt; không landing; cần compute nặng |
-| [5] | Pan et al., 2021 — *Fast-Tracker 2.0: Active Vision & Human Location Regression* | Deep learning human detection, 360° gimbal, occlusion-aware planner | Gimbal cho active vision nhưng deep model nặng; chưa kết hợp landing |
-| [6] | Qi et al., 2019 — *Autonomous Landing of Low-cost Quadrotor on Moving Platform* | Multi-size ArUco, 3D point-cluster loại false pose, adaptive backstepping | Monocular (không depth); không obstacle avoidance; không follow phase |
-| [7] | Zhou et al., 2020 — *EGO-Planner: ESDF-free Gradient-based Local Planner* | B-spline gradient-based, không cần ESDF; lightweight realtime | Chỉ tránh vật cản tĩnh; không target tracking/landing |
-| [8] | Ma'arif et al., 2021 — *APF Algorithm for Obstacle Avoidance in UAV for Dynamic Env* | So sánh APF truyền thống, modified APF, virtual-force APF | Chỉ mô phỏng MATLAB; không perception thực; local minima chưa giải quyết triệt để |
-
-### 5.2. Điểm mới trong dự án so với các công trình trước
-
-> **Nhận xét chung từ literature review**: Các nghiên cứu hiện có giải quyết tracking, obstacle avoidance, và landing **một cách riêng lẻ** hoặc chỉ kết hợp 2/3 tác vụ. Chưa có công trình nào kết hợp cả 3 trên một pipeline liên tục, sử dụng **duy nhất một camera RGB-D** với **gimbal chủ động**.
-
-| # | Điểm mới | So sánh với nghiên cứu trước |
-|---|----------|------------------------------|
-| **N1** | **Unified Single-Camera Architecture cho 3 tác vụ** — 1 RGB-D camera duy nhất phục vụ đồng thời tracking (RGB → ArUco), obstacle avoidance (Depth → APF), và precision landing (RGB → visual servo) | Fast-Tracker [3] & Elastic Tracker [4] dùng ≥ 2 camera tách biệt. Łuczak [1] dùng 1 depth camera nhưng chỉ cho landing+avoidance, không tracking. |
-| **N2** | **Cơ chế né vật cản APF & nâng cấp Velocity-Adaptive APF (VO-APF)** — Triển khai APF tiêu chuẩn làm baseline, sau đó mở rộng VO-APF điều biến lực đẩy theo vận tốc tương đối drone-obstacle | Ma'arif [8] khảo sát APF cải tiến nhưng chỉ mô phỏng MATLAB, không tích hợp perception thực. Dự án đưa APF tiêu chuẩn & VO-APF lên Quadrotor thực nghiệm với camera độ sâu. |
-| **N3** | **H-Pad-Aware Depth Masking** — Pipeline loại bỏ vùng H-Pad (dùng BBox từ ArUco) khỏi Depth map trước khi tính APF, giải quyết xung đột "mục tiêu bám = vật cản" | Hoàn toàn mới — không có trong bất kỳ paper nào được khảo sát. Đây là hệ quả trực tiếp của kiến trúc single-camera. |
-| **N4** | **Active Gimbal Multi-Phase Control theo State Machine** — Gimbal tự chuyển góc nhìn theo pha (ngang → chéo → thẳng xuống) | Łuczak [1] dùng gimbal nhưng chỉ cho landing. Fast-Tracker 2.0 [5] dùng gimbal cho tracking. Chưa ai kết hợp gimbal chuyển đổi liên tục qua nhiều pha. |
-
-### 5.3. Phương án thuật toán cho từng module
-
-#### 5.3.1. Module Vision — Nhận diện mục tiêu & xử lý Depth
-
-**Phương án đề xuất: ArUco Detection + Depth Masking Pipeline**
-
-| Bước | Thuật toán / Kỹ thuật | Tham khảo |
-|------|----------------------|-----------|
-| Phát hiện ArUco marker | `cv2.aruco.detectMarkers()` + `solvePnP()` | Qi [6]: dùng multi-size ArUco |
-| Pose estimation (6DOF) | PnP từ 4 corner points → pose (x,y,z, R,P,Y) trong camera frame | Standard OpenCV |
-| Depth Masking | Dilate ArUco BBox 15% → zero-out vùng đó trên depth map | **Mới (N3)** |
-| Obstacle extraction | Từ filtered depth → voxel grid / region clustering → danh sách obstacle (pos, size) | Tham khảo EGO-Planner [7] voxelize |
-
-**Xử lý luồng dữ liệu song song**: Camera output RGB + Depth ở ~30 FPS. Vision node xử lý:
-1. **Thread 1 (RGB)**: ArUco detect → pose + BBox → publish `/hpad/pose`, `/hpad/bbox`
-2. **Thread 2 (Depth)**: Nhận BBox → mask → extract obstacles → publish `/obstacles/depth`
-
-Hai thread chia sẻ BBox qua shared memory (lock-free queue) để đảm bảo < 5ms sync delay.
-
-**Phương án thay thế**: Nếu ArUco detection không đủ ổn định ở khoảng cách xa (> 5m), có thể bổ sung multi-scale ArUco (marker lớn bao quanh marker nhỏ) theo phương pháp của Qi [6].
-
----
-
-#### 5.3.2. Module Estimation — EKF cho H-Pad State
-
-**Phương án đề xuất: Extended Kalman Filter 6 state**
-
-| Thành phần | Chi tiết |
-|------------|----------|
-| State vector | $\mathbf{x} = [x, y, z, v_x, v_y, v_z]^T$ (vị trí + vận tốc H-Pad trong world frame) |
-| Motion model | Constant velocity: $\dot{x} = v_x$, $\dot{v}_x = 0$ + process noise $Q$ |
-| Measurement | ArUco pose (x,y,z) từ vision node, ~30Hz |
-| Output | Smooth pose + velocity estimate → dùng cho attractive force + prediction |
-
-**Vai trò trong pipeline**: EKF cung cấp **vận tốc ước lượng** của H-Pad — thông tin này được VO-APF dùng để tính lực hấp dẫn có dự đoán (predictive attraction), giúp drone bám target mượt hơn khi target đổi hướng.
-
-**Phương án thay thế**: Adaptive EKF tự động tune Q, R dựa trên innovation sequence — chỉ triển khai nếu hoàn thành Phase B trước tuần 7.
-
----
-
-#### 5.3.3. Module Planning — APF & VO-APF cho Tracking & Avoidance
-
-**Lộ trình triển khai 2 giai đoạn (Tăng tính an toàn & chắc chắn cho dự án)**:
-- **Giai đoạn 1 (Ưu tiên ban đầu)**: Triển khai thuật toán **APF tiêu chuẩn (Standard APF)** dựa trên vị trí tương đối giữa Quadrotor, H-Pad và vật cản. Mục tiêu: Hoàn thiện nhanh baseline planner, nghiệm thu luồng điều khiển và né vật cản cơ bản.
-- **Giai đoạn 2 (Nâng cấp mở rộng)**: Sau khi APF tiêu chuẩn chạy thành công và ổn định, tiến hành nâng cấp lên **Velocity-Adaptive APF (VO-APF)** để điều biến lực đẩy theo vận tốc tương đối, giúp phản ứng sớm và mượt hơn.
-
-> Tham khảo: Ma'arif [8] (APF baseline), Fast-Tracker [3] & EGO-Planner [7] (ý tưởng velocity-awareness)
-
-**Tại sao chọn APF làm baseline thay vì B-spline/EGO-Planner?**
-- APF tính toán **nhẹ** (< 20ms/cycle trên Pi 5), phù hợp real-time constraint.
-- Dễ triển khai, gỡ lỗi và kiểm thử từng bước.
-- APF **tự nhiên** kết hợp attraction (tới target) + repulsion (từ obstacles) trong một framework thống nhất.
-- Với sparse obstacles (vật cản rải rác), APF **đủ hiệu quả** mà không cần B-spline trajectory optimization phức tạp.
-
-**Cấu trúc lực trong APF & VO-APF**:
-
-1. **Attractive force (Lực hấp dẫn)**: Hướng Quadrotor về vị trí mục tiêu H-Pad (hoặc vị trí dự đoán từ EKF).
-2. **Repulsive force (Lực đẩy vật cản)**:
-   - *Giai đoạn APF tiêu chuẩn*: $F_{rep} = k_{rep} \left(\frac{1}{d} - \frac{1}{d_0}\right) \frac{1}{d^2} \hat{\mathbf{d}}$ (phụ thuộc vào khoảng cách $d$).
-   - *Giai đoạn VO-APF (Nâng cấp)*: Lực đẩy được nhân thêm hệ số vận tốc tương đối $\mathbf{v}_{rel} \cdot \hat{\mathbf{d}}$ để tăng lực đẩy khi bay thẳng vào vật cản và giảm lực khi bay song song.
-
-3. **Phase-dependent gain**: 
-   - FOLLOW: Full APF gain (gain = 1.0)
-   - APPROACH: Repulsive gain giảm 50% (ưu tiên hội tụ về landing pad)
-   - LAND: APF tắt, chuyển hoàn toàn sang IBVS visual servo.
-
-**Xử lý Local Minima**: Với sparse obstacles, local minima ít xảy ra. Nếu phát hiện drone bị kẹt (velocity < threshold > 3s), áp dụng **virtual wall escape** — thêm lực nhiễu ngẫu nhiên vuông góc để thoát ra.
-
----
-
-#### 5.3.4. Module Landing — Visual Servo & Precision Touchdown
-
-**Phương án đề xuất: Image-Based Visual Servoing (IBVS) + Multi-phase descent**
-
-> Tham khảo: Keipour [2] (visual servoing landing), Qi [6] (multi-size ArUco), Łuczak [1] (gimbal-assisted landing)
-
-| Pha | Chiến lược | Tham khảo |
-|-----|-----------|-----------|
-| APPROACH (5m → 0.5m) | Giảm khoảng cách dần, align marker center với image center, gimbal tilt xuống | Kết hợp Keipour [2] (image-space control) + Łuczak [1] (gimbal descent) |
-| LAND (< 0.5m) | Hạ thẳng đứng, gimbal −90°, fine alignment bằng ArUco corner sub-pixel | Qi [6]: multi-marker robustness |
-
-**Ý tưởng chính**: Thay vì reconstruct 3D pose phức tạp ở giai đoạn cuối, dùng **IBVS error** (pixel error giữa marker center và image center) trực tiếp làm feedback — nhanh hơn và robust hơn khi altitude thấp.
-
----
-
-#### 5.3.5. Module Integration — State Machine & Offboard Control
-
-**Phương án đề xuất: Finite State Machine (FSM) + PX4 Offboard API**
-
-| Thành phần | Chi tiết |
-|------------|----------|
-| FSM | 4 states: SEARCH → FOLLOW → APPROACH → LAND, transition logic rõ ràng |
-| Offboard interface | `px4_ros_com` + micro-XRCE-DDS agent |
-| Safety | Kill switch, watchdog timer (heartbeat), geo-fence |
-| Gimbal control | PWM output từ GPIO Pi 5, PID smoothing (EMA filter) |
-
----
-
-### 5.4. Tổng hợp phương án thuật toán
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    ALGORITHM STACK OVERVIEW                          │
-│                                                                      │
-│  ┌─────────────┐  ┌────────────┐  ┌──────────────┐  ┌───────────┐  │
-│  │  VISION     │  │ ESTIMATION │  │  PLANNING    │  │  LANDING  │  │
-│  │             │  │            │  │              │  │           │  │
-│  │ ArUco Det.  │  │ EKF 6-state│  │ VO-APF       │  │ IBVS      │  │
-│  │ Depth Mask  │  │ (pos+vel)  │  │ (vel-adapt.) │  │ (image    │  │
-│  │ (N3: new)   │  │            │  │ (N2: new)    │  │  space)   │  │
-│  └──────┬──────┘  └─────┬──────┘  └──────┬───────┘  └─────┬─────┘  │
-│         │               │                │                 │        │
-│         └───────────────┴────────────────┴─────────────────┘        │
-│                              │                                       │
-│                    ┌─────────▼──────────┐                           │
-│                    │  STATE MACHINE     │                           │
-│                    │  (FSM 4 states)    │                           │
-│                    │  + Gimbal Control  │                           │
-│                    │  (N4: new)         │                           │
-│                    └─────────┬──────────┘                           │
-│                              │                                       │
-│                    ┌─────────▼──────────┐                           │
-│                    │  PX4 OFFBOARD      │                           │
-│                    └────────────────────┘                           │
-└──────────────────────────────────────────────────────────────────────┘
+IDLE ──(alt > 80% takeoff_alt)──► SEARCH ──(ArUco detected ≥5 frame)──► FOLLOW
+                                     ▲                                      │
+                                     │──────(EKF EXPIRED > timeout)─────────┘
+                                                                             │
+                                                                   (Operator LAND cmd)
+                                                                             ▼
+                                                                         APPROACH ──(align OK)──► LAND
 ```
 
 ---
 
-## 6. Phân Công Module Chính và Người Phụ Trách
+## 2. Cấu trúc thư mục
 
-### 6.1. Phân công theo module
-
-| Module | Người phụ trách | Mô tả trách nhiệm |
-|--------|-----------------|---------------------|
-| **Vision Pipeline** | **Duy** | ArUco detection, pose estimation, Depth masking (N3), multi-thread RGB/Depth processing |
-| **EKF Estimation** | **Duy** | EKF smoother cho H-Pad state (pos + vel), tune Q/R, đánh giá tracking accuracy |
-| **APF / VO-APF Planner** | **Tuân** | Triển khai Standard APF trước (baseline), nâng cấp VO-APF sau khi ổn định (N2), follow guidance law |
-| **Landing Controller** | **Tuân** | IBVS landing servo, approach trajectory, alignment logic |
-| **Mô hình 6DOF & Sim** | **Tuân** | Mô hình UAV Simulink, validate APF / VO-APF trong simulation trước khi port ROS 2 |
-| **State Machine & FSM** | **Việt Anh** | FSM 4 states, transition logic, safety monitor, watchdog |
-| **Gimbal Control** | **Việt Anh** | Servo PWM control, multi-phase gimbal angle (N4), PID smoothing |
-| **PX4 Integration** | **Việt Anh** | Offboard mode, micro-XRCE-DDS setup, RC channel parsing, kill switch |
-| **Hardware Assembly** | **Việt Anh** | Lắp ráp camera + gimbal + Pi 5 lên S500 frame, wiring, balancing |
-
-### 6.2. Timeline chi tiết
-
-| Tuần | Duy (Vision/Estimation) | Tuân (Control/Planning) | Việt Anh (Embedded/Integration) | Milestone |
-|------|------------------------|------------------------|---------------------------------|-----------|
-| **W1** | ArUco Detection + Pose Estimation trên Pi 5 | Mô hình 6DOF UAV Simulink | ROS 2 + PX4 SITL + Gazebo setup | Các module cơ bản chạy độc lập |
-| **W2** | Depth Masking pipeline (N3) | Thiết kế & mô phỏng Standard APF trên Simulink | Servo Gimbal hardware + ROS node | Vision + APF + Gimbal đều có prototype |
-| **W3** | EKF Smoother (H-Pad velocity) | Tuning Standard APF + Guidance Law | State Machine FSM + Offboard interface | EKF output ổn định, Standard APF hoạt động |
-| **W4** | Multi-thread vision optimization | Port Standard APF sang ROS 2; Nghiên cứu mở rộng VO-APF | RC Landing Trigger + Gimbal multi-phase (N4) | Tất cả nodes chạy trên ROS 2 |
-| **W5** | **Full system integration SITL** | Landing visual servo (IBVS) | Hardware assembly lên S500 | SITL demo SEARCH→FOLLOW→APPROACH→LAND |
-| **W6** | Flight test #1-2: SEARCH + FOLLOW | Flight test với Standard APF; Nâng cấp VO-APF | Flight test: State machine + gimbal | Outdoor flight test bắt đầu |
-| **W7** | Flight test #3-5: Full pipeline | Flight test nâng cao với VO-APF | Flight test: RC trigger + safety | Toàn bộ pipeline bay ngoài trời |
-| **W8** | Data analysis + metrics đo lường | So sánh hiệu năng Standard APF vs VO-APF | Data analysis + system reliability | KPI evaluation hoàn tất |
-| **W9** | Báo cáo + Video demo | Báo cáo + Kết quả simulation vs real | Báo cáo + Hardware documentation | Nộp báo cáo + demo video |
-
-### 6.3. Deliverables
-
-| Deliverable | Responsible | Deadline |
-|-------------|-------------|----------|
-| Vision ROS 2 node (ArUco + Depth Mask) | Duy | W4 |
-| EKF ROS 2 node | Duy | W4 |
-| VO-APF ROS 2 node + Simulink validation | Tuân | W5 |
-| Landing servo ROS 2 node | Tuân | W5 |
-| State machine + Gimbal + PX4 integration | Việt Anh | W5 |
-| Full SITL demo video | Cả nhóm | W5 |
-| Flight test log data (≥ 5 flights) | Cả nhóm | W7 |
-| Final report + demo video | Cả nhóm | W9 |
+```
+VDT_project/
+├── README.md                    ← File này: deployment guide
+├── MODULES_REFERENCE.md         ← API & chức năng chi tiết từng module
+├── requirements.txt
+│
+├── simulation/                  ← Toàn bộ code pipeline Gazebo simulation
+│   ├── core/                    ← Node chính điều phối nhiệm vụ
+│   │   ├── mission_fsm_node.py  ← State machine FSM
+│   │   ├── offboard_commander.py← Giao tiếp PX4 Offboard
+│   │   └── takeoff.py           ← Script cất cánh
+│   ├── perception/              ← Nhận thức môi trường & mục tiêu
+│   │   ├── aruco_sim_node.py    ← ArUco detection trong Gazebo
+│   │   ├── ekf_ros_adapter.py   ← EKF target state estimator
+│   │   ├── depth_to_image_node.py
+│   │   └── mock_target_publisher.py
+│   ├── control/                 ← Thuật toán điều khiển
+│   │   ├── ibvs_controller.py   ← Image-Based Visual Servoing
+│   │   ├── apf_planner.py       ← APF path planner 3D
+│   │   └── apf_pointcloud_generator.py
+│   ├── utils/                   ← Monitoring & visualization tools
+│   ├── worlds/                  ← Gazebo world files (.sdf, .world)
+│   ├── config/
+│   │   └── mission_params.yaml  ← Tham số tập trung toàn hệ thống
+│   └── launch/
+│       ├── launch_simulation.py ← Master launcher (ĐIỂM VÀO CHÍNH)
+│       └── start_px4_sim.sh
+│
+├── vision/                      ← Code vision cho hardware thực
+│   ├── aruco_detector.py        ← ArUco detector (RealSense thực)
+│   ├── realsense_stream.py      ← RealSense D435i interface
+│   ├── target_state_ekf.py      ← EKF standalone (không cần ROS)
+│   └── ...
+│
+├── hardware/
+│   └── main_aruco_detector.py   ← Entry point deploy lên board nhúng
+│
+├── avoidance/                   ← Prototype MATLAB APF
+├── tests/                       ← Unit tests
+├── simulation_results/          ← Benchmark EKF output (offline)
+├── docs/                        ← Tài liệu bổ sung
+│   ├── IBVS_Implementation_Guide.md
+│   ├── README_BAG.md
+│   └── archive/                 ← Tài liệu cũ / thiết kế chi tiết
+└── References/                  ← Paper & tài liệu tham khảo
+```
 
 ---
 
-## Tài Liệu Tham Khảo
+## 3. Yêu cầu hệ thống & Cài đặt
 
-| # | Tài liệu |
-|---|----------|
-| [1] | Łuczak, P. & Granosik, G. (2025). *Autonomous UAV Landing and Collision Avoidance System for Unknown Terrain Utilizing Depth Camera with Actively Actuated Gimbal.* Sensors, 25(19), 6165. |
-| [2] | Keipour, A. et al. (2022). *Visual Servoing Approach to Autonomous UAV Landing on a Moving Vehicle.* Sensors, 22(17), 6549. |
-| [3] | Han, Z. et al. (2021). *Fast-Tracker: A Robust Aerial System for Tracking Agile Target in Cluttered Environments.* IEEE ICRA. |
-| [4] | Ji, J. et al. (2021). *Elastic Tracker: A Spatio-temporal Trajectory Planner for Flexible Aerial Tracking.* IEEE RAL. |
-| [5] | Pan, N. et al. (2021). *Fast-Tracker 2.0: Improving Autonomy of Aerial Tracking with Active Vision and Human Location Regression.* IET Cyber-Syst. Robot. |
-| [6] | Qi, D. et al. (2019). *Autonomous Landing Solution of Low-cost Quadrotor on a Moving Platform.* Robotics Auton. Syst. |
-| [7] | Zhou, X. et al. (2020). *EGO-Planner: An ESDF-Free Gradient-Based Local Planner for Quadrotors.* IEEE RAL. |
-| [8] | Ma'arif, A. et al. (2021). *Artificial Potential Field Algorithm for Obstacle Avoidance in UAV Quadrotor for Dynamic Environment.* IEEE COMNETSAT. |
+### 3.1 Yêu cầu phần mềm
+
+| Thành phần | Phiên bản | Ghi chú |
+|---|---|---|
+| Ubuntu | 22.04 LTS | Bắt buộc |
+| ROS 2 | Humble Hawksbill | `ros-humble-desktop` |
+| Gazebo | Harmonic | `ros-humble-ros-gzharmonic-bridge` |
+| PX4 Autopilot | v1.14+ | Submodule tại `PX4-Autopilot/` |
+| Python | 3.10+ | Đi kèm Ubuntu 22.04 |
+| OpenCV | 4.x | Cho ArUco detection |
+| QGroundControl | Daily / v4.2+ | Trạm mặt đất GCS (`~/QGroundControl.AppImage`) |
+
+### 3.2 Cài đặt dependencies
+
+```bash
+# 1. Cài ROS 2 Humble
+sudo apt update
+sudo apt install -y ros-humble-desktop ros-humble-ros-gzharmonic-bridge
+
+# 2. Cài Python dependencies
+cd /home/duy/VDT_project
+pip install -r requirements.txt
+
+# 3. Source ROS 2 (thêm vào ~/.bashrc để không cần làm lại)
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 3.3 Build PX4 lần đầu
+
+```bash
+cd /home/duy/VDT_project/PX4-Autopilot
+make px4_sitl        # Build PX4 SITL (lần đầu mất ~10 phút)
+```
+
+---
+
+## 4. Hướng dẫn chạy Simulation (Gazebo)
+
+> **Khuyến nghị**: Dùng terminal multiplexer như `tmux` để quản lý nhiều terminal song song.
+
+### 4.1 Cách 1: Chạy Pipeline Tự Động Hoàn Toàn (Recommended)
+
+Gồm **6 terminal** mở song song theo thứ tự (kèm 1 terminal tùy chọn):
+
+---
+
+#### 🟦 Terminal 1 — Khởi động PX4 SITL + Gazebo
+
+```bash
+cd /home/duy/VDT_project/PX4-Autopilot
+export GZ_PARTITION=vdt_harmonic
+export GZ_SIM_RESOURCE_PATH="$PWD/Tools/simulation/gz/models:${GZ_SIM_RESOURCE_PATH:-}"
+PX4_GZ_WORLD=obstacle_avoidance make px4_sitl gz_x500_depth
+```
+
+> ✅ Thành công khi: Cửa sổ Gazebo mở ra, drone `x500_depth_0` tại `(0,0,0)`, H-Pad tại `(5.0, 2.0, 0.02)`, các trụ vật cản đỏ/xanh hiển thị.
+
+---
+
+#### 🟦 Terminal 2 — Master Launcher (Bridge + TF + RViz2 + Autonomous nodes)
+
+```bash
+source /opt/ros/humble/setup.bash
+export GZ_PARTITION=vdt_harmonic
+python3 /home/duy/VDT_project/simulation/launch/launch_simulation.py --autonomous
+```
+
+> ✅ Thành công khi:
+> - Cửa sổ RViz2 mở ra, hiển thị map 3D PointCloud
+> - Log xuất hiện: `[AUTONOMOUS] Started ekf_ros_adapter, apf_planner, ibvs_controller, mission_fsm, offboard_commander`
+> - Camera gimbal tự chúc xuống `-30°`
+> - Định kỳ in: `[STATUS] Phase: SEARCH | Drone: (...) | Target: (...)`
+
+---
+
+#### 🟦 Terminal 3 — Khởi động QGroundControl (GCS quan sát telemetry)
+
+```bash
+~/QGroundControl.AppImage
+```
+
+> 💡 **Vai trò**: Trạm mặt đất kết nối tự động với PX4 SITL qua MAVLink UDP (`14550`), dùng để:
+> - Giám sát trực quan trạng thái bay, toạ độ, độ cao thực tế, la bàn và dữ liệu telemetry theo thời gian thực.
+> - Quan sát đường bay 3D và chuyển đổi trạng thái flight mode (`Hold`, `Offboard`,...).
+>
+> ⚠️ **Lưu ý quan trọng**: **Không** sử dụng thanh trượt Takeoff trên giao diện QGroundControl để cất cánh (do QGC bị hardcode chặn cứng mức tối thiểu 10.0 m trong mã nguồn QML, trong khi bài toán yêu cầu trần bay 3.0 m). Hãy thực hiện cất cánh ở **Terminal 4** ngay sau đây.
+
+---
+
+#### 🟦 Terminal 4 — Cất cánh drone lên 3.0 m
+
+**Cách A (Script Python — Tiện nhất):**
+```bash
+source /opt/ros/humble/setup.bash
+python3 /home/duy/VDT_project/simulation/core/takeoff.py --alt 3.0
+```
+
+**Cách B (PX4 Shell — Gõ trực tiếp vào Terminal 1):**
+```text
+pxh> param set MIS_TAKEOFF_ALT 3.0
+pxh> commander takeoff
+```
+
+> ✅ Thành công khi: Drone bay lên 3.0 m, `offboard_commander` báo kết nối MAVLink `udp:127.0.0.1:14540`, FSM chuyển sang `FOLLOW` khi nhìn thấy H-Pad.
+
+---
+
+#### 🟦 Terminal 5 — Giám sát Vision & Tracking (Hoặc chạy Vision Node riêng)
+
+> 💡 **Lưu ý**: Khi Terminal 2 chạy với cờ `--autonomous`, toàn bộ 6 node tự hành (gồm cả **ArUco Detector**) đã được kích hoạt tự động ngầm. Bạn có thể mở Terminal 5 để giám sát trạng thái nhận diện và EKF:
+
+```bash
+source /opt/ros/humble/setup.bash
+# Quan sát kết quả bám mục tiêu của EKF:
+ros2 topic echo /ekf/tracking_mode
+# Hoặc quan sát cờ nhận diện marker:
+ros2 topic echo /hpad/detected
+```
+
+*(Nếu ở Terminal 2 bạn **không** dùng cờ `--autonomous` mà chạy manual, hãy chạy script vision trực tiếp tại đây):*
+```bash
+source /opt/ros/humble/setup.bash
+cd /home/duy/VDT_project
+python3 simulation/perception/aruco_sim_node.py
+```
+
+> ✅ Thành công khi:
+> - `Camera intrinsics loaded: fx=466.0 fy=466.0`
+> - `[DETECTION] ID 42 detected | camera_optical xyz=(x, y, z) m`
+> - Topic `/hpad/annotated` hiển thị bounding box xanh lá trên RViz2
+> - `/ekf/tracking_mode` chuyển sang `TRACKING`
+
+---
+
+#### 🟦 Terminal 6 — Điều khiển H-Pad di động
+
+```bash
+source /opt/ros/humble/setup.bash
+cd /home/duy/VDT_project
+python3 simulation/utils/hpad_keyboard_controller.py --speed 0.5
+```
+
+**Bảng phím điều khiển H-Pad:**
+
+| Phím | Chức năng |
+|---|---|
+| `W` / `S` | Di chuyển tiến / lùi (trục X) |
+| `A` / `D` | Di chuyển trái / phải (trục Y) |
+| `SPACE` | Phanh dừng khẩn cấp |
+| `R` | Reset H-Pad về `(5.0, 2.0)` |
+| `+` / `-` | Tăng / giảm tốc độ |
+
+---
+
+#### 🟦 Terminal 7 (Tuỳ chọn) — Ra lệnh hạ cánh
+
+Khi muốn test pha `APPROACH → LAND`:
+```bash
+source /opt/ros/humble/setup.bash
+ros2 topic pub --once /operator/land_command std_msgs/msg/Bool "{data: true}"
+```
+
+> ✅ Hiện tượng: FSM chuyển `APPROACH`, drone giảm độ cao, gimbal tilt xuống sâu hơn (`-45°` đến `-75°`), khi `< 0.3 m` kích hoạt `LAND`.
+
+---
+
+### 4.2 Cách 2: Chạy Từng Node Riêng Lẻ (Debug Mode)
+
+Dùng khi cần phát triển hoặc debug từng module. **Bỏ flag `--autonomous`** ở Terminal 2:
+
+```bash
+# Terminal 2: Chỉ mở Bridge + TF + RViz2
+python3 simulation/launch/launch_simulation.py
+
+# Terminal 2A: EKF Adapter
+python3 simulation/perception/ekf_ros_adapter.py
+
+# Terminal 2B: APF Planner
+python3 simulation/control/apf_planner.py
+
+# Terminal 2C: IBVS Controller
+python3 simulation/control/ibvs_controller.py
+
+# Terminal 2D: Mission FSM
+python3 simulation/core/mission_fsm_node.py
+
+# Terminal 2E: Offboard Commander
+python3 simulation/core/offboard_commander.py
+```
+
+---
+
+### 4.3 Tạo World SDF (Chỉ cần chạy 1 lần nếu file chưa tồn tại)
+
+```bash
+source /opt/ros/humble/setup.bash
+python3 simulation/launch/launch_simulation.py --generate-world
+```
+
+---
+
+## 5. Hướng dẫn triển khai Hardware
+
+> [!IMPORTANT]
+> Phần này dành cho việc chuyển từ simulation sang phần cứng thực tế (Jetson Nano / Raspberry Pi 5 + RealSense D435i + Flight Controller PX4).
+
+### 5.1 Kiến trúc Phần cứng Vật lý & Phần mềm trên Companion Computer
+
+#### 📌 Phân biệt rõ giữa Phần cứng (Hardware) và Phần mềm (Software):
+
+1. **Thiết bị phần cứng vật lý (Physical Hardware)**:
+   - **Companion Computer**: Máy tính nhúng (Nvidia Jetson Nano / Orin Nano hoặc Raspberry Pi 5) chịu trách nhiệm chạy toàn bộ thuật toán.
+   - **Camera RGB-D**: Intel RealSense D435 / D435i kết nối qua cổng **USB 3.0** tới Companion Computer.
+   - **Flight Controller (PX4 FC)**: Bo điều khiển bay (Pixhawk 4 / 6C / Holybro) nhận lệnh vận tốc/vị trí qua cổng **UART (TELEM2)** hoặc **USB**.
+   - **Gimbal / Servo**: Điều khiển góc chúc camera qua kênh PWM từ FC hoặc Companion Computer.
+
+2. **Phần mềm thực thi trên Companion Computer**:
+   - `hardware/main_aruco_detector.py`: **Script kiểm tra độc lập (Bench-test)** trên bàn lab để xác nhận camera RealSense và thuật toán ArUco PnP hoạt động tốt trước khi bay.
+   - `vision/`: Bộ thư viện lõi xử lý ảnh RealSense, nhận diện ArUco, lọc depth mask và thuật toán toán học **Target-State EKF** (`target_state_ekf.py`).
+   - `simulation/perception/`: Node **EKF ROS Adapter** (`ekf_ros_adapter.py`) chạy ở 30 Hz để ước lượng vị trí/vận tốc 3D của H-Pad trong hệ quy chiếu `world`, bù trừ trễ và giữ tracking khi mất dấu.
+   - `simulation/control/`: Node **APF Planner** (`apf_planner.py` - tính lực hút tới vị trí dự đoán của EKF & đẩy vật cản) và **IBVS Controller** (`ibvs_controller.py` - điều khiển gimbal).
+   - `simulation/core/`: Node **Mission FSM** (`mission_fsm_node.py` - máy trạng thái bay) và **Offboard Commander** (`offboard_commander.py` - giao tiếp MAVLink qua UART tới PX4).
+
+#### 📐 Sơ đồ kết nối tổng thể:
+
+```
+════════════════════════════════════════════════════════════════════════════════
+                        PHẦN CỨNG VẬT LÝ (PHYSICAL HARDWARE)
+════════════════════════════════════════════════════════════════════════════════
+  ┌─────────────────────────┐                     ┌─────────────────────────┐
+  │   Intel RealSense D435  │                     │   Flight Controller     │
+  │   (Camera RGB-D)        │                     │   (Pixhawk / PX4 FC)    │
+  └────────────┬────────────┘                     └────────────▲────────────┘
+               │ Cáp USB 3.0                                   │ Cáp UART / USB
+               ▼                                               │ (MAVLink 115200/921600)
+┌──────────────────────────────────────────────────────────────┴────────────────┐
+│ COMPANION COMPUTER (Nvidia Jetson Nano / Raspberry Pi 5)                      │
+│                                                                               │
+│  [1. Lab Bench-test]                                                          │
+│  └── hardware/main_aruco_detector.py ◄─── Dùng test RealSense ngoài đời thật  │
+│                                           (OpenCV GUI, PnP pose, depth mask)  │
+│                                                                               │
+│  [2. Flight ROS 2 Pipeline]                                                   │
+│  ┌───────────────────────┐         ┌─────────────────────────┐                │
+│  │ Driver & Perception   │         │ Guidance & Planning     │                │
+│  │ - realsense2_camera   │         │ - apf_planner           │                │
+│  │ - aruco_detector node ┼────────►│ - ibvs_controller       │                │
+│  │ - ekf_ros_adapter     │         │   (Tính vel_cmd & yaw)  │                │
+│  └───────────────────────┘         └────────────┬────────────┘                │
+│                                                 │                             │
+│                                    ┌────────────▼────────────┐                │
+│                                    │ State Machine & Comm    │                │
+│                                    │ - mission_fsm_node      │                │
+│                                    │ - offboard_commander ───┼────────────────┘
+│                                    │   (pyulog / pymavlink)  │
+│                                    └─────────────────────────┘
+```
+
+### 5.2 Thứ tự triển khai lên hardware
+
+#### Bước 1: Cài đặt môi trường trên Companion Computer
+
+```bash
+# Cài ROS 2 Humble (nếu chưa có)
+sudo apt install -y ros-humble-desktop
+
+# Cài RealSense SDK 2.0 & ROS wrapper
+sudo apt-get install -y librealsense2-dkms librealsense2-utils ros-humble-realsense2-camera
+
+# Clone repo & cài dependencies
+cd ~/VDT_project
+pip install -r requirements.txt
+```
+
+#### Bước 2: Bench-test kiểm tra camera RealSense trên bàn Lab
+
+Trước khi gắn lên khung drone và cấp nguồn bay, chạy script kiểm tra độc lập:
+
+```bash
+# Chạy script bench-test với RealSense cắm cổng USB 3.0
+python3 hardware/main_aruco_detector.py --dict DICT_6X6_50 --target-id 42
+```
+> ✅ **Tiêu chí đạt**: Cửa sổ OpenCV mở ra, nhận diện đúng marker 42 với trục 3D toạ độ, FPS $\ge 25$, đo khoảng cách Z-depth khớp với thước đo thực tế.
+
+#### Bước 3: Cấu hình cổng kết nối PX4 cho Offboard (UART)
+
+Trong file `simulation/core/offboard_commander.py`, thay thế connection string UDP (của simulation) sang cổng serial phần cứng:
+
+```python
+# Simulation (UDP SITL):
+# connection_string = "udp:127.0.0.1:14540"
+
+# Hardware (UART TELEM2 trên Jetson Nano):
+connection_string = "/dev/ttyTHS1"  # baudrate 921600 hoặc 57600
+# Hoặc cáp USB to FTDI:
+# connection_string = "/dev/ttyUSB0"
+```
+
+#### Bước 4: Chuyển đổi tầng Vision sang ROS 2 thực tế
+
+- **Phương án A (Khuyên dùng)**: Chạy node ROS 2 chính thức `realsense2_camera_node` để lấy stream `/camera/color/image_raw`, sau đó chạy node ArUco detector đóng gói từ `vision/aruco_detector.py` để publish topic `/hpad/position_camera`.
+- **Phương án B**: Chạy adapter script đọc trực tiếp `RealSenseCamera` từ `vision/` và publish dữ liệu vào `/hpad/position_camera` giống giao diện `simulation/perception/aruco_sim_node.py`.
+
+#### Bước 5: Giữ nguyên toàn bộ các node thuật toán lõi
+
+Các node sau **hoàn toàn giữ nguyên logic** khi chạy trên hardware:
+
+| Node | File | Ghi chú |
+|---|---|---|
+| EKF Adapter | `simulation/perception/ekf_ros_adapter.py` | Subscribe topic `/hpad/position_camera` |
+| APF Planner | `simulation/control/apf_planner.py` | Input/output tính toán lực đẩy/hút không đổi |
+| IBVS Controller | `simulation/control/ibvs_controller.py` | Điều khiển gimbal bám ảnh |
+| Mission FSM | `simulation/core/mission_fsm_node.py` | Quản lý chuyển pha bay |
+| Offboard Commander | `simulation/core/offboard_commander.py` | Gửi setpoint vận tốc MAVLink xuống PX4 qua UART |
+
+#### Bước 6: Khởi động pipeline bay tự động trên hardware
+
+```bash
+source /opt/ros/humble/setup.bash
+
+# 1. Khởi động Camera & Vision
+ros2 launch realsense2_camera rs_launch.py &
+python3 simulation/perception/aruco_sim_node.py & # hoặc node hardware vision
+
+# 2. Khởi động các node xử lý lõi
+python3 simulation/perception/ekf_ros_adapter.py &
+python3 simulation/control/apf_planner.py &
+python3 simulation/control/ibvs_controller.py &
+python3 simulation/core/mission_fsm_node.py &
+
+# 3. Khởi động Offboard Commander kết nối PX4 FC
+python3 simulation/core/offboard_commander.py
+```
+
+> [!TIP]
+> Trên companion computer ngoài thực địa, nên cấu hình `systemd service` hoặc file `launch.sh` gắn vào `tmux` để tự động chạy khi bật nguồn pin cho máy tính nhúng.
+
+---
+
+## 6. Cấu hình tham số
+
+Tất cả tham số điều khiển được tập trung tại [`simulation/config/mission_params.yaml`](simulation/config/mission_params.yaml).
+
+### Các tham số quan trọng nhất
+
+| Tham số | Node | Mặc định | Mô tả |
+|---|---|---|---|
+| `follow_distance` | `apf_planner`, `mission_fsm` | `3.5` m | Cự ly bám mục tiêu |
+| `target_altitude` | `apf_planner`, `offboard_commander` | `3.0` m | Độ cao bay FOLLOW |
+| `v_max` | `apf_planner` | `1.2` m/s | Vận tốc tối đa APF |
+| `k_att` | `apf_planner` | `10.0` | Hệ số lực hút APF |
+| `k_rep` | `apf_planner` | `2500.0` | Hệ số lực đẩy APF (vật cản) |
+| `d0` | `apf_planner` | `2.5` m | Bán kính ảnh hưởng vật cản |
+| `search_timeout` | `mission_fsm` | `1.2` s | Timeout trước khi quay lại SEARCH |
+| `gate_threshold` | `ekf_ros_adapter` | `16.27` | Ngưỡng Mahalanobis gate EKF |
+| `K_pitch` | `ibvs_controller` | `0.8` | Gain điều khiển gimbal pitch |
+| `K_yaw` | `ibvs_controller` | `0.5` | Gain điều khiển yaw |
+
+> Xem mô tả đầy đủ tất cả tham số tại [`MODULES_REFERENCE.md`](MODULES_REFERENCE.md).
+
+---
+
+## 7. Xác nhận & Tiêu chí nghiệm thu
+
+Sau khi pipeline chạy ổn định, kiểm tra lần lượt từng tiêu chí:
+
+| STT | Hạng mục | Lệnh kiểm tra | Tiêu chí PASS |
+|---|---|---|---|
+| 1 | Tần số sensor | `ros2 topic hz /camera` | ≥ 15 Hz |
+| 2 | Tần số sensor | `ros2 topic hz /odom` | ≥ 20 Hz |
+| 3 | ArUco detection | `ros2 topic echo --once /hpad/position_camera` | Trả về tọa độ `(x,y,z)` |
+| 4 | EKF tracking | `ros2 topic echo /ekf/tracking_mode` | Chuyển thành `TRACKING` |
+| 5 | EKF dead reckoning | Che khuất H-Pad < 1s | Mode `DEAD_RECKONING`, không mất setpoint |
+| 6 | APF velocity | `ros2 topic echo /apf/velocity_cmd` | `|v| ≤ 1.2 m/s`, xuất hiện vector né khi gần vật cản |
+| 7 | IBVS gimbal | `ros2 topic echo /ibvs/gimbal_pitch` | Pitch mượt trong `[-75°, -15°]` |
+| 8 | FSM transitions | `ros2 topic echo /mission/phase` | `SEARCH → FOLLOW → APPROACH → LAND` |
+| 9 | Obstacle avoidance | Quan sát Gazebo | `d_min ≥ 0.8 m` với mọi trụ |
+| 10 | Landing accuracy | Quan sát tiếp xúc | Sai số tâm H-Pad `< 20 cm` |
+
+---
+
+## 8. Troubleshooting
+
+### ❌ Gazebo bridge không nhận dữ liệu / `No subscribers`
+- **Nguyên nhân**: Sai phiên bản bridge hoặc thiếu biến môi trường `GZ_PARTITION`
+- **Khắc phục**:
+  ```bash
+  sudo apt install -y ros-humble-ros-gzharmonic-bridge
+  export GZ_PARTITION=vdt_harmonic  # Phải set trước KHI chạy cả Terminal 1 và Terminal 2
+  ```
+
+### ❌ EKF báo `TF lookup failed (world → camera_optical_frame)`
+- **Nguyên nhân**: `launch_simulation.py` chưa chạy (node này broadcast TF ở 30 Hz)
+- **Khắc phục**: Chạy Terminal 2 trước Terminal 5 (ArUco node), đảm bảo log không có lỗi import.
+
+### ❌ `[SIM-ONLY] px4_msgs not available`
+- **Giải thích**: Đây là **fallback an toàn** đã được tích hợp. Hệ thống vẫn tính toán đầy đủ APF/EKF/IBVS/FSM và xuất log chẩn đoán, không crash.
+- **Khi cần kết nối thực**: Build workspace chứa `px4_msgs` tương thích PX4 v1.14.
+
+### ❌ ArUco node không nhận diện marker
+- **Khắc phục**:
+  1. Reset H-Pad: bấm `R` trong `hpad_keyboard_controller.py`
+  2. Kiểm tra gimbal chúc xuống:
+     ```bash
+     ros2 topic pub --once /model/x500_depth_0/command/gimbal_pitch std_msgs/msg/Float64 "{data: -0.5}"
+     ```
+  3. Quan sát `/hpad/annotated` trên RViz2 để xem trực tiếp khung nhận diện
+
+### ❌ Drone quay liên tục hoặc mất tracking trong FOLLOW
+- **Nguyên nhân phổ biến**: EKF EXPIRED do sai số TF hoặc delay camera
+- **Debug đồng thời**:
+  ```bash
+  ros2 topic echo /apf/velocity_cmd
+  ros2 topic echo /ibvs/yaw_cmd
+  ros2 topic echo /ekf/tracking_mode
+  ```
+  - Nếu `/ekf/tracking_mode` = `EXPIRED` → kiểm tra lại camera FPS và TF tree
+  - Nếu `/apf/velocity_cmd` có `linear.z ≠ 0` trong FOLLOW → kiểm tra `hold_follow_altitude: true` trong `mission_params.yaml`
+
+### ❌ APF thay đổi độ cao trong FOLLOW
+- Trong FOLLOW, điểm đích APF được đặt cùng độ cao drone hiện tại. Pha APPROACH mới được phép hạ.
+- Lực đẩy vật cản 3D vẫn có thể tạo thành phần `z` nếu drone sát phần trên trụ. Xem `linear.z` trên `/apf/velocity_cmd` để debug.
+
+---
+
+*Chi tiết API, ROS 2 Topics, và hướng dẫn test từng module xem tại [`MODULES_REFERENCE.md`](MODULES_REFERENCE.md)*
