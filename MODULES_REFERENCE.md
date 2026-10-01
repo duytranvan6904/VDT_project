@@ -234,21 +234,32 @@ python3 simulation/perception/mock_target_publisher.py --pattern circle --radius
 
 ## 4. simulation/control — Thuật toán điều khiển
 
-### 4.1 `apf_planner.py` — APF 3D Path Planner
+### 4.1 `apf_planner.py` & `iapf_core.py` — APF / Improved APF (I-APF) 3D Path Planner
 
-**Chức năng**: Tính vector vận tốc điều khiển bằng Artificial Potential Field 3D. Lực hút về điểm theo dõi (cách target `follow_distance`), lực đẩy từ các trụ hình trụ nạp từ file SDF. Có cơ chế chống kẹt Local Minima.
+**Chức năng**: Tính vector vận tốc điều khiển né vật cản 3D bằng Artificial Potential Field. Hỗ trợ 2 engine có thể chuyển đổi qua tham số `planner_type` hoặc cờ CLI `--planner <iapf|apf>`:
+- **`IAPFCore` (`iapf_core.py`) — MẶC ĐỊNH**: Thuật toán Improved APF 3D port từ MATLAB `avoidance/IAPF_Planner_3D_MultiObs.m`. Tích hợp giải quyết GNRON (Sigmoid goal weighting), thoát bẫy cực tiểu địa phương (Dynamic 3D Tangent Plane + Hysteresis), lọc dao động đổi hướng (Oscillation Suppression) và bảo đảm sàn vận tốc thoát hiểm.
+- **`APFCore` (`apf_planner.py`)**: Bản APF 2.5D cơ bản để làm đối chứng (benchmark).
 
-**Cấu trúc thuật toán:**
+**Cấu trúc thuật toán I-APF:**
 
 ```
 Input: p_drone (world), p_target (world), obstacles (cylinder list)
   │
-  ├── make_follow_goal()  → p_follow (điểm đứng cách target d_follow)
-  ├── attractive_force()  → F_att (hướng về p_follow)
-  ├── repulsive_force()   → F_rep (đẩy ra khỏi mỗi obstacle)
-  └── saturate()          → v_cmd (giới hạn v_max)
-                                    │
-Output: /apf/velocity_cmd (TwistStamped, world frame)
+  ├── make_follow_goal()     → p_follow (điểm đứng cách target d_follow theo mặt nghiêng 3D)
+  ├── F_att = 2*k_att*(p_follow - p_drone)
+  ├── F_rep = F_rep1 (đẩy xa với Sigmoid weight) + F_rep2 (hướng về đích triệt tiêu GNRON)
+  ├── F_total = F_att + F_rep
+  │
+  ├── Kiểm tra Local Minima (|F_total| < F_enter với Hysteresis)
+  │     ├── Có  → Dynamic Tangent 3D: Lấy mẫu 12 hướng tiếp tuyến, Forward-looking 3 bước, chọn tia tối ưu
+  │     │         F_cmd_raw = F_total + F_tan
+  │     └── Không → F_cmd_raw = F_total
+  │
+  ├── Oscillation Suppression → Lọc hướng di chuyển mượt mà dựa trên góc lệch Δalpha
+  ├── Speed Scheduling        → Điều biến tốc độ theo goal & obstacle, kẹp v_escape_min khi thoát bẫy
+  └── Target Feedforward      → Bù vận tốc mục tiêu di động trong pha FOLLOW
+                                │
+Output: /apf/velocity_cmd (Twist), /apf/yaw_cmd (Float64), /apf/force_markers (MarkerArray)
 ```
 
 **Nạp vật cản từ SDF:**
@@ -263,23 +274,35 @@ obstacles = load_cylinder_obstacles_from_sdf('/path/to/obstacle_avoidance.sdf')
 |---|---|---|
 | Subscribe | `/ekf/target_state` | `nav_msgs/Odometry` |
 | Subscribe | `/odom` | `nav_msgs/Odometry` |
-| Publish | `/apf/velocity_cmd` | `geometry_msgs/TwistStamped` |
-| Publish | `/apf/target_position` | `geometry_msgs/PointStamped` |
-| Publish | `/apf/forces_debug` | `geometry_msgs/Vector3Stamped` |
+| Subscribe | `/mission/phase` | `std_msgs/String` |
+| Subscribe | `/ekf/tracking_mode`| `std_msgs/String` |
+| Publish | `/apf/velocity_cmd` | `geometry_msgs/Twist` |
+| Publish | `/apf/yaw_cmd` | `std_msgs/Float64` |
+| Publish | `/apf/force_markers` | `visualization_msgs/MarkerArray` |
 
 **Tham số:**
 
 ```yaml
 apf_planner:
-  d0: 2.5            # Bán kính ảnh hưởng vật cản (m) — vật cản bắt đầu đẩy từ d0
-  v_max: 1.2         # Vận tốc tối đa output (m/s)
-  d_slow: 1.5        # Bán kính giảm tốc khi gần goal (m)
-  k_att: 10.0        # Hệ số lực hút
-  k_rep: 2500.0      # Hệ số lực đẩy vật cản (FOLLOW phase)
-  k_rep_approach: 125.0  # Hệ số lực đẩy giảm (APPROACH phase)
-  follow_distance: 3.5   # Cự ly bám mục tiêu (m)
-  hold_follow_altitude: true  # Giữ nguyên độ cao trong FOLLOW
-  target_lead_time: 0.25      # Dự báo vị trí target trước (s)
+  planner_type: "iapf"       # "iapf" (cải tiến 3D) hoặc "apf" (cơ bản)
+  d0: 2.5                    # Bán kính ảnh hưởng vật cản (m)
+  v_max: 1.5                 # Vận tốc tối đa output (m/s)
+  d_slow: 1.2                # Bán kính giảm tốc khi gần goal (m)
+  k_att: 10.0                # Hệ số lực hút
+  k_rep: 2500.0              # Hệ số lực đẩy vật cản (FOLLOW phase)
+  k_rep_approach: 125.0      # Hệ số lực đẩy giảm (APPROACH phase)
+  follow_distance: 3.5       # Cự ly bám mục tiêu (m)
+  hold_follow_altitude: true # Giữ nguyên độ cao trong FOLLOW
+  target_lead_time: 0.35     # Dự báo vị trí target trước (s)
+  # Tham số riêng của I-APF:
+  iapf_f_enter: 0.10         # Ngưỡng kích hoạt thoát kẹt (N)
+  iapf_f_exit: 0.30          # Ngưỡng thoát chế độ tiếp tuyến (N)
+  iapf_k_tan: 1.0            # Hệ số độ lớn lực tiếp tuyến
+  iapf_n_tangent: 12         # Số hướng candidate trên mặt phẳng tiếp tuyến 3D
+  iapf_n_pred: 3             # Số bước dự báo trước để đánh giá clearance
+  iapf_w_goal: 1.0           # Trọng số hướng về goal
+  iapf_w_clear: 1.0          # Trọng số độ thông thoáng vật cản
+  iapf_w_prev: 0.60          # Trọng số liên tục với hướng tránh trước đó
 ```
 
 ---

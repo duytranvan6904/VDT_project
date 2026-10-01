@@ -7,6 +7,7 @@
 apf_planner:
   ros__parameters:
     use_sim_time: true
+    planner_type: "iapf"        # "apf" (standard) or "iapf" (improved 3D)
     d0: 2.5
     v_max: 1.5
     d_slow: 1.2
@@ -21,6 +22,15 @@ apf_planner:
     max_target_lead: 1.0
     target_velocity_alpha: 0.35
     target_velocity_deadband: 0.18
+    # IAPF specific parameters
+    iapf_f_enter: 0.10
+    iapf_f_exit: 0.30
+    iapf_k_tan: 1.0
+    iapf_n_tangent: 12
+    iapf_n_pred: 3
+    iapf_w_goal: 1.0
+    iapf_w_clear: 1.0
+    iapf_w_prev: 0.60
 
 ekf_ros_adapter:
   ros__parameters:

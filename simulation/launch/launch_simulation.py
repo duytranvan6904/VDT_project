@@ -193,22 +193,67 @@ def build_pointcloud(obstacles, res=0.15):
             z += res
     return pts
 
-def discover_gazebo_topics():
-    """Return live Gazebo topics and select the x500 camera/odom topics."""
-    topics = []
+def discover_gazebo_topics(max_retries=6, retry_delay=1.5):
+    """Return live Gazebo topics, auto-detecting GZ_PARTITION and retrying until model spawns."""
+    partitions_to_try = []
+    current_part = os.environ.get('GZ_PARTITION')
+    if current_part:
+        partitions_to_try.append(current_part)
+    for fallback in ('vdt_harmonic', ''):
+        if fallback not in partitions_to_try:
+            partitions_to_try.append(fallback)
+
+    for attempt in range(1, max_retries + 1):
+        for part in partitions_to_try:
+            env = os.environ.copy()
+            if part:
+                env['GZ_PARTITION'] = part
+            elif 'GZ_PARTITION' in env:
+                del env['GZ_PARTITION']
+
+            try:
+                result = subprocess.run(
+                    ['gz', 'topic', '-l'],
+                    capture_output=True, text=True, timeout=5, env=env
+                )
+                topics = [line.strip() for line in result.stdout.splitlines() if line.strip() and line.startswith('/')]
+                has_camera = any('camera' in t.lower() for t in topics)
+                has_odom = any(('odom' in t.lower() or MODEL_NAME in t.lower()) for t in topics)
+
+                if has_camera and has_odom:
+                    if part != current_part:
+                        if part:
+                            os.environ['GZ_PARTITION'] = part
+                            print(f"      -> Tự động nhận diện và thiết lập GZ_PARTITION='{part}'.")
+                        else:
+                            os.environ.pop('GZ_PARTITION', None)
+                            print("      -> Sử dụng default Gazebo partition.")
+                    interesting = [t for t in topics if any(k in t.lower() for k in ('odom', 'camera', 'depth', 'point', 'joint'))]
+                    print("      -> Gazebo sensor/odom topics detected:")
+                    for t in interesting:
+                        print(f"         {t}")
+                    return topics
+            except Exception:
+                pass
+
+        if attempt < max_retries:
+            print(f"      -> Đang chờ Gazebo spawn model {MODEL_NAME} và khởi tạo sensor topics (thử lại {attempt}/{max_retries})...")
+            time.sleep(retry_delay)
+
+    print("[WARN] No camera/odom topic found from `gz topic -l` across partitions:")
+    print(f"       Đã kiểm tra các partition: {partitions_to_try}")
     try:
-        result = subprocess.run(['gz', 'topic', '-l'], capture_output=True, text=True, timeout=5)
-        topics = [line.strip() for line in result.stdout.splitlines() if line.strip() and line.startswith('/')]
-        interesting = [t for t in topics if any(k in t.lower() for k in ('odom', 'camera', 'depth', 'point', 'joint'))]
-        if interesting:
-            print("      -> Gazebo sensor/odom topics detected:")
-            for topic in interesting:
-                print(f"         {topic}")
+        proc_check = subprocess.run(['pgrep', '-f', 'gz sim|px4'], capture_output=True, text=True)
+        if not proc_check.stdout.strip():
+            print("[INFO] Chẩn đoán: Không phát hiện tiến trình PX4 hoặc Gazebo nào đang chạy.")
+            print("       Hãy kiểm tra xem Terminal 1 (make px4_sitl gz_x500_depth) có bị crash hoặc dừng không.")
         else:
-            print("[WARN] No camera/odom topic found from `gz topic -l`; ensure Gazebo is already running.")
-    except Exception as exc:
-        print(f"[WARN] Could not inspect Gazebo topics before bridging: {exc}")
-    return topics
+            print("[INFO] Chẩn đoán: Tiến trình Gazebo/PX4 đang chạy nhưng model chưa hoàn tất spawn.")
+            print("       Hãy kiểm tra xem cửa sổ Gazebo đã load xong x500_depth_0 và xuất hiện pxh> ở Terminal 1 chưa.")
+    except Exception:
+        pass
+
+    return []
 
 def select_gazebo_topic(topics, exact_names, suffixes, contains=()):
     """Choose the most specific runtime topic, preferring exact names."""
@@ -659,6 +704,13 @@ def main():
 
     # ── Autonomous nodes (optional) ──────────────────────────────────────
     autonomous = '--autonomous' in sys.argv
+    planner_type = None
+    for i, arg in enumerate(sys.argv):
+        if arg == '--planner' and i + 1 < len(sys.argv):
+            planner_type = sys.argv[i + 1].strip().lower()
+        elif arg.startswith('--planner='):
+            planner_type = arg.split('=', 1)[1].strip().lower()
+
     auto_procs = []
     if autonomous:
         print("[3/5] Launching Autonomous Pipeline nodes...")
@@ -669,6 +721,11 @@ def main():
             '--ros-args', '--params-file', config_file,
             '-p', 'use_sim_time:=true',
         ]
+        apf_extra_args = ['-p', f'world_sdf:={world_path}']
+        if planner_type:
+            apf_extra_args.extend(['-p', f'planner_type:={planner_type}'])
+            print(f"      -> Configured Planner algorithm: {planner_type.upper()}")
+
         auto_nodes = [
             ('ArUco Detector', [
                 sys.executable, os.path.join(sim_dir, 'perception', 'aruco_sim_node.py'),
@@ -681,7 +738,7 @@ def main():
             ('APF Planner', [
                 sys.executable, os.path.join(sim_dir, 'control', 'apf_planner.py'),
                 *params_args,
-                '-p', f'world_sdf:={world_path}',
+                *apf_extra_args,
             ]),
             ('IBVS Controller', [
                 sys.executable, os.path.join(sim_dir, 'control', 'ibvs_controller.py'),

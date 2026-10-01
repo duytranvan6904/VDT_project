@@ -25,7 +25,7 @@
 Hệ thống điều khiển tự hành theo kiến trúc phân tầng, cho phép Quadrotor:
 - **Phát hiện** mục tiêu di động (tấm H-Pad ArUco) bằng camera onboard
 - **Bám mục tiêu** (IBVS + EKF) kể cả khi mất tín hiệu tạm thời
-- **Tránh vật cản** theo thời gian thực (APF 3D)
+- **Tránh vật cản** theo thời gian thực (Hỗ trợ **Improved APF 3D** với Dynamic Tangent Escape chống kẹt Local Minima & Standard APF)
 - **Hạ cánh chính xác** lên bề mặt H-Pad khi nhận lệnh Operator
 
 ### Kiến trúc phân tầng
@@ -96,14 +96,15 @@ VDT_project/
 │   │   └── mock_target_publisher.py
 │   ├── control/                 ← Thuật toán điều khiển
 │   │   ├── ibvs_controller.py   ← Image-Based Visual Servoing
-│   │   ├── apf_planner.py       ← APF path planner 3D
+│   │   ├── apf_planner.py       ← APF / I-APF path planner ROS 2 Node wrapper
+│   │   ├── iapf_core.py         ← Lõi Improved APF 3D (GNRON, 3D Tangent, Oscillation Suppression)
 │   │   └── apf_pointcloud_generator.py
 │   ├── utils/                   ← Monitoring & visualization tools
 │   ├── worlds/                  ← Gazebo world files (.sdf, .world)
 │   ├── config/
 │   │   └── mission_params.yaml  ← Tham số tập trung toàn hệ thống
 │   └── launch/
-│       ├── launch_simulation.py ← Master launcher (ĐIỂM VÀO CHÍNH)
+│       ├── launch_simulation.py ← Master launcher (ĐIỂM VÀO CHÍNH, hỗ trợ flag --planner)
 │       └── start_px4_sim.sh
 │
 ├── vision/                      ← Code vision cho hardware thực
@@ -115,8 +116,10 @@ VDT_project/
 ├── hardware/
 │   └── main_aruco_detector.py   ← Entry point deploy lên board nhúng
 │
-├── avoidance/                   ← Prototype MATLAB APF
-├── tests/                       ← Unit tests
+├── avoidance/                   ← Prototype MATLAB APF (APFplanner_1_Obstacle.m, IAPF_Planner_3D_MultiObs.m)
+├── tests/                       ← Unit & Regression tests
+│   ├── test_follow_control.py   ← Test bám mục tiêu & giữ độ cao
+│   └── test_iapf_planner.py     ← Test I-APF & Benchmark A/B đối xứng bẫy vật cản
 ├── simulation_results/          ← Benchmark EKF output (offline)
 ├── docs/                        ← Tài liệu bổ sung
 │   ├── IBVS_Implementation_Guide.md
@@ -194,12 +197,18 @@ PX4_GZ_WORLD=obstacle_avoidance make px4_sitl gz_x500_depth
 ```bash
 source /opt/ros/humble/setup.bash
 export GZ_PARTITION=vdt_harmonic
-python3 /home/duy/VDT_project/simulation/launch/launch_simulation.py --autonomous
+
+# 1. Chạy với Improved APF (I-APF) — MẶC ĐỊNH (Tối ưu hóa tránh bẫy vật cản & GNRON):
+python3 /home/duy/VDT_project/simulation/launch/launch_simulation.py --autonomous --planner iapf
+
+# 2. Hoặc chạy với Standard APF cơ bản (để thực hiện kiểm chứng & benchmark đối đầu):
+# python3 /home/duy/VDT_project/simulation/launch/launch_simulation.py --autonomous --planner apf
 ```
 
 > ✅ Thành công khi:
 > - Cửa sổ RViz2 mở ra, hiển thị map 3D PointCloud
 > - Log xuất hiện: `[AUTONOMOUS] Started ekf_ros_adapter, apf_planner, ibvs_controller, mission_fsm, offboard_commander`
+> - Log thuật toán hiển thị: `Initialized Improved APF (I-APF) 3D Planner` (hoặc `Standard APF Planner`)
 > - Camera gimbal tự chúc xuống `-30°`
 > - Định kỳ in: `[STATUS] Phase: SEARCH | Drone: (...) | Target: (...)`
 
@@ -477,16 +486,29 @@ Tất cả tham số điều khiển được tập trung tại [`simulation/con
 
 | Tham số | Node | Mặc định | Mô tả |
 |---|---|---|---|
+| `planner_type` | `apf_planner` | `"iapf"` | Thuật toán né vật cản: `"iapf"` (cải tiến 3D) hoặc `"apf"` (cơ bản) |
 | `follow_distance` | `apf_planner`, `mission_fsm` | `3.5` m | Cự ly bám mục tiêu |
 | `target_altitude` | `apf_planner`, `offboard_commander` | `3.0` m | Độ cao bay FOLLOW |
-| `v_max` | `apf_planner` | `1.2` m/s | Vận tốc tối đa APF |
-| `k_att` | `apf_planner` | `10.0` | Hệ số lực hút APF |
-| `k_rep` | `apf_planner` | `2500.0` | Hệ số lực đẩy APF (vật cản) |
+| `v_max` | `apf_planner` | `1.5` m/s | Vận tốc tối đa APF / I-APF |
+| `k_att` | `apf_planner` | `10.0` | Hệ số lực hút |
+| `k_rep` | `apf_planner` | `2500.0` | Hệ số lực đẩy vật cản (FOLLOW phase) |
 | `d0` | `apf_planner` | `2.5` m | Bán kính ảnh hưởng vật cản |
+| `iapf_f_enter` | `apf_planner` | `0.10` N | Ngưỡng lực kích hoạt chế độ thoát bẫy Local Minima |
+| `iapf_f_exit` | `apf_planner` | `0.30` N | Ngưỡng lực thoát chế độ tiếp tuyến (Hysteresis) |
+| `iapf_k_tan` | `apf_planner` | `1.0` | Độ lớn lực tiếp tuyến khi kích hoạt thoát Local Minima |
+| `iapf_n_tangent`| `apf_planner` | `12` | Số hướng tiếp tuyến candidate trên mặt phẳng 3D |
+| `iapf_n_pred` | `apf_planner` | `3` | Số bước dự báo trước để đánh giá độ thông thoáng |
 | `search_timeout` | `mission_fsm` | `1.2` s | Timeout trước khi quay lại SEARCH |
 | `gate_threshold` | `ekf_ros_adapter` | `16.27` | Ngưỡng Mahalanobis gate EKF |
 | `K_pitch` | `ibvs_controller` | `0.8` | Gain điều khiển gimbal pitch |
 | `K_yaw` | `ibvs_controller` | `0.5` | Gain điều khiển yaw |
+
+### 🚀 Điểm cải tiến của Improved APF (I-APF) so với APF cơ bản
+
+1. **Giải quyết triệt để GNRON (*Goal Non-Reachable with Obstacle Nearby*)**: Lực đẩy được điều biến theo trọng số Sigmoid $weight\_rep = \frac{1}{1 + e^{-d_{goal}}} - 0.5$. Khi drone áp sát đích ($d_{goal} \to 0$), lực cản đẩy lùi triệt tiêu và thành phần $F_{rep2}$ hỗ trợ đẩy drone về đúng tâm đích, loại bỏ hiện tượng bị dội ngược ra xa.
+2. **Thoát bẫy cực tiểu địa phương (Local Minima)**: Tích hợp bộ phát hiện bẫy thế năng bằng cơ chế **Hysteresis Schmitt Trigger** ($F_{enter}=0.10\,N$, $F_{exit}=0.30\,N$). Khi drone bị kẹt giữa các vật cản đối xứng, thuật toán tự động sinh 12 tia tiếp tuyến 3D, dự báo khoảng trống an toàn $N_{pred}=3$ bước phía trước để chọn hướng lách tối ưu (hiển thị mũi tên màu **Magenta** trên RViz2).
+3. **Khử rung lắc (Oscillation Suppression)**: Lọc hướng bay theo 3 phân đoạn góc $\Delta\alpha$ ($\le 30^\circ$, $\le 60^\circ$, $> 60^\circ$), giữ độ êm ái khi đổi hướng đột ngột, triệt tiêu hiện tượng giật cục cho Quadrotor.
+4. **Bảo đảm tốc độ sàn thoát hiểm**: Duy trì vận tốc tối thiểu $v_{escape\_min} = 0.35 \cdot v_{max}$ khi đang thoát kẹt, ngăn drone bị "chết đứng" trong vùng ảnh hưởng của vật cản.
 
 > Xem mô tả đầy đủ tất cả tham số tại [`MODULES_REFERENCE.md`](MODULES_REFERENCE.md).
 
