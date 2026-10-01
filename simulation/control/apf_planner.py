@@ -25,6 +25,11 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
+try:
+    from simulation.control.iapf_core import IAPFCore, IAPFParams, IAPFResult
+except ImportError:
+    from iapf_core import IAPFCore, IAPFParams, IAPFResult
+
 # ---------------------------------------------------------------------------
 # Core APF algorithm (no ROS dependency)
 # ---------------------------------------------------------------------------
@@ -315,6 +320,7 @@ def _create_ros_node():
             super().__init__('apf_planner')
 
             # ── Parameters ───────────────────────────────────────────────
+            self.declare_parameter('planner_type', 'apf')  # 'apf' or 'iapf'
             self.declare_parameter('world_sdf', '')
             self.declare_parameter('d0', 2.0)
             self.declare_parameter('v_max', 1.2)
@@ -333,17 +339,51 @@ def _create_ros_node():
             self.declare_parameter('target_velocity_alpha', 0.25)
             self.declare_parameter('target_velocity_deadband', 0.08)
 
-            params = APFParams(
-                d0=self.get_parameter('d0').value,
-                v_max=self.get_parameter('v_max').value,
-                d_slow=self.get_parameter('d_slow').value,
-                k_att=self.get_parameter('k_att').value,
-                k_rep=self.get_parameter('k_rep').value,
-                goal_threshold=self.get_parameter('goal_threshold').value,
-                k_z=self.get_parameter('k_z').value,
-                vz_max=self.get_parameter('vz_max').value,
-            )
-            self.apf = APFCore(params)
+            # IAPF specific parameters
+            self.declare_parameter('iapf_f_enter', 0.10)
+            self.declare_parameter('iapf_f_exit', 0.30)
+            self.declare_parameter('iapf_k_tan', 1.0)
+            self.declare_parameter('iapf_n_tangent', 12)
+            self.declare_parameter('iapf_n_pred', 3)
+            self.declare_parameter('iapf_w_goal', 1.0)
+            self.declare_parameter('iapf_w_clear', 1.0)
+            self.declare_parameter('iapf_w_prev', 0.60)
+
+            self.planner_type = str(self.get_parameter('planner_type').value).strip().lower()
+
+            if self.planner_type == 'iapf':
+                iapf_params = IAPFParams(
+                    k_att=float(self.get_parameter('k_att').value),
+                    k_rep=float(self.get_parameter('k_rep').value),
+                    d0=float(self.get_parameter('d0').value),
+                    v_max=float(self.get_parameter('v_max').value),
+                    goal_tol=float(self.get_parameter('goal_threshold').value),
+                    f_enter=float(self.get_parameter('iapf_f_enter').value),
+                    f_exit=float(self.get_parameter('iapf_f_exit').value),
+                    k_tan=float(self.get_parameter('iapf_k_tan').value),
+                    n_tangent=int(self.get_parameter('iapf_n_tangent').value),
+                    n_pred=int(self.get_parameter('iapf_n_pred').value),
+                    w_goal=float(self.get_parameter('iapf_w_goal').value),
+                    w_clear=float(self.get_parameter('iapf_w_clear').value),
+                    w_prev=float(self.get_parameter('iapf_w_prev').value),
+                    vz_max=float(self.get_parameter('vz_max').value),
+                )
+                self.apf = IAPFCore(iapf_params)
+                self.get_logger().info('Initialized Improved APF (I-APF) 3D Planner.')
+            else:
+                params = APFParams(
+                    d0=float(self.get_parameter('d0').value),
+                    v_max=float(self.get_parameter('v_max').value),
+                    d_slow=float(self.get_parameter('d_slow').value),
+                    k_att=float(self.get_parameter('k_att').value),
+                    k_rep=float(self.get_parameter('k_rep').value),
+                    goal_threshold=float(self.get_parameter('goal_threshold').value),
+                    k_z=float(self.get_parameter('k_z').value),
+                    vz_max=float(self.get_parameter('vz_max').value),
+                )
+                self.apf = APFCore(params)
+                self.get_logger().info('Initialized Standard APF Planner.')
+
             self.k_rep_approach = self.get_parameter('k_rep_approach').value
             self.follow_distance = float(self.get_parameter('follow_distance').value)
             self.hold_follow_altitude = bool(
@@ -462,6 +502,8 @@ def _create_ros_node():
                 self.target_vel[2] = 0.0
 
         def phase_cb(self, msg: String):
+            if msg.data != self.phase and hasattr(self.apf, 'reset'):
+                self.apf.reset()
             self.phase = msg.data
 
         def tracking_mode_cb(self, msg: String):
@@ -660,6 +702,37 @@ def _create_ros_node():
                     ),
                 ]
                 markers.markers.append(total)
+
+                # Arrow: Tangent escape force (magenta) - when active in I-APF
+                if getattr(result, 'tangent_active', False) and hasattr(result, 'f_tan'):
+                    tan_m = Marker()
+                    tan_m.header.stamp = now
+                    tan_m.header.frame_id = 'world'
+                    tan_m.ns = 'apf_tangent'
+                    tan_m.id = 5
+                    tan_m.type = Marker.ARROW
+                    tan_m.action = Marker.ADD
+                    tan_m.scale.x = 0.09
+                    tan_m.scale.y = 0.16
+                    tan_m.scale.z = 0.0
+                    tan_m.color.r = 1.0
+                    tan_m.color.g = 0.1
+                    tan_m.color.b = 0.9  # Magenta
+                    tan_m.color.a = 0.95
+                    f_tan_norm = float(np.linalg.norm(result.f_tan))
+                    if f_tan_norm > 1e-4:
+                        tan_dir = result.f_tan / f_tan_norm * min(2.0, f_tan_norm)
+                    else:
+                        tan_dir = np.zeros(3)
+                    tan_m.points = [
+                        start,
+                        Point(
+                            x=float(self.drone_pos[0] + tan_dir[0]),
+                            y=float(self.drone_pos[1] + tan_dir[1]),
+                            z=float(self.drone_pos[2] + tan_dir[2]),
+                        ),
+                    ]
+                    markers.markers.append(tan_m)
 
             # Marker: Drone Position (Cyan Sphere)
             if self.has_odom:

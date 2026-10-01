@@ -659,6 +659,13 @@ def main():
 
     # ── Autonomous nodes (optional) ──────────────────────────────────────
     autonomous = '--autonomous' in sys.argv
+    planner_type = None
+    for i, arg in enumerate(sys.argv):
+        if arg == '--planner' and i + 1 < len(sys.argv):
+            planner_type = sys.argv[i + 1].strip().lower()
+        elif arg.startswith('--planner='):
+            planner_type = arg.split('=', 1)[1].strip().lower()
+
     auto_procs = []
     if autonomous:
         print("[3/5] Launching Autonomous Pipeline nodes...")
@@ -669,6 +676,11 @@ def main():
             '--ros-args', '--params-file', config_file,
             '-p', 'use_sim_time:=true',
         ]
+        apf_extra_args = ['-p', f'world_sdf:={world_path}']
+        if planner_type:
+            apf_extra_args.extend(['-p', f'planner_type:={planner_type}'])
+            print(f"      -> Configured Planner algorithm: {planner_type.upper()}")
+
         auto_nodes = [
             ('ArUco Detector', [
                 sys.executable, os.path.join(sim_dir, 'perception', 'aruco_sim_node.py'),
@@ -681,7 +693,7 @@ def main():
             ('APF Planner', [
                 sys.executable, os.path.join(sim_dir, 'control', 'apf_planner.py'),
                 *params_args,
-                '-p', f'world_sdf:={world_path}',
+                *apf_extra_args,
             ]),
             ('IBVS Controller', [
                 sys.executable, os.path.join(sim_dir, 'control', 'ibvs_controller.py'),
