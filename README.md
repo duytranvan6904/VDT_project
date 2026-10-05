@@ -955,30 +955,8 @@ Nếu dùng bản hiện tại trong mô hình liên tục, cấu hình riêng M
 
 Nếu cần selector và đường đạo hàm chạy liên tục, cần thiết kế lại/kiểm tra cách chốt pha và `x0`, cấu hình cập nhật biến `persistent`, cùng cách phát reset. Một tín hiệu reset giữ ở `1` sau chuyển pha vẫn chỉ reset một lần khi Integrator dùng `rising`; nó khác cơ chế xung một mẫu của file hiện tại. Không đổi reset sang `level` khi dùng tín hiệu giữ mức này.
 
-## 11. Theo dõi và kiểm chứng
 
-Các tín hiệu nên đưa vào Scope hoặc logging để kiểm tra luồng:
-
-- `Rxy`, `Rz`, `dRxy`, `dRz`, `psi`, `dpsi`.
-- `S1`, `S2`, `S3`.
-- `validLOS`, `validGuidance`, `landingMode`, `resetIntegrator`, `enableIntegration`.
-- Ba đạo hàm trước và sau selector.
-- Trạng thái thực và trạng thái tham chiếu sau Integrator.
-- Vận tốc APF, vận tốc Landing và vận tốc cuối cùng sau Switch.
-- Sai số bám vận tốc, sai số vị trí tương đối và vận tốc tương đối UAV–target.
-
-Kiểm tra rằng reset xảy ra đúng một lần, `x0` trùng trạng thái thực tại chuyển pha, hai Switch chọn cùng pha, và mất validity không làm tự đổi lại APF.
-
-Các script kiểm tra hiện có ở thư mục `work`. Từ thư mục gốc chứa `outputs` và `work`, có thể chạy:
-
-```matlab
-run('work/test_guidance_law.m')
-run('work/test_apf_landing_selector.m')
-```
-
-Selector đã được kiểm tra trong MATLAB cho các tình huống: chốt trạng thái thực, reset một lần, giữ pha, chặn dữ liệu không hữu hạn, mất/khôi phục validity và xuất cờ kiểu `double` có giá trị `0/1`. Việc kiểm tra hàm MATLAB chưa xác nhận toàn bộ mô hình Simulink, thứ tự thực thi khối, khả năng bám của UAV hoặc tiếp đất thành công.
-
-## 12. Phần tiếp đất cuối chưa được định nghĩa
+## 11. Phần tiếp đất cuối chưa được định nghĩa
 
 Luồng hiện tại quản lý hai pha APF và Landing. Nó chưa có một trạng thái riêng xác nhận tiếp đất hoặc hoàn tất nhiệm vụ.
 
@@ -986,7 +964,7 @@ Khi `Rxy <= Rmin`, LOS có thể không hợp lệ dù UAV vẫn còn ở phía 
 
 Để đánh giá soft landing hoàn chỉnh, cần định nghĩa điều kiện tiếp đất theo mô hình, chẳng hạn sai số ngang, khoảng cách tới mặt pad, vận tốc tương đối ngang/đứng, và tín hiệu tiếp xúc nếu có. Sau đó xác định hành vi điều khiển khi tiếp xúc và khi mất validity kéo dài. Các điều kiện/ngưỡng này chưa được triển khai trong hai file guidance và selector hiện tại.
 
-## 13. Tài liệu tham chiếu
+## 12. Tài liệu tham chiếu
 
 *Terminal-Angle-Constrained Guidance based on Sliding Mode Control for UAV Soft Landing on Ground Vehicles*.
 
