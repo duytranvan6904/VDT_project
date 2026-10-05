@@ -623,7 +623,7 @@ Speed Scheduling
 
 # Soft Landing for Quadrotor
 
-Tài liệu mô tả mô hình Simulink đang xây dựng: UAV dùng **IAPF để tiếp cận và bám Hpad**, sau đó chuyển một chiều sang **Soft Landing bằng Sliding Mode Control**. Bộ điều khiển vận tốc và mô hình động lực học UAV nhận lệnh từ pha đang được chọn. Thuật toán này có thể triển khai cho Hpad di động tuy nhiên trong mô phỏng Hpad được giả định đứng yên (Vận tốc và gia tốc = 0). Code Matlab của các khối nằm trong folder Soft Landing. Tham số mô phỏng lấy trong file Parameters.m
+Tài liệu mô tả mô hình Simulink đang xây dựng: UAV dùng **IAPF để tiếp cận và bám Hpad**, sau đó chuyển một chiều sang **Soft Landing bằng Sliding Mode Control**. Bộ điều khiển vận tốc và mô hình động lực học UAV nhận lệnh từ pha đang được chọn. Thuật toán này có thể triển khai cho Hpad di động tuy nhiên trong mô phỏng Hpad được giả định đứng yên (Vận tốc và gia tốc = 0). Tham số mô phỏng lấy trong file Parameters.m
 
 
 ## 1. Các khối chính
