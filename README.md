@@ -1,5 +1,8 @@
 # VDT_project
  Hệ thống bám mục tiêu động thời gian thực và tránh vật cản tự động cho Quadrotors sử dụng ROS 2, PX4 Autopilot, YOLO + ByteTrack, EKF và Improved APF.
+[APF Planner 2D for Quadrotor]()
+[IAPF Planner 3D for Quadrotor]()
+[Soft Landing for Quadrotor]()
 # APF Planner 2D for Quadrotor
 
 Hàm `APFplanner_1_Obstacle` sử dụng phương pháp **Artificial Potential Field (APF)** để tạo lệnh vận tốc cho UAV 2D, dựa trên vị trí hiện tại, vị trí đích và vị trí các vật cản.
@@ -615,7 +618,7 @@ Speed Scheduling
 
 để tạo lệnh vận tốc 3D cho UAV tránh vật cản và tiến tới goal.
 
-# Luồng xử lý thuật toán Soft Landing UAV
+# Soft Landing for Quadrotor
 
 Tài liệu mô tả mô hình Simulink đang xây dựng: UAV dùng **IAPF để tiếp cận và bám Hpad**, sau đó chuyển một chiều sang **Soft Landing bằng Sliding Mode Control**. Bộ điều khiển vận tốc và mô hình động lực học UAV nhận lệnh từ pha đang được chọn. Thuật toán này có thể triển khai cho Hpad di động tuy nhiên trong mô phỏng Hpad được giả định đứng yên (Vận tốc và gia tốc = 0). Code Matlab của các khối nằm trong folder Soft Landing.
 
