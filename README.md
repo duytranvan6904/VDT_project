@@ -615,7 +615,7 @@ Speed Scheduling
 
 để tạo lệnh vận tốc 3D cho UAV tránh vật cản và tiến tới goal.
 
-# Luồng xử lý thuật toán soft landing UAV
+# Luồng xử lý thuật toán Soft Landing UAV
 
 Tài liệu mô tả mô hình Simulink đang xây dựng: UAV dùng **APF để tiếp cận và bám target**, sau đó chuyển một chiều sang **Landing bằng Sliding Mode Guidance**. Bộ điều khiển vận tốc và mô hình động lực học UAV nhận lệnh từ pha đang được chọn.
 
