@@ -732,8 +732,4 @@ Khi `Rxy <= Rmin`, LOS có thể không hợp lệ dù UAV vẫn còn ở phía 
 
 ## 13. Tài liệu tham chiếu
 
-- Bài báo người dùng cung cấp: *Terminal-Angle-Constrained Guidance based on Sliding Mode Control for UAV Soft Landing on Ground Vehicles*. File PDF gốc nằm trong thư mục `E:\VDT 2026\Quadrotor\Soft landing`.
-- [MathWorks — Integrator](https://www.mathworks.com/help/simulink/slref/integrator.html): external initial condition, reset và state port.
-- [MathWorks — Switch](https://www.mathworks.com/help/simulink/slref/switch.html): chọn cổng theo tín hiệu điều khiển và tiêu chí.
-- [MathWorks — MATLABFunctionConfiguration](https://www.mathworks.com/help/simulink/slref/simulink.matlabfunctionconfiguration.html): Update method và Sample time.
-- [MathWorks — Continuous-time MATLAB functions và persistent variables](https://www.mathworks.com/help/simulink/gui/enablecontinuoustimematlabfunctionstowritetoinitializedpersistentvariables.html): cấu hình cho phép cập nhật persistent khi chạy liên tục.
+*Terminal-Angle-Constrained Guidance based on Sliding Mode Control for UAV Soft Landing on Ground Vehicles*.
