@@ -615,4 +615,125 @@ Speed Scheduling
 
 để tạo lệnh vận tốc 3D cho UAV tránh vật cản và tiến tới goal.
 
-# Soft Landing for Quadrotor 
+Ba Integrator tạo trạng thái tham chiếu:
+
+```text
+Vp_Landing      = Vp0      + integral(dVp_toInt)
+alpha_p_Landing = alpha_p0 + integral(dalpha_p_toInt)
+gamma_p_Landing = gamma_p0 + integral(dgamma_p_toInt)
+```
+
+Cấu hình cả ba Integrator:
+
+- **Initial condition source:** `external`.
+- **External reset:** `rising`.
+- Nối `resetIntegrator` vào cổng reset của cả ba khối.
+- Nối ba giá trị `x0` tương ứng vào đúng Integrator.
+- Đầu vào đạo hàm phải lấy từ `APFLandingSelector`, thay cho đường nối trực tiếp từ GuidanceLaw.
+
+`VelComponents` nhận trạng thái sau tích phân. Nếu đầu ra dùng hệ NED:
+
+```matlab
+Vx_Landing = Vp_Landing*cos(gamma_p_Landing)*cos(alpha_p_Landing);
+Vy_Landing = Vp_Landing*cos(gamma_p_Landing)*sin(alpha_p_Landing);
+Vz_Landing = -Vp_Landing*sin(gamma_p_Landing);
+```
+
+Nếu khối điều khiển dùng hệ có trục đứng hướng lên, cần đổi dấu phù hợp tại giao diện. Nhánh APF, nhánh Landing và vận tốc đo đưa vào bộ điều khiển phải cùng hệ tọa độ.
+
+Đầu ra Integrator là **tham chiếu**, còn đầu vào trạng thái GuidanceLaw là **trạng thái thực**. Không nối ba trạng thái tham chiếu trở lại GuidanceLaw chỉ để tạo vòng phản hồi. Vòng phản hồi hiện tại đi qua bộ điều khiển và động lực học UAV.
+
+## 8. Nối hai Switch chọn vận tốc và yaw
+
+Theo sơ đồ hiện tại:
+
+- Cổng trên `u1`: lệnh APF.
+- Cổng dưới `u3`: lệnh Landing.
+- Cổng giữa `u2`: tín hiệu điều khiển lựa chọn.
+
+Đặt **Criteria for passing first input = `u2 ~= 0`**, và tính:
+
+```matlab
+u2 = 1 - landingMode;
+```
+
+Trong Simulink, dùng Constant `1` và khối Sum có dấu `+-`. Dùng chung tín hiệu điều khiển cho cả Switch vận tốc và Switch yaw.
+
+| Pha | `landingMode` | `u2` | Nhánh được chọn |
+|---|---:|---:|---|
+| APF | 0 | 1 | Cổng trên: APF |
+| Landing | 1 | 0 | Cổng dưới: Landing |
+
+Với tiêu chí `u2 ~= 0`, ô Threshold không quyết định ngưỡng chuyển pha. Ngưỡng này nằm ở `Rswitch` trong hàm. Không tiếp tục dùng `Rxy` trực tiếp làm tín hiệu điều khiển cho Switch đã đặt `u2 ~= 0`.
+
+Nếu đổi cổng trên sang Landing và cổng dưới sang APF, có thể nối trực tiếp `landingMode` vào `u2`.
+
+Nếu trước đây các cổng cờ của MATLAB Function được khai báo thủ công là Boolean, đổi kiểu sang `double` hoặc để Simulink suy luận kiểu từ code hiện tại. `validGuidance` đầu vào của selector có thể là Boolean hoặc số `0/1`; selector chỉ coi giá trị `1` là hợp lệ.
+
+`enableIntegration` đã được dùng bên trong hàm để chặn/cho qua đạo hàm. Bên ngoài, có thể nối nó vào Scope; không cần một khối Switch đạo hàm thứ hai.
+
+## 9. Khi guidance không hợp lệ
+
+| Tình huống | Pha | Reset | Đạo hàm vào Integrator |
+|---|---|---:|---|
+| APF, chưa đủ điều kiện chuyển | APF | 0 | Ba giá trị 0 |
+| Đủ điều kiện chuyển | Landing | 1 tại mẫu chuyển | Ba đạo hàm hợp lệ |
+| Landing, dữ liệu hợp lệ | Landing | 0 | Ba đạo hàm hợp lệ |
+| Landing, guidance hoặc dữ liệu không hợp lệ | Landing | 0 | Ba giá trị 0 |
+| Landing, dữ liệu hợp lệ trở lại | Landing | 0 | Tiếp tục cho đạo hàm đi qua |
+
+Đưa đạo hàm về `0` giữ nguyên tham chiếu tốc độ và góc trong Integrator. Nó **không đặt vận tốc UAV bằng 0**, không reset Integrator, và không làm UAV tự dừng. Nhánh Landing vẫn được chọn, nên bộ điều khiển tiếp tục nhận tham chiếu vận tốc đang được giữ.
+
+## 10. Mô hình liên tục và cách thực thi file hiện tại
+
+Mô hình động lực học UAV và các Integrator `1/s` có thể là liên tục. Tuy nhiên, **phiên bản `APFLandingSelector.m` đang lưu được thiết kế chạy rời rạc theo chu kỳ điều khiển `Ts`**:
+
+- Khối ghi cập nhật biến `persistent` để nhớ pha và chốt `x0`.
+- Xung reset là một lần cập nhật của hàm, dài một chu kỳ `Ts`.
+- Ba đạo hàm đi qua selector cũng được cập nhật theo `Ts` và giữ giá trị giữa các mẫu.
+- Dòng chú thích trong file không tự đặt sample time cho khối Simulink.
+
+Nếu dùng bản hiện tại trong mô hình liên tục, cấu hình riêng MATLAB Function này với **Update method = Discrete**, **Sample time = Ts**, và giữ solver liên tục cho các trạng thái liên tục. `Ts` là chu kỳ cập nhật hàm, không phải mặc định bằng bước nội bộ của solver và chưa có một giá trị cụ thể được chốt cho mô hình này.
+
+**Chưa có phiên bản selector được xác nhận chạy Continuous trong mô hình Simulink của người dùng.** Không coi việc đổi cờ từ Boolean sang số `0/1` là thay đổi cách thực thi từ rời rạc sang liên tục.
+
+Nếu cần selector và đường đạo hàm chạy liên tục, cần thiết kế lại/kiểm tra cách chốt pha và `x0`, cấu hình cập nhật biến `persistent`, cùng cách phát reset. Một tín hiệu reset giữ ở `1` sau chuyển pha vẫn chỉ reset một lần khi Integrator dùng `rising`; nó khác cơ chế xung một mẫu của file hiện tại. Không đổi reset sang `level` khi dùng tín hiệu giữ mức này.
+
+## 11. Theo dõi và kiểm chứng
+
+Các tín hiệu nên đưa vào Scope hoặc logging để kiểm tra luồng:
+
+- `Rxy`, `Rz`, `dRxy`, `dRz`, `psi`, `dpsi`.
+- `S1`, `S2`, `S3`.
+- `validLOS`, `validGuidance`, `landingMode`, `resetIntegrator`, `enableIntegration`.
+- Ba đạo hàm trước và sau selector.
+- Trạng thái thực và trạng thái tham chiếu sau Integrator.
+- Vận tốc APF, vận tốc Landing và vận tốc cuối cùng sau Switch.
+- Sai số bám vận tốc, sai số vị trí tương đối và vận tốc tương đối UAV–target.
+
+Kiểm tra rằng reset xảy ra đúng một lần, `x0` trùng trạng thái thực tại chuyển pha, hai Switch chọn cùng pha, và mất validity không làm tự đổi lại APF.
+
+Các script kiểm tra hiện có ở thư mục `work`. Từ thư mục gốc chứa `outputs` và `work`, có thể chạy:
+
+```matlab
+run('work/test_guidance_law.m')
+run('work/test_apf_landing_selector.m')
+```
+
+Selector đã được kiểm tra trong MATLAB cho các tình huống: chốt trạng thái thực, reset một lần, giữ pha, chặn dữ liệu không hữu hạn, mất/khôi phục validity và xuất cờ kiểu `double` có giá trị `0/1`. Việc kiểm tra hàm MATLAB chưa xác nhận toàn bộ mô hình Simulink, thứ tự thực thi khối, khả năng bám của UAV hoặc tiếp đất thành công.
+
+## 12. Phần tiếp đất cuối chưa được định nghĩa
+
+Luồng hiện tại quản lý hai pha APF và Landing. Nó chưa có một trạng thái riêng xác nhận tiếp đất hoặc hoàn tất nhiệm vụ.
+
+Khi `Rxy <= Rmin`, LOS có thể không hợp lệ dù UAV vẫn còn ở phía trên target. Việc chặn đạo hàm ở gần target không được coi là điều kiện hạ cánh hoàn tất.
+
+Để đánh giá soft landing hoàn chỉnh, cần định nghĩa điều kiện tiếp đất theo mô hình, chẳng hạn sai số ngang, khoảng cách tới mặt pad, vận tốc tương đối ngang/đứng, và tín hiệu tiếp xúc nếu có. Sau đó xác định hành vi điều khiển khi tiếp xúc và khi mất validity kéo dài. Các điều kiện/ngưỡng này chưa được triển khai trong hai file guidance và selector hiện tại.
+
+## 13. Tài liệu tham chiếu
+
+- Bài báo người dùng cung cấp: *Terminal-Angle-Constrained Guidance based on Sliding Mode Control for UAV Soft Landing on Ground Vehicles*. File PDF gốc nằm trong thư mục `E:\VDT 2026\Quadrotor\Soft landing`.
+- [MathWorks — Integrator](https://www.mathworks.com/help/simulink/slref/integrator.html): external initial condition, reset và state port.
+- [MathWorks — Switch](https://www.mathworks.com/help/simulink/slref/switch.html): chọn cổng theo tín hiệu điều khiển và tiêu chí.
+- [MathWorks — MATLABFunctionConfiguration](https://www.mathworks.com/help/simulink/slref/simulink.matlabfunctionconfiguration.html): Update method và Sample time.
+- [MathWorks — Continuous-time MATLAB functions và persistent variables](https://www.mathworks.com/help/simulink/gui/enablecontinuoustimematlabfunctionstowritetoinitializedpersistentvariables.html): cấu hình cho phép cập nhật persistent khi chạy liên tục.
