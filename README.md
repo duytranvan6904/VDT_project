@@ -1,6 +1,6 @@
 # VDT_project
  Hệ thống bám mục tiêu động thời gian thực và tránh vật cản tự động cho Quadrotors sử dụng ROS 2, PX4 Autopilot, YOLO + ByteTrack, EKF và Improved APF.
-# APF Planner for 1 Quadrotor
+# APF Planner 2D for Quadrotor
 
 Hàm `APFplanner_1_Obstacle` sử dụng phương pháp **Artificial Potential Field (APF)** để tạo lệnh vận tốc cho UAV 2D, dựa trên vị trí hiện tại, vị trí đích và vị trí các vật cản.
 
@@ -122,7 +122,7 @@ V_cmd   [1×3]
 yaw_cmd [1×1]
 Stop    [1×1]
 ```
-# IAPF Planner for UAV 3D
+# IAPF Planner 3D for Quadrotor
 
 Hàm `IAPF_Planner_3D_MultiObs` triển khai thuật toán **Improved Artificial Potential Field (IAPF)** để tạo lệnh vận tốc cho UAV trong không gian 3D.
 
@@ -614,3 +614,5 @@ Speed Scheduling
 ```
 
 để tạo lệnh vận tốc 3D cho UAV tránh vật cản và tiến tới goal.
+
+# Soft Landing for Quadrotor 
