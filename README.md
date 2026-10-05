@@ -810,7 +810,7 @@ Các con số này là tham số của bản cài đặt hiện tại, không ph
 
 Trong ảnh Simulink đã trao đổi, `Vt` và `dVt` đang được nối Constant `0`. Nếu mô phỏng target chuyển động, cần cấp trạng thái chuyển động target phù hợp cho guidance và các khối tính hình học.
 
-## 6. Quản lý chuyển pha bằng APFLandingSelector
+## 6. Quản lý chuyển pha bằng LandingModeManager
 
 ### 6.1. Giao diện hiện tại
 
