@@ -625,18 +625,18 @@ Tài liệu bám theo `GuidanceLaw.m`, `APFLandingSelector.m` và sơ đồ Simu
 
 | Khối | Nhiệm vụ | Đầu ra chính |
 |---|---|---|
-| `APF_Planner` | Tạo lệnh tiếp cận/bám target từ vị trí UAV, target và thông tin vật cản | Vector vận tốc APF và yaw APF |
-| Tính trạng thái từ vận tốc thực | Đổi vận tốc đo được sang tốc độ và góc quỹ đạo | `Vp_actual`, `alpha_p_actual`, `gamma_p_actual` |
-| Tính hình học tương đối và LOS | Tính khoảng cách, tốc độ khoảng cách và tốc độ quay đường ngắm | `Rxy`, `dRxy`, `Rz`, `dRz`, `psi`, `dpsi`, `validLOS` |
-| Mặt trượt | Biểu diễn sai số khoảng cách và các ràng buộc góc | `S = [S1; S2; S3]` |
-| [GuidanceLaw.m](GuidanceLaw.m) | Giải hệ phương trình dẫn đường, bảo vệ số và giới hạn lệnh | Ba đạo hàm và `validGuidance` |
-| [APFLandingSelector.m](APFLandingSelector.m) | Chốt pha, chốt giá trị khởi tạo, phát reset và cho phép/chặn đạo hàm | `landingMode`, `resetIntegrator`, ba `x0`, ba đạo hàm vào Integrator |
+| APF_Planner | Tạo lệnh tiếp cận/bám target từ vị trí UAV, target và thông tin vật cản | Vector vận tốc APF và yaw APF |
+| VelocityToFlightState.m | Đổi vận tốc đo được sang tốc độ và góc quỹ đạo | `Vp_actual`, `alpha_p_actual`, `gamma_p_actual` |
+| DistUAVtoHpad.m | Tính khoảng cách và góc của đường ngắm | `Rxy`, `psi` |
+| SlidingSurface.m | Biểu diễn sai số khoảng cách và các ràng buộc góc | `S = [S1; S2; S3]` |
+| GuidanceLaw.m | Giải hệ phương trình dẫn đường, bảo vệ số và giới hạn lệnh | Ba đạo hàm và `validGuidance` |
+| LandingModeManager.m | Chốt pha, chốt giá trị khởi tạo, phát reset và cho phép/chặn đạo hàm | `landingMode`, `resetIntegrator`, ba `x0`, ba đạo hàm vào Integrator |
+| HoriRangeRate.m | Tính tốc độ thay đổi của đường ngắm LOS | `dRxy` |
+| LOSRate.m | Tính tốc độ thay đổi của góc đường ngắm LOS và xuất cờ valid tránh điểm kỳ dị khi Rxy tiến đến 0 | `dpsi` và `valid` |
+| VerticalDist.m | Tính khoảng cách theo trục Z và tốc độ thay đổi khoảng cách theo trục Z giữa UAV và Hpad | `Rz` và `dRz` |
+| VelComponents.m | Đổi trạng thái tham chiếu Landing sang vận tốc Cartesian | Vector vận tốc Landing |
 | Ba Integrator | Tạo tham chiếu tốc độ và góc quỹ đạo Landing | `Vp_Landing`, `alpha_p_Landing`, `gamma_p_Landing` |
-| `VelComponents` | Đổi trạng thái tham chiếu Landing sang vận tốc Cartesian | Vector vận tốc Landing |
 | Hai Switch | Chọn lệnh vận tốc và yaw từ APF hoặc Landing | Lệnh đưa vào bộ điều khiển UAV |
-| Bộ điều khiển và UAV | Bám lệnh được chọn; sinh chuyển động và dữ liệu phản hồi | Vị trí, vận tốc thực và tư thế UAV |
-
-`LandingModeManager.m` là phiên bản quản lý pha trước đây. Khi dùng cấu trúc trong README này, `APFLandingSelector.m` là khối quản lý pha; không cần thêm một bộ quản lý pha thứ hai.
 
 ## 2. Sơ đồ luồng tín hiệu
 
