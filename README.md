@@ -617,9 +617,8 @@ Speed Scheduling
 
 # Luồng xử lý thuật toán Soft Landing UAV
 
-Tài liệu mô tả mô hình Simulink đang xây dựng: UAV dùng **APF để tiếp cận và bám target**, sau đó chuyển một chiều sang **Landing bằng Sliding Mode Guidance**. Bộ điều khiển vận tốc và mô hình động lực học UAV nhận lệnh từ pha đang được chọn.
+Tài liệu mô tả mô hình Simulink đang xây dựng: UAV dùng **IAPF để tiếp cận và bám Hpad**, sau đó chuyển một chiều sang **Soft Landing bằng Sliding Mode Control**. Bộ điều khiển vận tốc và mô hình động lực học UAV nhận lệnh từ pha đang được chọn. Thuật toán này có thể triển khai cho Hpad di động tuy nhiên trong mô phỏng Hpad được giả định đứng yên (Vận tốc và gia tốc = 0). Code Matlab của các khối nằm trong folder Soft Landing.
 
-Tài liệu bám theo `GuidanceLaw.m`, `APFLandingSelector.m` và sơ đồ Simulink đã trao đổi. Đây là mô tả của cấu trúc APF + Landing hiện tại; pha APF là lựa chọn của mô hình này, không phải khẳng định rằng bài báo gốc dùng APF.
 
 ## 1. Các khối chính
 
@@ -635,6 +634,7 @@ Tài liệu bám theo `GuidanceLaw.m`, `APFLandingSelector.m` và sơ đồ Simu
 | LOSRate.m | Tính tốc độ thay đổi của góc đường ngắm LOS và xuất cờ valid tránh điểm kỳ dị khi Rxy tiến đến 0 | `dpsi` và `valid` |
 | VerticalDist.m | Tính khoảng cách theo trục Z và tốc độ thay đổi khoảng cách theo trục Z giữa UAV và Hpad | `Rz` và `dRz` |
 | VelComponents.m | Đổi trạng thái tham chiếu Landing sang vận tốc Cartesian | Vector vận tốc Landing |
+| LandingStop.m | Điều kiện để nhận biết đã chạm đến Hpad và ngắt động cơ | `stop` |
 | Ba Integrator | Tạo tham chiếu tốc độ và góc quỹ đạo Landing | `Vp_Landing`, `alpha_p_Landing`, `gamma_p_Landing` |
 | Hai Switch | Chọn lệnh vận tốc và yaw từ APF hoặc Landing | Lệnh đưa vào bộ điều khiển UAV |
 
@@ -653,7 +653,7 @@ flowchart TD
     SURFACE --> GUIDANCE
     STATES --> GUIDANCE
     TARGET --> GUIDANCE
-    GUIDANCE -->|Đạo hàm và validGuidance| MANAGER[APFLandingSelector]
+    GUIDANCE -->|Đạo hàm và validGuidance| MANAGER[LandingModeManager]
     STATES --> MANAGER
     LOS -->|Rxy| MANAGER
     MANAGER -->|Đạo hàm đã chặn hoặc cho qua| INTS[Ba Integrator]
