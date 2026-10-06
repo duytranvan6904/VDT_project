@@ -509,7 +509,12 @@ class DualScaleArUcoDetector:
         # Build OpenCV Board object
         obj_points = [self.big_corners_3d, self.small_corners_3d]
         board_ids = np.array([self.big_id, self.small_id], dtype=np.int32)
-        self.board = cv2.aruco.Board_create(obj_points, self.aruco_dict, board_ids)
+        if hasattr(cv2.aruco, "Board_create"):
+            self.board = cv2.aruco.Board_create(obj_points, self.aruco_dict, board_ids)
+        elif hasattr(cv2.aruco, "Board"):
+            self.board = cv2.aruco.Board(obj_points, self.aruco_dict, board_ids)
+        else:
+            raise AttributeError("OpenCV cv2.aruco has neither Board_create nor Board constructor")
         
         # Base ArUco detector
         marker_sizes = {self.big_id: self.big_size_m, self.small_id: self.small_size_m}
@@ -520,6 +525,13 @@ class DualScaleArUcoDetector:
             dist_coeffs=self.dist_coeffs,
             target_marker_ids=[self.big_id, self.small_id]
         )
+
+    def set_camera_parameters(self, camera_matrix: np.ndarray, dist_coeffs: Optional[np.ndarray] = None):
+        """Update camera intrinsic matrix and distortion coefficients."""
+        self.camera_matrix = camera_matrix
+        if dist_coeffs is not None:
+            self.dist_coeffs = dist_coeffs
+        self.base_detector.set_camera_parameters(self.camera_matrix, self.dist_coeffs)
 
     def detect(
         self,

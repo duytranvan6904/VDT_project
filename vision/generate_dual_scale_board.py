@@ -62,11 +62,19 @@ def create_dual_scale_board(
     
     total_px = big_px + 2 * margin_px
     
+    # Cross-version ArUco marker drawing
+    def _draw_marker(dict_obj, marker_id, size):
+        if hasattr(cv2.aruco, "generateImageMarker"):
+            return cv2.aruco.generateImageMarker(dict_obj, marker_id, size)
+        elif hasattr(cv2.aruco, "drawMarker"):
+            return cv2.aruco.drawMarker(dict_obj, marker_id, size)
+        raise AttributeError("cv2.aruco has neither generateImageMarker nor drawMarker")
+
     # 1. Draw outer big marker
-    big_marker = cv2.aruco.drawMarker(dictionary, big_id, big_px)
+    big_marker = _draw_marker(dictionary, big_id, big_px)
     
     # 2. Draw inner small marker
-    small_marker = cv2.aruco.drawMarker(dictionary, small_id, small_px)
+    small_marker = _draw_marker(dictionary, small_id, small_px)
     
     # 3. Create white quiet zone patch for inner marker
     patch = np.ones((small_patch_px, small_patch_px), dtype=np.uint8) * 255
