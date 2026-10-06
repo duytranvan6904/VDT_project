@@ -735,6 +735,10 @@ def main():
                 sys.executable, os.path.join(sim_dir, 'perception', 'ekf_ros_adapter.py'),
                 *params_args,
             ]),
+            ('Covariance Gate', [
+                sys.executable, os.path.join(sim_dir, 'control', 'covariance_gate.py'),
+                *params_args,
+            ]),
             ('APF Planner', [
                 sys.executable, os.path.join(sim_dir, 'control', 'apf_planner.py'),
                 *params_args,

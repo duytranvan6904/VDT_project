@@ -54,6 +54,20 @@ aruco_sim_node:
     min_detection_distance_m: 0.05
     max_detection_distance_m: 15.0
 
+covariance_gate_node:
+  ros__parameters:
+    use_sim_time: true
+    pad_radius_m: 0.25
+    confidence_sigma: 2.0
+    max_measurement_age_s: 0.5
+    max_horizontal_distance_m: 5.0
+    rswitch_base_m: 1.5
+    rswitch_alpha: 1.0
+    sliding_beta: 2.0
+    default_drone_eph_m: 0.10
+    default_drone_epv_m: 0.15
+    eval_rate_hz: 20.0
+
 ibvs_controller:
   ros__parameters:
     use_sim_time: true
