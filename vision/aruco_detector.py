@@ -134,6 +134,11 @@ class ArUcoDetector:
         self.parameters.polygonalApproxAccuracyRate = 0.05
         self.parameters.minCornerDistanceRate = 0.02
 
+        # Crucial for dual-scale landing pad & outer canvas margins!
+        # The default 0.05 groups the 50cm outer canvas boundary and the 40cm marker into duplicates,
+        # causing OpenCV to discard the 40cm outer marker. Setting to 0.005 allows nested markers and margins.
+        self.parameters.minMarkerDistanceRate = 0.005
+
     def get_marker_size(self, marker_id: int) -> float:
         """Get physical side length in meters for a specific marker ID."""
         return float(self.marker_sizes.get(marker_id, self.default_marker_size))
@@ -590,6 +595,16 @@ class DualScaleArUcoDetector:
             None,
             None
         )
+
+        # Fallback to single marker pose if estimatePoseBoard returns 0 or fails
+        if (retval == 0 or rvec is None or tvec is None) and len(detected_ids) > 0:
+            preferred_id = self.small_id if self.small_id in detected_ids else self.big_id
+            for res_m in single_results:
+                if res_m["id"] == preferred_id and res_m.get("rvec") is not None and res_m.get("tvec") is not None:
+                    rvec = res_m["rvec"]
+                    tvec = res_m["tvec"]
+                    retval = 1
+                    break
 
         if retval > 0 and rvec is not None and tvec is not None:
             rvec_flat = rvec.reshape(3, 1)

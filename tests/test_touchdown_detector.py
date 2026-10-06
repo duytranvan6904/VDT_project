@@ -120,6 +120,13 @@ class TestTouchdownDetector(unittest.TestCase):
         )
         self.assertTrue(res2.touchdown_confirmed)
 
+    def test_detector_reset_clears_latched_touchdown(self):
+        """Calling reset() must unlatch touchdown state completely."""
+        self.detector.is_latched = True
+        self.detector.reset()
+        self.assertFalse(self.detector.is_latched)
+        self.assertIsNone(self.detector.confirm_start_time)
+
 
 if __name__ == '__main__':
     unittest.main()

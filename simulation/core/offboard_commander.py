@@ -261,7 +261,7 @@ class OffboardCommander(Node):
             self.yaw_enu = msg.data
 
     def touchdown_cb(self, msg: Bool):
-        if msg.data and self.offboard_engaged:
+        if msg.data and self.offboard_engaged and self.phase == 'LAND':
             self.get_logger().info('🏆 Touchdown signal received! Disengaging offboard and sending DISARM.')
             self.offboard_engaged = False
             self.current_yaw_ned = None

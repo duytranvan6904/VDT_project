@@ -246,15 +246,17 @@ class TouchdownDetectorNode(Node):
         self.drone_odom: Optional[Odometry] = None
         self.optical_z: Optional[float] = None
         self.last_optical_time: float = 0.0
-        self.commanded_vz: float = -0.20  # default assumption during landing
+        self.commanded_vz: float = 0.0  # default zero
         self.px4_landed: bool = False
+        self.phase: str = 'IDLE'
         self.last_log_time: float = 0.0
 
         # Subscriptions
         self.create_subscription(Odometry, '/odom', self.odom_cb, sensor_qos)
         self.create_subscription(PointStamped, '/hpad/position_camera', self.optical_cb, 10)
         self.create_subscription(Twist, '/landing/velocity_cmd', self.cmd_cb, 10)
-        self.create_subscription(Twist, '/fsm/velocity_cmd', self.cmd_cb, 10)
+        self.create_subscription(Twist, '/mission/velocity_setpoint', self.cmd_cb, 10)
+        self.create_subscription(String, '/mission/phase', self.phase_cb, 10)
 
         # Publishers
         self.touchdown_pub = self.create_publisher(Bool, '/landing/touchdown', 10)
@@ -267,6 +269,12 @@ class TouchdownDetectorNode(Node):
             f"TouchdownDetectorNode initialized: optical_thresh={params.optical_height_threshold_m:.2f}m, "
             f"confirm_duration={params.confirmation_duration_s:.2f}s, rate={rate_hz:.1f}Hz"
         )
+
+    def phase_cb(self, msg: String):
+        prev_phase = self.phase
+        self.phase = msg.data
+        if self.phase != 'LAND':
+            self.detector.reset()
 
     def odom_cb(self, msg: Odometry):
         self.drone_odom = msg
@@ -282,6 +290,13 @@ class TouchdownDetectorNode(Node):
     def eval_loop(self):
         now = time.monotonic()
         if self.drone_odom is None:
+            return
+
+        # Touchdown detection MUST only be active during LAND phase!
+        # When hovering, taking off, or following, reset state and hold touchdown False.
+        if self.phase != 'LAND':
+            self.detector.reset()
+            self.touchdown_pub.publish(Bool(data=False))
             return
 
         actual_vz = float(self.drone_odom.twist.twist.linear.z)

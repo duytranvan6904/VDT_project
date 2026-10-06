@@ -314,7 +314,10 @@ class MissionFSMNode(Node):
         self.ibvs_yaw = msg.data
 
     def touchdown_cb(self, msg: Bool):
-        self.touchdown_detected = msg.data
+        if self.phase == MissionPhase.LAND:
+            self.touchdown_detected = msg.data
+        else:
+            self.touchdown_detected = False
 
     def safe_to_land_cb(self, msg: Bool):
         self.safe_to_land = msg.data
@@ -523,6 +526,7 @@ class MissionFSMNode(Node):
 
             if covariance_safe or legacy_safe:
                 self.phase = MissionPhase.LAND
+                self.touchdown_detected = False
                 self.get_logger().info(
                     f'Landing condition met (cov_safe={covariance_safe}, '
                     f'error={horizontal_error:.2f}m, alt={altitude:.2f}m), starting LAND.'
@@ -536,6 +540,7 @@ class MissionFSMNode(Node):
         if self.touchdown_detected or (self.has_odom and self.drone_pos[2] < 0.12):
             self.phase = MissionPhase.IDLE
             self.land_requested = False
+            self.touchdown_detected = False
             self.get_logger().info('🏆 Touchdown confirmed! Returning to IDLE.')
 
     # ── Setpoint composition ─────────────────────────────────────────────
