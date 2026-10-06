@@ -81,17 +81,17 @@ smc_guidance_node:
 ibvs_controller:
   ros__parameters:
     use_sim_time: true
-    K_pitch: 0.8
-    K_yaw: 0.85
+    K_pitch: 1.10
+    K_yaw: 1.10
     focal_x: 466.0
     focal_y: 466.0
     u0: 320.0
     v0: 240.0
     search_yaw_rate: 0.20
-    pitch_rate_limit: 1.8
-    pitch_ema_alpha: 0.30
-    pitch_pixel_trim_gain: 0.6
-    yaw_rate_limit: 0.45
+    pitch_rate_limit: 2.5
+    pitch_ema_alpha: 0.55
+    pitch_pixel_trim_gain: 0.90
+    yaw_rate_limit: 0.75
     drone_model: x500_depth_0
 
 mission_fsm:

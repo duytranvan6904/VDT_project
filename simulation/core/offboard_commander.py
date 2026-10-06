@@ -508,11 +508,12 @@ class OffboardCommander(Node):
                 self.get_logger().warning(f'Failed to set OFFBOARD mode: {e}')
 
     def _send_disarm_command(self):
-        """Send DISARM command to PX4."""
+        """Send FORCE DISARM command to PX4 on touchdown to shut off motors immediately."""
         if HAS_PX4_MSGS and self.command_pub is not None:
             msg = VehicleCommand()
             msg.command = self.VEHICLE_CMD_COMPONENT_ARM_DISARM
-            msg.param1 = 0.0   # 0 = disarm
+            msg.param1 = 0.0      # 0 = disarm
+            msg.param2 = 21196.0  # Force disarm (bypasses PX4 in-air safety check)
             msg.target_system = 1
             msg.target_component = 1
             msg.source_system = 1
@@ -520,17 +521,22 @@ class OffboardCommander(Node):
             msg.from_external = True
             msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
             self.command_pub.publish(msg)
-            self.get_logger().info('DISARM command sent to PX4 (DDS).')
+            self.get_logger().info('FORCE DISARM command sent to PX4 (DDS).')
         elif self.mav_conn is not None:
             try:
-                self.mav_conn.mav.command_long_send(
-                    1, 1,
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-                    0, 0.0, 0, 0, 0, 0, 0, 0
-                )
-                self.get_logger().info('DISARM command sent to PX4 (MAVLink).')
-            except Exception:
-                pass
+                # Send burst of 3 force-disarm packets to ensure delivery over UDP
+                for _ in range(3):
+                    self.mav_conn.mav.command_long_send(
+                        1, 1,
+                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+                        0,
+                        0.0,       # param1: 0 = disarm
+                        21196.0,   # param2: 21196 = force disarm
+                        0, 0, 0, 0, 0
+                    )
+                self.get_logger().info('✅ FORCE DISARM command sent to PX4 (MAVLink, param2=21196).')
+            except Exception as e:
+                self.get_logger().warning(f'Failed to send force disarm: {e}')
 
 
 # ---------------------------------------------------------------------------

@@ -175,6 +175,7 @@ class MissionFSMNode(Node):
         self.smc_velocity = np.zeros(3)
         self.smc_yaw_rate = 0.0
         self.last_smc_time = 0.0
+        self.mission_completed = False
 
         # ── Subscribers ──────────────────────────────────────────────────
         sensor_qos = QoSProfile(
@@ -368,7 +369,7 @@ class MissionFSMNode(Node):
         """Wait for takeoff. Chuyển pha khi drone lên trên 2.5m (gần hoàn tất cất cánh)."""
         if not self.has_odom:
             return
-        if self.drone_pos[2] >= 2.5:
+        if self.drone_pos[2] >= 2.5 and not self.mission_completed:
             # Always enter SEARCH first.  Initial detection must use the same
             # stable reacquisition handshake as a target found after loss.
             self.search_entry_hold_yaw = self.drone_yaw
@@ -523,12 +524,14 @@ class MissionFSMNode(Node):
 
             covariance_safe = bool(self.safe_to_land)
             legacy_safe = (horizontal_error < self.align_thresh and altitude < self.land_alt)
+            # Allow SMC Guidance to begin glide slope descent immediately when aligned within 1.5m and detected
+            glide_safe = (self.detected and horizontal_error < 1.5)
 
-            if covariance_safe or legacy_safe:
+            if covariance_safe or legacy_safe or glide_safe:
                 self.phase = MissionPhase.LAND
                 self.touchdown_detected = False
                 self.get_logger().info(
-                    f'Landing condition met (cov_safe={covariance_safe}, '
+                    f'Landing condition met (cov_safe={covariance_safe}, glide_safe={glide_safe}, '
                     f'error={horizontal_error:.2f}m, alt={altitude:.2f}m), starting LAND.'
                 )
 
@@ -541,7 +544,8 @@ class MissionFSMNode(Node):
             self.phase = MissionPhase.IDLE
             self.land_requested = False
             self.touchdown_detected = False
-            self.get_logger().info('🏆 Touchdown confirmed! Returning to IDLE.')
+            self.mission_completed = True
+            self.get_logger().info('🏆 Precision landing completed! Drone safely stopped on landing pad.')
 
     # ── Setpoint composition ─────────────────────────────────────────────
 

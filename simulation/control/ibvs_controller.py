@@ -373,15 +373,16 @@ class IBVSController(Node):
                     eu_eff = 0.0
                 else:
                     eu_eff = eu - math.copysign(12.0, eu)
-                # Bù perspective khi gimbal nghiêng sâu:
+                # Bù perspective khi gimbal nghiêng sâu + feedforward khi mục tiêu chuyển động:
                 pitch_cos = max(0.4, math.cos(self.gimbal_pitch_filtered))
+                # Add yaw_ff directly to desired_yaw (proportional bias), NOT accumulating endlessly on self.yaw_cmd!
+                # When target stops, yaw_ff immediately drops to 0 without residual drift!
                 desired_yaw = self.drone_yaw - self.K_yaw * (eu_eff / self.fx) * pitch_cos
+                if abs(yaw_ff) > 0.01:
+                    desired_yaw = _wrap_angle(desired_yaw + yaw_ff * 0.25)
                 self.yaw_cmd = _slew_angle(
                     self.yaw_cmd, desired_yaw, self.yaw_rate_limit * dt,
                 )
-                # Feedforward: anticipate target motion (cộng riêng biệt)
-                if abs(yaw_ff) > 0.01:
-                    self.yaw_cmd = _wrap_angle(self.yaw_cmd + yaw_ff * dt)
             elif target_is_usable and dist_h > 0.3:
                 # Không có pixel → slew về hướng predicted bearing
                 pred_dx = dx + self.target_vel[0] * 0.3

@@ -155,10 +155,13 @@ class CovarianceGate:
         dist_z = float(abs(diff[2]))
 
         # 7. Safety conditions
+        # Conical approach funnel: at approach altitudes, uncertainty is permitted to be
+        # up to funnel boundary (max(pad_radius, 0.12 * dist_z)), narrowing to 0.25m at the pad.
         reasons = []
-        if r_unc > self.pad_radius:
+        allowed_unc = max(self.pad_radius, 0.12 * dist_z)
+        if r_unc > allowed_unc:
             reasons.append(
-                f"Uncertainty radius {r_unc:.3f}m > pad radius {self.pad_radius:.3f}m"
+                f"Uncertainty radius {r_unc:.3f}m > allowed funnel {allowed_unc:.3f}m"
             )
         if measurement_age_s > self.max_measurement_age:
             reasons.append(
