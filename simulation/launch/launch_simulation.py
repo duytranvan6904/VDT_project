@@ -744,6 +744,10 @@ def main():
                 *params_args,
                 *apf_extra_args,
             ]),
+            ('SMC Guidance', [
+                sys.executable, os.path.join(sim_dir, 'control', 'smc_guidance.py'),
+                *params_args,
+            ]),
             ('IBVS Controller', [
                 sys.executable, os.path.join(sim_dir, 'control', 'ibvs_controller.py'),
                 *params_args,
