@@ -1,0 +1,386 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- GÓI HỖ TRỢ TIẾNG VIỆT VÀ FONT CHỮ ---
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese,english]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.2cm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+% --- ĐỊNH DẠNG TIÊU ĐỀ ---
+\titleformat{\section}{\large\bfseries\color{blue!80!black}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{black!90}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\small\bfseries\color{black!80}}{\thesubsubsection.}{0.5em}{}
+
+\begin{document}
+\selectlanguage{vietnamese}
+
+% --- PHẦN TIÊU ĐỀ BÁO CÁO ---
+\begin{center}
+    {\large \textbf{BÁO CÁO ĐỀ XUẤT KỸ THUẬT}}\\[0.3em]
+    {\LARGE \textbf{\color{blue!85!black}THIẾT KẾ GIẢI PHÁP HẠ CÁNH CHÍNH XÁC (PRECISION LANDING)\\ TRÊN BÃI ĐÁP ARUCO CHO QUADROTOR}}\\[0.4em]
+    {\large \textit{Tích hợp Covariance-Aware Gating, Nested Dual-Scale ArUco Board và Sliding Mode Control}}
+    \vspace{0.8em}
+\end{center}
+
+\begin{tabular}{ll}
+    \textbf{Dự án:} & VDT Quadrotor Autonomous Navigation and Landing System \\
+    \textbf{Người lập đề xuất:} & Kỹ sư Duy (Vision \& Estimation Lead) \\
+    \textbf{Kính gửi:} & Trưởng nhóm / Trưởng phòng Kỹ thuật \\
+    \textbf{Ngày trình duyệt:} & Tháng 10, 2026
+\end{tabular}
+
+\vspace{0.8em}
+\hrule height 1.2pt
+\vspace{1.2em}
+
+% --- TÓM TẮT ĐỀ XUẤT ---
+\section*{TÓM TẮT ĐỀ XUẤT (EXECUTIVE SUMMARY)}
+Sau khi hoàn thiện và thử nghiệm thành công pipeline phát hiện, bám bắt mục tiêu (\textit{Tracking \& Follow}), giai đoạn then chốt tiếp theo là thực hiện **Hạ cánh chính xác (Precision Landing)** trên bãi đáp H-Pad gắn marker ArUco cố định. 
+
+Báo cáo này đề xuất giải pháp kỹ thuật giải quyết triệt để các bài toán thực tế đã được Trưởng phòng lưu ý và các giới hạn quang học phần cứng:
+\begin{enumerate}[noitemsep,topsep=2pt]
+    \item \textbf{Khắc phục sai số ước lượng vị trí:} Kết hợp hiệp phương sai ($Covariance$) từ cả hai bộ lọc EKF (Target EKF và PX4 EKF2) để thiết lập cơ chế giám sát an toàn (\textit{Covariance-Gated Landing}).
+    \item \textbf{Loại bỏ trôi dạt GPS và mở rộng dải độ cao nhận dạng:} Áp dụng chiến lược định vị tương đối (\textit{Marker-Relative Strategy}) kết hợp cấu trúc **mốc kép lồng nhau (Nested Dual-Scale ArUco Board)**. Giải pháp này giúp camera duy trì nhận diện liên tục từ cự ly xa ($5\text{ m}$) xuống tận cự ly cực gần ($5\text{ cm}$) mà không lo tràn khung hình, đưa sai số tiếp đất về mức $\sim 1$--$3\text{ cm}$.
+    \item \textbf{Đảm bảo tầm nhìn camera và tiếp đất êm ái:} Kế thừa thuật toán điều khiển trượt (SMC) theo quỹ đạo tiếp cận nghiêng $45^\circ$, kết hợp cơ chế ngắt động cơ an toàn dựa trên dung hợp đa cảm biến khi tiếp đất.
+\end{enumerate}
+
+---
+
+\section{ĐẶT VẤN ĐỀ VÀ MỤC TIÊU KỸ THUẬT}
+
+\subsection{Thách thức kỹ thuật khi chuyển sang pha Landing}
+Trong pha theo dõi bay cao, sai số vị trí $\pm 0.5\text{ m}$ là hoàn toàn chấp nhận được. Tuy nhiên, khi hạ cánh xuống bãi đáp có kích thước giới hạn (đường kính $D_{pad} \approx 40\text{ cm}$):
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Cộng dồn sai số độc lập:} Cả vị trí bãi đáp và vị trí drone đều được ước lượng qua các bộ lọc xác suất (EKF). Nếu tính toán trong hệ quy chiếu toàn cầu (Global Frame), sai số định vị GPS của drone ($\sim 0.5$--$1.5\text{ m}$) cộng dồn với sai số nhận dạng thị giác sẽ khiến drone đáp trượt khỏi bãi đáp dù thuật toán điều khiển chạy đúng.
+    \item \textbf{Nghịch lý tỷ lệ góc mở camera (Single Marker Paradox):} Nếu chỉ dùng 1 marker đơn:
+    \begin{itemize}[noitemsep]
+        \item Marker lớn ($15$--$20\text{ cm}$): Khi drone hạ xuống độ cao thấp ($< 0.4\text{ m}$), marker sẽ bị tràn ra ngoài góc mở (FOV) của camera hoặc các góc bị cắt bởi biên ảnh, làm mất hoàn toàn tín hiệu PnP.
+        \item Marker nhỏ ($3$--$5\text{ cm}$): Khi ở độ cao lớn ($> 2\text{ m}$), marker quá bé trên cảm biến, không thể phát hiện được.
+    \end{itemize}
+    \item \textbf{Hiện tượng nảy khi tiếp đất (Ground Effect \& Bounce):} Khi chạm đất, nếu không phát hiện kịp thời để ngắt động cơ (\textit{Disarm}), phản lực mặt đất và hiệu ứng mặt đất sẽ làm vòng lặp điều khiển vận tốc hiểu nhầm và gây giật nảy, lật máy bay.
+\end{itemize}
+
+\subsection{Mục tiêu cốt lõi của đề xuất}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item Hạ cánh an toàn, êm ái trên H-Pad đứng yên; sai số chạm đất $< 10\text{ cm}$ (hướng tới $< 3\text{ cm}$ nhờ Nested Marker), vận tốc tiếp đất $< 0.3\text{ m/s}$.
+    \item Duy trì vòng lặp điều khiển thị giác kín (\textit{Closed-loop Visual Feedback}) liên tục từ độ cao $5\text{ m}$ xuống tận thời điểm chạm đất ($5\text{ cm}$).
+    \item Tự động treo dừng (\textit{Hover/Hold}) hoặc hủy hạ cánh nếu hiệp phương sai sai số vượt ngưỡng an toàn.
+    \item Phát hiện chạm đất chuẩn xác bằng phần cứng sẵn có và gửi lệnh Disarm tin cậy qua PX4.
+\end{itemize}
+
+---
+
+\section{NGUỒN DỮ LIỆU VÀ CƠ CHẾ THU THẬP THÔNG TIN}
+Đề xuất sử dụng các luồng thông tin sẵn có từ kiến trúc phần cứng hiện tại, kết hợp tối ưu hóa mẫu in bãi đáp:
+
+\subsection{Dữ liệu thị giác: Cấu trúc Nested Dual-Scale ArUco Board}
+Để khắc phục hiện tượng mất dấu khi đến gần mặt đất, bãi đáp H-Pad ($40\text{ cm} \times 40\text{ cm}$) được thiết kế tích hợp **2 marker ArUco đồng tâm lồng nhau**:
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Marker ngoài (Outer Marker - ID 42, $20\text{ cm}$):} Kích thước lớn, tối ưu hóa cho nhận diện thô từ xa ở dải độ cao $0.8\text{ m} \to 5.0\text{ m}$.
+    \item \textbf{Marker trong (Inner Marker - ID 43, $4\text{ cm}$):} Kích thước nhỏ, nằm chính giữa tâm của ID 42, tối ưu hóa cho nhận diện tinh cự ly gần ở dải độ cao $0.05\text{ m} \to 0.8\text{ m}$.
+    \item \textbf{Thuật toán ước lượng ArUco Board:} Sử dụng hàm \texttt{cv2.aruco.estimatePoseBoard()} với cấu hình tọa độ 3D chung gốc. Cho dù camera nhìn thấy marker lớn, marker nhỏ, hay cả hai marker cùng lúc, thuật toán đều suy ra **duy nhất một vector tương đối tới đúng tâm bãi đáp** mà không gây hiện tượng giật bước (no step jump).
+    \item \textbf{Dữ liệu xuất ra:} Vector tịnh tiến tương đối $\mathbf{t}_c = [x_c, y_c, z_c]^T$ và ma trận quay $\mathbf{R}_c$.
+\end{itemize}
+
+\subsection{Dữ liệu ước lượng bãi đáp (Target EKF Node)}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Nguồn gốc:} Node lọc Kalman mở rộng cục bộ trong không gian ROS 2.
+    \item \textbf{Trạng thái ước lượng:} $\hat{\mathbf{X}}_T = [x_T, y_T, z_T, \dot{x}_T, \dot{y}_T, \dot{z}_T]^T$.
+    \item \textbf{Trích xuất ma trận hiệp phương sai vị trí $P_{target\_pos}$:}
+    Được trích xuất trực tiếp từ khối con $3 \times 3$ của ma trận hiệp phương sai trạng thái toàn phần $P_T \in \mathbb{R}^{6 \times 6}$ trong EKF:
+    \begin{equation}
+        P_{target\_pos} = P_T[0:2, 0:2] = \begin{bmatrix}
+            \sigma_{tx}^2 & \sigma_{t\_xy} & \sigma_{t\_xz} \\
+            \sigma_{t\_xy} & \sigma_{ty}^2 & \sigma_{t\_yz} \\
+            \sigma_{t\_xz} & \sigma_{t\_yz} & \sigma_{tz}^2
+        \end{bmatrix}
+    \end{equation}
+    Được publish realtime trong trường \texttt{pose.covariance} của bản tin \texttt{geometry\_msgs/PoseWithCovarianceStamped}.
+\end{itemize}
+
+\subsection{Dữ liệu trạng thái Drone từ PX4 Autopilot (EKF2)}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Nguồn gốc:} Bộ lọc EKF2 (24 trạng thái) chạy trên bo Pixhawk, truyền qua micro-ROS / MAVLink.
+    \item \textbf{Thu thập thông số Covariance $P_{drone\_pos}$:}
+    Trích xuất từ bản tin \texttt{/fmu/out/vehicle\_local\_position}:
+    \begin{itemize}[noitemsep]
+        \item $eph$ (\textit{Horizontal Position Accuracy}): Độ lệch chuẩn sai số theo phương ngang (m).
+        \item $epv$ (\textit{Vertical Position Accuracy}): Độ lệch chuẩn sai số theo phương đứng (m).
+    \end{itemize}
+    Ma trận hiệp phương sai vị trí của drone được mô hình hóa đẳng hướng trên mặt phẳng ngang:
+    \begin{equation}
+        P_{drone\_pos} = \begin{bmatrix}
+            eph^2 & 0 & 0 \\
+            0 & eph^2 & 0 \\
+            0 & 0 & epv^2
+        \end{bmatrix}
+    \end{equation}
+    \item \textbf{Góc tư thế (Attitude) từ IMU:} Góc nghiêng thân Drone (Roll $\phi$, Pitch $\theta$, Yaw $\psi$) từ con quay hồi chuyển có độ chính xác rất cao ($< 0.5^\circ$), dùng để xoay các vector thị giác về mặt phẳng nằm ngang.
+\end{itemize}
+
+---
+
+\section{MÔ HÌNH TOÁN HỌC SAI SỐ TƯƠNG ĐỐI VÀ CƠ CHẾ COVARIANCE GATING}
+
+\subsection{Mô hình không gian trạng thái và hiệp phương sai ước lượng bãi đáp ($P_{target\_pos}$)}
+Trạng thái động học của bãi đáp được mô tả bởi vector trạng thái 6 chiều:
+\begin{equation}
+    \mathbf{x}_T = [\mathbf{p}_T^T, \mathbf{v}_T^T]^T \in \mathbb{R}^6, \quad \text{với } \mathbf{p}_T = [x_T, y_T, z_T]^T, \; \mathbf{v}_T = [\dot{x}_T, \dot{y}_T, \dot{z}_T]^T
+\end{equation}
+Bộ lọc Kalman mở rộng (EKF) duy trì ma trận hiệp phương sai sai số trạng thái $\mathbf{P}_T \in \mathbb{R}^{6 \times 6}$:
+\begin{equation}
+    \mathbf{P}_T(t) = \mathbb{E}\left[(\mathbf{x}_T(t) - \hat{\mathbf{x}}_T(t))(\mathbf{x}_T(t) - \hat{\mathbf{x}}_T(t))^T\right]
+\end{equation}
+Chu trình đệ quy EKF:
+\begin{align}
+    \text{Dự báo (Time Update):} \quad &\hat{\mathbf{x}}_T^-(k) = \mathbf{F} \hat{\mathbf{x}}_T(k-1), \quad \mathbf{P}_T^-(k) = \mathbf{F} \mathbf{P}_T(k-1) \mathbf{F}^T + \mathbf{Q}(\Delta t) \\
+    \text{Cập nhật (Measurement):} \quad &\mathbf{K}_k = \mathbf{P}_T^-(k) \mathbf{H}^T \left(\mathbf{H} \mathbf{P}_T^-(k) \mathbf{H}^T + \mathbf{R}_k\right)^{-1} \\
+    &\mathbf{P}_T(k) = (\mathbf{I} - \mathbf{K}_k \mathbf{H}) \mathbf{P}_T^-(k) (\mathbf{I} - \mathbf{K}_k \mathbf{H})^T + \mathbf{K}_k \mathbf{R}_k \mathbf{K}_k^T
+\end{align}
+Khối con hiệp phương sai vị trí 3D $\mathbf{P}_{target\_pos} \in \mathbb{R}^{3 \times 3}$ được trích xuất trực tiếp:
+\begin{equation}
+    \mathbf{P}_{target\_pos} = \mathbf{P}_T[0:2, 0:2] = \begin{bmatrix}
+        \sigma_{tx}^2 & \sigma_{t\_xy} & \sigma_{t\_xz} \\
+        \sigma_{t\_xy} & \sigma_{ty}^2 & \sigma_{t\_yz} \\
+        \sigma_{t\_xz} & \sigma_{t\_yz} & \sigma_{tz}^2
+    \end{bmatrix}
+\end{equation}
+Trên ROS 2, ma trận này được ánh xạ từ mảng 36 phần tử của \texttt{nav\_msgs/msg/Odometry}:
+$\sigma_{tx}^2 = \text{cov}[0], \; \sigma_{t\_xy} = \text{cov}[1], \; \sigma_{ty}^2 = \text{cov}[7], \; \sigma_{tz}^2 = \text{cov}[14]$.
+
+\subsection{Mô hình hiệp phương sai ước lượng trạng thái Drone ($P_{drone\_pos}$)}
+Vị trí drone $\mathbf{p}_D = [x_D, y_D, z_D]^T$ trong hệ quy chiếu cục bộ NED được ước lượng bởi PX4 EKF2. Sai số vị trí 1-sigma được PX4 chuẩn hóa qua bản tin \texttt{vehicle\_local\_position}:
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item $eph = \sigma_h = \sqrt{\sigma_N^2 + \sigma_E^2}$: Độ lệch chuẩn vị trí phương ngang (Horizontal Position Error Metric, m).
+    \item $epv = \sigma_v = \sigma_D$: Độ lệch chuẩn vị trí phương thẳng đứng (Vertical Position Error Metric, m).
+\end{itemize}
+Mô hình ma trận hiệp phương sai vị trí drone được thiết lập theo giả định đẳng hướng trên mặt phẳng ngang:
+\begin{equation}
+    \mathbf{P}_{drone\_pos} = \begin{bmatrix}
+        eph^2 & 0 & 0 \\
+        0 & eph^2 & 0 \\
+        0 & 0 & epv^2
+    \end{bmatrix} \in \mathbb{R}^{3 \times 3}
+\end{equation}
+Đặc tính biến thiên thời gian thực nghiệm: $eph \in [0.03, 0.10]\text{ m}$ (RTK/VIO), $eph \in [0.30, 0.80]\text{ m}$ (GNSS tiêu chuẩn), $eph > 1.0\text{ m}$ (môi trường suy biến).
+
+\subsection{Mô hình hiệp phương sai tương đối toàn cục và Phân rã trị riêng}
+Vector sai lệch vị trí tương đối giữa tâm bãi đáp và trọng tâm drone: $\Delta \mathbf{r} = \hat{\mathbf{p}}_T - \hat{\mathbf{p}}_D$. Do hai bộ lọc hoạt động độc lập ($\mathbb{E}[(\mathbf{x}_T - \hat{\mathbf{x}}_T)(\mathbf{x}_D - \hat{\mathbf{x}}_D)^T] = \mathbf{0}$), ma trận hiệp phương sai sai số tương đối toàn phần:
+\begin{equation}
+    \mathbf{P}_{relative} = \mathbf{P}_{target\_pos} + \mathbf{P}_{drone\_pos} = \begin{bmatrix}
+        \sigma_{tx}^2 + eph^2 & \sigma_{t\_xy} & \sigma_{t\_xz} \\
+        \sigma_{t\_xy} & \sigma_{ty}^2 + eph^2 & \sigma_{t\_yz} \\
+        \sigma_{t\_xz} & \sigma_{t\_yz} & \sigma_{tz}^2 + epv^2
+    \end{bmatrix}
+\end{equation}
+Chiếu lên mặt phẳng ngang tiếp xúc $(x, y)$, ma trận $\mathbf{P}_{xy} \in \mathbb{R}^{2 \times 2}$ mô tả một **Elip sai số (Error Ellipse)**. Phân rã phổ $\mathbf{P}_{xy} = \mathbf{V} \mathbf{\Lambda} \mathbf{V}^T$ với giá trị riêng cực đại:
+\begin{equation}
+    \lambda_{max}(\mathbf{P}_{xy}) = \frac{\text{tr}(\mathbf{P}_{xy}) + \sqrt{(\text{tr}(\mathbf{P}_{xy}))^2 - 4\det(\mathbf{P}_{xy})}}{2}
+\end{equation}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Độ lệch chuẩn theo phương xấu nhất (Worst-Case Directional Uncertainty):}
+    \begin{equation}
+        \sigma_{relative\_xy} = \sqrt{\lambda_{max}(\mathbf{P}_{xy})}
+    \end{equation}
+    \item \textbf{Bán kính tin cậy 3-sigma ($99.7\%$ Confidence Ellipse):}
+    \begin{equation}
+        R_{conf\_3\sigma} = 3 \cdot \sigma_{relative\_xy} = 3 \sqrt{\lambda_{max}(\mathbf{P}_{xy})}
+    \end{equation}
+\end{itemize}
+
+\subsection{Chuẩn an toàn hạ cánh: Cơ chế Covariance Gating}
+Để đảm bảo toàn bộ diện tích tiếp xúc của khung chân drone (Landing Gear Footprint, bán kính $r_{gear}$) nằm trọn trong mặt phẳng bãi đáp (bán kính $R_{pad} = D_{pad}/2$):
+\begin{enumerate}
+    \item \textbf{Ràng buộc biên hình học:} Khoảng cách cực đại từ tâm bãi đáp đến điểm xa nhất của chân tiếp xúc với độ tin cậy $99.7\%$ là:
+    \begin{equation}
+        r_{max\_contact} = \|\Delta \hat{\mathbf{r}}_{xy}\| + R_{conf\_3\sigma} + r_{gear} \le R_{pad}
+    \end{equation}
+    \begin{equation}
+        \iff \|\Delta \hat{\mathbf{r}}_{xy}\| + 3\sqrt{\lambda_{max}(\mathbf{P}_{xy})} \le R_{pad} - r_{gear}
+    \end{equation}
+    \item \textbf{Chuẩn hóa hệ số an toàn thiết kế ($R_{pad}/2$):} Với cấu hình drone thực tế $r_{gear} \approx R_{pad}/2$, điều kiện an toàn chuyển pha (\textit{Covariance Gate}) được chuẩn hóa:
+    \begin{equation}
+        \boxed{\|\Delta \hat{\mathbf{r}}_{xy}\| + 3\sqrt{\lambda_{max}(\mathbf{P}_{xy})} \le \frac{R_{pad}}{2}}
+    \end{equation}
+    \begin{equation}
+        \text{Landing\_Authorization} = \begin{cases}
+            \text{TRUE (Cho phép hạ cánh)} & \text{khi } \|\Delta \hat{\mathbf{r}}_{xy}\| + 3\sqrt{\lambda_{max}(\mathbf{P}_{xy})} \le \frac{R_{pad}}{2} \\
+            \text{FALSE (Duy trì Hover / Abort)} & \text{khi } \|\Delta \hat{\mathbf{r}}_{xy}\| + 3\sqrt{\lambda_{max}(\mathbf{P}_{xy})} > \frac{R_{pad}}{2}
+        \end{cases}
+    \end{equation}
+\end{enumerate}
+
+\subsection{Chuyển đổi hệ quy chiếu cục bộ Marker-Relative (Triệt tiêu sai số GPS)}
+Trong điều kiện bay ngoài trời sử dụng GPS dân sự, $eph \approx 0.5$--$1.5\text{ m} > R_{pad}$, khiến điều kiện toàn cầu không thể thỏa mãn. Hệ thống áp dụng cơ chế chuyển hệ quy chiếu **Marker-Relative**:
+\begin{enumerate}[noitemsep,topsep=2pt]
+    \item Gán tâm bãi đáp làm gốc quy chiếu cục bộ $\mathcal{F}_{pad}$: $\mathbf{p}_{origin} \equiv [0, 0, 0]^T$.
+    \item Camera PnP đo trực tiếp vector tịnh tiến và ma trận quay: $\mathbf{t}_c \in \mathbb{R}^3, \; \mathbf{R}_c \in SO(3)$.
+    \item Chiếu vector đo qua ma trận góc quay Gimbal $\mathbf{R}_g$ và ma trận quay tư thế thân drone $\mathbf{R}_b^n(\phi, \theta)$ (Body-to-NED rotation matrix) trích xuất từ IMU high-rate ($>250\text{ Hz}$, sai số góc $< 0.5^\circ$):
+    \begin{equation}
+        \mathbf{r}_{rel} = \mathbf{R}_b^n \cdot \mathbf{R}_g \cdot \mathbf{t}_c = [\Delta x_{MR}, \Delta y_{MR}, \Delta z_{MR}]^T
+    \end{equation}
+    \item Vector $\mathbf{r}_{rel}$ hoàn toàn độc lập với vị trí toàn cầu $\mathbf{p}_D$ và sai số $eph$ của PX4. Hiệp phương sai trong hệ quy chiếu Marker-Relative co về thuần túy sai số thị giác máy tính:
+    \begin{equation}
+        \mathbf{P}_{relative}^{MR} \approx \mathbf{J}_{TF} \mathbf{R}_{vision} \mathbf{J}_{TF}^T \ll \mathbf{P}_{relative}^{Global} \quad (\sigma_{relative}^{MR} \approx 0.01\text{--}0.03\text{ m})
+    \end{equation}
+    Điều này giải thích tại sao điều kiện Covariance Gate được thỏa mãn ở cự ly tiếp cận.
+\end{enumerate}
+
+\subsection{Cấu hình Nested Dual-Scale ArUco Board và Tính liên tục của PnP}
+Để mở rộng dải độ cao hoạt động từ $5.0\text{ m}$ xuống tới $0.05\text{ m}$ mà không gây suy biến PnP do cắt biên ảnh (Edge Clipping), bãi đáp được thiết kế dạng **Nested ArUco Board**:
+\begin{enumerate}[noitemsep,topsep=2pt]
+    \item \textbf{Mô hình hình học bãi đáp:}
+    \begin{itemize}[noitemsep]
+        \item Outer Marker: ID 42, kích thước $L_{outer} = 20\text{ cm}$, vùng hoạt động $z \in [0.8\text{m}, 5.0\text{m}]$.
+        \item Inner Marker: ID 43, kích thước $L_{inner} = 4\text{ cm}$, đồng tâm với ID 42, vùng hoạt động $z \in [0.05\text{m}, 0.8\text{m}]$.
+    \end{itemize}
+    \item \textbf{Mô hình toán học ArUco Board:} Tập hợp 8 đỉnh 3D của hai marker được định nghĩa trên cùng mặt phẳng $Z=0$ với gốc tọa độ đặt tại tâm bãi đáp:
+    \begin{equation}
+        \mathcal{M} = \{\mathbf{P}_i^{(outer)}\}_{i=1}^4 \cup \{\mathbf{P}_j^{(inner)}\}_{j=1}^4, \quad \mathbf{P} \in \mathbb{R}^3
+    \end{equation}
+    \item \textbf{Hàm tối ưu hóa đa điểm (Multi-point PnP Optimization):}
+    \begin{equation}
+        (\mathbf{R}^*, \mathbf{t}^*) = \arg\min_{\mathbf{R}, \mathbf{t}} \sum_{k \in \mathcal{V}} \left\| \mathbf{u}_k - \pi(\mathbf{K}, \mathbf{R} \mathbf{P}_k + \mathbf{t}) \right\|^2
+    \end{equation}
+    với $\mathcal{V}$ là tập hợp các điểm góc quan sát được trong khung ảnh, $\pi(\cdot)$ là hàm chiếu phối cảnh camera.
+    \item \textbf{Tính chất liên tục và chống nhảy bước (Continuous Transition):} Do cả hai marker cùng quy chiếu về gốc tọa độ tâm $(0,0,0)$, vector nghiệm $\mathbf{t}^*(z)$ đạt tính chất liên tục $C^0$ trên toàn bộ dải độ cao chuyển tiếp $z \in [0.4\text{m}, 0.8\text{m}]$, hoàn toàn không xảy ra gián đoạn tín hiệu điều khiển.
+\end{enumerate}
+
+---
+
+\section{Ý TƯỞNG THUẬT TOÁN CHI TIẾT THEO TỪNG PHA HOẠT ĐỘNG}
+
+Quy trình hạ cánh tự động được thiết kế thành **4 pha trạng thái liên hoàn**:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.2cm and 0.8cm,
+    block/.style={rectangle, draw=blue!70, fill=blue!5, thick, rounded corners, minimum height=2.2em, text width=3.2cm, align=center, font=\small},
+    decision/.style={diamond, draw=orange!80, fill=orange!10, thick, aspect=1.8, text width=2.4cm, align=center, font=\footnotesize},
+    line/.style={draw, -{Latex[length=2.5mm]}, thick}
+]
+    \node [block] (p1) {\textbf{PHA 1: TIẾP CẬN}\\Dẫn đường Dual-EKF};
+    \node [decision, right=of p1] (gate1) {$\sigma_{rel} \le R_{pad}/2$\\Khóa Marker lớn?};
+    \node [block, right=of gate1] (p2) {\textbf{PHA 2: GLIDE-SLOPE}\\Marker-Relative SMC ($45^\circ$)\\Chuyển sang Marker nhỏ};
+    \node [decision, below=of p2] (gate2) {Sai lệch ngang\\$|\Delta r_{xy}| < 0.05\text{m}$\\Độ cao $z < 0.3\text{m}$?};
+    \node [block, left=of gate2] (p3) {\textbf{PHA 3: TIẾP ĐẤT}\\Hạ chậm có visual lock\\từ Marker nhỏ};
+    \node [block, left=of p3] (p4) {\textbf{PHA 4: NGẮT ĐỘNG CƠ}\\Đa tín hiệu Touchdown\\+ Cắt ga Disarm};
+
+    \path [line] (p1) -- (gate1);
+    \path [line] (gate1) -- node[above, font=\footnotesize] {Đạt} (p2);
+    \path [line] (gate1) |- node[near start, left, font=\footnotesize] {Chưa} ++(0,1.2) -| (p1);
+    \path [line] (p2) -- (gate2);
+    \path [line] (gate2) -- node[above, font=\footnotesize] {Đạt} (p3);
+    \path [line] (gate2) |- node[near start, right, font=\footnotesize] {Chưa} ++(1.2,0) |- (p2);
+    \path [line] (p3) -- (p4);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Pha 1: Tiếp cận và Kiểm tra sai số (Approach \& Covariance Gate)}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Nhiệm vụ:} Đưa drone từ trạng thái bay theo đuôi (\textit{Follow}) tiếp cận vào vùng lân cận bãi đáp ở độ cao an toàn ($z \approx 3$--$5\text{ m}$).
+    \item \textbf{Dữ liệu thị giác:} Bắt bám bằng **Marker lớn (ID 42)**.
+    \item \textbf{Điều kiện chuyển pha:} Marker lớn nhận dạng ổn định $\ge 10$ frames và $\sigma_{relative} \le R_{pad}/2$. Nếu chưa đạt, giữ \textit{Hover} chờ covariance hội tụ.
+\end{itemize}
+
+\subsection{Pha 2: Hạ cánh theo quỹ đạo nghiêng (Glide-Slope Marker-Relative SMC)}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Kế thừa ý tưởng từ mô phỏng Simulink của Tuân:} Quỹ đạo tiếp cận nghiêng $45^\circ$ giúp trục quang camera luôn hướng vào tâm bãi đáp, không bị che khuất.
+    \item \textbf{Chuyển giao mượt mà giữa 2 Marker (Dual-Scale Transition):}
+    \begin{itemize}[noitemsep]
+        \item Ở độ cao $z > 0.8\text{ m}$: Thuật toán sử dụng Marker lớn (ID 42).
+        \item Ở dải độ cao $0.4\text{ m} \le z \le 0.8\text{ m}$: Thuật toán ArUco Board nhận diện đồng thời cả hai marker và tự động chuyển quyền ưu tiên sang Marker nhỏ (ID 43).
+        \item Khi $z < 0.4\text{ m}$: Marker lớn tràn khung hình, Marker nhỏ đảm nhận toàn bộ việc định vị với độ phân giải góc cực cao.
+    \end{itemize}
+    \item \textbf{Luật điều khiển vận tốc SMC (Offboard):}
+    Vector sai số phẳng $\mathbf{e} = \mathbf{r}_{rel}$. Mặt trượt: $\mathbf{s} = \dot{\mathbf{e}} + \mathbf{C}\mathbf{e}$. Lệnh vận tốc:
+    \begin{equation}
+        \mathbf{v}_{cmd} = -K_p \mathbf{e} - K_s \cdot \text{sat}\left(\frac{\mathbf{s}}{\epsilon}\right)
+    \end{equation}
+\end{itemize}
+
+\subsection{Pha 3: Tiếp đất thẳng đứng cự ly gần (Terminal Vertical Descent)}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Đột phá nhờ Nested Marker:} Ở cự ly sát đất ($z < 0.3\text{ m}$), drone **KHÔNG bị mất dấu hình ảnh**. Marker nhỏ (ID 43) vẫn nằm trọn trong FOV, cung cấp phản hồi vị trí với độ chính xác milimet.
+    \item \textbf{Cơ chế hoạt động:} Triệt tiêu vận tốc ngang ($v_{x\_cmd} = v_{y\_cmd} = 0$), duy trì bám tâm bãi đáp với sai lệch ngang $< 3\text{ cm}$, hạ chậm đều với vận tốc an toàn $v_{z\_descent} \approx 0.15$--$0.2\text{ m/s}$.
+\end{itemize}
+
+\subsection{Pha 4: Nhận diện tiếp đất và Dừng động cơ (Touchdown Detection \& Disarm)}
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item \textbf{Ý tưởng dung hợp đa tín hiệu nhận diện chạm đất:}
+    Kích hoạt ngắt động cơ khi thỏa mãn đồng thời các điều kiện vật lý:
+    \begin{enumerate}[noitemsep]
+        \item \textbf{Đo khoảng cách cực gần từ Marker nhỏ:} Kích thước bounding box và độ cao PnP của Marker nhỏ xác nhận cự ly chạm sàn ($z \le 0.05\text{ m}$).
+        \item \textbf{Xung gia tốc tiếp đất (IMU Spike):} Gia tốc trục $z$ xuất hiện xung lực phản hồi từ mặt sàn ($\Delta a_z > a_{threshold}$).
+        \item \textbf{Xác nhận từ Land Detector của PX4:} Trạng thái nội bộ của PX4 phát hiện dù tăng lệnh giảm ga nhưng độ cao không còn thay đổi.
+    \end{enumerate}
+    \item \textbf{Hành động dứt khoát:} Gửi lệnh \texttt{MAV\_CMD\_COMPONENT\_ARM\_DISARM} (Disarm) ngay lập tức để triệt tiêu lực nâng, chống nảy và chống lật máy bay.
+\end{itemize}
+
+---
+
+\section{KIẾN TRÚC TÍCH HỢP HỆ THỐNG TRÊN PHẦN CỨNG THỰC TẾ}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Tầng điều khiển} & \textbf{Node phần mềm / Phần cứng} & \textbf{Chức năng chính} \\ \midrule
+\textbf{Cảm nhận (Perception)} & \texttt{realsense\_camera\_node} & Thu nhận ảnh RGB độ trễ thấp (30 fps) \\
+ & \texttt{nested\_aruco\_detector} & Xử lý ArUco Board ID 42 (20cm) + ID 43 (4cm) \\
+\midrule
+\textbf{Ước lượng (Estimation)} & \texttt{target\_ekf\_node} & EKF 6 trạng thái + tính $P_{target}$ realtime \\
+ & \texttt{px4\_bridge} (micro-ROS) & Thu nhận $eph, epv$, góc Roll/Pitch từ PX4 \\
+\midrule
+\textbf{Dẫn đường (Guidance)} & \texttt{precision\_landing\_smc\_node} & Giám sát Covariance Gate + Luật SMC $45^\circ$ \\
+ & & Quản lý chuyển mạch Dual-Scale Marker \\
+\midrule
+\textbf{Chấp hành (Execution)} & PX4 Autopilot (Firmware) & Vòng lặp PID vận tốc \& tư thế bay (250 Hz) \\
+ & Bộ 4 động cơ ESC / Brushless & Thực thi lực đẩy và ngắt Disarm khẩn cấp \\ \bottomrule
+\end{tabular}
+\end{table}
+
+---
+
+\section{KẾT LUẬN VÀ KIẾN NGHỊ PHÊ DUYỆT}
+
+\subsection{Kết luận}
+Bản đề xuất kỹ thuật này đã hoàn thiện giải pháp Precision Landing với 3 trụ cột vững chắc:
+\begin{itemize}[noitemsep,topsep=2pt]
+    \item Cơ sở toán học an toàn: Ngưỡng sai số theo **Bán kính bãi đáp / 2** và kiểm soát hướng xấu nhất qua **$\max(\text{eigenvalue})$**.
+    \item Đột phá về quang học và định vị: Kết hợp chiến lược **Marker-Relative** với **Nested Dual-Scale ArUco Board** giúp xóa bỏ hoàn toàn trôi dạt GPS và xóa bỏ vùng mù khi chạm đất.
+    \item Ổn định động lực học: Quỹ đạo tiếp cận **Glide-Slope $45^\circ$** điều khiển bằng **SMC**, phối hợp đa tín hiệu ngắt động cơ bảo đảm an toàn cơ khí.
+\end{itemize}
+
+\subsection{Kiến nghị bước tiếp theo}
+Kính đề nghị Trưởng nhóm / Trưởng phòng kỹ thuật xem xét và phê duyệt về mặt nguyên lý thiết kế để bộ phận kỹ thuật tiến hành:
+\begin{enumerate}[noitemsep]
+    \item In thử nghiệm tấm bãi đáp Nested ArUco Board (ID 42 + ID 43) theo đúng tỷ lệ thiết kế.
+    \item Hoàn thiện node ROS 2 tích hợp bộ dò kép và luật điều khiển SMC để thử nghiệm trên SITL/Gazebo trước khi bay thật.
+\end{enumerate}
+
+\vspace{1.5em}
+\begin{flushright}
+    \textbf{Người lập đề xuất}\\
+    \textit{(Ký và ghi rõ họ tên)}\\[3em]
+    \textbf{Duy}
+\end{flushright}
+
+\end{document}

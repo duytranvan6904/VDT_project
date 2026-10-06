@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 from typing import List, Tuple, Dict, Any, Optional, Union, Iterable
@@ -432,3 +433,249 @@ class ArUcoDetector:
 
             cv2.circle(img, (w - panel_w - 4, y_pos - 4), 5, color, -1)
             cv2.putText(img, row_str, (w - panel_w + 8, y_pos), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1)
+
+
+class DualScaleArUcoDetector:
+    """
+    Precision Landing Detector utilizing a Dual-Scale ArUco Board.
+    Combines:
+      - Big Outer Marker (e.g., ID 42, 40cm): Far range guidance (0.8m - 5.0m)
+      - Small Inner Marker (e.g., ID 43, 5cm): Close range touchdown guidance (0.05m - 1.2m)
+    
+    Both markers share a single origin (0, 0, 0) at the geometric center of the pad.
+    OpenCV's estimatePoseBoard fuses observed corners into a unified, zero-jump pose.
+    """
+
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        big_id: int = 42,
+        big_size_m: float = 0.40,
+        small_id: int = 43,
+        small_size_m: float = 0.05,
+        dictionary_name: str = "DICT_6X6_50",
+        camera_matrix: Optional[np.ndarray] = None,
+        dist_coeffs: Optional[np.ndarray] = None,
+    ):
+        """
+        Initialize Dual-Scale ArUco Board Detector.
+        """
+        self.camera_matrix = camera_matrix
+        self.dist_coeffs = dist_coeffs if dist_coeffs is not None else np.zeros(5, dtype=np.float32)
+        
+        # Load from config file if provided and exists
+        if config_path and os.path.exists(config_path):
+            import yaml
+            with open(config_path, "r") as f:
+                cfg = yaml.safe_load(f)
+            self.dictionary_name = cfg.get("dictionary", dictionary_name)
+            markers_cfg = cfg.get("markers", [])
+            self.big_id = markers_cfg[0]["id"]
+            self.big_size_m = float(markers_cfg[0]["size_m"])
+            self.big_corners_3d = np.array(markers_cfg[0]["corners_3d"], dtype=np.float32)
+            
+            self.small_id = markers_cfg[1]["id"]
+            self.small_size_m = float(markers_cfg[1]["size_m"])
+            self.small_corners_3d = np.array(markers_cfg[1]["corners_3d"], dtype=np.float32)
+        else:
+            self.dictionary_name = dictionary_name
+            self.big_id = int(big_id)
+            self.big_size_m = float(big_size_m)
+            self.small_id = int(small_id)
+            self.small_size_m = float(small_size_m)
+            
+            hb = self.big_size_m / 2.0
+            self.big_corners_3d = np.array([
+                [-hb,  hb, 0.0],
+                [ hb,  hb, 0.0],
+                [ hb, -hb, 0.0],
+                [-hb, -hb, 0.0]
+            ], dtype=np.float32)
+            
+            hs = self.small_size_m / 2.0
+            self.small_corners_3d = np.array([
+                [-hs,  hs, 0.0],
+                [ hs,  hs, 0.0],
+                [ hs, -hs, 0.0],
+                [-hs, -hs, 0.0]
+            ], dtype=np.float32)
+
+        if self.dictionary_name not in ARUCO_DICT_MAP:
+            raise ValueError(f"Unknown dictionary: {self.dictionary_name}")
+            
+        self.dict_id = ARUCO_DICT_MAP[self.dictionary_name]
+        self.aruco_dict = cv2.aruco.getPredefinedDictionary(self.dict_id)
+        
+        # Build OpenCV Board object
+        obj_points = [self.big_corners_3d, self.small_corners_3d]
+        board_ids = np.array([self.big_id, self.small_id], dtype=np.int32)
+        self.board = cv2.aruco.Board_create(obj_points, self.aruco_dict, board_ids)
+        
+        # Base ArUco detector
+        marker_sizes = {self.big_id: self.big_size_m, self.small_id: self.small_size_m}
+        self.base_detector = ArUcoDetector(
+            dictionary_name=self.dictionary_name,
+            marker_size_meters=marker_sizes,
+            camera_matrix=self.camera_matrix,
+            dist_coeffs=self.dist_coeffs,
+            target_marker_ids=[self.big_id, self.small_id]
+        )
+
+    def detect(
+        self,
+        color_image: np.ndarray,
+        camera_matrix: Optional[np.ndarray] = None,
+        dist_coeffs: Optional[np.ndarray] = None,
+    ) -> Dict[str, Any]:
+        """
+        Detect the dual-scale board in a frame.
+        
+        Returns:
+            Dictionary with board pose, tracking mode, and individual marker info.
+        """
+        K = camera_matrix if camera_matrix is not None else self.camera_matrix
+        D = dist_coeffs if dist_coeffs is not None else self.dist_coeffs
+        if D is None:
+            D = np.zeros(5, dtype=np.float32)
+
+        # 1. Detect individual markers with base detector
+        single_results = self.base_detector.process_frame(color_image, K, D)
+        
+        detected_ids = [res["id"] for res in single_results if res["id"] in (self.big_id, self.small_id)]
+        
+        result: Dict[str, Any] = {
+            "board_detected": False,
+            "rvec": None,
+            "tvec": None,
+            "euler_deg": None,
+            "distance_m": 0.0,
+            "active_ids": detected_ids,
+            "tracking_mode": "LOST",
+            "single_markers": single_results,
+            "num_corners_fused": 0,
+        }
+        
+        if not detected_ids or K is None:
+            return result
+
+        # 2. Extract corners and IDs matching board
+        board_corners = []
+        board_ids_list = []
+        for res in single_results:
+            if res["id"] in (self.big_id, self.small_id):
+                board_corners.append(res["corners"])
+                board_ids_list.append(res["id"])
+
+        board_ids_arr = np.array(board_ids_list, dtype=np.int32)
+
+        # 3. Solve Board PnP
+        retval, rvec, tvec = cv2.aruco.estimatePoseBoard(
+            board_corners,
+            board_ids_arr,
+            self.board,
+            K,
+            D,
+            None,
+            None
+        )
+
+        if retval > 0 and rvec is not None and tvec is not None:
+            rvec_flat = rvec.reshape(3, 1)
+            tvec_flat = tvec.reshape(3, 1)
+            dist = float(np.linalg.norm(tvec_flat))
+            euler = rvec_to_euler(rvec_flat, degrees=True)
+            
+            # Determine tracking mode
+            if self.big_id in detected_ids and self.small_id in detected_ids:
+                mode = "DUAL_FUSED"
+            elif self.small_id in detected_ids:
+                mode = "INNER_FINE"
+            else:
+                mode = "OUTER_COARSE"
+
+            result.update({
+                "board_detected": True,
+                "rvec": rvec_flat,
+                "tvec": tvec_flat,
+                "euler_deg": euler,
+                "distance_m": dist,
+                "tracking_mode": mode,
+                "num_corners_fused": retval * 4,
+            })
+
+        return result
+
+    def draw_visualizations(
+        self,
+        color_image: np.ndarray,
+        board_result: Dict[str, Any],
+        camera_matrix: Optional[np.ndarray] = None,
+        dist_coeffs: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """
+        Draw visual axes and tracking HUD overlay on the image.
+        """
+        K = camera_matrix if camera_matrix is not None else self.camera_matrix
+        D = dist_coeffs if dist_coeffs is not None else self.dist_coeffs
+        # Ensure 3-channel image for drawing
+        if len(color_image.shape) == 2:
+            annotated_base = cv2.cvtColor(color_image, cv2.COLOR_GRAY2BGR)
+        else:
+            annotated_base = color_image.copy()
+
+        # Base visualization of individual markers
+        annotated = self.base_detector.draw_results(
+            annotated_base,
+            board_result["single_markers"],
+            K,
+            D,
+            draw_axes=False,
+            draw_summary_table=False
+        )
+
+        h, w = annotated.shape[:2]
+
+        if board_result["board_detected"] and K is not None:
+            rvec = board_result["rvec"]
+            tvec = board_result["tvec"]
+            mode = board_result["tracking_mode"]
+            dist_m = board_result["distance_m"]
+            
+            # Draw board center axis (origin of H-Pad)
+            axis_len = 0.20 if mode != "INNER_FINE" else 0.08
+            draw_axis_3d(annotated, K, D, rvec, tvec, length=axis_len, thickness=3)
+
+            # Project center point
+            center_2d, _ = cv2.projectPoints(np.zeros((1, 3), dtype=np.float32), rvec, tvec, K, D)
+            cx, cy = int(center_2d[0, 0, 0]), int(center_2d[0, 0, 1])
+            if 0 <= cx < w and 0 <= cy < h:
+                cv2.circle(annotated, (cx, cy), 7, (0, 0, 255), -1)
+                cv2.circle(annotated, (cx, cy), 12, (0, 255, 255), 2)
+                cv2.putText(
+                    annotated, "PAD CENTER (0,0)",
+                    (cx + 15, cy + 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2
+                )
+
+            # Draw top HUD banner
+            mode_colors = {
+                "DUAL_FUSED": (0, 255, 0),     # Bright Green
+                "INNER_FINE": (0, 215, 255),   # Gold / Yellow
+                "OUTER_COARSE": (255, 165, 0), # Orange
+            }
+            color = mode_colors.get(mode, (200, 200, 200))
+            
+            hud_text = (
+                f"BOARD: {mode} | IDs: {board_result['active_ids']} | "
+                f"Z: {tvec[2,0]:.2f}m | Dist: {dist_m:.2f}m"
+            )
+            cv2.rectangle(annotated, (10, 10), (w - 10, 45), (20, 20, 20), -1)
+            cv2.rectangle(annotated, (10, 10), (w - 10, 45), color, 2)
+            cv2.putText(annotated, hud_text, (20, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        else:
+            cv2.rectangle(annotated, (10, 10), (320, 45), (20, 20, 20), -1)
+            cv2.rectangle(annotated, (10, 10), (320, 45), (0, 0, 255), 2)
+            cv2.putText(annotated, "BOARD: TARGET LOST", (20, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+        return annotated
+

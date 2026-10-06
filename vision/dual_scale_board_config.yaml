@@ -1,0 +1,22 @@
+dictionary: DICT_6X6_50
+board_type: nested_dual_scale
+total_pad_size_m: 0.5
+markers:
+- id: 42
+  role: outer_coarse
+  size_m: 0.4
+  effective_range_m: [0.8, 5.0]
+  corners_3d:
+  - [-0.2, 0.2, 0.0]
+  - [0.2, 0.2, 0.0]
+  - [0.2, -0.2, 0.0]
+  - [-0.2, -0.2, 0.0]
+- id: 43
+  role: inner_fine
+  size_m: 0.05
+  effective_range_m: [0.05, 1.2]
+  corners_3d:
+  - [-0.025, 0.025, 0.0]
+  - [0.025, 0.025, 0.0]
+  - [0.025, -0.025, 0.0]
+  - [-0.025, -0.025, 0.0]
