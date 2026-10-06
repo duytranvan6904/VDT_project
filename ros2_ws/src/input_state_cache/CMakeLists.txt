@@ -12,6 +12,19 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(launch_testing_ament_cmake REQUIRED)
+
+  ament_add_gtest(input_cache_logic_test
+    test/test_input_cache_logic.cpp
+    src/input_cache_logic.cpp)
+  target_include_directories(input_cache_logic_test PRIVATE include)
+
+  add_launch_test(test/test_input_cache_ros.py TIMEOUT 60)
+  add_launch_test(test/test_input_cache_rosbag.py TIMEOUT 120)
+endif()
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
