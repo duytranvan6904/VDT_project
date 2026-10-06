@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <limits>
 
 namespace offboard_manager
 {
@@ -19,14 +20,16 @@ enum class SetpointType
   VELOCITY
 };
 
+// World ENU. yaw is the ENU heading in rad; NaN means hold current yaw.
 struct PlannerOutput
 {
   float vx = 0.0f;
   float vy = 0.0f;
   float vz = 0.0f;
-  float yaw = 0.0f;
+  float yaw = std::numeric_limits<float>::quiet_NaN();
 };
 
+// PX4 NED. yaw is the NED heading in rad; NaN means hold current yaw.
 struct Setpoint
 {
   SetpointType type = SetpointType::VELOCITY;
@@ -36,7 +39,7 @@ struct Setpoint
   float vx = 0.0f;
   float vy = 0.0f;
   float vz = 0.0f;
-  float yaw = 0.0f;
+  float yaw = std::numeric_limits<float>::quiet_NaN();
   float yaw_rate = 0.0f;
   bool use_yaw_rate = false;
 };

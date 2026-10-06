@@ -1,0 +1,11 @@
+vision_interface_bridge:
+  ros__parameters:
+    use_sim_time: false
+    image_width: 640.0
+    image_height: 480.0
+    camera_info_topic: /camera_info
+    detected_topic: /hpad/detected
+    bbox_topic: /hpad/bbox
+    marker_topic: vision/marker
+    phase_topic: /mission/phase
+    fsm_state_timeout_sec: 1.0

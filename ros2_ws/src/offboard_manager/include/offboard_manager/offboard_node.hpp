@@ -8,9 +8,9 @@
 #include <px4_msgs/msg/vehicle_status.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include "offboard_manager/offboard_types.hpp"
-#include "offboard_manager/msg/planner_output.hpp"
-#include "offboard_manager/msg/offboard_status.hpp"
-#include "input_state_cache/msg/timeout_flags.hpp"
+#include "vdt_msgs/msg/planner_output.hpp"
+#include "vdt_msgs/msg/offboard_status.hpp"
+#include "vdt_msgs/msg/timeout_flags.hpp"
 
 namespace offboard_manager
 {
@@ -39,6 +39,8 @@ private:
   bool is_vehicle_status_fresh() const;
   bool is_local_position_fresh() const;
   bool is_px4_ready() const;
+  bool is_airborne() const;
+  bool is_planner_stale() const;
   void publish_vehicle_command(
     uint16_t command, float param1, float param2 = 0.0f, float param3 = 0.0f);
   void publish_status();
@@ -56,11 +58,13 @@ private:
   rclcpp::Publisher<msg::OffboardStatus>::SharedPtr status_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<input_state_cache::msg::TimeoutFlags>::SharedPtr timeout_sub_;
-  bool planner_timeout_ = false; 
+  bool planner_timeout_ = true;
 
   OffboardContext ctx_;
   FsmState fsm_state_ = FsmState::SEARCH;
   PlannerOutput planner_output_;
+  bool has_planner_ = false;
+  double last_planner_time_ = 0.0;
 
   px4_msgs::msg::VehicleStatus vehicle_status_;
   px4_msgs::msg::VehicleLocalPosition local_position_;
@@ -81,8 +85,9 @@ private:
   double data_freshness_timeout_sec_;
   float max_horizontal_velocity_;
   float max_vertical_velocity_;
-  float max_yaw_;
   double watchdog_timeout_sec_;
+  double planner_timeout_sec_;
+  float min_engage_altitude_m_;
   float yaw_search_rate_;
   float land_descent_rate_;
   bool debug_enabled_;

@@ -4,8 +4,8 @@
 #include <std_msgs/msg/u_int8.hpp>
 #include "fsm_state_machine/fsm_types.hpp"
 #include "fsm_state_machine/fsm_actions.hpp"
-#include "input_state_cache/msg/input_snapshot.hpp"
-#include "rc_parser/msg/rc_fsm_input.hpp"
+#include "vdt_msgs/msg/input_snapshot.hpp"
+#include "vdt_msgs/msg/rc_fsm_input.hpp"
 
 namespace fsm_state_machine
 {
@@ -43,7 +43,7 @@ private:
   double last_snapshot_time_ = -1.0;
   bool killed_ = false;
   bool force_land_requested_ = false;
-  float land_entry_height_ = 0.5f;
+  FsmParams params_;
   double last_update_time_ = -1.0;
   bool debug_enabled_ = false;
 };

@@ -2,7 +2,7 @@
 
 ## 1. Package cần cài đặt ngoài
 
-Không có package ROS2 ngoài nào. Node tự định nghĩa `RcChannelsRaw` và `RcFsmInput`; `RcFsmInput` được publish cho FSM qua topic `rc/fsm_input`. Lưu ý phần cứng: cần RC receiver hỗ trợ output SBUS nối qua UART vào Pi 5.
+Phụ thuộc vào `vdt_msgs` định nghĩa `RcChannelsRaw` và `RcFsmInput`; `RcFsmInput` được publish cho FSM qua topic `rc/fsm_input`. Lưu ý phần cứng: cần RC receiver hỗ trợ output SBUS nối qua UART vào Pi 5.
 
 ## 2. Nguyên lý hoạt động
 

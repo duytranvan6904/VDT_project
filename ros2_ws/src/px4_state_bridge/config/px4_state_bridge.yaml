@@ -1,0 +1,14 @@
+px4_state_bridge:
+  ros__parameters:
+    use_sim_time: false
+    odometry_topic: /fmu/out/vehicle_odometry
+    land_detected_topic: /fmu/out/vehicle_land_detected
+    gimbal_angle_topic: /gimbal/target_angle_deg
+    world_frame: world
+    base_frame: base_link
+    gimbal_frame: gimbal_link
+    camera_frame: camera_optical_frame
+    gimbal_pivot_xyz: [0.0, 0.0, 0.0]
+    camera_in_gimbal_xyz: [0.0, 0.0, 0.0]
+    use_ground_contact: false
+    odom_timeout_sec: 0.5

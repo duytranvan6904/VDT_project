@@ -1,104 +1,193 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, TimerAction
-from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution
 
 
 def generate_launch_description():
     start_hardware = LaunchConfiguration('start_hardware')
     start_servo = LaunchConfiguration('start_servo')
     debug = LaunchConfiguration('debug')
-    params_file = PathJoinSubstitution([
-        FindPackageShare('vdt_bringup'), 'System_Params.yaml'
-    ])
 
-    xrce = Node(
-        package='xrce_bridge_manager',
-        executable='xrce_bridge_node',
-        name='xrce_bridge_node',
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    xrce = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('xrce_bridge_manager'),
+                'launch',
+                'xrce_bridge.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'debug': debug
+        }.items()
     )
 
-    input_cache = Node(
-        package='input_state_cache',
-        executable='input_cache_node',
-        name='input_cache_node',
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    px4_state_bridge = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('px4_state_bridge'),
+                'launch',
+                'px4_state_bridge.launch.py'
+            ])
+        )
     )
 
-    rc_parser = Node(
-        package='rc_parser',
-        executable='rc_node',
-        name='rc_node',
-        condition=IfCondition(start_hardware),
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    vision_interface_bridge = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('vision_interface_bridge'),
+                'launch',
+                'vision_interface_bridge.launch.py'
+            ])
+        )
     )
 
-    kill_switch = Node(
-        package='kill_switch',
-        executable='kill_switch_node',
-        name='kill_switch_node',
-        condition=IfCondition(start_hardware),
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    input_cache = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('input_state_cache'),
+                'launch',
+                'input_cache.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'debug': debug
+        }.items()
     )
 
-    safety = Node(
-        package='offboard_safety_monitor',
-        executable='safety_monitor_node',
-        name='safety_monitor_node',
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    rc_parser = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('rc_parser'),
+                'launch',
+                'rc_parser.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'start_hardware': start_hardware,
+            'debug': debug
+        }.items()
     )
 
-    fsm = Node(
-        package='fsm_state_machine',
-        executable='fsm_node',
-        name='fsm_node',
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    kill_switch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('kill_switch'),
+                'launch',
+                'kill_switch.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'start_hardware': start_hardware,
+            'debug': debug
+        }.items()
     )
 
-    gimbal = Node(
-        package='gimbal_control',
-        executable='gimbal_node',
-        name='gimbal_node',
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    safety = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('offboard_safety_monitor'),
+                'launch',
+                'offboard_safety_monitor.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'debug': debug
+        }.items()
     )
 
-    offboard = Node(
-        package='offboard_manager',
-        executable='offboard_node',
-        name='offboard_node',
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    fsm = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('fsm_state_machine'),
+                'launch',
+                'fsm.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'debug': debug
+        }.items()
     )
 
-    servo = Node(
-        package='servo_control',
-        executable='servo_node',
-        name='servo_node',
-        condition=IfCondition(start_servo),
-        parameters=[params_file, {'debug_enabled': debug}],
-        output='screen',
+    gimbal = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('gimbal_control'),
+                'launch',
+                'gimbal.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'debug': debug
+        }.items()
+    )
+
+    offboard = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('offboard_manager'),
+                'launch',
+                'offboard_manager.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'debug': debug
+        }.items()
+    )
+
+    servo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution([
+                FindPackageShare('servo_control'),
+                'launch',
+                'servo_control.launch.py'
+            ])
+        ),
+        launch_arguments={
+            'start_servo': start_servo,
+            'debug': debug
+        }.items()
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument('start_hardware', default_value='true'),
-        DeclareLaunchArgument('start_servo', default_value='false'),
-        DeclareLaunchArgument('debug', default_value='false'),
+        DeclareLaunchArgument(
+            'start_hardware',
+            default_value='true'
+        ),
+        DeclareLaunchArgument(
+            'start_servo',
+            default_value='false'
+        ),
+        DeclareLaunchArgument(
+            'debug',
+            default_value='false'
+        ),
         xrce,
-        TimerAction(period=1.0, actions=[input_cache]),
-        TimerAction(period=2.0, actions=[rc_parser, kill_switch]),
-        TimerAction(period=3.0, actions=[safety]),
-        TimerAction(period=4.0, actions=[fsm, gimbal]),
-        TimerAction(period=5.0, actions=[offboard]),
-        TimerAction(period=6.0, actions=[servo]),
+        px4_state_bridge,
+        vision_interface_bridge,
+        TimerAction(
+            period=1.0,
+            actions=[input_cache]
+        ),
+        TimerAction(
+            period=2.0,
+            actions=[rc_parser, kill_switch]
+        ),
+        TimerAction(
+            period=3.0,
+            actions=[safety]
+        ),
+        TimerAction(
+            period=4.0,
+            actions=[fsm, gimbal]
+        ),
+        TimerAction(
+            period=5.0,
+            actions=[offboard]
+        ),
+        TimerAction(
+            period=6.0,
+            actions=[servo]
+        )
     ])

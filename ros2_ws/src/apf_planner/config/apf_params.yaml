@@ -1,0 +1,62 @@
+apf_planner:
+  ros__parameters:
+    planner_type: iapf
+    obstacle_source: pointcloud
+    world_sdf: ""
+    world_frame: world
+    odom_topic: /odom
+    target_topic: /hpad/state_filtered
+    mode_topic: /ekf/tracking_mode
+    phase_topic: /mission/phase
+    cloud_topic: /map_generator/global_cloud
+    allowed_tracking_modes: [TRACKING, PREDICTING]
+    data_timeout_sec: 0.5
+    rate_hz: 30.0
+    d0: 2.0
+    v_max: 1.2
+    d_slow: 1.5
+    k_att: 10.0
+    k_rep: 250.0
+    k_rep_approach: 125.0
+    goal_threshold: 0.20
+    follow_distance: 3.5
+    hold_follow_altitude: true
+    target_altitude: 3.0
+    k_z: 0.6
+    vz_max: 0.5
+    target_lead_time: 0.25
+    max_target_lead: 0.75
+    target_velocity_alpha: 0.25
+    target_velocity_deadband: 0.08
+    cloud_voxel_size: 0.3
+    cloud_query_radius: 0.0
+    cloud_cluster_radius: 1.2
+    max_cloud_points: 8
+    iapf_f_enter: 0.10
+    iapf_f_exit: 0.30
+    iapf_k_tan: 1.0
+    iapf_n_tangent: 12
+    iapf_n_pred: 3
+    iapf_w_goal: 1.0
+    iapf_w_clear: 1.0
+    iapf_w_prev: 0.60
+
+apf_pointcloud_generator:
+  ros__parameters:
+    topic: /map_generator/global_cloud
+    frame_id: world
+    rate_hz: 1.0
+    num_obs: 35
+    map_size: 25.0
+    height: 4.0
+    resolution: 0.15
+    clear_radius: 2.0
+    seed: -1
+    publish_static_tf: true
+
+planner_merge:
+  ros__parameters:
+    rate_hz: 20.0
+    yaw_source: ibvs_apf   
+    upstream_timeout_sec: 0.3
+    stale_hover_sec: 0.5

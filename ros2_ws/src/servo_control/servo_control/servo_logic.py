@@ -20,3 +20,11 @@ def control_angle_to_servo_angle(control_angle_deg, home_angle_deg, angle_min_de
         return clamp(home_angle_deg, angle_min_deg, angle_max_deg)
     servo_angle = home_angle_deg + control_angle_deg
     return clamp(servo_angle, angle_min_deg, angle_max_deg)
+
+
+def servo_angle_to_value(servo_angle_deg, angle_min_deg, angle_max_deg):
+    if angle_max_deg <= angle_min_deg:
+        return 0.0
+    angle_clamped = clamp(servo_angle_deg, angle_min_deg, angle_max_deg)
+    ratio = (angle_clamped - angle_min_deg) / (angle_max_deg - angle_min_deg)
+    return -1.0 + 2.0 * ratio

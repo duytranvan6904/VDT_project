@@ -16,13 +16,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(input_state_cache REQUIRED)
+find_package(vdt_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/PlannerOutput.msg"
-  "msg/OffboardStatus.msg"
-)
 
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
@@ -34,7 +29,7 @@ add_executable(offboard_node
 
 target_include_directories(offboard_node PRIVATE include)
 target_link_libraries(offboard_node "${cpp_typesupport_target}")
-ament_target_dependencies(offboard_node rclcpp std_msgs px4_msgs input_state_cache)
+ament_target_dependencies(offboard_node rclcpp std_msgs px4_msgs vdt_msgs)
 
 install(TARGETS offboard_node DESTINATION lib/${PROJECT_NAME})
 

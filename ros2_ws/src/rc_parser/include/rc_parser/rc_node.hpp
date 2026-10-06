@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include "rc_parser/msg/rc_channels_raw.hpp"
-#include "rc_parser/msg/rc_fsm_input.hpp"
+#include "vdt_msgs/msg/rc_channels_raw.hpp"
+#include "vdt_msgs/msg/rc_fsm_input.hpp"
 #include "rc_parser/rc_types.hpp"
 #include "rc_parser/rc_uart.hpp"
 

@@ -5,7 +5,6 @@ namespace fsm_state_machine
 
 FsmActuators::FsmActuators(rclcpp::Node * node)
 {
-  yaw_rate_pub_ = node->create_publisher<std_msgs::msg::Float32>("cmd/yaw_rate", 10);
   gimbal_state_pub_ = node->create_publisher<std_msgs::msg::UInt8>("gimbal/state_request", 10);
   planner_mode_pub_ = node->create_publisher<std_msgs::msg::UInt8>("planner/mode", 10);
   apf_gain_pub_ = node->create_publisher<std_msgs::msg::Float32>("planner/apf_gain", 10);
@@ -13,7 +12,7 @@ FsmActuators::FsmActuators(rclcpp::Node * node)
   descent_rate_pub_ = node->create_publisher<std_msgs::msg::Float32>("cmd/vertical_descent_rate", 10);
   disarm_pub_ = node->create_publisher<std_msgs::msg::Bool>("cmd/disarm_request", 10);
 
-  yaw_search_rate_ = node->declare_parameter<float>("yaw_search_rate", 0.3f);
+  approach_descent_rate_ = node->declare_parameter<float>("approach_descent_rate", 0.3f);
   land_descent_rate_ = node->declare_parameter<float>("land_descent_rate", 0.4f);
 }
 
@@ -31,11 +30,17 @@ void FsmActuators::publish_planner_mode(State state)
   planner_mode_pub_->publish(msg);
 }
 
+void FsmActuators::publish_descent_rate(float rate)
+{
+  std_msgs::msg::Float32 msg;
+  msg.data = rate;
+  descent_rate_pub_->publish(msg);
+}
+
 void FsmActuators::action_search()
 {
-  std_msgs::msg::Float32 yaw_msg;
-  yaw_msg.data = yaw_search_rate_;
-  yaw_rate_pub_->publish(yaw_msg);
+  publish_planner_mode(State::SEARCH);
+  publish_descent_rate(0.0f);
   publish_gimbal_state_request(State::SEARCH);
 }
 
@@ -48,9 +53,10 @@ void FsmActuators::action_follow(const SensorInput & /*s*/)
   apf_gain_pub_->publish(gain_msg);
 
   publish_gimbal_state_request(State::FOLLOW);
+  publish_descent_rate(0.0f);
 }
 
-void FsmActuators::action_approach(const SensorInput & s)
+void FsmActuators::action_approach(const SensorInput & s, float land_entry_height)
 {
   publish_planner_mode(State::APPROACH);
 
@@ -63,9 +69,13 @@ void FsmActuators::action_approach(const SensorInput & s)
   std_msgs::msg::Float32 align_msg;
   align_msg.data = s.align_error;
   align_error_pub_->publish(align_msg);
+  
+  const bool can_descend =
+    s.marker_detected && s.geometry_valid && s.delta_h >= land_entry_height;
+  publish_descent_rate(can_descend ? approach_descent_rate_ : 0.0f);
 }
 
-void FsmActuators::action_land(const SensorInput & s)
+void FsmActuators::action_land(const SensorInput & /*s*/)
 {
   publish_planner_mode(State::LAND);
 
@@ -75,15 +85,14 @@ void FsmActuators::action_land(const SensorInput & s)
 
   publish_gimbal_state_request(State::LAND);
 
-  std_msgs::msg::Float32 descent_msg;
-  descent_msg.data = land_descent_rate_;
-  descent_rate_pub_->publish(descent_msg);
+  publish_descent_rate(land_descent_rate_);
+}
 
-  if (s.touchdown) {
-    std_msgs::msg::Bool disarm_msg;
-    disarm_msg.data = true;
-    disarm_pub_->publish(disarm_msg);
-  }
+void FsmActuators::action_complete()
+{
+  std_msgs::msg::Bool disarm_msg;
+  disarm_msg.data = true;
+  disarm_pub_->publish(disarm_msg);
 }
 
 }  // namespace fsm_state_machine
