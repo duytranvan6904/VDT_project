@@ -111,8 +111,8 @@ class ArUcoDetector:
 
         # Adaptive Thresholding tuning: finer step to capture both small and large markers simultaneously
         self.parameters.adaptiveThreshWinSizeMin = 3
-        self.parameters.adaptiveThreshWinSizeMax = 53
-        self.parameters.adaptiveThreshWinSizeStep = 4
+        self.parameters.adaptiveThreshWinSizeMax = 35
+        self.parameters.adaptiveThreshWinSizeStep = 8
 
         # Allow smaller markers (down to 1% of image perimeter)
         # IR projector speckles can form tiny quadrilaterals. A slightly
@@ -134,10 +134,9 @@ class ArUcoDetector:
         self.parameters.polygonalApproxAccuracyRate = 0.05
         self.parameters.minCornerDistanceRate = 0.02
 
-        # Crucial for dual-scale landing pad & outer canvas margins!
-        # The default 0.05 groups the 50cm outer canvas boundary and the 40cm marker into duplicates,
-        # causing OpenCV to discard the 40cm outer marker. Setting to 0.005 allows nested markers and margins.
-        self.parameters.minMarkerDistanceRate = 0.005
+        # The A0 board uses two separated tags, so keep OpenCV's normal
+        # duplicate-contour spacing instead of treating one nested tag as two.
+        self.parameters.minMarkerDistanceRate = 0.05
 
     def get_marker_size(self, marker_id: int) -> float:
         """Get physical side length in meters for a specific marker ID."""
@@ -444,18 +443,19 @@ class DualScaleArUcoDetector:
     """
     Precision Landing Detector utilizing a Dual-Scale ArUco Board.
     Combines:
-      - Big Outer Marker (e.g., ID 42, 40cm): Far range guidance (0.8m - 5.0m)
+      - Big Coarse Marker (e.g., ID 42, 52cm): Far range guidance (0.8m - 5.0m)
       - Small Inner Marker (e.g., ID 43, 5cm): Close range touchdown guidance (0.05m - 1.2m)
     
-    Both markers share a single origin (0, 0, 0) at the geometric center of the pad.
-    OpenCV's estimatePoseBoard fuses observed corners into a unified, zero-jump pose.
+    The small marker defines the landing origin. The large marker is placed away
+    from it on an A0 sheet. Each marker's configured board corners map detections
+    back to that same origin; the larger visible tag is preferred for pose.
     """
 
     def __init__(
         self,
         config_path: Optional[str] = None,
         big_id: int = 42,
-        big_size_m: float = 0.40,
+        big_size_m: float = 0.52,
         small_id: int = 43,
         small_size_m: float = 0.05,
         dictionary_name: str = "DICT_6X6_50",
@@ -482,19 +482,23 @@ class DualScaleArUcoDetector:
             self.small_id = markers_cfg[1]["id"]
             self.small_size_m = float(markers_cfg[1]["size_m"])
             self.small_corners_3d = np.array(markers_cfg[1]["corners_3d"], dtype=np.float32)
+            self.pad_width_m = float(cfg.get("total_pad_width_m", 1.189))
+            self.pad_height_m = float(cfg.get("total_pad_height_m", 0.841))
         else:
             self.dictionary_name = dictionary_name
             self.big_id = int(big_id)
             self.big_size_m = float(big_size_m)
             self.small_id = int(small_id)
             self.small_size_m = float(small_size_m)
-            
+            self.pad_width_m = 1.189
+            self.pad_height_m = 0.841
             hb = self.big_size_m / 2.0
+            big_center_x = -self.pad_width_m / 2.0 + 0.0205 + hb
             self.big_corners_3d = np.array([
-                [-hb,  hb, 0.0],
-                [ hb,  hb, 0.0],
-                [ hb, -hb, 0.0],
-                [-hb, -hb, 0.0]
+                [big_center_x - hb,  hb, 0.0],
+                [big_center_x + hb,  hb, 0.0],
+                [big_center_x + hb, -hb, 0.0],
+                [big_center_x - hb, -hb, 0.0]
             ], dtype=np.float32)
             
             hs = self.small_size_m / 2.0
@@ -504,6 +508,11 @@ class DualScaleArUcoDetector:
                 [ hs, -hs, 0.0],
                 [-hs, -hs, 0.0]
             ], dtype=np.float32)
+
+        self.marker_centers_3d = {
+            self.big_id: np.mean(self.big_corners_3d, axis=0).reshape(3, 1),
+            self.small_id: np.mean(self.small_corners_3d, axis=0).reshape(3, 1),
+        }
 
         if self.dictionary_name not in ARUCO_DICT_MAP:
             raise ValueError(f"Unknown dictionary: {self.dictionary_name}")
@@ -575,13 +584,19 @@ class DualScaleArUcoDetector:
         if not detected_ids or K is None:
             return result
 
-        # 2. Extract corners and IDs matching board
-        board_corners = []
-        board_ids_list = []
-        for res in single_results:
-            if res["id"] in (self.big_id, self.small_id):
-                board_corners.append(res["corners"])
-                board_ids_list.append(res["id"])
+        # Prefer the large marker whenever it's visible: its four corners have
+        # lower pixel noise than the small tag in the overlap range. Both IDs
+        # have board-frame corners, so either single tag yields the pad origin.
+        pose_marker_id = self.big_id if self.big_id in detected_ids else self.small_id
+
+        # 2. Extract only the selected marker for this pose solve.
+        selected_markers = [res for res in single_results if res["id"] == pose_marker_id]
+        selected_marker = max(
+            selected_markers,
+            key=lambda res: abs(float(cv2.contourArea(np.asarray(res["corners"]).reshape(-1, 2)))),
+        )
+        board_corners = [selected_marker["corners"]]
+        board_ids_list = [pose_marker_id]
 
         board_ids_arr = np.array(board_ids_list, dtype=np.int32)
 
@@ -596,15 +611,17 @@ class DualScaleArUcoDetector:
             None
         )
 
-        # Fallback to single marker pose if estimatePoseBoard returns 0 or fails
+        # estimatePoseBoard maps even a single observed tag into the configured
+        # board frame. Keep the marker-frame fallback only for OpenCV failures.
         if (retval == 0 or rvec is None or tvec is None) and len(detected_ids) > 0:
-            preferred_id = self.small_id if self.small_id in detected_ids else self.big_id
-            for res_m in single_results:
-                if res_m["id"] == preferred_id and res_m.get("rvec") is not None and res_m.get("tvec") is not None:
-                    rvec = res_m["rvec"]
-                    tvec = res_m["tvec"]
-                    retval = 1
-                    break
+            preferred_id = pose_marker_id
+            res_m = selected_marker
+            if res_m.get("rvec") is not None and res_m.get("tvec") is not None:
+                rvec = res_m["rvec"]
+                rotation, _ = cv2.Rodrigues(rvec)
+                marker_center = self.marker_centers_3d[preferred_id]
+                tvec = np.asarray(res_m["tvec"]).reshape(3, 1) - rotation @ marker_center
+                retval = 1
 
         if retval > 0 and rvec is not None and tvec is not None:
             rvec_flat = rvec.reshape(3, 1)
@@ -613,9 +630,7 @@ class DualScaleArUcoDetector:
             euler = rvec_to_euler(rvec_flat, degrees=True)
             
             # Determine tracking mode
-            if self.big_id in detected_ids and self.small_id in detected_ids:
-                mode = "DUAL_FUSED"
-            elif self.small_id in detected_ids:
+            if pose_marker_id == self.small_id:
                 mode = "INNER_FINE"
             else:
                 mode = "OUTER_COARSE"
@@ -705,4 +720,3 @@ class DualScaleArUcoDetector:
             cv2.putText(annotated, "BOARD: TARGET LOST", (20, 33), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         return annotated
-

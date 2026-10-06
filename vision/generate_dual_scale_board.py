@@ -2,14 +2,14 @@
 """
 Generate Dual-Scale ArUco Board for Precision Landing.
 Design:
-  - Big Outer Marker: ID 42 (DICT_6X6_50), Size: 40cm x 40cm (0.40m)
+  - Big Coarse Marker: ID 42 (DICT_6X6_50), Size: 52cm x 52cm (0.52m)
   - Small Inner Marker: ID 43 (DICT_6X6_50), Size: 5cm x 5cm (0.05m)
-  - Small Marker White Quiet Zone: 6cm x 6cm (0.06m) centered
-  - Total Pad Canvas (with 5cm outer margin): 50cm x 50cm (0.50m)
+  - Markers are separate; the small marker stays at the landing origin.
+  - Total Pad Canvas: 118.9cm x 84.1cm (A0 landscape)
 
 Outputs:
-  - vision/dual_scale_aruco_board_40_5cm.png (Texture & Printing)
-  - vision/dual_scale_aruco_board_40_5cm.pdf (Printable 1:1 PDF)
+  - vision/dual_scale_aruco_board_A0_52_5cm.png (Texture & Printing)
+  - vision/dual_scale_aruco_board_A0_52_5cm.pdf (Printable 1:1 PDF)
   - vision/dual_scale_board_config.yaml (OpenCV Board Definition)
 """
 
@@ -23,13 +23,15 @@ import yaml
 
 def create_dual_scale_board(
     big_id: int = 42,
-    big_size_m: float = 0.40,
+    big_size_m: float = 0.52,
     small_id: int = 43,
     small_size_m: float = 0.05,
     small_patch_m: float = 0.06,
-    margin_m: float = 0.05,
+    margin_m: float = 0.0205,
     dict_name: str = "DICT_6X6_50",
-    pixels_per_cm: int = 50,
+    pixels_per_cm: int = 25,
+    paper_width_m: float = 1.189,
+    paper_height_m: float = 0.841,
 ):
     """
     Construct image and 3D corner coordinates for the dual-scale board.
@@ -42,7 +44,7 @@ def create_dual_scale_board(
         small_patch_m: White background patch width/height for small marker in meters
         margin_m: Outer white quiet zone margin width in meters
         dict_name: OpenCV ArUco dictionary name
-        pixels_per_cm: Resolution scale (50 px/cm gives 2000px for 40cm marker)
+        pixels_per_cm: Resolution scale (25 px/cm gives 1300px for 52cm marker)
         
     Returns:
         canvas: 2D uint8 numpy array (grayscale image)
@@ -60,7 +62,16 @@ def create_dual_scale_board(
     small_patch_px = int(round(small_patch_m * 100 * pixels_per_cm))
     margin_px = int(round(margin_m * 100 * pixels_per_cm))
     
-    total_px = big_px + 2 * margin_px
+    total_w_px = int(round(paper_width_m * 100 * pixels_per_cm))
+    total_h_px = int(round(paper_height_m * 100 * pixels_per_cm))
+    if big_px + 2 * margin_px > min(total_w_px, total_h_px):
+        raise ValueError("The large marker and margin do not fit on the A0 canvas")
+    big_x = margin_px
+    big_y = (total_h_px - big_px) // 2
+    small_x = (total_w_px - small_patch_px) // 2
+    small_y = (total_h_px - small_patch_px) // 2
+    if big_x + big_px >= small_x:
+        raise ValueError("The large marker must not overlap the centered landing marker")
     
     # Cross-version ArUco marker drawing
     def _draw_marker(dict_obj, marker_id, size):
@@ -81,18 +92,11 @@ def create_dual_scale_board(
     offset = (small_patch_px - small_px) // 2
     patch[offset:offset + small_px, offset:offset + small_px] = small_marker
     
-    # 4. Embed inner patch exactly at the center of the outer marker
-    board_img = big_marker.copy()
-    center = big_px // 2
-    patch_half = small_patch_px // 2
-    board_img[
-        center - patch_half:center - patch_half + small_patch_px,
-        center - patch_half:center - patch_half + small_patch_px
-    ] = patch
-    
-    # 5. Place board onto full canvas with outer white margin
-    canvas = np.ones((total_px, total_px), dtype=np.uint8) * 255
-    canvas[margin_px:margin_px + big_px, margin_px:margin_px + big_px] = board_img
+    # 4. Place both tags on an A0 landscape sheet without overlapping either code.
+    # The coarse tag sits at left; the fine tag stays centered on the landing origin.
+    canvas = np.ones((total_h_px, total_w_px), dtype=np.uint8) * 255
+    canvas[big_y:big_y + big_px, big_x:big_x + big_px] = big_marker
+    canvas[small_y:small_y + small_patch_px, small_x:small_x + small_patch_px] = patch
     
     # 6. Calculate 3D object points in Board Frame
     # Origin (0,0,0) is defined at the exact geometric center of the pad.
@@ -105,11 +109,12 @@ def create_dual_scale_board(
     # Bottom-Left:  [-size/2, -size/2, 0]
     
     hb = big_size_m / 2.0
+    big_center_x = -paper_width_m / 2.0 + margin_m + hb
     big_corners_3d = [
-        [-hb,  hb, 0.0],
-        [ hb,  hb, 0.0],
-        [ hb, -hb, 0.0],
-        [-hb, -hb, 0.0]
+        [big_center_x - hb,  hb, 0.0],
+        [big_center_x + hb,  hb, 0.0],
+        [big_center_x + hb, -hb, 0.0],
+        [big_center_x - hb, -hb, 0.0]
     ]
     
     hs = small_size_m / 2.0
@@ -122,8 +127,10 @@ def create_dual_scale_board(
     
     board_config = {
         "dictionary": dict_name,
-        "board_type": "nested_dual_scale",
-        "total_pad_size_m": float(big_size_m + 2 * margin_m),
+        "board_type": "a0_landscape_dual_scale",
+        "total_pad_size_m": float(paper_height_m),
+        "total_pad_width_m": float(paper_width_m),
+        "total_pad_height_m": float(paper_height_m),
         "markers": [
             {
                 "id": int(big_id),
@@ -148,11 +155,14 @@ def create_dual_scale_board(
 def main():
     parser = argparse.ArgumentParser(description="Generate Dual-Scale ArUco Board for Precision Landing")
     parser.add_argument("--big-id", type=int, default=42, help="Outer marker ID (default: 42)")
-    parser.add_argument("--big-size", type=float, default=0.40, help="Outer marker size in meters (default: 0.40 = 40cm)")
+    parser.add_argument("--big-size", type=float, default=0.52, help="Outer marker size in meters (default: 0.52 = 52cm)")
     parser.add_argument("--small-id", type=int, default=43, help="Inner marker ID (default: 43)")
     parser.add_argument("--small-size", type=float, default=0.05, help="Inner marker size in meters (default: 0.05 = 5cm)")
     parser.add_argument("--small-patch", type=float, default=0.06, help="Inner marker white patch size in meters (default: 0.06 = 6cm)")
-    parser.add_argument("--margin", type=float, default=0.05, help="Canvas outer white margin in meters (default: 0.05 = 5cm)")
+    parser.add_argument("--margin", type=float, default=0.0205, help="Large marker edge margin in meters")
+    parser.add_argument("--paper-width", type=float, default=1.189, help="A0 landscape width in meters")
+    parser.add_argument("--paper-height", type=float, default=0.841, help="A0 landscape height in meters")
+    parser.add_argument("--pixels-per-cm", type=int, default=25, help="Texture resolution in pixels per cm")
     parser.add_argument("--dict", type=str, default="DICT_6X6_50", help="ArUco dictionary (default: DICT_6X6_50)")
     parser.add_argument("--output-dir", type=str, default="vision", help="Output directory")
     args = parser.parse_args()
@@ -163,7 +173,7 @@ def main():
     print(f"  • Dictionary: {args.dict}")
     print(f"  • Outer Marker: ID {args.big_id}, Size {args.big_size*100:.1f}cm")
     print(f"  • Inner Marker: ID {args.small_id}, Size {args.small_size*100:.1f}cm (patch {args.small_patch*100:.1f}cm)")
-    print(f"  • Total Landing Pad Size: {(args.big_size + 2*args.margin)*100:.1f}cm x {(args.big_size + 2*args.margin)*100:.1f}cm")
+    print(f"  • Landing Sheet: {args.paper_width*100:.1f}cm x {args.paper_height*100:.1f}cm (A0 landscape)")
     
     canvas, board_config = create_dual_scale_board(
         big_id=args.big_id,
@@ -173,18 +183,19 @@ def main():
         small_patch_m=args.small_patch,
         margin_m=args.margin,
         dict_name=args.dict,
-        pixels_per_cm=50  # 2500 x 2500 px
+        pixels_per_cm=args.pixels_per_cm,
+        paper_width_m=args.paper_width,
+        paper_height_m=args.paper_height,
     )
     
     # 1. Save PNG
-    png_path = os.path.join(args.output_dir, "dual_scale_aruco_board_40_5cm.png")
+    png_path = os.path.join(args.output_dir, "dual_scale_aruco_board_A0_52_5cm.png")
     cv2.imwrite(png_path, canvas)
     print(f"  -> Saved PNG: {png_path} ({canvas.shape[1]}x{canvas.shape[0]} px)")
     
     # 2. Save Printable PDF (with 1:1 scale DPI)
-    # 50 px/cm = 127 DPI
-    dpi = int(50 / 0.393701) # 127 DPI
-    pdf_path = os.path.join(args.output_dir, "dual_scale_aruco_board_40_5cm.pdf")
+    dpi = args.pixels_per_cm / 0.393701
+    pdf_path = os.path.join(args.output_dir, "dual_scale_aruco_board_A0_52_5cm.pdf")
     pil_img = Image.fromarray(canvas)
     pil_img.save(pdf_path, "PDF", resolution=dpi)
     print(f"  -> Saved 1:1 Printable PDF: {pdf_path}")

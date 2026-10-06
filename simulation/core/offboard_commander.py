@@ -128,6 +128,7 @@ class OffboardCommander(Node):
         self.declare_parameter('enable_alt_hold', True)
         self.declare_parameter('target_altitude', 3.0)
         self.declare_parameter('alt_hold_kp', 1.0)
+        self.declare_parameter('mission_command_timeout', 0.25)
         self.auto_arm = self.get_parameter('auto_arm').value
         self.auto_offboard = self.get_parameter('auto_offboard').value
         self.min_offboard_alt = float(self.get_parameter('min_offboard_alt').value)
@@ -136,6 +137,9 @@ class OffboardCommander(Node):
         self.enable_alt_hold = bool(self.get_parameter('enable_alt_hold').value)
         self.target_altitude = float(self.get_parameter('target_altitude').value)
         self.alt_hold_kp = float(self.get_parameter('alt_hold_kp').value)
+        self.mission_command_timeout = max(
+            0.05, float(self.get_parameter('mission_command_timeout').value)
+        )
 
         # ── State ────────────────────────────────────────────────────────
         self.velocity_enu = [0.0, 0.0, 0.0]
@@ -145,6 +149,7 @@ class OffboardCommander(Node):
         self.current_drone_yaw = 0.0
         self.current_yaw_ned = None
         self.has_odom = False
+        self.last_velocity_cmd_time = 0.0
         self.has_fsm_yaw = False
         self.last_fsm_yaw_time = 0.0
         self.armed = False
@@ -249,6 +254,7 @@ class OffboardCommander(Node):
 
     def velocity_cb(self, msg: Twist):
         self.velocity_enu = [msg.linear.x, msg.linear.y, msg.linear.z]
+        self.last_velocity_cmd_time = time.monotonic()
 
     def yaw_cb(self, msg: Float64):
         self.yaw_enu = msg.data
@@ -362,10 +368,18 @@ class OffboardCommander(Node):
             dt = max(0.01, min(0.2, now - self.last_setpoint_time))
         self.last_setpoint_time = now
 
-        # Convert ENU → NED
-        cmd_vx = self.velocity_enu[0]
-        cmd_vy = self.velocity_enu[1]
-        cmd_vz = self.velocity_enu[2]
+        # A dead mission node must not leave PX4 executing its last descent
+        # velocity indefinitely. Zero velocity is the safe command on timeout.
+        command_fresh = (
+            self.last_velocity_cmd_time > 0.0
+            and now - self.last_velocity_cmd_time <= self.mission_command_timeout
+        )
+        if command_fresh:
+            cmd_vx, cmd_vy, cmd_vz = self.velocity_enu
+        else:
+            cmd_vx = cmd_vy = cmd_vz = 0.0
+            if self.has_odom:
+                self.yaw_enu = self.current_drone_yaw
 
         # Closed-loop Altitude Hold when no active climb/descent command is present
         # (e.g. isolated IBVS test, APF vz=0 in FOLLOW, hover)

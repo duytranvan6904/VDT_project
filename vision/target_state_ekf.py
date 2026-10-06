@@ -143,6 +143,19 @@ class TargetStateEKF:
         Prediction must be chronological.  The caller should buffer delayed
         sensor messages instead of silently applying them to a newer state.
         """
+        predicted = self.predict_snapshot(timestamp)
+        self._state = predicted.state.copy()
+        self._covariance = predicted.covariance.copy()
+        self._timestamp = predicted.timestamp
+        return self.snapshot()
+
+    def predict_snapshot(self, timestamp: float) -> EstimatorSnapshot:
+        """Return a prediction without advancing the filter's measurement time.
+
+        This is useful for publishing dead-reckoned state between sensor
+        updates. Keeping the filter at its latest measurement timestamp lets
+        the next delayed camera frame still be fused in chronological order.
+        """
         if not self._initialized or self._timestamp is None:
             raise RuntimeError("initialize the estimator before predict")
         if not np.isfinite(timestamp):
@@ -153,12 +166,20 @@ class TargetStateEKF:
         dt = max(0.0, dt)
 
         f = self.transition_matrix(dt)
-        self._state = f @ self._state
-        self._clamp_velocity()
-        self._covariance = f @ self._covariance @ f.T + self.process_covariance(dt)
-        self._covariance = self._symmetrize(self._covariance)
-        self._timestamp = float(timestamp)
-        return self.snapshot()
+        state = f @ self._state
+        v_xy = float(np.hypot(state[3], state[4]))
+        if v_xy > self.v_max:
+            state[3:5] *= self.v_max / v_xy
+        if abs(state[5]) > 1.5:
+            state[5] = float(np.clip(state[5], -1.5, 1.5))
+        covariance = f @ self._covariance @ f.T + self.process_covariance(dt)
+        covariance = self._symmetrize(covariance)
+        return EstimatorSnapshot(
+            timestamp=float(timestamp),
+            state=state,
+            covariance=covariance,
+            initialized=True,
+        )
 
     def update(
         self,

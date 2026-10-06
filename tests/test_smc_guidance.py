@@ -16,7 +16,7 @@ class TestSMCGuidance(unittest.TestCase):
         self.guidance = SMCGuidance(self.params)
 
     def test_glide_slope_guidance_direction(self):
-        """In Glide Slope phase, velocity command must drive drone towards pad and downward."""
+        """Outside the descent corridor, glide guidance must not descend."""
         drone_pos = np.array([1.0, 1.0, 3.0])
         drone_vel = np.array([0.5, 0.2, -0.2])
         target_pos = np.array([5.0, 2.0, 0.0])  # Target is in +x, +y direction, and below
@@ -33,8 +33,66 @@ class TestSMCGuidance(unittest.TestCase):
         # Horizontal command should point towards +x and +y
         self.assertGreater(res.velocity_cmd[0], 0.0)  # vx > 0
         self.assertGreater(res.velocity_cmd[1], 0.0)  # vy > 0
-        # Vertical command must be negative (descending in ENU)
-        self.assertLess(res.velocity_cmd[2], 0.0)      # vz < 0
+        # Hold height until horizontal alignment is inside the pad corridor.
+        self.assertEqual(res.velocity_cmd[2], 0.0)
+
+    def test_glide_command_tracks_current_target_error_after_course_drift(self):
+        """Glide translation must point to the pad even if internal course is stale."""
+        res = self.guidance.step(
+            drone_pos=np.array([3.02, 0.56, 2.50]),
+            # Deliberately points away from the pad in y; command must use the
+            # current EKF position error rather than this integrated course.
+            drone_vel=np.array([0.30, -0.20, 0.0]),
+            target_pos=np.array([3.00, 1.00, 0.0]),
+            dt=0.05,
+            rswitch_override=0.80,
+        )
+
+        self.assertEqual(res.sub_phase, "GLIDE_SLOPE")
+        self.assertLess(res.velocity_cmd[0], 0.0)
+        self.assertGreater(res.velocity_cmd[1], 0.0)
+        self.assertLess(res.velocity_cmd[2], 0.0)
+
+    def test_glide_includes_target_velocity_feedforward(self):
+        """A moving pad's world-frame velocity is added to position pursuit."""
+        res = self.guidance.step(
+            drone_pos=np.array([0.0, 0.0, 4.0]),
+            drone_vel=np.zeros(3),
+            target_pos=np.array([0.20, 0.0, 0.0]),
+            target_vel=np.array([0.0, 0.50, 0.0]),
+            dt=0.05,
+            rswitch_override=0.80,
+        )
+
+        self.assertGreater(res.velocity_cmd[1], 0.30)
+        self.assertLessEqual(np.linalg.norm(res.velocity_cmd), self.params.v_max + 1e-6)
+
+    def test_glide_descends_from_hover_once_inside_landing_corridor(self):
+        """A hovering vehicle inside the corridor must get a nonzero descent command."""
+        res = self.guidance.step(
+            drone_pos=np.array([5.16, 1.89, 4.89]),
+            drone_vel=np.array([-0.20, 0.04, 0.0]),
+            target_pos=np.array([5.0, 2.0, 0.0]),
+            dt=0.05,
+            rswitch_override=0.80,
+        )
+
+        self.assertEqual(res.sub_phase, "GLIDE_SLOPE")
+        self.assertLess(res.velocity_cmd[2], 0.0)
+        self.assertGreaterEqual(res.velocity_cmd[2], -self.params.v_descend_fast)
+        self.assertLessEqual(np.linalg.norm(res.velocity_cmd), self.params.v_max + 1e-6)
+
+    def test_glide_holds_altitude_outside_horizontal_landing_corridor(self):
+        res = self.guidance.step(
+            drone_pos=np.array([3.0, 2.0, 4.0]),
+            drone_vel=np.array([0.0, 0.0, 0.0]),
+            target_pos=np.array([5.0, 2.0, 0.0]),
+            dt=0.05,
+            rswitch_override=0.80,
+        )
+
+        self.assertEqual(res.sub_phase, "GLIDE_SLOPE")
+        self.assertEqual(res.velocity_cmd[2], 0.0)
 
     def test_sub_phase_transition_to_final_descent(self):
         """When Rxy <= Rswitch, guidance must switch to FINAL_DESCENT."""

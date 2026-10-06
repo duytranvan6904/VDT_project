@@ -7,7 +7,6 @@ smoothed target state in the world frame.
 
 Pipeline:
   /hpad/position_camera (PointStamped, camera_optical_frame)
-  + /hpad/detected (Bool)
   + /odom (Odometry)
   → TF2 transform camera_optical_frame → world
   → TargetStateEKF.predict() / .update()
@@ -41,7 +40,7 @@ from tf2_ros.transform_listener import TransformListener
 
 from geometry_msgs.msg import PointStamped, TransformStamped
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Bool, String
+from std_msgs.msg import String
 
 
 def _transform_point_manual(
@@ -116,14 +115,11 @@ class EKFRosAdapter(Node):
         # ── State ────────────────────────────────────────────────────────
         # All estimator timing uses ROS time so sensor stamps, TF stamps,
         # prediction and replay remain in one clock domain (including sim time).
-        self.last_detection_time = 0.0
         self.last_valid_meas_time: float | None = None
         self.last_ekf_time: float | None = None
         self.last_diag_time = 0.0
         self.last_world_meas_log_time = 0.0
         self.tf_reject_count = 0
-        self.detected = False
-        self.detection_count = 0             # consecutive detection counter
         self.phase = 'FOLLOW'                # current mission phase (for tracking policy)
         self.candidate_pos: np.ndarray | None = None
         self.candidate_time = 0.0
@@ -143,10 +139,6 @@ class EKFRosAdapter(Node):
         self.create_subscription(
             PointStamped, '/hpad/position_camera',
             self.position_cb, 10,
-        )
-        self.create_subscription(
-            Bool, '/hpad/detected',
-            self.detected_cb, 10,
         )
         self.create_subscription(
             String, '/mission/phase',
@@ -180,14 +172,6 @@ class EKFRosAdapter(Node):
         value = stamp.sec + stamp.nanosec * 1e-9
         return float(value) if value > 0.0 else float(fallback)
 
-    def detected_cb(self, msg: Bool):
-        self.detected = msg.data
-        if msg.data:
-            self.last_detection_time = self._ros_time_sec()
-            self.detection_count += 1
-        else:
-            self.detection_count = 0
-
     def phase_cb(self, msg: String):
         self.phase = msg.data
 
@@ -196,9 +180,10 @@ class EKFRosAdapter(Node):
 
         This is the EVENT-DRIVEN update path: transform to world, feed EKF.
         """
-        if not self.detected:
-            return
-
+        # A PointStamped is published only for a positive detector result.
+        # Do not gate it on /hpad/detected: that Bool has no image stamp and
+        # arrives on a separate topic, so a later negative frame can overtake
+        # this valid pose while the camera callback is still processing.
         camera_pos = np.array([msg.point.x, msg.point.y, msg.point.z])
         camera_dist = float(np.linalg.norm(camera_pos))
 
@@ -325,17 +310,22 @@ class EKFRosAdapter(Node):
         if self.last_ekf_time is None or now <= self.last_ekf_time:
             return
 
-        # Only predict (no update) — the measurement path handles updates
-        if not self.detected:
-            # During extended dropout (> 1.0s without detection), gently decay velocity towards 0
-            # to prevent runaway linear projection indefinitely if target stopped out of view
-            time_since_meas = now - self.last_valid_meas_time if self.last_valid_meas_time is not None else 999.0
-            if time_since_meas > 1.0:
-                self.ekf._state[3:] *= 0.985
+        # Publish dead reckoning from a copy. Do not advance the measurement
+        # filter clock here: camera processing/transport can deliver a valid
+        # image 100–200 ms after its capture stamp. Advancing the core filter
+        # on this timer made every such frame look out of order and caused the
+        # EKF to expire during slow close-range landing images.
+        time_since_meas = (
+            now - self.last_valid_meas_time
+            if self.last_valid_meas_time is not None else 999.0
+        )
+        predicted = self.ekf.predict_snapshot(now)
+        if time_since_meas > 1.0:
+            prediction_dt = max(0.0, now - self.ekf.timestamp)
+            damping_dt = min(prediction_dt, time_since_meas - 1.0)
+            predicted.state[3:] *= 0.985 ** (50.0 * damping_dt)
 
-            self.ekf.predict(now)
-            self.last_ekf_time = now
-            self._publish_state()
+        self._publish_state(predicted)
 
     # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -392,10 +382,10 @@ class EKFRosAdapter(Node):
             )
             return None
 
-    def _publish_state(self):
+    def _publish_state(self, snapshot=None):
         """Publish current EKF state as Odometry + tracking mode as String."""
         now_ros = self._ros_time_sec()
-        snap = self.ekf.snapshot()
+        snap = snapshot if snapshot is not None else self.ekf.snapshot()
 
         if not snap.initialized:
             return
@@ -411,7 +401,9 @@ class EKFRosAdapter(Node):
         )
         age = max(0.0, age)
         mode = classify_tracking_mode(
-            detected=self.detected,
+            # A positive Bool on a separate topic is not synchronized with
+            # its pose/bbox. Freshness comes from the last accepted pose.
+            detected=age <= 0.5,
             age_since_measurement_s=age,
             phase=self.phase if self.phase in ('APPROACH', 'FOLLOW') else 'FOLLOW',
         )

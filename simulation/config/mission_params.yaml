@@ -15,7 +15,7 @@ apf_planner:
     k_att: 10.0
     k_rep: 2500.0
     k_rep_approach: 125.0
-    goal_threshold: 0.20
+    goal_threshold: 0.30
     follow_distance: 3.5
     hold_follow_altitude: true
     target_lead_time: 0.35
@@ -35,7 +35,10 @@ apf_planner:
 ekf_ros_adapter:
   ros__parameters:
     use_sim_time: true
-    process_accel_variance: [1.0, 1.0, 0.5]
+    # Lower horizontal process noise keeps static-pad covariance inside the
+    # landing gate at the camera's measured update rate while retaining
+    # enough acceleration freedom for a 0.5 m/s target.
+    process_accel_variance: [0.25, 0.25, 0.5]
     gate_threshold: 16.27
     predict_rate_hz: 50.0
     source_frame: camera_optical_frame
@@ -48,7 +51,7 @@ aruco_sim_node:
     use_sim_time: true
     use_dual_scale: true
     marker_id: 42
-    marker_size_m: 0.40
+    marker_size_m: 0.52
     small_marker_id: 43
     small_marker_size_m: 0.05
     min_detection_distance_m: 0.05
@@ -57,15 +60,22 @@ aruco_sim_node:
 covariance_gate_node:
   ros__parameters:
     use_sim_time: true
-    pad_radius_m: 0.25
+    pad_radius_m: 0.42
     confidence_sigma: 2.0
     max_measurement_age_s: 0.5
     max_horizontal_distance_m: 5.0
     rswitch_base_m: 1.5
     rswitch_alpha: 1.0
+    r_switch_min_m: 3.0
+    r_switch_max_m: 15.0
+    sigma_ideal_m: 0.05
+    sigma_bad_m: 0.30
+    sigma_max_continue_glide_m: 0.15
     sliding_beta: 2.0
-    default_drone_eph_m: 0.10
-    default_drone_epv_m: 0.15
+    # Gazebo truth odometry is precise; use these only if the bridge omits covariance.
+    # Replace with calibrated PX4 covariance values for real flight.
+    default_drone_eph_m: 0.03
+    default_drone_epv_m: 0.05
     eval_rate_hz: 20.0
 
 smc_guidance_node:
@@ -73,9 +83,14 @@ smc_guidance_node:
     use_sim_time: true
     v_max: 1.50
     v_final_xy_max: 0.35
-    v_descend_fast: 0.35
+    v_descend_fast: 0.20
     v_descend_touch: 0.15
     rswitch_default: 0.80
+    final_descent_rxy_m: 1.00
+    final_descent_alt_m: 1.50
+    final_uncertainty_max_2sigma_m: 0.12
+    max_state_age_s: 0.30
+    max_covariance_age_s: 0.30
     control_rate_hz: 20.0
 
 ibvs_controller:
@@ -89,21 +104,34 @@ ibvs_controller:
     v0: 240.0
     search_yaw_rate: 0.15
     pitch_rate_limit: 2.0
+    approach_pitch_rate_limit: 0.50
     pitch_ema_alpha: 0.42
     pitch_pixel_trim_gain: 0.75
-    yaw_rate_limit: 0.52
+    yaw_rate_limit: 0.80
+    yaw_feedforward_min_target_speed: 0.30
+    yaw_feedforward_max_rate: 0.15
+    target_state_timeout: 0.50
+    target_prediction_horizon: 0.25
+    landing_pitch_rate_limit: 0.50
+    bbox_timeout: 0.30
     drone_model: x500_depth_0
 
 mission_fsm:
   ros__parameters:
     use_sim_time: true
     follow_distance: 3.5
-    alignment_threshold: 0.3
-    land_altitude: 0.5
     search_timeout: 3.0
     approach_timeout: 3.0
+    smc_command_timeout: 0.20
+    apf_command_timeout: 0.25
+    covariance_status_timeout: 0.30
+    covariance_revert_timeout: 3.0
+    max_uncertainty_enter_glide_2sigma_m: 0.20
+    max_uncertainty_continue_glide_2sigma_m: 0.30
+    final_descent_rxy_m: 1.00
+    final_descent_alt_m: 1.50
+    final_uncertainty_max_2sigma_m: 0.12
     takeoff_altitude: 3.0
-    land_descent_speed: 0.3
     yaw_align_enable: true
     yaw_align_enter_deg: 25.0
     yaw_align_exit_deg: 10.0
@@ -113,13 +141,17 @@ mission_fsm:
     yaw_align_u_stop_px: 250.0
     yaw_align_min_speed_scale: 0.60
     yaw_align_speed_filter_alpha: 0.35
-    reacquire_confirm_time: 0.25
+    reacquire_confirm_time: 0.30
     reacquire_hold_timeout: 4.0
     reacquire_lost_timeout: 2.0
-    reacquire_bbox_timeout: 1.0
-    reacquire_max_yaw_rate_deg: 18.0
-    follow_entry_hold_time: 0.25
+    reacquire_bbox_timeout: 0.80
+    follow_bbox_timeout: 0.30
+    follow_detection_hold_timeout: 0.25
+    landing_tracking_timeout: 0.30
+    reacquire_max_yaw_rate_deg: 20.0
+    follow_entry_hold_time: 0.10
     search_entry_hold_time: 0.30
+    follow_speed_limit: 1.50
 
 offboard_commander:
   ros__parameters:
@@ -128,31 +160,11 @@ offboard_commander:
     auto_offboard: true
     min_offboard_alt: 2.0
     max_accel: 0.8
-    max_yaw_rate: 0.65
+    max_yaw_rate: 0.80
     enable_alt_hold: true
     target_altitude: 3.0
     alt_hold_kp: 1.0
-
-covariance_gate:
-  ros__parameters:
-    use_sim_time: true
-    landing_pad_radius_m: 0.25
-    confidence_sigma: 2.0
-    r_switch_min_m: 0.20
-    r_switch_max_m: 0.80
-    gate_rate_hz: 20.0
-
-smc_guidance:
-  ros__parameters:
-    use_sim_time: true
-    glide_slope_deg: 45.0
-    final_descent_alt_m: 0.70
-    descent_speed_glide_mps: 0.35
-    descent_speed_final_mps: 0.18
-    smc_c_xy: 0.8
-    smc_k_xy: 0.4
-    smc_phi_xy: 0.15
-    rate_hz: 20.0
+    mission_command_timeout: 0.25
 
 touchdown_detector:
   ros__parameters:

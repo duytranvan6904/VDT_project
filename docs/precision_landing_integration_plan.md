@@ -141,8 +141,8 @@ flowchart TD
 | Camera | Intel RealSense D435 | ArUco detection + Depth sensing |
 | Companion Computer | Jetson Nano / NUC | ROS 2 nodes, EKF, Guidance |
 | Servo Gimbal | 2-axis (pitch + yaw) | Camera pointing control (IBVS) |
-| ArUco Marker | **Nested Dual-Scale Board**<br/>• Outer: ID 42, 20cm (dải xa 0.8–5m)<br/>• Inner: ID 43, 4cm (dải gần 0.05–0.8m) | Landing pad identifier với khả năng bám liên tục cự ly gần |
-| H-Pad | ~40cm × 40cm | Landing surface chứa nested board đồng tâm |
+| ArUco Marker | **A0 landscape dual-scale board**<br/>• ID 42 coarse: 52cm, đặt lệch trái (dải xa)<br/>• ID 43 fine: 5cm, đặt đúng tâm pad (dải gần) | Hai tag không che mã của nhau; PnP quy đổi cả hai về tâm pad |
+| H-Pad | 118.9cm × 84.1cm (A0 landscape) | Landing surface; ID 43 trùng tâm bãi đáp |
 | Frame | Holybro X500 Depth | Quadrotor platform |
 
 ---
@@ -433,6 +433,14 @@ stateDiagram-v2
         → Disarm
     end note
 ```
+
+#### Tracking invariants carried into the landing pipeline
+
+- APF publishes obstacle/goal guidance on `/apf/guidance_velocity_cmd` and target-motion compensation on `/apf/target_velocity_ff`. The FSM reduces only the guidance component during yaw alignment and caps the combined horizontal command at `follow_speed_limit`.
+- Target-motion compensation remains enabled at the standoff goal while estimated target speed is at least `0.20 m/s`; otherwise the drone would stop at the goal, fall behind, and repeatedly accelerate back toward the marker.
+- FOLLOW yaw uses pixel feedback plus a bounded line-of-sight bearing lead. Both IBVS and Offboard allow up to `0.80 rad/s`; lead activates above `0.30 m/s` and goes to zero for a stationary target.
+- SEARCH holds its yaw when a detection arrives. FOLLOW is entered only after a bbox newer than that trigger, accepted EKF `TRACKING`, an in-frame marker, and settled vehicle yaw remain valid for the confirmation interval. A pre-trigger bbox cannot confirm the lock.
+- FOLLOW translation accepts only fresh bbox/detection input. Its vertical velocity is always zero; Offboard altitude hold is the only FOLLOW altitude controller. APF's `0.30 m` goal deadband suppresses small stand-off corrections caused by stationary-target estimate noise.
 
 ### 5.2. Chi tiết từng pha
 
@@ -730,26 +738,14 @@ def switch_to_land_mode(self):
 
 | Pha Landing | Gimbal Pitch | Lý do |
 |---|---|---|
-| APF_APPROACH | IBVS control (−10° → −45°) | Theo dõi marker từ xa, IBVS giữ marker ở tâm ảnh |
-| GLIDE_SLOPE | −45° → −70° (theo γ_p) | Camera nhìn chéo xuống theo quỹ đạo SMC 45° |
-| FINAL_DESCENT | −80° → −90° | Camera nhìn thẳng xuống, marker rất gần |
+| APF_APPROACH | IBVS theo pixel + hình học EKF; slew pitch tối đa 0.5 rad/s | Giữ marker trong FOV trong lúc APF tiến ngang |
+| GLIDE_SLOPE | Tiếp tục IBVS khi marker đang detect | Gimbal không nhảy góc theo lệnh chuyển pha; mất ảnh thì giữ pitch hiện tại |
+| FINAL_DESCENT | Slew dần tới −90° với giới hạn 0.5 rad/s, chỉ khi có marker mới | Nhìn xuống gần pad mà không tạo bước gập đột ngột |
 | TOUCHDOWN | −90° (lock) | Không di chuyển gimbal khi chạm |
 
-```python
-def compute_gimbal_pitch(self, phase, gamma_p=None):
-    """Compute gimbal pitch for each landing phase."""
-    if phase == 'APF_APPROACH':
-        return self.ibvs_pitch  # IBVS auto-control
-    elif phase == 'GLIDE_SLOPE':
-        # Gimbal bù theo góc quỹ đạo bay để giữ marker trong FOV
-        # gamma_p dương khi bay lên, âm khi hạ
-        pitch_deg = np.degrees(gamma_p) - 90.0  # -45° flight path → -135° → clip
-        return np.clip(pitch_deg, -90.0, -30.0)
-    elif phase in ('FINAL_DESCENT', 'TOUCHDOWN'):
-        return -90.0  # Nhìn thẳng xuống
-    else:
-        return -45.0  # Default
-```
+Trong `APPROACH` và `GLIDE_SLOPE`, IBVS chỉ dùng EKF feedforward khi vừa có detection ảnh mới vừa có tracking mode `TRACKING`. Khi ảnh stale/mất, controller giữ pitch và yaw ở trạng thái hiện tại; EKF prediction không kéo camera khỏi vị trí nhìn cuối. `FINAL_DESCENT` mới cho phép đặt pitch về −90°, qua rate limit và lọc EMA.
+
+`/landing/uncertainty_radius` là confidence radius theo `confidence_sigma` (mặc định 2σ). Vì các ngưỡng trong phần landing được biểu diễn theo σ, với cấu hình 2σ phải dùng radius `0.20 m` để vào GLIDE (`σ ≤ 0.10 m`), `0.30 m` để tiếp tục GLIDE (`σ ≤ 0.15 m`) và `0.12 m` để vào FINAL (`σ ≤ 0.06 m`).
 
 ---
 
@@ -984,7 +980,7 @@ covariance_gate:
     sigma_bad: 0.30        # m
     
     # Pad geometry
-    pad_half_width: 0.20   # m (H-Pad 40cm → radius 20cm)
+    pad_half_width: 0.4205 # m (nửa cạnh ngắn A0; inscribed landing radius)
     confidence_level: 3.0  # n-sigma cho confidence ellipse
     
     # Abort timing

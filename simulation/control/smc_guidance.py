@@ -61,7 +61,11 @@ class SMCParams:
     v_descend_fast: float = 0.35  # Descent velocity when altitude > 0.5m (m/s)
     v_descend_touch: float = 0.15 # Touchdown descent velocity when altitude <= 0.3m (m/s)
     rswitch_default: float = 0.80 # Default switching radius (m)
+    final_descent_rxy_m: float = 1.00
+    final_descent_alt_m: float = 1.50
     final_centering_kp: float = 0.70  # Proportional centering gain in final descent
+    glide_centering_kp: float = 0.70  # World-frame target pursuit gain during glide
+    target_velocity_ff_gain: float = 0.80  # EKF feed-forward for a moving pad
     rmin: float = 0.05          # Singularity avoidance radius (m)
 
 
@@ -128,21 +132,29 @@ class SMCGuidance:
         rswitch = rswitch_override if rswitch_override is not None else self.p.rswitch_default
         rswitch = max(self.p.rmin, rswitch)
 
-        # 2. Check for Terminal Final Descent Sub-Phase
-        # Drone enters final descent when within switching cylinder or very close to touchdown
-        if r_xy <= rswitch or r_z < 0.20:
+        # Final descent requires both horizontal and vertical proximity.
+        # The adaptive handover radius may tighten this cylinder, but must
+        # never trigger a vertical descent while the drone is far above/beside the pad.
+        final_radius = min(rswitch, self.p.final_descent_rxy_m)
+        if r_xy <= final_radius and r_z <= self.p.final_descent_alt_m:
             return self._final_descent_step(dx, dy, r_z, dt)
 
         # 3. GLIDE_SLOPE Sub-Phase (SMC Guidance)
         return self._glide_slope_step(
-            drone_pos, drone_vel, target_pos, target_vel, dx, dy, r_xy, r_z, dt, sliding_weight
+            drone_pos, drone_vel, target_pos, target_vel, dx, dy, r_xy, r_z,
+            final_radius, dt, sliding_weight
         )
 
     def _final_descent_step(self, dx: float, dy: float, r_z: float, dt: float) -> SMCResult:
         """Terminal vertical descent directly over the landing pad."""
-        # Horizontal PD centering directly onto pad center
-        vx_cmd = np.clip(self.p.final_centering_kp * dx, -self.p.v_final_xy_max, self.p.v_final_xy_max)
-        vy_cmd = np.clip(self.p.final_centering_kp * dy, -self.p.v_final_xy_max, self.p.v_final_xy_max)
+        # Position feedback is expressed in the same ENU world frame as the
+        # target estimate.  Limit the vector magnitude so diagonal motion
+        # cannot exceed the terminal horizontal speed cap.
+        xy_cmd = self._position_velocity(
+            dx, dy, np.zeros(2), self.p.final_centering_kp,
+            self.p.v_final_xy_max,
+        )
+        vx_cmd, vy_cmd = float(xy_cmd[0]), float(xy_cmd[1])
 
         # Vertical descent speed tapers near the ground
         if r_z > 0.40:
@@ -165,6 +177,25 @@ class SMCGuidance:
             valid=True,
         )
 
+    @staticmethod
+    def _position_velocity(
+        dx: float,
+        dy: float,
+        target_vel_xy: np.ndarray,
+        gain: float,
+        speed_limit: float,
+    ) -> np.ndarray:
+        """Bounded ENU pursuit velocity toward the estimated target position."""
+        command = gain * np.array([dx, dy], dtype=np.float64)
+        target_velocity = np.asarray(target_vel_xy, dtype=np.float64)[:2]
+        if target_velocity.shape == (2,) and np.all(np.isfinite(target_velocity)):
+            command += target_velocity
+        speed = float(np.linalg.norm(command))
+        limit = max(0.0, float(speed_limit))
+        if speed > limit and speed > 1e-9:
+            command *= limit / speed
+        return command
+
     def _glide_slope_step(
         self,
         drone_pos: np.ndarray,
@@ -175,6 +206,7 @@ class SMCGuidance:
         dy: float,
         r_xy: float,
         r_z: float,
+        final_radius: float,
         dt: float,
         sliding_weight: float,
     ) -> SMCResult:
@@ -275,10 +307,48 @@ class SMCGuidance:
         self.alpha_p = float(self.alpha_p + dalpha_p * dt_safe)
         self.gamma = float(np.clip(self.gamma + dgamma * dt_safe, -math.pi / 3.0, 0.0))
 
-        # Compute velocity command in ENU
-        vx_cmd = self.Vp * math.cos(self.gamma) * math.cos(self.alpha_p)
-        vy_cmd = self.Vp * math.cos(self.gamma) * math.sin(self.alpha_p)
-        vz_cmd = self.Vp * math.sin(self.gamma)  # Negative in descent (ENU)
+        # Compute velocity command in ENU. The reaching-law solution can
+        # legitimately leave gamma at zero when the vehicle starts from a
+        # hover (the common landing case); that made GLIDE_SLOPE publish
+        # vz=0 forever, so the altitude gate for FINAL_DESCENT could never be
+        # reached. Keep SMC's horizontal guidance, but make the glide profile
+        # explicit and only descend while horizontally inside the landing
+        # corridor. The covariance/vision gate is enforced by the node and FSM.
+        # Use current ENU target error for the actual command. The integrated
+        # course can drift from vehicle motion after a hover or gate pause and
+        # otherwise send the drone away from the pad even with correct EKF data.
+        xy_cmd = self._position_velocity(
+            dx,
+            dy,
+            np.asarray(target_vel, dtype=np.float64)[:2]
+            * self.p.target_velocity_ff_gain,
+            self.p.glide_centering_kp,
+            self.p.v_max,
+        )
+        vx_cmd, vy_cmd = float(xy_cmd[0]), float(xy_cmd[1])
+        horizontal_speed = math.hypot(vx_cmd, vy_cmd)
+        if r_xy <= final_radius and r_z > self.p.final_descent_alt_m:
+            slope_speed = horizontal_speed * math.tan(abs(self.p.theta_des_rad))
+            descent_speed = min(
+                max(self.p.v_descend_touch, slope_speed),
+                self.p.v_descend_fast,
+                max(0.10, r_z - self.p.final_descent_alt_m),
+            )
+            vz_cmd = -descent_speed
+            # Keep the resultant 3D command inside the configured speed cap.
+            horizontal_limit = math.sqrt(max(
+                0.0, self.p.v_max * self.p.v_max - vz_cmd * vz_cmd
+            ))
+            if horizontal_speed > horizontal_limit and horizontal_speed > 1e-9:
+                xy_scale = horizontal_limit / horizontal_speed
+                vx_cmd *= xy_scale
+                vy_cmd *= xy_scale
+                horizontal_speed = horizontal_limit
+            self.gamma = math.atan2(vz_cmd, max(horizontal_speed, 1e-4))
+        else:
+            # Hold height until the vehicle is inside the descent corridor.
+            vz_cmd = 0.0
+            self.gamma = 0.0
 
         vel_cmd = np.array([vx_cmd, vy_cmd, vz_cmd], dtype=np.float64)
         yaw_rate = float(np.clip(dalpha_p, -0.6, 0.6))
@@ -305,6 +375,11 @@ class SMCGuidanceNode(Node):
         self.declare_parameter('v_descend_fast', 0.35)
         self.declare_parameter('v_descend_touch', 0.15)
         self.declare_parameter('rswitch_default', 0.80)
+        self.declare_parameter('final_descent_rxy_m', 1.00)
+        self.declare_parameter('final_descent_alt_m', 1.50)
+        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.12)
+        self.declare_parameter('max_state_age_s', 0.30)
+        self.declare_parameter('max_covariance_age_s', 0.30)
         self.declare_parameter('control_rate_hz', 20.0)
 
         params = SMCParams(
@@ -313,6 +388,15 @@ class SMCGuidanceNode(Node):
             v_descend_fast=float(self.get_parameter('v_descend_fast').value),
             v_descend_touch=float(self.get_parameter('v_descend_touch').value),
             rswitch_default=float(self.get_parameter('rswitch_default').value),
+            final_descent_rxy_m=float(self.get_parameter('final_descent_rxy_m').value),
+            final_descent_alt_m=float(self.get_parameter('final_descent_alt_m').value),
+        )
+        self.final_uncertainty_max = float(
+            self.get_parameter('final_uncertainty_max_2sigma_m').value
+        )
+        self.max_state_age = float(self.get_parameter('max_state_age_s').value)
+        self.max_covariance_age = float(
+            self.get_parameter('max_covariance_age_s').value
         )
 
         self.guidance = SMCGuidance(params)
@@ -326,16 +410,26 @@ class SMCGuidanceNode(Node):
 
         self.drone_odom: Optional[Odometry] = None
         self.target_odom: Optional[Odometry] = None
+        self.mission_phase = 'IDLE'
+        self.tracking_mode = 'EXPIRED'
         self.safe_to_land: bool = False
+        self.uncertainty_radius = float('inf')
         self.rswitch_adaptive: float = params.rswitch_default
         self.sliding_weight: float = 1.0
+        self.last_odom_rx_time = 0.0
+        self.last_target_rx_time = 0.0
+        self.last_safe_rx_time = 0.0
+        self.last_uncertainty_rx_time = 0.0
         self.last_step_time = time.monotonic()
         self.last_log_time = time.monotonic()
 
         # Subscriptions
         self.create_subscription(Odometry, '/odom', self.drone_odom_cb, sensor_qos)
         self.create_subscription(Odometry, '/ekf/target_state', self.target_odom_cb, 10)
+        self.create_subscription(String, '/mission/phase', self.phase_cb, 10)
+        self.create_subscription(String, '/ekf/tracking_mode', self.tracking_mode_cb, 10)
         self.create_subscription(Bool, '/landing/safe_to_land', self.safe_cb, 10)
+        self.create_subscription(Float64, '/landing/uncertainty_radius', self.uncertainty_cb, 10)
         self.create_subscription(Float64, '/landing/rswitch_adaptive', self.rswitch_cb, 10)
         self.create_subscription(Float64, '/landing/sliding_weight', self.weight_cb, 10)
 
@@ -353,12 +447,30 @@ class SMCGuidanceNode(Node):
 
     def drone_odom_cb(self, msg: Odometry):
         self.drone_odom = msg
+        self.last_odom_rx_time = time.monotonic()
 
     def target_odom_cb(self, msg: Odometry):
         self.target_odom = msg
+        self.last_target_rx_time = time.monotonic()
+
+    def phase_cb(self, msg: String):
+        previous = self.mission_phase
+        self.mission_phase = msg.data
+        if self.mission_phase == 'APPROACH' and previous not in ('APPROACH', 'LAND'):
+            # Start the landing controller from the current motion, not from
+            # integrator state accumulated while following/searching.
+            self.guidance.initialized = False
+
+    def tracking_mode_cb(self, msg: String):
+        self.tracking_mode = msg.data
 
     def safe_cb(self, msg: Bool):
         self.safe_to_land = msg.data
+        self.last_safe_rx_time = time.monotonic()
+
+    def uncertainty_cb(self, msg: Float64):
+        self.uncertainty_radius = float(msg.data)
+        self.last_uncertainty_rx_time = time.monotonic()
 
     def rswitch_cb(self, msg: Float64):
         self.rswitch_adaptive = float(msg.data)
@@ -366,12 +478,46 @@ class SMCGuidanceNode(Node):
     def weight_cb(self, msg: Float64):
         self.sliding_weight = float(msg.data)
 
+    def _publish_hold(self, state: str = 'HOLD'):
+        # The vehicle may brake/hover while this command is held. Discard the
+        # old integrated speed, course, and flight-path state so reacquisition
+        # restarts guidance from measured odometry instead of a stale trajectory.
+        self.guidance.initialized = False
+        self.vel_pub.publish(Twist())
+        self.sub_phase_pub.publish(String(data=state))
+
     def control_loop(self):
         now = time.monotonic()
         dt = now - self.last_step_time
         self.last_step_time = now
 
+        if self.mission_phase not in ('APPROACH', 'LAND'):
+            self._publish_hold('INACTIVE')
+            return
+
         if self.drone_odom is None or self.target_odom is None:
+            self._publish_hold()
+            return
+
+        state_fresh = (
+            now - self.last_odom_rx_time <= self.max_state_age
+            and now - self.last_target_rx_time <= self.max_state_age
+        )
+        covariance_fresh = (
+            self.last_safe_rx_time > 0.0
+            and self.last_uncertainty_rx_time > 0.0
+            and now - self.last_safe_rx_time <= self.max_covariance_age
+            and now - self.last_uncertainty_rx_time <= self.max_covariance_age
+        )
+        if (
+            not state_fresh
+            or not covariance_fresh
+            or self.tracking_mode != 'TRACKING'
+            or not self.safe_to_land
+        ):
+            # Never let a predicted or stale target state drive a landing
+            # command. The FSM holds and waits for reacquisition/abort.
+            self._publish_hold()
             return
 
         dp = self.drone_odom.pose.pose.position
@@ -393,6 +539,13 @@ class SMCGuidanceNode(Node):
             rswitch_override=self.rswitch_adaptive,
             sliding_weight=self.sliding_weight,
         )
+
+        if (
+            res.sub_phase == 'FINAL_DESCENT'
+            and self.uncertainty_radius > self.final_uncertainty_max
+        ):
+            self._publish_hold('FINAL_GATE_WAIT')
+            return
 
         # Publish Twist command
         twist = Twist()

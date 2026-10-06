@@ -11,7 +11,8 @@ Thuật toán:
 
 ROS 2 interface:
   Subscribe: /odom, /ekf/target_state, /ekf/tracking_mode, /mission/phase
-  Publish:   /apf/velocity_cmd, /apf/force_markers
+  Publish:   /apf/velocity_cmd, /apf/guidance_velocity_cmd,
+             /apf/target_velocity_ff, /apf/force_markers
 """
 
 from __future__ import annotations
@@ -30,6 +31,14 @@ try:
 except ImportError:
     from iapf_core import IAPFCore, IAPFParams, IAPFResult
 
+try:
+    from simulation.control.tracking_control import (
+        TargetMotionGate,
+        target_velocity_feedforward,
+    )
+except ImportError:
+    from tracking_control import TargetMotionGate, target_velocity_feedforward
+
 # ---------------------------------------------------------------------------
 # Core APF algorithm (no ROS dependency)
 # ---------------------------------------------------------------------------
@@ -42,7 +51,7 @@ class APFParams:
     d_slow: float = 1.5           # Deceleration distance to goal (m)
     k_att: float = 10.0           # Attractive gain
     k_rep: float = 2500.0         # Repulsive gain
-    goal_threshold: float = 0.20  # Stop distance near goal (m)
+    goal_threshold: float = 0.30  # Stop distance near goal (m)
     k_z: float = 0.6              # Altitude P gain (1/s)
     vz_max: float = 0.5           # Max vertical velocity (m/s)
 
@@ -328,7 +337,7 @@ def _create_ros_node():
             self.declare_parameter('k_att', 10.0)
             self.declare_parameter('k_rep', 250.0)
             self.declare_parameter('k_rep_approach', 125.0)
-            self.declare_parameter('goal_threshold', 0.20)
+            self.declare_parameter('goal_threshold', 0.30)
             self.declare_parameter('follow_distance', 3.5)
             self.declare_parameter('hold_follow_altitude', True)
             self.declare_parameter('target_altitude', 3.0)
@@ -408,6 +417,8 @@ def _create_ros_node():
             self.drone_pos = np.zeros(3)
             self.goal_pos = None               # from EKF target state
             self.target_vel = np.zeros(3)
+            self.target_motion_gate = TargetMotionGate()
+            self.target_motion_velocity = np.zeros(2)
             self.has_odom = False
             self.phase = 'IDLE'
             self.tracking_mode = 'EXPIRED'
@@ -445,6 +456,12 @@ def _create_ros_node():
 
             # ── Publishers ───────────────────────────────────────────────
             self.vel_pub = self.create_publisher(Twist, '/apf/velocity_cmd', 10)
+            self.guidance_vel_pub = self.create_publisher(
+                Twist, '/apf/guidance_velocity_cmd', 10,
+            )
+            self.target_ff_pub = self.create_publisher(
+                Twist, '/apf/target_velocity_ff', 10,
+            )
             self.yaw_pub = self.create_publisher(Float64, '/apf/yaw_cmd', 10)
             self.marker_pub = self.create_publisher(
                 MarkerArray, '/apf/force_markers', 10,
@@ -500,6 +517,9 @@ def _create_ros_node():
                 self.target_vel[:2] = 0.0
             if abs(self.target_vel[2]) < 0.08:
                 self.target_vel[2] = 0.0
+            self.target_motion_velocity = self.target_motion_gate.update(
+                self.target_vel[:2]
+            )
 
         def phase_cb(self, msg: String):
             if msg.data != self.phase and hasattr(self.apf, 'reset'):
@@ -508,6 +528,12 @@ def _create_ros_node():
 
         def tracking_mode_cb(self, msg: String):
             self.tracking_mode = msg.data
+            if msg.data != 'TRACKING':
+                # A prediction through image loss is not fresh evidence that
+                # a moving target is still moving. Reconfirm after reacquire.
+                self.target_motion_gate.reset()
+                self.target_motion_velocity[:] = 0.0
+                self.target_vel[:2] = 0.0
 
         # ── Main loop ────────────────────────────────────────────────────
 
@@ -516,11 +542,12 @@ def _create_ros_node():
             if self.goal_pos is not None:
                 target_goal = np.copy(self.goal_pos)
                 if self.has_odom and self.phase == 'FOLLOW':
-                    # Only apply lead when target is actively moving (>= 0.18 m/s)
-                    # to prevent EKF velocity noise from jittering the standoff goal
-                    target_speed = float(np.linalg.norm(self.target_vel[:2]))
-                    if target_speed >= 0.18:
-                        lead = self.target_vel * self.target_lead_time
+                    # Require repeated EKF velocity evidence before letting a
+                    # transient stationary-target estimate shift the goal.
+                    target_speed = float(np.linalg.norm(self.target_motion_velocity))
+                    if target_speed > 0.0:
+                        lead = self.target_vel.copy() * self.target_lead_time
+                        lead[:2] = self.target_motion_velocity * self.target_lead_time
                         lead_xy_norm = float(np.linalg.norm(lead[:2]))
                         if lead_xy_norm > self.max_target_lead and lead_xy_norm > 1e-9:
                             lead[:2] *= self.max_target_lead / lead_xy_norm
@@ -575,16 +602,25 @@ def _create_ros_node():
             cmd_vx = float(result.velocity[0])
             cmd_vy = float(result.velocity[1])
             cmd_vz = float(result.velocity[2])
+            guidance_cmd = Twist()
+            guidance_cmd.linear.x = cmd_vx
+            guidance_cmd.linear.y = cmd_vy
+            guidance_cmd.linear.z = cmd_vz
+            target_ff = Twist()
 
-            # In FOLLOW phase, inject target horizontal velocity feedforward so the drone
-            # doesn't lag or get left behind when tracking a moving target!
-            # Only inject if target is genuinely moving (>= 0.20 m/s) and not already at goal,
-            # ensuring that a stationary target allows the drone to hold perfectly steady.
+            # Publish APF guidance separately from target-motion feedforward.
+            # Feedforward remains active at the standoff goal while the target
+            # moves; otherwise the drone stops, falls behind, then repeatedly
+            # accelerates back toward the target.
             if self.phase == 'FOLLOW':
-                target_speed = float(np.linalg.norm(self.target_vel[:2]))
-                if target_speed >= 0.20 and not result.at_goal:
-                    cmd_vx += float(self.target_vel[0])
-                    cmd_vy += float(self.target_vel[1])
+                ff_xy = target_velocity_feedforward(
+                    self.target_motion_velocity, min_speed=0.20,
+                )
+                target_ff.linear.x = float(ff_xy[0])
+                target_ff.linear.y = float(ff_xy[1])
+                cmd_vx += target_ff.linear.x
+                cmd_vy += target_ff.linear.y
+                if float(np.linalg.norm(ff_xy)) > 0.0:
                     v_max = float(self.apf.params.v_max)
                     total_h_speed = math.hypot(cmd_vx, cmd_vy)
                     if total_h_speed > v_max:
@@ -596,6 +632,8 @@ def _create_ros_node():
             cmd.linear.x = cmd_vx
             cmd.linear.y = cmd_vy
             cmd.linear.z = cmd_vz
+            self.guidance_vel_pub.publish(guidance_cmd)
+            self.target_ff_pub.publish(target_ff)
             self.vel_pub.publish(cmd)
             self.yaw_pub.publish(Float64(data=float(result.yaw_cmd)))
 
@@ -604,6 +642,8 @@ def _create_ros_node():
 
         def _publish_zero_velocity(self):
             self.vel_pub.publish(Twist())
+            self.guidance_vel_pub.publish(Twist())
+            self.target_ff_pub.publish(Twist())
 
         def _publish_force_markers(
             self,

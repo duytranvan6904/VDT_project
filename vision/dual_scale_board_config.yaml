@@ -1,16 +1,18 @@
 dictionary: DICT_6X6_50
-board_type: nested_dual_scale
-total_pad_size_m: 0.5
+board_type: a0_landscape_dual_scale
+total_pad_size_m: 0.841
+total_pad_width_m: 1.189
+total_pad_height_m: 0.841
 markers:
 - id: 42
   role: outer_coarse
-  size_m: 0.4
+  size_m: 0.52
   effective_range_m: [0.8, 5.0]
   corners_3d:
-  - [-0.2, 0.2, 0.0]
-  - [0.2, 0.2, 0.0]
-  - [0.2, -0.2, 0.0]
-  - [-0.2, -0.2, 0.0]
+  - [-0.5740000000000001, 0.26, 0.0]
+  - [-0.05400000000000005, 0.26, 0.0]
+  - [-0.05400000000000005, -0.26, 0.0]
+  - [-0.5740000000000001, -0.26, 0.0]
 - id: 43
   role: inner_fine
   size_m: 0.05

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ArUco detection node for the Gazebo RGB-D camera.
 
-Supports both Dual-Scale ArUco Board (Big ID 42 40cm, Small ID 43 5cm)
+Supports an A0 landscape dual-scale board (ID 42 52cm, ID 43 5cm)
 for continuous precision landing guidance from 5m down to touchdown (0.05m),
 and legacy single-marker operation.
 
@@ -15,7 +15,7 @@ Outputs:
   /hpad/position_camera  geometry_msgs/PointStamped (x, y, z in optical frame)
   /hpad/bbox             vision_msgs/BoundingBox2D
   /hpad/detected         std_msgs/Bool
-  /hpad/tracking_mode    std_msgs/String (DUAL_FUSED | OUTER_COARSE | INNER_FINE | LOST)
+  /hpad/tracking_mode    std_msgs/String (OUTER_COARSE | INNER_FINE | LOST)
   /hpad/annotated        sensor_msgs/Image
 
 The PnP pose is expressed in the ROS camera optical frame (x-right, y-down, z-forward).
@@ -50,7 +50,7 @@ class ArucoSimulationNode(Node):
         self.declare_parameter('use_dual_scale', True)
         self.declare_parameter('board_config', os.path.join(REPO_ROOT, 'vision', 'dual_scale_board_config.yaml'))
         self.declare_parameter('marker_id', 42)
-        self.declare_parameter('marker_size_m', 0.40)
+        self.declare_parameter('marker_size_m', 0.52)
         self.declare_parameter('small_marker_id', 43)
         self.declare_parameter('small_marker_size_m', 0.05)
         self.declare_parameter('dictionary', 'DICT_6X6_50')
@@ -258,9 +258,18 @@ class ArucoSimulationNode(Node):
                 single_markers = res.get('single_markers', [])
                 if single_markers:
                     all_corners = np.vstack([m['corners'] for m in single_markers])
+                    pad_origin_px, _ = cv2.projectPoints(
+                        np.zeros((1, 3), dtype=np.float32),
+                        rvec,
+                        tvec,
+                        self.camera_matrix,
+                        self.dist_coeffs,
+                    )
+                    pad_center = pad_origin_px.reshape(2)
                     bbox = BoundingBox2D()
-                    bbox.center.position.x = float(np.mean(all_corners[:, 0]))
-                    bbox.center.position.y = float(np.mean(all_corners[:, 1]))
+                    # Aim at the landing origin, not the off-center coarse tag.
+                    bbox.center.position.x = float(pad_center[0])
+                    bbox.center.position.y = float(pad_center[1])
                     bbox.center.theta = 0.0
                     bbox.size_x = float(np.max(all_corners[:, 0]) - np.min(all_corners[:, 0]))
                     bbox.size_y = float(np.max(all_corners[:, 1]) - np.min(all_corners[:, 1]))

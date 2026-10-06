@@ -57,7 +57,7 @@
     <include>
       <uri>model://arucotag</uri>
       <name>hpad_aruco</name>
-      <pose>5.00 2.00 0.02 0 0 0</pose>
+      <pose>3.00 1.00 0.02 0 0 0</pose>
     </include>
 
     <model name="cyl_1"><static>true</static>

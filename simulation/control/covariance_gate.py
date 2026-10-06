@@ -75,6 +75,11 @@ class CovarianceGate:
         sliding_beta: float = 2.0,
         default_drone_eph_m: float = 0.10,
         default_drone_epv_m: float = 0.15,
+        rswitch_min_m: Optional[float] = None,
+        rswitch_max_m: Optional[float] = None,
+        sigma_ideal_m: float = 0.05,
+        sigma_bad_m: float = 0.30,
+        max_uncertainty_2sigma_m: Optional[float] = None,
     ):
         self.pad_radius = float(pad_radius_m)
         self.confidence_sigma = float(confidence_sigma)
@@ -82,6 +87,14 @@ class CovarianceGate:
         self.max_horizontal_dist = float(max_horizontal_distance_m)
         self.rswitch_base = float(rswitch_base_m)
         self.rswitch_alpha = float(rswitch_alpha)
+        self.rswitch_min = None if rswitch_min_m is None else float(rswitch_min_m)
+        self.rswitch_max = None if rswitch_max_m is None else float(rswitch_max_m)
+        self.sigma_ideal = max(0.0, float(sigma_ideal_m))
+        self.sigma_bad = max(self.sigma_ideal + 1e-6, float(sigma_bad_m))
+        self.max_uncertainty_2sigma = (
+            None if max_uncertainty_2sigma_m is None
+            else max(0.0, float(max_uncertainty_2sigma_m))
+        )
         self.sliding_beta = float(sliding_beta)
         self.default_drone_eph = float(default_drone_eph_m)
         self.default_drone_epv = float(default_drone_epv_m)
@@ -163,6 +176,14 @@ class CovarianceGate:
             reasons.append(
                 f"Uncertainty radius {r_unc:.3f}m > allowed funnel {allowed_unc:.3f}m"
             )
+        if (
+            self.max_uncertainty_2sigma is not None
+            and r_unc > self.max_uncertainty_2sigma
+        ):
+            reasons.append(
+                f"Uncertainty radius {r_unc:.3f}m > glide limit "
+                f"{self.max_uncertainty_2sigma:.3f}m (2-sigma)"
+            )
         if measurement_age_s > self.max_measurement_age:
             reasons.append(
                 f"Measurement age {measurement_age_s:.2f}s > timeout {self.max_measurement_age:.2f}s"
@@ -178,9 +199,25 @@ class CovarianceGate:
         reject_reason = "; ".join(reasons) if not safe_to_land else "OK"
 
         # 8. Adaptive phase transition distance and sliding weight
-        rswitch_adaptive = float(
-            self.rswitch_base * (1.0 + self.rswitch_alpha * np.sqrt(lambda_max_2d))
-        )
+        if self.rswitch_min is not None and self.rswitch_max is not None:
+            # The glide starts farther away only when relative uncertainty is
+            # low. Poor covariance moves the handover inward, never outward.
+            sigma_xy = float(np.sqrt(lambda_max_2d))
+            confidence = float(np.clip(
+                (sigma_xy - self.sigma_ideal) / (self.sigma_bad - self.sigma_ideal),
+                0.0,
+                1.0,
+            ))
+            rswitch_adaptive = self.rswitch_max - confidence * (
+                self.rswitch_max - self.rswitch_min
+            )
+        else:
+            # Keep the old constructor behavior for callers that still pass
+            # rswitch_base_m/rswitch_alpha without an explicit range.
+            rswitch_adaptive = self.rswitch_base * (
+                1.0 + self.rswitch_alpha * np.sqrt(lambda_max_2d)
+            )
+        rswitch_adaptive = float(max(0.0, rswitch_adaptive))
         sliding_weight = float(1.0 / (1.0 + self.sliding_beta * lambda_max_2d))
 
         return CovarianceStatusResult(
@@ -215,6 +252,11 @@ class CovarianceGateNode(Node):
         self.declare_parameter('max_horizontal_distance_m', 5.0)
         self.declare_parameter('rswitch_base_m', 1.5)
         self.declare_parameter('rswitch_alpha', 1.0)
+        self.declare_parameter('r_switch_min_m', 3.0)
+        self.declare_parameter('r_switch_max_m', 15.0)
+        self.declare_parameter('sigma_ideal_m', 0.05)
+        self.declare_parameter('sigma_bad_m', 0.30)
+        self.declare_parameter('sigma_max_continue_glide_m', 0.15)
         self.declare_parameter('sliding_beta', 2.0)
         self.declare_parameter('default_drone_eph_m', 0.10)
         self.declare_parameter('default_drone_epv_m', 0.15)
@@ -226,6 +268,13 @@ class CovarianceGateNode(Node):
         max_dist = float(self.get_parameter('max_horizontal_distance_m').value)
         rswitch_base = float(self.get_parameter('rswitch_base_m').value)
         rswitch_alpha = float(self.get_parameter('rswitch_alpha').value)
+        rswitch_min = float(self.get_parameter('r_switch_min_m').value)
+        rswitch_max = float(self.get_parameter('r_switch_max_m').value)
+        sigma_ideal = float(self.get_parameter('sigma_ideal_m').value)
+        sigma_bad = float(self.get_parameter('sigma_bad_m').value)
+        sigma_max_continue = float(
+            self.get_parameter('sigma_max_continue_glide_m').value
+        )
         sliding_beta = float(self.get_parameter('sliding_beta').value)
         drone_eph = float(self.get_parameter('default_drone_eph_m').value)
         drone_epv = float(self.get_parameter('default_drone_epv_m').value)
@@ -238,6 +287,11 @@ class CovarianceGateNode(Node):
             max_horizontal_distance_m=max_dist,
             rswitch_base_m=rswitch_base,
             rswitch_alpha=rswitch_alpha,
+            rswitch_min_m=rswitch_min,
+            rswitch_max_m=rswitch_max,
+            sigma_ideal_m=sigma_ideal,
+            sigma_bad_m=sigma_bad,
+            max_uncertainty_2sigma_m=confidence_sigma * sigma_max_continue,
             sliding_beta=sliding_beta,
             default_drone_eph_m=drone_eph,
             default_drone_epv_m=drone_epv,
@@ -252,16 +306,15 @@ class CovarianceGateNode(Node):
         # State storage
         self.latest_drone_odom: Optional[Odometry] = None
         self.latest_target_odom: Optional[Odometry] = None
-        self.is_detected: bool = False
-        self.last_detection_time: float = 0.0
         self.tracking_mode: str = "LOST"
+        self.ekf_tracking_mode: str = "EXPIRED"
         self.last_log_time: float = 0.0
 
         # Subscriptions
         self.create_subscription(Odometry, '/odom', self.drone_odom_cb, sensor_qos)
         self.create_subscription(Odometry, '/ekf/target_state', self.target_odom_cb, 10)
-        self.create_subscription(Bool, '/hpad/detected', self.detected_cb, 10)
         self.create_subscription(String, '/hpad/tracking_mode', self.tracking_mode_cb, 10)
+        self.create_subscription(String, '/ekf/tracking_mode', self.ekf_tracking_mode_cb, 10)
 
         # Publishers
         self.safe_pub = self.create_publisher(Bool, '/landing/safe_to_land', 10)
@@ -284,17 +337,19 @@ class CovarianceGateNode(Node):
     def target_odom_cb(self, msg: Odometry):
         self.latest_target_odom = msg
 
-    def detected_cb(self, msg: Bool):
-        self.is_detected = msg.data
-        if msg.data:
-            self.last_detection_time = time.monotonic()
-
     def tracking_mode_cb(self, msg: String):
         self.tracking_mode = msg.data
 
+    def ekf_tracking_mode_cb(self, msg: String):
+        self.ekf_tracking_mode = msg.data
+
     def eval_loop(self):
         now = time.monotonic()
-        meas_age = now - self.last_detection_time if self.last_detection_time > 0 else 999.0
+        # Use the EKF's accepted-measurement mode, not the unsynchronized raw
+        # Bool topic. A negative frame can otherwise race a valid pose and
+        # close the landing gate at the camera's normal frame rate.
+        measurement_fresh = self.ekf_tracking_mode == "TRACKING"
+        meas_age = 0.0 if measurement_fresh else self.gate.max_measurement_age + 1.0
 
         if self.latest_drone_odom is None or self.latest_target_odom is None:
             # Insufficient inputs: output safe=False
@@ -316,7 +371,7 @@ class CovarianceGateNode(Node):
             target_pos=target_pos,
             drone_cov_36=drone_cov,
             target_cov_36=target_cov,
-            is_detected=self.is_detected and (self.tracking_mode != "LOST"),
+            is_detected=measurement_fresh,
             measurement_age_s=meas_age,
         )
 
@@ -349,6 +404,7 @@ class CovarianceGateNode(Node):
             KeyValue(key="rel_dist_z_m", value=f"{res.relative_dist_z:.3f}"),
             KeyValue(key="measurement_age_s", value=f"{res.measurement_age_s:.2f}"),
             KeyValue(key="tracking_mode", value=self.tracking_mode),
+            KeyValue(key="ekf_tracking_mode", value=self.ekf_tracking_mode),
         ]
         self.diag_pub.publish(diag)
 
