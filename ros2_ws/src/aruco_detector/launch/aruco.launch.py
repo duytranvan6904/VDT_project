@@ -2,6 +2,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+import os
 
 MODE_PARAMETERS = {
     "sim": {
@@ -29,9 +31,18 @@ def build_parameters(context) -> dict:
     mode = read_launch_argument(context, "mode")
     if mode not in MODE_PARAMETERS:
         raise RuntimeError(f"mode must be sim or hw, got: {mode}")
+    
+    # Load System_Params.yaml
+    config_file = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+        'System_Params.yaml'
+    )
+    
     parameters = dict(MODE_PARAMETERS[mode])
     parameters["marker_id"] = int(read_launch_argument(context, "marker_id"))
-    return parameters
+    
+    # Return both config file and overrides
+    return [config_file, parameters]
 
 
 def build_aruco_node(context) -> Node:
@@ -40,7 +51,7 @@ def build_aruco_node(context) -> Node:
         executable="aruco_node",
         name="aruco_node",
         output="screen",
-        parameters=[build_parameters(context)],
+        parameters=build_parameters(context),
     )
 
 
