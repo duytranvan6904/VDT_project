@@ -41,13 +41,18 @@ ekf_ros_adapter:
     source_frame: camera_optical_frame
     target_frame: world
     max_target_speed: 2.5
-    min_marker_distance: 2.2
+    min_marker_distance: 0.05
 
 aruco_sim_node:
   ros__parameters:
     use_sim_time: true
-    marker_size_m: 0.895
-    min_detection_distance_m: 2.2
+    use_dual_scale: true
+    marker_id: 42
+    marker_size_m: 0.40
+    small_marker_id: 43
+    small_marker_size_m: 0.05
+    min_detection_distance_m: 0.05
+    max_detection_distance_m: 15.0
 
 ibvs_controller:
   ros__parameters:
