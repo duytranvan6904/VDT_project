@@ -4,7 +4,7 @@ import math
 
 import rclpy
 from geometry_msgs.msg import Twist
-from offboard_manager.msg import PlannerOutput
+from vdt_msgs.msg import PlannerOutput
 from rclpy.node import Node
 from std_msgs.msg import Float64, String
 
