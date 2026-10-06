@@ -29,7 +29,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float64, String
+from std_msgs.msg import Bool, Float64, String
 
 # ---------------------------------------------------------------------------
 # Try importing px4_msgs — fallback to pymavlink from PX4-Autopilot tree
@@ -194,6 +194,10 @@ class OffboardCommander(Node):
             Odometry, '/odom',
             self.odom_cb, sensor_qos,
         )
+        self.create_subscription(
+            Bool, '/landing/touchdown',
+            self.touchdown_cb, 10,
+        )
 
         # ── PX4 Publishers (hoặc MAVLink UDP connection) ────────────────
         self.mav_conn = None
@@ -256,14 +260,23 @@ class OffboardCommander(Node):
         if not self.has_fsm_yaw or (time.monotonic() - self.last_fsm_yaw_time > 1.0):
             self.yaw_enu = msg.data
 
+    def touchdown_cb(self, msg: Bool):
+        if msg.data and self.offboard_engaged:
+            self.get_logger().info('🏆 Touchdown signal received! Disengaging offboard and sending DISARM.')
+            self.offboard_engaged = False
+            self.current_yaw_ned = None
+            self._send_disarm_command()
+
     def phase_cb(self, msg: String):
         prev_phase = self.phase
         self.phase = msg.data
 
-        # Reset latch on touchdown / disarm
-        if self.phase in ('IDLE', 'LAND') and self.current_alt < 0.5:
+        # Reset latch on transition back to IDLE (landing completed)
+        if self.phase == 'IDLE' and prev_phase in ('LAND', 'APPROACH'):
+            self.get_logger().info('Phase returned to IDLE from LAND/APPROACH. Disengaging offboard and sending DISARM.')
             self.offboard_engaged = False
             self.current_yaw_ned = None
+            self._send_disarm_command()
 
         # Tự động kích hoạt OFFBOARD mode khi bước vào pha FOLLOW để APF lái drone (nếu đã đủ độ cao)
         if self.phase in ('FOLLOW', 'APPROACH') and prev_phase in ('IDLE', 'SEARCH'):

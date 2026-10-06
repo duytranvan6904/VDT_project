@@ -748,6 +748,10 @@ def main():
                 sys.executable, os.path.join(sim_dir, 'control', 'smc_guidance.py'),
                 *params_args,
             ]),
+            ('Touchdown Detector', [
+                sys.executable, os.path.join(sim_dir, 'control', 'touchdown_detector.py'),
+                *params_args,
+            ]),
             ('IBVS Controller', [
                 sys.executable, os.path.join(sim_dir, 'control', 'ibvs_controller.py'),
                 *params_args,

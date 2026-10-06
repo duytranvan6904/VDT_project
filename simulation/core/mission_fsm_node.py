@@ -165,9 +165,16 @@ class MissionFSMNode(Node):
         self.reacquire_hold_yaw = 0.0
         self.reacquire_timeout_warned = False
         self.follow_entry_hold_until = 0.0
-        self.follow_entry_hold_yaw = 0.0
         self.search_entry_hold_yaw = 0.0
         self.search_entry_hold_until = 0.0
+
+        # Precision landing & Touchdown state
+        self.touchdown_detected = False
+        self.safe_to_land = False
+        self.has_smc_cmd = False
+        self.smc_velocity = np.zeros(3)
+        self.smc_yaw_rate = 0.0
+        self.last_smc_time = 0.0
 
         # ── Subscribers ──────────────────────────────────────────────────
         sensor_qos = QoSProfile(
@@ -192,6 +199,15 @@ class MissionFSMNode(Node):
         )
         self.create_subscription(
             Float64, '/ibvs/yaw_cmd', self.ibvs_yaw_cb, 10,
+        )
+        self.create_subscription(
+            Bool, '/landing/touchdown', self.touchdown_cb, 10,
+        )
+        self.create_subscription(
+            Bool, '/landing/safe_to_land', self.safe_to_land_cb, 10,
+        )
+        self.create_subscription(
+            Twist, '/landing/velocity_cmd', self.smc_vel_cb, 10,
         )
 
         # ── Publishers ───────────────────────────────────────────────────
@@ -296,6 +312,20 @@ class MissionFSMNode(Node):
 
     def ibvs_yaw_cb(self, msg: Float64):
         self.ibvs_yaw = msg.data
+
+    def touchdown_cb(self, msg: Bool):
+        self.touchdown_detected = msg.data
+
+    def safe_to_land_cb(self, msg: Bool):
+        self.safe_to_land = msg.data
+
+    def smc_vel_cb(self, msg: Twist):
+        self.smc_velocity[0] = msg.linear.x
+        self.smc_velocity[1] = msg.linear.y
+        self.smc_velocity[2] = msg.linear.z
+        self.smc_yaw_rate = msg.angular.z
+        self.last_smc_time = time.monotonic()
+        self.has_smc_cmd = True
 
     # ── FSM Logic ────────────────────────────────────────────────────────
 
@@ -488,19 +518,25 @@ class MissionFSMNode(Node):
             )
             altitude = self.drone_pos[2]
 
-            if horizontal_error < self.align_thresh and altitude < self.land_alt:
+            covariance_safe = bool(self.safe_to_land)
+            legacy_safe = (horizontal_error < self.align_thresh and altitude < self.land_alt)
+
+            if covariance_safe or legacy_safe:
                 self.phase = MissionPhase.LAND
                 self.get_logger().info(
-                    f'Alignment OK (error={horizontal_error:.2f}m, '
-                    f'alt={altitude:.2f}m), starting LAND.'
+                    f'Landing condition met (cov_safe={covariance_safe}, '
+                    f'error={horizontal_error:.2f}m, alt={altitude:.2f}m), starting LAND.'
                 )
 
     def _handle_land(self):
         """Vertical descent until touchdown."""
-        if self.has_odom and self.drone_pos[2] < 0.1:
+        # Multi-tiered drift-invariant touchdown detection:
+        # Prioritize confirmed touchdown signal from TouchdownDetector,
+        # with secondary fallback on low altitude.
+        if self.touchdown_detected or (self.has_odom and self.drone_pos[2] < 0.12):
             self.phase = MissionPhase.IDLE
             self.land_requested = False
-            self.get_logger().info('Touchdown detected! Returning to IDLE.')
+            self.get_logger().info('🏆 Touchdown confirmed! Returning to IDLE.')
 
     # ── Setpoint composition ─────────────────────────────────────────────
 
@@ -656,9 +692,16 @@ class MissionFSMNode(Node):
                 yaw.data = float(self.drone_yaw)
 
         elif self.phase == MissionPhase.LAND:
-            # Straight down, lock yaw
-            vel.linear.z = float(-self.descent_speed)
-            yaw.data = float(self.drone_yaw)  # hold current yaw
+            now = time.monotonic()
+            if self.has_smc_cmd and (now - self.last_smc_time < 0.5):
+                vel.linear.x = float(self.smc_velocity[0])
+                vel.linear.y = float(self.smc_velocity[1])
+                vel.linear.z = float(self.smc_velocity[2])
+                yaw.data = float(self.ibvs_yaw if self.detected else self.drone_yaw)
+            else:
+                # Straight down fallback, lock yaw
+                vel.linear.z = float(-self.descent_speed)
+                yaw.data = float(self.drone_yaw)  # hold current yaw
 
         self.vel_pub.publish(vel)
         self.yaw_pub.publish(yaw)
