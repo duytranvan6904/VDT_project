@@ -81,17 +81,17 @@ smc_guidance_node:
 ibvs_controller:
   ros__parameters:
     use_sim_time: true
-    K_pitch: 1.10
-    K_yaw: 1.10
+    K_pitch: 0.92
+    K_yaw: 0.92
     focal_x: 466.0
     focal_y: 466.0
     u0: 320.0
     v0: 240.0
-    search_yaw_rate: 0.20
-    pitch_rate_limit: 2.5
-    pitch_ema_alpha: 0.55
-    pitch_pixel_trim_gain: 0.90
-    yaw_rate_limit: 0.75
+    search_yaw_rate: 0.15
+    pitch_rate_limit: 2.0
+    pitch_ema_alpha: 0.42
+    pitch_pixel_trim_gain: 0.75
+    yaw_rate_limit: 0.52
     drone_model: x500_depth_0
 
 mission_fsm:
@@ -113,11 +113,11 @@ mission_fsm:
     yaw_align_u_stop_px: 250.0
     yaw_align_min_speed_scale: 0.60
     yaw_align_speed_filter_alpha: 0.35
-    reacquire_confirm_time: 0.35
+    reacquire_confirm_time: 0.25
     reacquire_hold_timeout: 4.0
-    reacquire_lost_timeout: 1.5
-    reacquire_bbox_timeout: 0.8
-    reacquire_max_yaw_rate_deg: 12.0
+    reacquire_lost_timeout: 2.0
+    reacquire_bbox_timeout: 1.0
+    reacquire_max_yaw_rate_deg: 18.0
     follow_entry_hold_time: 0.25
     search_entry_hold_time: 0.30
 
@@ -128,7 +128,7 @@ offboard_commander:
     auto_offboard: true
     min_offboard_alt: 2.0
     max_accel: 0.8
-    max_yaw_rate: 0.80
+    max_yaw_rate: 0.65
     enable_alt_hold: true
     target_altitude: 3.0
     alt_hold_kp: 1.0

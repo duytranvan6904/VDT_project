@@ -121,7 +121,7 @@ class IBVSController(Node):
         self.search_hold_active = False
         self.search_hold_yaw = 0.0
         self.search_hold_last_seen = 0.0
-        self.search_hold_timeout = 0.75
+        self.search_hold_timeout = 2.0
         self.search_entry_hold_active = False
         self.search_entry_hold_yaw = 0.0
         self.search_entry_started = 0.0
@@ -356,14 +356,21 @@ class IBVSController(Node):
             # drone_yaw hiện tại, rồi slew yaw_cmd đến đó.
             # → Ổn định hơn incremental vì không tích lũy sai số.
             #
-            # Velocity feedforward: bù trước cho target di chuyển, nhưng
-            # CLAMP ±0.15 rad/s để tránh EKF velocity noise gây giật.
+            # Velocity feedforward: only active when target is genuinely moving (> 0.25 m/s).
+            # Clamped to ±0.10 rad/s to prevent EKF velocity noise from causing twitching.
+            # When target stops or is stationary, yaw_ff drops to 0 immediately so desired_yaw
+            # centers the target with ZERO steady-state bias!
+            target_speed = (
+                math.hypot(self.target_vel[0], self.target_vel[1])
+                if target_is_usable
+                else 0.0
+            )
             yaw_ff = 0.0
-            if target_is_usable and dist_h > 1.0:
+            if target_is_usable and dist_h > 1.0 and target_speed > 0.25:
                 vx, vy = self.target_vel[0], self.target_vel[1]
                 v_tan = (-dy * vx + dx * vy) / dist_h
                 raw_ff = v_tan / dist_h  # angular rate (rad/s)
-                yaw_ff = max(-0.15, min(0.15, raw_ff))
+                yaw_ff = max(-0.10, min(0.10, raw_ff))
 
             if has_pixel:
                 eu = u - self.u0
@@ -379,7 +386,7 @@ class IBVSController(Node):
                 # When target stops, yaw_ff immediately drops to 0 without residual drift!
                 desired_yaw = self.drone_yaw - self.K_yaw * (eu_eff / self.fx) * pitch_cos
                 if abs(yaw_ff) > 0.01:
-                    desired_yaw = _wrap_angle(desired_yaw + yaw_ff * 0.25)
+                    desired_yaw = _wrap_angle(desired_yaw + yaw_ff * 0.15)
                 self.yaw_cmd = _slew_angle(
                     self.yaw_cmd, desired_yaw, self.yaw_rate_limit * dt,
                 )

@@ -425,7 +425,7 @@ class MissionFSMNode(Node):
         # Once the fixed yaw target has been sent, verify target tracking and
         # bounded yaw rate so the vehicle transitions cleanly to FOLLOW.
         bbox_fresh = (
-            self.last_bbox_time >= self.reacquire_started
+            self.has_bbox
             and now - self.last_bbox_time <= self.reacquire_bbox_timeout
         )
         bbox_in_roi = (
