@@ -43,7 +43,7 @@ public:
     fsm_sub_ = create_subscription<std_msgs::msg::UInt8>(
       "fsm/state", 10, std::bind(&VisionInterfaceBridge::on_fsm_state, this, std::placeholders::_1));
 
-    marker_pub_ = create_publisher<fsm_state_machine::msg::VisionMarker>(marker_topic, 10);
+    marker_pub_ = create_publisher<vdt_msgs::msg::VisionMarker>(marker_topic, 10);
     phase_pub_ = create_publisher<std_msgs::msg::String>(phase_topic, 10);
 
     phase_timer_ = create_wall_timer(
@@ -53,7 +53,7 @@ public:
 private:
   void publish_marker(bool visible, float error)
   {
-    fsm_state_machine::msg::VisionMarker msg;
+    vdt_msgs::msg::VisionMarker msg;
     msg.marker_visible = visible;
     msg.pixel_align_error = error;
     marker_pub_->publish(msg);
@@ -102,7 +102,7 @@ private:
   rclcpp::Subscription<vision_msgs::msg::BoundingBox2D>::SharedPtr bbox_sub_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub_;
   rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr fsm_sub_;
-  rclcpp::Publisher<fsm_state_machine::msg::VisionMarker>::SharedPtr marker_pub_;
+  rclcpp::Publisher<vdt_msgs::msg::VisionMarker>::SharedPtr marker_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr phase_pub_;
   rclcpp::TimerBase::SharedPtr phase_timer_;
 

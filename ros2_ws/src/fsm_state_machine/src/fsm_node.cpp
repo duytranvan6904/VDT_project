@@ -19,11 +19,11 @@ FsmNode::FsmNode()
   params_.ignore_planner_timeout = declare_parameter<bool>("ignore_planner_timeout", false);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
 
-  snapshot_sub_ = create_subscription<input_state_cache::msg::InputSnapshot>(
+  snapshot_sub_ = create_subscription<vdt_msgs::msg::InputSnapshot>(
     "input_cache/snapshot", 10,
     std::bind(&FsmNode::on_snapshot, this, std::placeholders::_1));
 
-  rc_sub_ = create_subscription<rc_parser::msg::RcFsmInput>(
+  rc_sub_ = create_subscription<vdt_msgs::msg::RcFsmInput>(
     "rc/fsm_input", 10,
     std::bind(&FsmNode::on_rc, this, std::placeholders::_1));
 
@@ -53,13 +53,13 @@ void FsmNode::on_force_land(const std_msgs::msg::Bool::SharedPtr msg)
   force_land_requested_ = msg->data;
 }
 
-void FsmNode::on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg)
+void FsmNode::on_rc(const vdt_msgs::msg::RcFsmInput::SharedPtr msg)
 {
   rc_input_.land_switch = msg->land_switch;
   rc_input_.kill_switch = msg->kill_switch;
 }
 
-void FsmNode::on_snapshot(const input_state_cache::msg::InputSnapshot::SharedPtr msg)
+void FsmNode::on_snapshot(const vdt_msgs::msg::InputSnapshot::SharedPtr msg)
 {
   latest_snapshot_ = *msg;
   has_snapshot_ = true;

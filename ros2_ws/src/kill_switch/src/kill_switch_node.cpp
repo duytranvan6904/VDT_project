@@ -20,7 +20,7 @@ KillSwitchNode::KillSwitchNode()
   debounce_threshold_ = declare_parameter<int>("debounce_threshold", 3);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
 
-  rc_sub_ = create_subscription<rc_parser::msg::RcChannelsRaw>(
+  rc_sub_ = create_subscription<vdt_msgs::msg::RcChannelsRaw>(
     "rc/channels_raw", 10, std::bind(&KillSwitchNode::on_rc_channels, this, std::placeholders::_1));
 
   vehicle_command_pub_ = create_publisher<px4_msgs::msg::VehicleCommand>(
@@ -35,7 +35,7 @@ KillSwitchNode::KillSwitchNode()
     std::chrono::milliseconds(20), std::bind(&KillSwitchNode::update, this));
 }
 
-void KillSwitchNode::on_rc_channels(const rc_parser::msg::RcChannelsRaw::SharedPtr msg)
+void KillSwitchNode::on_rc_channels(const vdt_msgs::msg::RcChannelsRaw::SharedPtr msg)
 {
   for (size_t i = 0; i < latest_channels_.ch.size(); ++i) {
     latest_channels_.ch[i] = msg->ch[i];

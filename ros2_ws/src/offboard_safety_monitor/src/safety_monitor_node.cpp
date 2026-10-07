@@ -34,7 +34,7 @@ SafetyMonitorNode::SafetyMonitorNode()
   battery_sub_ = create_subscription<px4_msgs::msg::BatteryStatus>(
     "/fmu/out/battery_status", 10,
     std::bind(&SafetyMonitorNode::on_battery, this, std::placeholders::_1));
-  offboard_status_sub_ = create_subscription<offboard_manager::msg::OffboardStatus>(
+  offboard_status_sub_ = create_subscription<vdt_msgs::msg::OffboardStatus>(
     "offboard/status", 10,
     std::bind(&SafetyMonitorNode::on_offboard_status, this, std::placeholders::_1));
 
@@ -67,7 +67,7 @@ void SafetyMonitorNode::on_battery(const px4_msgs::msg::BatteryStatus::SharedPtr
 }
 
 void SafetyMonitorNode::on_offboard_status(
-  const offboard_manager::msg::OffboardStatus::SharedPtr msg)
+  const vdt_msgs::msg::OffboardStatus::SharedPtr msg)
 {
   offboard_status_ = *msg;
 }

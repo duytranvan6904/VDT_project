@@ -24,9 +24,9 @@ InputCacheNode::InputCacheNode()
     "ekf/tracking_mode", 10, std::bind(&InputCacheNode::on_tracking, this, std::placeholders::_1));
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "odom", sensor_qos, std::bind(&InputCacheNode::on_odom, this, std::placeholders::_1));
-  vision_sub_ = create_subscription<fsm_state_machine::msg::VisionMarker>(
+  vision_sub_ = create_subscription<vdt_msgs::msg::VisionMarker>(
     "vision/marker", 10, std::bind(&InputCacheNode::on_vision, this, std::placeholders::_1));
-  alt_sub_ = create_subscription<fsm_state_machine::msg::AltEstimate>(
+  alt_sub_ = create_subscription<vdt_msgs::msg::AltEstimate>(
     "alt_estimator/state", 10, std::bind(&InputCacheNode::on_alt, this, std::placeholders::_1));
   planner_sub_ = create_generic_subscription(
     "planner/velocity_setpoint", "offboard_manager/msg/PlannerOutput", rclcpp::QoS(10),
@@ -86,7 +86,7 @@ void InputCacheNode::on_odom(const nav_msgs::msg::Odometry::SharedPtr msg)
   freshness_.last_odom_time = this->now().seconds();
 }
 
-void InputCacheNode::on_vision(const fsm_state_machine::msg::VisionMarker::SharedPtr msg)
+void InputCacheNode::on_vision(const vdt_msgs::msg::VisionMarker::SharedPtr msg)
 {
   raw_sensors_.vision.marker_visible = msg->marker_visible;
   raw_sensors_.vision.pixel_align_error = msg->pixel_align_error;
@@ -94,7 +94,7 @@ void InputCacheNode::on_vision(const fsm_state_machine::msg::VisionMarker::Share
   freshness_.last_vision_time = this->now().seconds();
 }
 
-void InputCacheNode::on_alt(const fsm_state_machine::msg::AltEstimate::SharedPtr msg)
+void InputCacheNode::on_alt(const vdt_msgs::msg::AltEstimate::SharedPtr msg)
 {
   raw_sensors_.alt.altitude = msg->altitude;
   raw_sensors_.alt.touchdown_flag = msg->touchdown_flag;

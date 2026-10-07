@@ -85,7 +85,7 @@ public:
       gimbal_topic, 10, std::bind(&Px4StateBridge::on_gimbal, this, std::placeholders::_1));
 
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
-    alt_pub_ = create_publisher<fsm_state_machine::msg::AltEstimate>("alt_estimator/state", 10);
+    alt_pub_ = create_publisher<vdt_msgs::msg::AltEstimate>("alt_estimator/state", 10);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
     alt_timer_ = create_wall_timer(
@@ -181,7 +181,7 @@ private:
       return;
     }
     const bool land_fresh = has_land_ && (now_sec - land_time_) <= 1.0;
-    fsm_state_machine::msg::AltEstimate msg;
+    vdt_msgs::msg::AltEstimate msg;
     msg.altitude = static_cast<float>(altitude_);
     msg.touchdown_flag = land_fresh && (landed_ || (use_ground_contact_ && ground_contact_));
     alt_pub_->publish(msg);
@@ -191,7 +191,7 @@ private:
   rclcpp::Subscription<px4_msgs::msg::VehicleLandDetected>::SharedPtr land_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr gimbal_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-  rclcpp::Publisher<fsm_state_machine::msg::AltEstimate>::SharedPtr alt_pub_;
+  rclcpp::Publisher<vdt_msgs::msg::AltEstimate>::SharedPtr alt_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::TimerBase::SharedPtr alt_timer_;
 
