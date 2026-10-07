@@ -10,7 +10,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <tf2_ros/transform_broadcaster.h>
-#include "fsm_state_machine/msg/alt_estimate.hpp"
+#include "vdt_msgs/msg/alt_estimate.hpp"
 #include "px4_state_bridge/frame_conversion.hpp"
 
 namespace px4_state_bridge

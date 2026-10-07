@@ -4,8 +4,8 @@
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/u_int8.hpp>
 #include "gimbal_control/gimbal_types.hpp"
-#include "fsm_state_machine/msg/alt_estimate.hpp"
-#include "input_state_cache/msg/timeout_flags.hpp"
+#include "vdt_msgs/msg/alt_estimate.hpp"
+#include "vdt_msgs/msg/timeout_flags.hpp"
 
 namespace gimbal_control
 {
