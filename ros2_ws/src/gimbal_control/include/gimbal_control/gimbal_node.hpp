@@ -18,8 +18,8 @@ public:
 private:
   void on_state_request(const std_msgs::msg::UInt8::SharedPtr msg);
   void on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void on_alt(const fsm_state_machine::msg::AltEstimate::SharedPtr msg);
-  void on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg);
+  void on_alt(const vdt_msgs::msg::AltEstimate::SharedPtr msg);
+  void on_timeout_flags(const vdt_msgs::msg::TimeoutFlags::SharedPtr msg);
 
   void update();
   GimbalTelemetry build_telemetry() const;
@@ -28,14 +28,14 @@ private:
 
   rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr state_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_sub_;
-  rclcpp::Subscription<fsm_state_machine::msg::AltEstimate>::SharedPtr alt_sub_;
-  rclcpp::Subscription<input_state_cache::msg::TimeoutFlags>::SharedPtr timeout_sub_;
+  rclcpp::Subscription<vdt_msgs::msg::AltEstimate>::SharedPtr alt_sub_;
+  rclcpp::Subscription<vdt_msgs::msg::TimeoutFlags>::SharedPtr timeout_sub_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr angle_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   nav_msgs::msg::Odometry ekf_state_;
-  fsm_state_machine::msg::AltEstimate alt_state_;
-  input_state_cache::msg::TimeoutFlags timeout_flags_;
+  vdt_msgs::msg::AltEstimate alt_state_;
+  vdt_msgs::msg::TimeoutFlags timeout_flags_;
   GimbalPhase phase_ = GimbalPhase::SEARCH;
   GimbalPhase last_phase_ = GimbalPhase::SEARCH;
 
