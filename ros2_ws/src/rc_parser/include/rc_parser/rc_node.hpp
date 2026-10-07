@@ -8,7 +8,7 @@
 
 namespace rc_parser
 {
-
+namespace msg = vdt_msgs::msg;
 class RcNode : public rclcpp::Node
 {
 public:

@@ -13,6 +13,7 @@
 #include "vdt_msgs/msg/timeout_flags.hpp"
 
 namespace offboard_manager
+namespace msg = vdt_msgs::msg;
 {
 
 class OffboardNode : public rclcpp::Node
@@ -27,7 +28,7 @@ private:
   void on_inhibit(const std_msgs::msg::Bool::SharedPtr msg);
   void on_vehicle_status(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
   void on_local_position(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg);
-  void on_timeout_flags(const input_state_cache::msg::TimeoutFlags::SharedPtr msg);
+  void on_timeout_flags(const vdt_msgs::msg::TimeoutFlags::SharedPtr msg);
 
   void update();
   void reset_engage_sequence();
@@ -57,7 +58,7 @@ private:
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
   rclcpp::Publisher<msg::OffboardStatus>::SharedPtr status_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Subscription<input_state_cache::msg::TimeoutFlags>::SharedPtr timeout_sub_;
+  rclcpp::Subscription<vdt_msgs::msg::TimeoutFlags>::SharedPtr timeout_sub_;
   bool planner_timeout_ = true;
 
   OffboardContext ctx_;
@@ -84,7 +85,8 @@ private:
   int health_confirm_timeout_cycles_;
   double data_freshness_timeout_sec_;
   float max_horizontal_velocity_;
-  float max_vertical_velocity_;
+  float max_vertical_velocity_; 
+  float max_yaw_;
   double watchdog_timeout_sec_;
   double planner_timeout_sec_;
   float min_engage_altitude_m_;

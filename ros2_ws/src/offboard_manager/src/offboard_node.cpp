@@ -38,6 +38,8 @@ OffboardNode::OffboardNode()
     max_yaw_ = 0.0f;
   }
   watchdog_timeout_sec_ = declare_parameter<double>("watchdog_timeout_sec", 0.5);
+  planner_timeout_sec_ = declare_parameter<double>("planner_timeout_sec", 1.0);
+  min_engage_altitude_m_ = declare_parameter<float>("min_engage_altitude_m", 2.0f);
   yaw_search_rate_ = declare_parameter<float>("yaw_search_rate", 0.3f);
   land_descent_rate_ = declare_parameter<float>("land_descent_rate", 0.4f);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
@@ -85,8 +87,10 @@ void OffboardNode::on_fsm_state(const std_msgs::msg::UInt8::SharedPtr msg)
 
 void OffboardNode::on_planner_output(const msg::PlannerOutput::SharedPtr msg)
 {
+  has_planner_ = true;
+  last_planner_time_ = this->now().seconds();
   const bool finite = std::isfinite(msg->vx) && std::isfinite(msg->vy) &&
-    std::isfinite(msg->vz) && std::isfinite(msg->yaw);
+    std::isfinite(msg->vz);
   if (!finite) {
     planner_output_ = PlannerOutput{};
     return;
@@ -94,7 +98,7 @@ void OffboardNode::on_planner_output(const msg::PlannerOutput::SharedPtr msg)
   planner_output_.vx = std::clamp(msg->vx, -max_horizontal_velocity_, max_horizontal_velocity_);
   planner_output_.vy = std::clamp(msg->vy, -max_horizontal_velocity_, max_horizontal_velocity_);
   planner_output_.vz = std::clamp(msg->vz, -max_vertical_velocity_, max_vertical_velocity_);
-  planner_output_.yaw = std::clamp(msg->yaw, -max_yaw_, max_yaw_);
+  planner_output_.yaw = msg->yaw;
 }
 
 void OffboardNode::on_killed(const std_msgs::msg::Bool::SharedPtr msg)
@@ -152,6 +156,19 @@ bool OffboardNode::is_px4_ready() const
   const bool ekf_ready = is_local_position_fresh() &&
     local_position_.xy_valid && local_position_.z_valid;
   return is_vehicle_status_fresh() && ekf_ready && !vehicle_status_.failsafe;
+}
+
+bool OffboardNode::is_planner_stale() const
+{
+  return planner_timeout_ || !has_planner_ ||
+    (this->now().seconds() - last_planner_time_) > planner_timeout_sec_;
+}
+
+bool OffboardNode::is_airborne() const
+{
+  return is_vehicle_status_fresh() && is_local_position_fresh() &&
+    vehicle_status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED &&
+    local_position_.z_valid && (-local_position_.z) >= min_engage_altitude_m_;
 }
 
 void OffboardNode::send_heartbeat()
@@ -298,28 +315,18 @@ void OffboardNode::update()
     return;
   }
 
-  if (planner_timeout_) {
-    if (ctx_.offboard_active) {
-      enter_failsafe();
-    } else {
+  if (!ctx_.offboard_active) {
+    if (!is_airborne()) {
       reset_engage_sequence();
+    } else {
+      engage_request();
     }
-    publish_status();
-    log_debug();
-    return;
+  } else if (watchdog_check()) {
+    send_heartbeat();
+    publish_setpoint(build_setpoint(
+      fsm_state_, planner_output_, yaw_search_rate_, land_descent_rate_, is_planner_stale()));
   }
 
-  if (!ctx_.offboard_active) {
-    engage_request();
-  } else {
-    send_heartbeat();
-    if (watchdog_check()) {
-      const Setpoint sp = planner_timeout_ ?
-      build_setpoint_search(yaw_search_rate_) :
-      build_setpoint(fsm_state_, planner_output_, yaw_search_rate_, land_descent_rate_);
-      publish_setpoint(sp);
-    }
-  }
   publish_status();
   log_debug();
 }

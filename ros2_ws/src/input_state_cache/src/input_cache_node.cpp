@@ -29,7 +29,7 @@ InputCacheNode::InputCacheNode()
   alt_sub_ = create_subscription<vdt_msgs::msg::AltEstimate>(
     "alt_estimator/state", 10, std::bind(&InputCacheNode::on_alt, this, std::placeholders::_1));
   planner_sub_ = create_generic_subscription(
-    "planner/velocity_setpoint", "offboard_manager/msg/PlannerOutput", rclcpp::QoS(10),
+    "planner/velocity_setpoint", "vdt_msgs/msg/PlannerOutput", rclcpp::QoS(10),
     std::bind(&InputCacheNode::on_planner, this, std::placeholders::_1));
 
   snapshot_pub_ = create_publisher<msg::InputSnapshot>("input_cache/snapshot", 10);

@@ -9,7 +9,7 @@
 
 namespace fsm_state_machine
 {
-
+namespace msg = vdt_msgs::msg;
 class FsmNode : public rclcpp::Node
 {
 public:
@@ -17,7 +17,7 @@ public:
 
 private:
   void on_snapshot(const input_state_cache::msg::InputSnapshot::SharedPtr msg);
-  void on_rc(const rc_parser::msg::RcFsmInput::SharedPtr msg);
+  void on_rc(const vdt_msgs::msg::RcFsmInput::SharedPtr msg);
   void on_killed(const std_msgs::msg::Bool::SharedPtr msg);
   void on_force_land(const std_msgs::msg::Bool::SharedPtr msg);
 
@@ -26,8 +26,8 @@ private:
   void publish_state();
   void log_debug(const SensorInput & s, const RcInput & rc) const;
 
-  rclcpp::Subscription<input_state_cache::msg::InputSnapshot>::SharedPtr snapshot_sub_;
-  rclcpp::Subscription<rc_parser::msg::RcFsmInput>::SharedPtr rc_sub_;
+  rclcpp::Subscription<vdt_msgs::msg::InputSnapshot>::SharedPtr snapshot_sub_;
+  rclcpp::Subscription<vdt_msgs::msg::RcFsmInput>::SharedPtr rc_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr killed_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr force_land_sub_;
 
@@ -37,7 +37,7 @@ private:
   FsmActuators actuators_;
   FsmContext ctx_;
   RcInput rc_input_;
-  input_state_cache::msg::InputSnapshot latest_snapshot_;
+  vdt_msgs::msg::InputSnapshot latest_snapshot_;
 
   bool has_snapshot_ = false;
   double last_snapshot_time_ = -1.0;
