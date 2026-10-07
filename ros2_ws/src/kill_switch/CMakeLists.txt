@@ -26,7 +26,7 @@ add_executable(kill_switch_node
 )
 
 target_include_directories(kill_switch_node PRIVATE include)
-ament_target_dependencies(kill_switch_node rclcpp std_msgs px4_msgs vdt_msgs)
+ament_target_dependencies(kill_switch_node rclcpp std_msgs px4_msgs vdt_msgs rc_parser)
 
 install(TARGETS kill_switch_node DESTINATION lib/${PROJECT_NAME})
 
