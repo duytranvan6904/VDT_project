@@ -10,7 +10,7 @@ find_package(std_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(fsm_state_machine REQUIRED)
 
-add_executable(px4_state_bridge_node src/px4_state_bridge_node.cpp)
+add_executable(px4_state_bridge_node src/px4_bridge_node.cpp)
 target_include_directories(px4_state_bridge_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
