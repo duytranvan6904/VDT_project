@@ -846,7 +846,7 @@ Tên topic và message PX4 còn phụ thuộc phiên bản `px4_msgs`, firmware 
 
 ## Tham số tập trung
 
-Các tham số runtime của hệ thống bay được khai báo trong [System_Params.yaml](System_Params.yaml). Khi chạy bằng `vdt_bringup`, file này được cài vào package và nạp cho mọi node. Giá trị trong launch arguments có thể ghi đè `debug_enabled`, `start_hardware` và `start_servo`.
+Toàn bộ tham số runtime (embedded, vision, planner) được khai báo trong [System_Params.yaml](System_Params.yaml), mỗi node một khối theo tên node. Khi chạy bằng `vdt_bringup`, file này được cài vào package và nạp cho mọi node. Launch file của `ekf_adapter`, `ibvs`, `apf_planner` nạp cùng file này qua launch argument `params_file` (mặc định trỏ tới `System_Params.yaml` đã cài trong `vdt_bringup`); node chạy bằng `ros2 run` truyền `--params-file`. Giá trị truyền qua launch argument hoặc `-p` đặt sau file sẽ ghi đè giá trị trong file. Giá trị trong launch arguments của `vdt_system.launch.py` có thể ghi đè `debug_enabled`, `start_hardware` và `start_servo`.
 
 | Node | Nhóm tham số |
 |---|---|
@@ -861,26 +861,26 @@ Các tham số runtime của hệ thống bay được khai báo trong [System_P
 | `kill_switch_node` | `kill_channel=5`, `low_threshold=1200`, `high_threshold=1800`, `debounce_threshold=3`, `debug_enabled=false` |
 | `servo_node` | `servo_function=33.0`, `command_timeout_sec=2.5`, `min_send_interval_sec=0.1`, `min_send_delta=0.01`, `keepalive_sec=1.5`, `pwm_min_us=1000`, `pwm_max_us=2000`, `angle_min_deg=0`, `angle_max_deg=180`, `home_angle_deg=90`, `input_timeout_sec=1.0`, `debug_enabled=false` |
 | `xrce_bridge_node` | `serial_port=/dev/ttyAMA0`, `baudrate=921600`, `connection_timeout_sec=2.0`, `debug_enabled=false` |
+| `aruco_node` | `marker_id=42`, `marker_size_m=0.15` (cạnh ngoài của phần đen), `dictionary=DICT_6X6_50`, `min_detection_distance_m=0.0`, `min_z_m=0.0`, `image_topic=/camera`, `camera_info_topic=/camera_info`, `camera_frame_id=camera_optical_frame`, `fallback_horizontal_fov_rad=1.52`, `require_camera_info=true` |
+| `ekf_node` | `process_accel_variance=[1.0, 1.0, 0.5]`, `gate_threshold=16.27`, `max_target_speed=2.5`, `max_target_vz=1.5`, `target_frame=world`, `child_frame=hpad`, `tf_timeout_s=0.03`, `output_rate_hz=50.0`, `position_topic=/hpad/position_camera`, `phase_topic=/mission/phase`, `state_topic=/ekf/target_state`, `mode_topic=/ekf/tracking_mode` |
+| `ibvs_controller` | `K_pitch=0.8`, `K_yaw=0.5`, `focal_x=466.0`, `focal_y=466.0`, `u0=320.0`, `v0=240.0`, `pitch_rate_limit=1.5`, `pitch_ema_alpha=0.25`, `pitch_pixel_trim_gain=0.5`, `pitch_trim_limit_deg=20.0`, `yaw_rate_limit=0.5` |
+| `planner_node` | `planner_type=iapf` (mặc định trong code là `apf`), `obstacle_source=pointcloud`, `target_topic=/ekf/target_state`, `allowed_tracking_modes=[TRACKING, PREDICTING]`, `data_timeout_sec=0.5`, `rate_hz=30`, `d0=2.0`, `v_max=1.2`, `d_slow=1.5`, `k_att=10.0`, `k_rep=250.0`, `k_rep_approach=125.0`, `goal_threshold=0.20`, `follow_distance=3.5`, `hold_follow_altitude=true`, `target_altitude=3.0`, `k_z=0.6`, `vz_max=0.5`, `max_cloud_points=8`, `iapf_f_enter=0.10`, `iapf_f_exit=0.30`, `iapf_n_tangent=12`, `iapf_n_pred=3` |
+| `planner_merge_node` | `rate_hz=20`, `yaw_source=ibvs_apf`, `upstream_timeout_sec=0.3`, `stale_hover_sec=0.5`, `yaw_timeout_sec=0.3`, `phase_timeout_sec=1.0`, `output_topic=planner/velocity_setpoint` |
+| `apf_pointcloud_generator` | `topic=/map_generator/global_cloud`, `frame_id=world`, `rate_hz=1.0`, `num_obs=35`, `map_size=25.0`, `height=4.0`, `resolution=0.15`, `clear_radius=2.0`, `seed=-1`, `publish_static_tf=true` |
 
-Tham số của module vision và planner không nằm trong `System_Params.yaml` (danh sách đầy đủ xem guide của từng package):
+Riêng `takeoff` vẫn dùng tham số dòng lệnh, không nằm trong `System_Params.yaml`:
 
 | Node | Nguồn tham số | Tham số chính |
 |---|---|---|
-| `aruco_node` | Tham số node (`--ros-args -p`) | `marker_id=42`, `marker_size_m=0.15` (cạnh ngoài của phần đen), `dictionary=DICT_6X6_50`, `min_detection_distance_m=0.0`, `min_z_m=0.0`, `image_topic=/camera`, `camera_info_topic=/camera_info`, `camera_frame_id=camera_optical_frame`, `fallback_horizontal_fov_rad=1.52`, `require_camera_info=true` |
-| `ekf_node` | Tham số node và launch arguments của `ekf.launch.py` | `process_accel_variance=[1.0, 1.0, 0.5]`, `gate_threshold=16.27`, `max_target_speed=2.5`, `max_target_vz=1.5`, `target_frame=world`, `child_frame=hpad`, `tf_timeout_s=0.03`, `output_rate_hz=50.0`, `position_topic=/hpad/position_camera`, `phase_topic=/mission/phase`, `state_topic=/ekf/target_state`, `mode_topic=/ekf/tracking_mode` |
-| `ibvs_controller` | `ibvs/config/ibvs_params.yaml` | `K_pitch=0.8`, `K_yaw=0.5`, `focal_x=focal_y=466.0`, `u0=320.0`, `v0=240.0`, `pitch_rate_limit=1.5`, `pitch_ema_alpha=0.25`, `pitch_pixel_trim_gain=0.5`, `pitch_trim_limit_deg=20.0`, `yaw_rate_limit=0.5` |
-| `apf_planner` | `apf_planner/config/apf_params.yaml` | `planner_type=iapf` (node mặc định `apf`), `obstacle_source=pointcloud`, `target_topic=/ekf/target_state`, `allowed_tracking_modes=[TRACKING, PREDICTING]`, `data_timeout_sec=0.5`, `rate_hz=30`, `d0=2.0`, `v_max=1.2`, `d_slow=1.5`, `k_att=10`, `k_rep=250`, `k_rep_approach=125`, `goal_threshold=0.20`, `follow_distance=3.5`, `hold_follow_altitude=true`, `target_altitude=3.0`, `k_z=0.6`, `vz_max=0.5`, `max_cloud_points=8`, `iapf_f_enter=0.10`, `iapf_f_exit=0.30`, `iapf_n_tangent=12`, `iapf_n_pred=3` |
-| `planner_merge` | `apf_planner/config/apf_params.yaml` | `rate_hz=20`, `yaw_source=ibvs_apf`, `upstream_timeout_sec=0.3`, `stale_hover_sec=0.5`, `yaw_timeout_sec=0.3`, `phase_timeout_sec=1.0`, `output_topic=planner/velocity_setpoint` |
-| `apf_pointcloud_generator` | `apf_planner/config/apf_params.yaml` | `topic=/map_generator/global_cloud`, `frame_id=world`, `rate_hz=1.0`, `num_obs=35`, `map_size=25.0`, `height=4.0`, `resolution=0.15`, `clear_radius=2.0`, `seed=-1`, `publish_static_tf=true` |
 | `takeoff` | Tham số dòng lệnh | `--alt=3.0` (phải khớp `MIS_TAKEOFF_ALT` của PX4), `--climb-timeout=20.0` |
 
 Launch arguments:
 
 | Launch file | Arguments |
 |---|---|
-| `ekf.launch.py` | `use_sim_time=false`, `publish_odom_tf=true`, `publish_camera_tf=true`, `odom_topic=/odom`, `world_frame=world`, `base_frame=base_link`, `camera_frame=camera_optical_frame`, `cam_x/y/z`, `cam_roll/pitch/yaw` |
-| `ibvs.launch.py` | `params_file=config/ibvs_params.yaml`, `use_sim_time=false` |
-| `apf_planner.launch.py` | `params_file`, `generator=false`, `planner_type=iapf` |
+| `ekf.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `vdt_bringup`), `use_sim_time=false`, `publish_odom_tf=true`, `publish_camera_tf=true`, `odom_topic=/odom`, `world_frame=world`, `base_frame=base_link`, `camera_frame=camera_optical_frame`, `cam_x/y/z`, `cam_roll/pitch/yaw` |
+| `ibvs.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `vdt_bringup`), `use_sim_time=false` |
+| `apf_planner.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `vdt_bringup`), `generator=false`, `planner_type=iapf` |
 | `vdt_system.launch.py` (`vdt_bringup`) | `start_hardware=true` (bật `rc_node` và `kill_switch_node`; chỉ đặt `false` trong bench/SITL có cơ chế safety khác), `start_servo=false` (bật `servo_node`), `debug=false` (ghi đè `debug_enabled`) |
 
 ## Sơ đồ launch
