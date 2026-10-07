@@ -16,7 +16,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(rc_parser REQUIRED)
+find_package(vdt_msgs REQUIRED)
 
 add_executable(kill_switch_node
   src/main.cpp
@@ -25,7 +25,7 @@ add_executable(kill_switch_node
 )
 
 target_include_directories(kill_switch_node PRIVATE include)
-ament_target_dependencies(kill_switch_node rclcpp std_msgs px4_msgs rc_parser)
+ament_target_dependencies(kill_switch_node rclcpp std_msgs px4_msgs vdt_msgs)
 
 install(TARGETS kill_switch_node DESTINATION lib/${PROJECT_NAME})
 
