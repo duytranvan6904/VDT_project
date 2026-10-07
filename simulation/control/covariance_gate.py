@@ -80,6 +80,8 @@ class CovarianceGate:
         sigma_ideal_m: float = 0.05,
         sigma_bad_m: float = 0.30,
         max_uncertainty_2sigma_m: Optional[float] = None,
+        use_marker_relative: bool = False,
+        attitude_sigma_rad: float = 0.0087,
     ):
         self.pad_radius = float(pad_radius_m)
         self.confidence_sigma = float(confidence_sigma)
@@ -98,6 +100,8 @@ class CovarianceGate:
         self.sliding_beta = float(sliding_beta)
         self.default_drone_eph = float(default_drone_eph_m)
         self.default_drone_epv = float(default_drone_epv_m)
+        self.use_marker_relative = bool(use_marker_relative)
+        self.attitude_sigma_rad = float(attitude_sigma_rad)
 
     def extract_drone_covariance(self, odom_cov: Optional[np.ndarray]) -> np.ndarray:
         """Extract 3x3 position covariance matrix from 36-element odom covariance."""
@@ -137,8 +141,22 @@ class CovarianceGate:
         P_drone = self.extract_drone_covariance(drone_cov_36)
         P_target = self.extract_target_covariance(target_cov_36)
 
-        # 1. Total relative covariance P_rel = P_drone + P_target
-        P_rel = P_drone + P_target
+        # 1. Total relative covariance
+        # In Marker-Relative mode (Section 3.5), global GPS position error (eph) is eliminated.
+        # However, relative uncertainty must include:
+        # - Target tracking covariance from vision / EKF (P_target)
+        # - Drone attitude uncertainty from PX4 EKF projected over distance: var_att = (h * sigma_theta)^2
+        # - Drone altitude uncertainty from PX4 EKF: epv^2
+        dist_z = float(abs(drone_pos[2] - target_pos[2]))
+        h = max(0.1, dist_z)
+
+        if self.use_marker_relative:
+            var_att = (h * self.attitude_sigma_rad) ** 2
+            epv2 = float(P_drone[2, 2]) if P_drone is not None and P_drone[2, 2] > 1e-6 else self.default_drone_epv ** 2
+            P_ekf_att_alt = np.diag([var_att, var_att, epv2])
+            P_rel = P_target + P_ekf_att_alt
+        else:
+            P_rel = P_drone + P_target
 
         # 2. Horizontal 2D relative covariance
         P_rel_2d = P_rel[:2, :2]
@@ -260,6 +278,8 @@ class CovarianceGateNode(Node):
         self.declare_parameter('sliding_beta', 2.0)
         self.declare_parameter('default_drone_eph_m', 0.10)
         self.declare_parameter('default_drone_epv_m', 0.15)
+        self.declare_parameter('use_marker_relative', True)
+        self.declare_parameter('attitude_sigma_rad', 0.0087)
         self.declare_parameter('eval_rate_hz', 20.0)
 
         pad_radius = float(self.get_parameter('pad_radius_m').value)
@@ -278,6 +298,8 @@ class CovarianceGateNode(Node):
         sliding_beta = float(self.get_parameter('sliding_beta').value)
         drone_eph = float(self.get_parameter('default_drone_eph_m').value)
         drone_epv = float(self.get_parameter('default_drone_epv_m').value)
+        use_marker_relative = bool(self.get_parameter('use_marker_relative').value)
+        attitude_sigma = float(self.get_parameter('attitude_sigma_rad').value)
         rate_hz = float(self.get_parameter('eval_rate_hz').value)
 
         self.gate = CovarianceGate(
@@ -295,6 +317,8 @@ class CovarianceGateNode(Node):
             sliding_beta=sliding_beta,
             default_drone_eph_m=drone_eph,
             default_drone_epv_m=drone_epv,
+            use_marker_relative=use_marker_relative,
+            attitude_sigma_rad=attitude_sigma,
         )
 
         sensor_qos = QoSProfile(

@@ -137,21 +137,32 @@ class SMCGuidance:
         # never trigger a vertical descent while the drone is far above/beside the pad.
         final_radius = min(rswitch, self.p.final_descent_rxy_m)
         if r_xy <= final_radius and r_z <= self.p.final_descent_alt_m:
-            return self._final_descent_step(dx, dy, r_z, dt)
+            return self._final_descent_step(dx, dy, r_z, dt, target_vel)
 
         # 3. GLIDE_SLOPE Sub-Phase (SMC Guidance)
         return self._glide_slope_step(
             drone_pos, drone_vel, target_pos, target_vel, dx, dy, r_xy, r_z,
-            final_radius, dt, sliding_weight
+            rswitch, dt, sliding_weight
         )
 
-    def _final_descent_step(self, dx: float, dy: float, r_z: float, dt: float) -> SMCResult:
+    def _final_descent_step(
+        self,
+        dx: float,
+        dy: float,
+        r_z: float,
+        dt: float,
+        target_vel: Optional[np.ndarray] = None,
+    ) -> SMCResult:
         """Terminal vertical descent directly over the landing pad."""
         # Position feedback is expressed in the same ENU world frame as the
-        # target estimate.  Limit the vector magnitude so diagonal motion
-        # cannot exceed the terminal horizontal speed cap.
+        # target estimate. Pass target_vel feedforward to track moving landing pads!
+        target_vel_xy = (
+            np.asarray(target_vel, dtype=np.float64)[:2]
+            if target_vel is not None
+            else np.zeros(2)
+        )
         xy_cmd = self._position_velocity(
-            dx, dy, np.zeros(2), self.p.final_centering_kp,
+            dx, dy, target_vel_xy, self.p.final_centering_kp,
             self.p.v_final_xy_max,
         )
         vx_cmd, vy_cmd = float(xy_cmd[0]), float(xy_cmd[1])
@@ -206,7 +217,7 @@ class SMCGuidance:
         dy: float,
         r_xy: float,
         r_z: float,
-        final_radius: float,
+        rswitch: float,
         dt: float,
         sliding_weight: float,
     ) -> SMCResult:
@@ -307,16 +318,6 @@ class SMCGuidance:
         self.alpha_p = float(self.alpha_p + dalpha_p * dt_safe)
         self.gamma = float(np.clip(self.gamma + dgamma * dt_safe, -math.pi / 3.0, 0.0))
 
-        # Compute velocity command in ENU. The reaching-law solution can
-        # legitimately leave gamma at zero when the vehicle starts from a
-        # hover (the common landing case); that made GLIDE_SLOPE publish
-        # vz=0 forever, so the altitude gate for FINAL_DESCENT could never be
-        # reached. Keep SMC's horizontal guidance, but make the glide profile
-        # explicit and only descend while horizontally inside the landing
-        # corridor. The covariance/vision gate is enforced by the node and FSM.
-        # Use current ENU target error for the actual command. The integrated
-        # course can drift from vehicle motion after a hover or gate pause and
-        # otherwise send the drone away from the pad even with correct EKF data.
         xy_cmd = self._position_velocity(
             dx,
             dy,
@@ -327,12 +328,12 @@ class SMCGuidance:
         )
         vx_cmd, vy_cmd = float(xy_cmd[0]), float(xy_cmd[1])
         horizontal_speed = math.hypot(vx_cmd, vy_cmd)
-        if r_xy <= final_radius and r_z > self.p.final_descent_alt_m:
-            slope_speed = horizontal_speed * math.tan(abs(self.p.theta_des_rad))
+        if r_xy <= rswitch and r_z > self.p.final_descent_alt_m:
+            slope_speed = max(0.20, horizontal_speed * math.tan(abs(self.p.theta_des_rad)))
+            alt_speed = max(self.p.v_descend_touch, 0.20 * r_z)
             descent_speed = min(
-                max(self.p.v_descend_touch, slope_speed),
                 self.p.v_descend_fast,
-                max(0.10, r_z - self.p.final_descent_alt_m),
+                max(slope_speed, alt_speed),
             )
             vz_cmd = -descent_speed
             # Keep the resultant 3D command inside the configured speed cap.
@@ -344,6 +345,9 @@ class SMCGuidance:
                 vx_cmd *= xy_scale
                 vy_cmd *= xy_scale
                 horizontal_speed = horizontal_limit
+            self.gamma = math.atan2(vz_cmd, max(horizontal_speed, 1e-4))
+        elif r_xy <= rswitch and r_z <= self.p.final_descent_alt_m:
+            vz_cmd = -self.p.v_descend_touch
             self.gamma = math.atan2(vz_cmd, max(horizontal_speed, 1e-4))
         else:
             # Hold height until the vehicle is inside the descent corridor.
@@ -376,8 +380,8 @@ class SMCGuidanceNode(Node):
         self.declare_parameter('v_descend_touch', 0.15)
         self.declare_parameter('rswitch_default', 0.80)
         self.declare_parameter('final_descent_rxy_m', 1.00)
-        self.declare_parameter('final_descent_alt_m', 1.50)
-        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.12)
+        self.declare_parameter('final_descent_alt_m', 0.70)
+        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.35)
         self.declare_parameter('max_state_age_s', 0.30)
         self.declare_parameter('max_covariance_age_s', 0.30)
         self.declare_parameter('control_rate_hz', 20.0)
@@ -512,7 +516,7 @@ class SMCGuidanceNode(Node):
         if (
             not state_fresh
             or not covariance_fresh
-            or self.tracking_mode != 'TRACKING'
+            or self.tracking_mode not in ('TRACKING', 'PREDICTING')
             or not self.safe_to_land
         ):
             # Never let a predicted or stale target state drive a landing
@@ -544,8 +548,19 @@ class SMCGuidanceNode(Node):
             res.sub_phase == 'FINAL_DESCENT'
             and self.uncertainty_radius > self.final_uncertainty_max
         ):
-            self._publish_hold('FINAL_GATE_WAIT')
-            return
+            # If uncertainty is elevated above 0.60m, hold altitude while maintaining
+            # active horizontal centering so the target stays locked in the camera frame!
+            if res.r_z > 0.40:
+                res.velocity_cmd[2] = 0.0
+                res.sub_phase = 'FINAL_GATE_WAIT'
+                self.sub_phase_pub.publish(String(data=res.sub_phase))
+                twist = Twist()
+                twist.linear.x = float(res.velocity_cmd[0])
+                twist.linear.y = float(res.velocity_cmd[1])
+                twist.linear.z = 0.0
+                twist.angular.z = float(res.yaw_rate_cmd)
+                self.vel_pub.publish(twist)
+                return
 
         # Publish Twist command
         twist = Twist()

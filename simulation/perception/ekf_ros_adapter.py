@@ -91,7 +91,7 @@ class EKFRosAdapter(Node):
         self.declare_parameter('source_frame', 'camera_optical_frame')
         self.declare_parameter('target_frame', 'world')
         self.declare_parameter('max_target_speed', 2.5)
-        self.declare_parameter('min_marker_distance', 1.5)
+        self.declare_parameter('min_marker_distance', 0.05)
 
         accel_var = self.get_parameter('process_accel_variance').value
         gate = self.get_parameter('gate_threshold').value

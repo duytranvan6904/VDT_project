@@ -163,6 +163,12 @@ class OffboardCommander(Node):
         self.last_heartbeat_time = 0.0
         self.last_mode_req_time = 0.0
         self.px4_current_main_mode = None
+        self.manual_override = False
+        self.offboard_confirmed = False
+        self.offboard_request_time = 0.0
+        self.ground_contact_since: Optional[float] = None
+        self.override_pub = self.create_publisher(Bool, '/safety/manual_override', 10)
+        self.create_subscription(Bool, '/operator/reset_override', self.reset_override_cb, 10)
 
         # ── QoS for PX4 topics ───────────────────────────────────────────
         px4_qos = QoSProfile(
@@ -267,7 +273,7 @@ class OffboardCommander(Node):
             self.yaw_enu = msg.data
 
     def touchdown_cb(self, msg: Bool):
-        if msg.data and self.offboard_engaged and self.phase == 'LAND':
+        if msg.data and self.offboard_engaged and self.phase in ('LAND', 'APPROACH'):
             self.get_logger().info('🏆 Touchdown signal received! Disengaging offboard and sending DISARM.')
             self.offboard_engaged = False
             self.current_yaw_ned = None
@@ -278,56 +284,41 @@ class OffboardCommander(Node):
         self.phase = msg.data
 
         # Reset latch on transition back to IDLE (landing completed)
-        if self.phase == 'IDLE' and prev_phase in ('LAND', 'APPROACH'):
-            self.get_logger().info('Phase returned to IDLE from LAND/APPROACH. Disengaging offboard and sending DISARM.')
+        if self.phase == 'IDLE':
+            if prev_phase in ('LAND', 'APPROACH'):
+                self.get_logger().info('Phase returned to IDLE from LAND/APPROACH. Disengaging offboard and sending DISARM.')
+                self._send_disarm_command()
             self.offboard_engaged = False
+            self.offboard_confirmed = False
+            self.manual_override = False
             self.current_yaw_ned = None
-            self._send_disarm_command()
 
-        # Tự động kích hoạt OFFBOARD mode khi bước vào pha FOLLOW để APF lái drone (nếu đã đủ độ cao)
+        # Tự động kích hoạt OFFBOARD mode khi bước vào pha FOLLOW để APF lái drone (nếu đã đủ độ cao và không bị can thiệp tay)
         if self.phase in ('FOLLOW', 'APPROACH') and prev_phase in ('IDLE', 'SEARCH'):
-            if self.current_alt >= self.min_offboard_alt:
+            if self.current_alt >= self.min_offboard_alt and not self.manual_override:
                 self.offboard_engaged = True
+                self.offboard_confirmed = False
+                self.offboard_request_time = time.monotonic()
                 if self.enable_alt_hold:
                     self.target_altitude = max(self.target_altitude, self.current_alt)
                 if self.has_odom:
                     self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
                 self._send_offboard_mode()
+
+    def reset_override_cb(self, msg: Bool):
+        if msg.data:
+            self.manual_override = False
+            self.offboard_confirmed = False
+            self.get_logger().info('Manual override reset by operator. Autonomous offboard mode can re-engage.')
 
     # ── PX4 Communication ────────────────────────────────────────────────
 
     def heartbeat_cb(self):
-        """Publish OffboardControlMode at 10 Hz (DDS) or MAVLink companion heartbeat + mode enforce."""
+        """Publish OffboardControlMode at 10 Hz (DDS) or MAVLink companion heartbeat + mode monitor."""
         now = time.monotonic()
 
-        # Kiểm tra điều kiện chốt kích hoạt OFFBOARD mode
-        if not self.offboard_engaged:
-            if self.phase in ('FOLLOW', 'APPROACH') and self.current_alt >= self.min_offboard_alt:
-                self.offboard_engaged = True
-                if self.enable_alt_hold:
-                    self.target_altitude = max(self.target_altitude, self.current_alt)
-                if self.has_odom:
-                    self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
-                self.get_logger().info(
-                    f'✅ Drone đạt độ cao an toàn ({self.current_alt:.2f}m >= {self.min_offboard_alt:.1f}m)! '
-                    f'Kích hoạt chốt OFFBOARD mode (Hold altitude: {self.target_altitude:.1f}m).'
-                )
-                self._send_offboard_mode()
-
-        if HAS_PX4_MSGS and self.offboard_pub is not None:
-            if not self.offboard_engaged:
-                return
-            msg = OffboardControlMode()
-            msg.position = False
-            msg.velocity = True
-            msg.acceleration = False
-            msg.attitude = False
-            msg.body_rate = False
-            msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
-            self.offboard_pub.publish(msg)
-
-        elif self.mav_conn is not None:
-            # 1. Phát Heartbeat định kỳ 1 Hz để PX4 nhận biết Companion Computer kết nối
+        # 1. Phát Heartbeat định kỳ 1 Hz để PX4 nhận biết Companion Computer kết nối
+        if self.mav_conn is not None:
             if now - self.last_heartbeat_time >= 1.0:
                 try:
                     self.mav_conn.mav.heartbeat_send(
@@ -350,19 +341,104 @@ class OffboardCommander(Node):
             except Exception:
                 pass
 
-            # 3. Khi đã chốt OFFBOARD mode, liên tục duy trì yêu cầu OFFBOARD nếu bị rớt mode
-            if self.offboard_engaged:
-                if self.px4_current_main_mode != 6 and (now - self.last_mode_req_time >= 1.0):
-                    self._send_offboard_mode()
-                    self.last_mode_req_time = now
+        # 3. SAFETY MONITOR: PHÁT HIỆN CAN THIỆP TỪ PHI CÔNG / QGROUNDCONTROL / RC TX-RX
+        # Điều kiện: OFFBOARD đã từng được kích hoạt và xác nhận thành công (offboard_confirmed == True).
+        # Nếu sau đó mode bị đổi sang bất kỳ mode nào khác 6 (như AUTO_LAND=4, POSCTL=3, RTL, v.v.):
+        # Phi công đã ra lệnh can thiệp thủ công từ QGC hoặc tay điều khiển RC!
+        # HỆ THỐNG PHẢI LẬP TỨC NHẢ QUYỀN ĐIỀU KHIỂN (DISENGAGE OFFBOARD)!
+        if self.offboard_engaged and self.offboard_confirmed:
+            if self.px4_current_main_mode is not None and self.px4_current_main_mode != 6:
+                self.manual_override = True
+                self.offboard_engaged = False
+                self.offboard_confirmed = False
+                self.current_cmd_ned = [0.0, 0.0, 0.0]
+                self.current_yaw_ned = None
+                mode_names = {
+                    1: "MANUAL",
+                    2: "ALTCTL",
+                    3: "POSCTL",
+                    4: "AUTO (Land / RTL / Mission / Hold)",
+                    5: "ACRO",
+                    6: "OFFBOARD",
+                    7: "STABILIZED",
+                    8: "RATTITUDE",
+                }
+                mode_name = mode_names.get(self.px4_current_main_mode, f"MODE_{self.px4_current_main_mode}")
+                self.get_logger().error(
+                    f'🚨 [SAFETY INTERVENTION] CAN THIỆP TỪ PHI CÔNG / QGC / RC PHÁT HIỆN! '
+                    f'PX4 Flight Mode đổi từ OFFBOARD sang {mode_name} (mã {self.px4_current_main_mode}). '
+                    f'LẬP TỨC NGẮT OFFBOARD MODE, DỪNG MỌI LỆNH TỰ ĐỘNG ĐỂ NHƯỜNG TOÀN QUYỀN CHO PHI CÔNG!'
+                )
+                override_msg = Bool()
+                override_msg.data = True
+                self.override_pub.publish(override_msg)
+                return
+
+        # Nếu đang trong trạng thái Manual Override, tuyệt đối KHÔNG kích hoạt lại OFFBOARD!
+        if self.manual_override:
+            return
+
+        # 4. Xác nhận trạng thái OFFBOARD khi PX4 đã vào mode 6 thành công
+        if self.offboard_engaged and not self.offboard_confirmed:
+            if self.px4_current_main_mode == 6 or HAS_PX4_MSGS:
+                self.offboard_confirmed = True
+                self.get_logger().info('🎯 PX4 đã chuyển sang chế độ OFFBOARD thành công!')
+            elif now - self.offboard_request_time >= 0.5:
+                # Nếu chưa vào được mode 6 (đang chờ setpoint stream ổn định), gửi lại yêu cầu
+                self._send_offboard_mode()
+                self.offboard_request_time = now
+
+        # 5. Kiểm tra điều kiện chốt kích hoạt OFFBOARD mode ban đầu
+        if not self.offboard_engaged:
+            if self.phase in ('FOLLOW', 'APPROACH') and self.current_alt >= self.min_offboard_alt:
+                self.offboard_engaged = True
+                self.offboard_confirmed = False
+                self.offboard_request_time = now
+                if self.enable_alt_hold:
+                    self.target_altitude = max(self.target_altitude, self.current_alt)
+                if self.has_odom:
+                    self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
+                self.get_logger().info(
+                    f'✅ Drone đạt độ cao an toàn ({self.current_alt:.2f}m >= {self.min_offboard_alt:.1f}m)! '
+                    f'Kích hoạt chốt OFFBOARD mode (Hold altitude: {self.target_altitude:.1f}m).'
+                )
+                self._send_offboard_mode()
+
+        if HAS_PX4_MSGS and self.offboard_pub is not None:
+            if not self.offboard_engaged or self.manual_override:
+                return
+            msg = OffboardControlMode()
+            msg.position = False
+            msg.velocity = True
+            msg.acceleration = False
+            msg.attitude = False
+            msg.body_rate = False
+            msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
+            self.offboard_pub.publish(msg)
 
     def publish_setpoint(self):
         """Publish TrajectorySetpoint with velocity + yaw in NED with smooth slew-rate limiting."""
-        # SAFETY GUARD: Chỉ phát setpoint sau khi OFFBOARD đã được chốt kích hoạt an toàn!
-        if not self.offboard_engaged:
+        # SAFETY GUARD: Chỉ phát setpoint sau khi OFFBOARD đã được chốt kích hoạt an toàn VÀ KHÔNG BỊ CAN THIỆP TAY!
+        if not self.offboard_engaged or self.manual_override:
             return
 
         now = time.monotonic()
+
+        # Ground Stoppage Failsafe on Landing Pad:
+        # If vehicle is resting on the landing pad (alt <= 0.12m) during LAND/APPROACH for >= 0.8s,
+        # disarm motors immediately!
+        if self.phase in ('LAND', 'APPROACH') and self.has_odom and self.current_alt <= 0.12:
+            if self.ground_contact_since is None:
+                self.ground_contact_since = now
+            elif now - self.ground_contact_since >= 0.8:
+                self.get_logger().info('🏆 Ground contact on landing pad confirmed! Disengaging offboard and sending DISARM.')
+                self.offboard_engaged = False
+                self.current_yaw_ned = None
+                self._send_disarm_command()
+                return
+        else:
+            self.ground_contact_since = None
+
         dt = 0.05
         if self.last_setpoint_time > 0.0:
             dt = max(0.01, min(0.2, now - self.last_setpoint_time))
@@ -382,8 +458,9 @@ class OffboardCommander(Node):
                 self.yaw_enu = self.current_drone_yaw
 
         # Closed-loop Altitude Hold when no active climb/descent command is present
-        # (e.g. isolated IBVS test, APF vz=0 in FOLLOW, hover)
-        if self.enable_alt_hold and self.has_odom and self.phase != 'LAND':
+        # (e.g. isolated IBVS test, APF vz=0 in FOLLOW, hover).
+        # Must not execute during APPROACH or LAND to prevent pulling the drone back to cruise altitude!
+        if self.enable_alt_hold and self.has_odom and self.phase not in ('LAND', 'APPROACH'):
             if abs(cmd_vz) < 0.05:
                 alt_error = self.target_altitude - self.current_alt
                 deadband_alt = 0.06

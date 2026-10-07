@@ -88,7 +88,11 @@ class IBVSController(Node):
         self.declare_parameter('focal_y', 466.0)
         self.declare_parameter('u0', 320.0)
         self.declare_parameter('v0', 240.0)
-        self.declare_parameter('search_yaw_rate', 0.20)     # 11.5 deg/s
+        self.declare_parameter('search_yaw_rate', 0.0)     # 0.0 rad/s = hold yaw steady, no body spinning
+        self.declare_parameter('search_pitch_sweep_enable', True)
+        self.declare_parameter('search_pitch_sweep_min_deg', -55.0)
+        self.declare_parameter('search_pitch_sweep_max_deg', -25.0)
+        self.declare_parameter('search_pitch_sweep_speed_deg', 15.0)
         self.declare_parameter('pitch_rate_limit', 1.5)      # servo limit
         self.declare_parameter('approach_pitch_rate_limit', 0.50)  # rad/s
         self.declare_parameter('pitch_ema_alpha', 0.25)
@@ -107,7 +111,12 @@ class IBVSController(Node):
         self.fy = self.get_parameter('focal_y').value
         self.u0 = self.get_parameter('u0').value
         self.v0 = self.get_parameter('v0').value
-        self.search_yaw_rate = self.get_parameter('search_yaw_rate').value
+        self.search_yaw_rate = float(self.get_parameter('search_yaw_rate').value)
+        self.search_pitch_sweep_enable = bool(self.get_parameter('search_pitch_sweep_enable').value)
+        self.search_pitch_sweep_min = math.radians(float(self.get_parameter('search_pitch_sweep_min_deg').value))
+        self.search_pitch_sweep_max = math.radians(float(self.get_parameter('search_pitch_sweep_max_deg').value))
+        self.search_pitch_sweep_speed = math.radians(float(self.get_parameter('search_pitch_sweep_speed_deg').value))
+        self.search_pitch_direction = 1.0
         self.pitch_rate_limit = self.get_parameter('pitch_rate_limit').value
         self.approach_pitch_rate_limit = max(
             0.05, float(self.get_parameter('approach_pitch_rate_limit').value)
@@ -163,7 +172,7 @@ class IBVSController(Node):
         self.search_hold_last_seen = 0.0
         self.search_hold_timeout = 2.0
         self.search_entry_hold_active = False
-        self.search_entry_hold_yaw = 0.0
+        self.search_entry_hold_yaw = None
         self.search_entry_started = 0.0
         self.search_entry_hold_time = 0.30
         self.last_target_time = 0.0
@@ -176,8 +185,8 @@ class IBVSController(Node):
             'IDLE':     (math.radians(-45), math.radians(-10)),
             'SEARCH':   (math.radians(-60), math.radians(-10)),  # nới rộng để không bị kẹt khi mất dấu gần
             'FOLLOW':   (math.radians(-88), math.radians(-10)),  # bám theo target linh hoạt đến gần thẳng đứng
-            'APPROACH': (math.radians(-88), math.radians(-20)),
-            'LAND':     (math.radians(-88), math.radians(-20)),
+            'APPROACH': (math.radians(-90), math.radians(-10)),
+            'LAND':     (math.radians(-90), math.radians(-10)),
         }
 
         # ── Subscribers ──────────────────────────────────────────────────
@@ -339,6 +348,14 @@ class IBVSController(Node):
                 target_pitch = landing_pitch_from_geometry(
                     self.drone_pos[2], self.target_pos[2], horizontal_range,
                 )
+                if u is not None and v is not None:
+                    ev = v - self.v0
+                    ev_eff = 0.0 if abs(ev) < 6.0 else ev - math.copysign(6.0, ev)
+                    target_pitch -= (
+                        self.K_pitch
+                        * (ev_eff / self.fy)
+                        * self.pitch_pixel_trim_gain
+                    )
                 pitch_min, pitch_max = self.pitch_limits['LAND']
                 target_pitch = max(pitch_min, min(pitch_max, target_pitch))
                 max_pitch_delta = self.landing_pitch_rate_limit * dt
@@ -351,9 +368,20 @@ class IBVSController(Node):
                     + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
                 )
             else:
-                # Keep the last camera aim and yaw command during a visual
-                # dropout; the FSM pauses descent until the marker is visible.
-                self.gimbal_pitch = self.gimbal_pitch_filtered
+                if self.drone_pos[2] <= 1.2:
+                    # Near ground without visual lock: guide camera straight down (nadir) to catch target underneath
+                    target_pitch = math.radians(-85.0)
+                    max_pitch_delta = self.landing_pitch_rate_limit * dt
+                    self.gimbal_pitch = max(
+                        self.gimbal_pitch_filtered - max_pitch_delta,
+                        min(self.gimbal_pitch_filtered + max_pitch_delta, target_pitch),
+                    )
+                    self.gimbal_pitch_filtered = (
+                        self.ema_alpha * self.gimbal_pitch
+                        + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
+                    )
+                else:
+                    self.gimbal_pitch = self.gimbal_pitch_filtered
                 self.visual_measurement_active = False
             if self.landing_yaw_hold_initialized:
                 self.yaw_cmd = self.landing_yaw_hold
@@ -385,7 +413,9 @@ class IBVSController(Node):
 
             # ── PITCH: 3D geometry feedforward + soft pixel trim ──
             if target_is_usable:
-                target_pitch = -math.atan2(dz, max(0.2, dist_h))
+                target_pitch = landing_pitch_from_geometry(
+                    self.drone_pos[2], self.target_pos[2], dist_h
+                )
                 # Khi có pixel, thêm trim nhỏ để bù sai số EKF
                 if has_pixel:
                     ev = v - self.v0
@@ -485,11 +515,22 @@ class IBVSController(Node):
         if self.phase == 'SEARCH':
             self.visual_measurement_active = False
             if not self.search_hold_active and not self.detected:
-                self.gimbal_pitch = self.default_pitch
-                # Chuyển dần về default_pitch mượt mà, không giật nảy đột ngột
-                self.gimbal_pitch_filtered = (
-                    0.05 * self.default_pitch + 0.95 * self.gimbal_pitch_filtered
-                )
+                if self.search_pitch_sweep_enable:
+                    # Quét góc pitch gimbal nhịp nhàng lên xuống để tìm kiếm marker trên mặt đất
+                    self.gimbal_pitch += self.search_pitch_direction * self.search_pitch_sweep_speed * dt
+                    if self.gimbal_pitch >= self.search_pitch_sweep_max:
+                        self.gimbal_pitch = self.search_pitch_sweep_max
+                        self.search_pitch_direction = -1.0
+                    elif self.gimbal_pitch <= self.search_pitch_sweep_min:
+                        self.gimbal_pitch = self.search_pitch_sweep_min
+                        self.search_pitch_direction = 1.0
+                    self.gimbal_pitch_filtered = self.gimbal_pitch
+                else:
+                    self.gimbal_pitch = self.default_pitch
+                    # Chuyển dần về default_pitch mượt mà, không giật nảy đột ngột
+                    self.gimbal_pitch_filtered = (
+                        0.05 * self.default_pitch + 0.95 * self.gimbal_pitch_filtered
+                    )
 
             if self.search_entry_hold_active:
                 if self.search_entry_started <= 0.0:
@@ -525,26 +566,46 @@ class IBVSController(Node):
                         self.ema_alpha * pitch_target
                         + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
                     )
+                    # Actively servo yaw to center the target horizontally in the camera frame
+                    self.yaw_cmd = update_tracking_yaw_command(
+                        yaw_command=self.yaw_cmd,
+                        drone_yaw=self.drone_yaw,
+                        pixel_u=self.last_pixel_u,
+                        image_center_u=self.u0,
+                        focal_x=self.fx,
+                        pixel_gain=self.K_yaw,
+                        target_delta_xy=None,
+                        target_velocity_xy=(0.0, 0.0),
+                        tracking_mode='TRACKING',
+                        target_state_age=0.0,
+                        target_state_timeout=self.target_state_timeout,
+                        dt=dt,
+                        yaw_rate_limit=self.yaw_rate_limit,
+                    )
+                    self.search_hold_yaw = self.yaw_cmd
             elif (
                 self.search_hold_active
                 and now - self.search_hold_last_seen > self.search_hold_timeout
             ):
                 self.search_hold_active = False
-                # Restart the next sweep from actual yaw, not from a stale
-                # command accumulated during the previous sweep.
+                # Restart smoothly from actual yaw
                 self.yaw_cmd = self.drone_yaw
+                self.search_entry_hold_yaw = self.drone_yaw
 
             if self.search_entry_hold_active:
                 # Give PX4 time to brake at the phase-entry yaw before sweep.
                 self.yaw_cmd = self.search_entry_hold_yaw
             elif self.search_hold_active:
-                # Keep a fixed setpoint so the vehicle controller can brake;
-                # do not follow actual yaw every cycle.
+                # Keep setpoint from visual servoing or hold last steered angle
                 self.yaw_cmd = self.search_hold_yaw
-            else:
+            elif abs(self.search_yaw_rate) > 1e-4:
                 self.yaw_cmd = _wrap_angle(
                     self.yaw_cmd + self.search_yaw_rate * dt
                 )
+            else:
+                # OPTION 2: Khi search_yaw_rate == 0.0, GIỮ NGUYÊN GÓC YAW HIỆN TẠI
+                # Drone ổn định tuyệt đối, không xoay tròn thân, không tạo quán tính giật góc
+                self.yaw_cmd = self.search_entry_hold_yaw if self.search_entry_hold_yaw is not None else self.drone_yaw
             self._publish_commands()
 
         elif self.phase == 'IDLE':

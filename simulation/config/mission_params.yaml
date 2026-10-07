@@ -1,179 +1,212 @@
 # ============================================================================
 # Mission Parameters — APF + IBVS + EKF Simulation
 # ============================================================================
-# ROS 2 parameter-file format.  The launcher passes this file to every
-# autonomous node, so changing a value here affects the actual simulation.
+# Định dạng file tham số ROS 2 (ROS 2 parameter file format).
+# File này được nạp cho toàn bộ các node tự hành trong hệ thống mô phỏng,
+# việc thay đổi các giá trị tại đây sẽ trực tiếp tác động đến hành vi của drone.
 
+# ----------------------------------------------------------------------------
+# 1. BỘ QUY HOẠCH QUỸ ĐẠO LỰC THẾ NHÂN TẠO (APF / IAPF TRAJECTORY PLANNER)
+# ----------------------------------------------------------------------------
 apf_planner:
   ros__parameters:
-    use_sim_time: true
-    planner_type: "iapf"        # "apf" (standard) or "iapf" (improved 3D)
-    d0: 2.5
-    v_max: 1.5
-    d_slow: 1.2
-    target_altitude: 3.0
-    k_att: 10.0
-    k_rep: 2500.0
-    k_rep_approach: 125.0
-    goal_threshold: 0.30
-    follow_distance: 3.5
-    hold_follow_altitude: true
-    target_lead_time: 0.35
-    max_target_lead: 1.0
-    target_velocity_alpha: 0.35
-    target_velocity_deadband: 0.18
-    # IAPF specific parameters
-    iapf_f_enter: 0.10
-    iapf_f_exit: 0.30
-    iapf_k_tan: 1.0
-    iapf_n_tangent: 12
-    iapf_n_pred: 3
-    iapf_w_goal: 1.0
-    iapf_w_clear: 1.0
-    iapf_w_prev: 0.60
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng từ topic /clock của Gazebo
+    planner_type: "iapf"                  # Thuật toán quy hoạch: "apf" (chuẩn) hoặc "iapf" (cải tiến 3D tránh bẫy cực tiểu)
+    d0: 2.5                               # Bán kính ảnh hưởng của lực đẩy từ chướng ngại vật (m) - ngoài khoảng cách này không sinh lực đẩy
+    v_max: 1.5                            # Giới hạn vận tốc bay tối đa do APF tạo ra (m/s)
+    d_slow: 1.2                           # Khoảng cách kích hoạt giảm tốc mượt mà khi tiếp cận mục tiêu hoặc vật cản (m)
+    target_altitude: 3.0                  # Độ cao bay mong muốn mà drone duy trì trong chế độ APF (m)
+    k_att: 10.0                           # Hệ số lực hút hướng về mục tiêu (Attractive potential gain)
+    k_rep: 2500.0                         # Hệ số lực đẩy né tránh chướng ngại vật trong pha FOLLOW (Repulsive potential gain)
+    k_rep_approach: 125.0                 # Hệ số lực đẩy trong pha APPROACH (giảm nhỏ để không cản trở drone hạ xuống bãi đáp)
+    goal_threshold: 0.30                  # Bán kính ngưỡng coi như đã đạt đến mục tiêu (m)
+    follow_distance: 3.5                  # Khoảng cách bám đuổi mục tiêu mong muốn theo phương ngang (m)
+    hold_follow_altitude: true            # Bật/tắt duy trì độ cao cố định trong pha FOLLOW
+    target_lead_time: 0.35                # Thời gian dự đoán đón đầu mục tiêu (s) dựa theo vận tốc mục tiêu
+    max_target_lead: 1.0                  # Khoảng cách đón đầu tối đa cho phép theo vector vận tốc mục tiêu (m)
+    target_velocity_alpha: 0.35           # Hệ số lọc thông thấp EMA [0.0 - 1.0] làm mịn vector vận tốc mục tiêu
+    target_velocity_deadband: 0.18        # Vùng chết vận tốc mục tiêu (m/s) - dưới ngưỡng này coi như mục tiêu đứng yên
+    # Tham số riêng cho thuật toán IAPF (Improved Artificial Potential Field)
+    iapf_f_enter: 0.10                    # Ngưỡng lực cản kích hoạt rẽ nhánh tiếp tuyến né vật cản (mặt phẳng tiếp tuyến 3D)
+    iapf_f_exit: 0.30                     # Ngưỡng lực cản để thoát khỏi chế độ rẽ nhánh tiếp tuyến và bay thẳng về đích
+    iapf_k_tan: 1.0                       # Hệ số độ lớn của lực tiếp tuyến (Tangential force gain) giúp bọc vòng qua chướng ngại vật
+    iapf_n_tangent: 12                    # Số lượng tia tiếp tuyến lấy mẫu đánh giá trong không gian 3D
+    iapf_n_pred: 3                        # Số bước dự đoán quỹ đạo phía trước (forward prediction steps)
+    iapf_w_goal: 1.0                      # Trọng số ưu tiên hướng về đích trong hàm chi phí chọn hướng bay tốt nhất
+    iapf_w_clear: 1.0                     # Trọng số ưu tiên khoảng cách thông thoáng tới chướng ngại vật gần nhất
+    iapf_w_prev: 0.60                     # Trọng số ưu tiên giữ hướng bay mượt mà, tránh đổi hướng đột ngột so với chu kỳ trước
 
+# ----------------------------------------------------------------------------
+# 2. BỘ LỌC EKF ƯỚC LƯỢNG TRẠNG THÁI MỤC TIÊU (EXTENDED KALMAN FILTER)
+# ----------------------------------------------------------------------------
 ekf_ros_adapter:
   ros__parameters:
-    use_sim_time: true
-    # Lower horizontal process noise keeps static-pad covariance inside the
-    # landing gate at the camera's measured update rate while retaining
-    # enough acceleration freedom for a 0.5 m/s target.
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng từ Gazebo
+    # Phương sai gia tốc mô hình chuyển động quá trình [x, y, z] (m^2/s^4)
+    # Giá trị nhỏ giúp ma trận hiệp phương sai của bãi đáp tĩnh thu hẹp nhanh vào cổng hạ cánh
     process_accel_variance: [0.25, 0.25, 0.5]
-    gate_threshold: 16.27
-    predict_rate_hz: 50.0
-    source_frame: camera_optical_frame
-    target_frame: world
-    max_target_speed: 2.5
-    min_marker_distance: 0.05
+    gate_threshold: 16.27                 # Ngưỡng kiểm định Chi-bình phương (Chi-square gate) loại bỏ phép đo thị giác sai lệch/nhiễu
+    predict_rate_hz: 50.0                 # Tần số chu kỳ dự đoán trạng thái EKF (Hz)
+    source_frame: camera_optical_frame    # Hệ quy chiếu quang học của camera nơi thu nhận tọa độ marker
+    target_frame: world                   # Hệ quy chiếu toàn cục quy đổi sang tọa độ chung của môi trường
+    max_target_speed: 2.5                 # Giới hạn vận tốc tối đa của mục tiêu (m/s) để loại trừ ước lượng phi lý
+    min_marker_distance: 0.05             # Khoảng cách tối thiểu tin cậy từ camera tới marker (m)
 
+# ----------------------------------------------------------------------------
+# 3. NODE NHẬN DIỆN ARUCO MARKER (ARUCO DETECTOR)
+# ----------------------------------------------------------------------------
 aruco_sim_node:
   ros__parameters:
-    use_sim_time: true
-    use_dual_scale: true
-    marker_id: 42
-    marker_size_m: 0.52
-    small_marker_id: 43
-    small_marker_size_m: 0.05
-    min_detection_distance_m: 0.05
-    max_detection_distance_m: 15.0
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng từ Gazebo
+    use_dual_scale: true                  # Bật tính năng nhận diện kép 2 marker lồng nhau (dual-scale)
+    marker_id: 42                         # Mã ID của ArUco marker lớn (dùng cho bám bắt tầm xa/trên cao)
+    marker_size_m: 0.52                   # Kích thước cạnh của ArUco marker lớn (m)
+    small_marker_id: 43                   # Mã ID của ArUco marker nhỏ ở tâm (dùng cho pha hạ cánh cự ly sát đất)
+    small_marker_size_m: 0.10             # Kích thước cạnh của ArUco marker nhỏ (m)
+    min_detection_distance_m: 0.05        # Cự ly nhận diện tối thiểu (m)
+    max_detection_distance_m: 15.0        # Cự ly nhận diện tối đa (m)
 
+# ----------------------------------------------------------------------------
+# 4. CỔNG HIỆP PHƯƠNG SAI AN TOÀN HẠ CÁNH (COVARIANCE GATE NODE)
+# ----------------------------------------------------------------------------
 covariance_gate_node:
   ros__parameters:
-    use_sim_time: true
-    pad_radius_m: 0.42
-    confidence_sigma: 2.0
-    max_measurement_age_s: 0.5
-    max_horizontal_distance_m: 5.0
-    rswitch_base_m: 1.5
-    rswitch_alpha: 1.0
-    r_switch_min_m: 3.0
-    r_switch_max_m: 15.0
-    sigma_ideal_m: 0.05
-    sigma_bad_m: 0.30
-    sigma_max_continue_glide_m: 0.15
-    sliding_beta: 2.0
-    # Gazebo truth odometry is precise; use these only if the bridge omits covariance.
-    # Replace with calibrated PX4 covariance values for real flight.
-    default_drone_eph_m: 0.03
-    default_drone_epv_m: 0.05
-    eval_rate_hz: 20.0
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng
+    pad_radius_m: 0.42                    # Bán kính vật lý của bãi đáp H-Pad / Marker (m)
+    confidence_sigma: 2.0                 # Hệ số tin cậy k-sigma cho elip hiệp phương sai (2.0 sigma tương đương ~95.4%)
+    max_measurement_age_s: 0.5            # Thời gian tồn tại tối đa của phép đo thị giác (s) trước khi bị coi là mất tín hiệu
+    max_horizontal_distance_m: 8.0        # Khoảng cách ngang tối đa cho phép để bắt đầu xét điều kiện vào phễu hạ cánh (m)
+    rswitch_base_m: 1.5                   # Bán kính chuyển đổi cơ sở giữa vùng tiếp cận và vùng trượt SMC (m)
+    rswitch_alpha: 1.0                    # Hệ số mở rộng bán kính chuyển đổi r_switch theo độ cao hiện tại
+    r_switch_min_m: 4.5                   # Giới hạn dưới của bán kính phễu chuyển đổi r_switch (m)
+    r_switch_max_m: 10.0                  # Giới hạn trên của bán kính phễu chuyển đổi r_switch (m)
+    sigma_ideal_m: 0.04                   # Độ lệch chuẩn sai số lý tưởng kỳ vọng (m) khi camera nhìn rõ marker ở tầm gần
+    sigma_bad_m: 0.25                     # Ngưỡng độ lệch chuẩn sai số bị coi là quá kém (m), không an toàn để hạ cánh
+    sigma_max_continue_glide_m: 0.25      # Độ lệch chuẩn sai số tối đa cho phép để tiếp tục giai đoạn trượt glide
+    sliding_beta: 2.0                     # Hệ số thích nghi mặt trượt SMC theo độ bất định hiệp phương sai
+    use_marker_relative: true             # Kích hoạt quy đổi sang hệ quy chiếu tương đối gắn trên marker (Marker-relative)
+    attitude_sigma_rad: 0.0087            # Độ không đảm bảo góc nghiêng roll/pitch của drone (~0.5 độ tính theo rad)
+    default_drone_eph_m: 0.03             # Sai số ước lượng vị trí ngang mặc định của drone (m)
+    default_drone_epv_m: 0.05             # Sai số ước lượng độ cao mặc định của drone (m)
+    eval_rate_hz: 20.0                    # Tần số đánh giá cổng hiệp phương sai Covariance Gate (Hz)
 
+# ----------------------------------------------------------------------------
+# 5. BỘ DẪN ĐƯỜNG ĐIỀU KHIỂN TRƯỢT HẠ CÁNH CHÍNH XÁC (SMC GUIDANCE NODE)
+# ----------------------------------------------------------------------------
 smc_guidance_node:
   ros__parameters:
-    use_sim_time: true
-    v_max: 1.50
-    v_final_xy_max: 0.35
-    v_descend_fast: 0.20
-    v_descend_touch: 0.15
-    rswitch_default: 0.80
-    final_descent_rxy_m: 1.00
-    final_descent_alt_m: 1.50
-    final_uncertainty_max_2sigma_m: 0.12
-    max_state_age_s: 0.30
-    max_covariance_age_s: 0.30
-    control_rate_hz: 20.0
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng
+    v_max: 1.50                           # Vận tốc tối đa trong pha trượt dẫn đường SMC (m/s)
+    v_final_xy_max: 0.35                  # Vận tốc mặt phẳng ngang tối đa trong pha hạ cánh thẳng đứng cuối cùng (m/s)
+    v_descend_fast: 0.45                  # Tốc độ hạ độ cao nhanh trong giai đoạn trượt chéo glide (m/s)
+    v_descend_touch: 0.25                 # Tốc độ hạ độ cao chậm và êm ở giai đoạn chạm đất sát mặt sàn (m/s)
+    rswitch_default: 5.00                 # Bán kính mặt trượt chuyển đổi mặc định khi chưa có thông số từ Covariance Gate (m)
+    final_descent_rxy_m: 0.60             # Bán kính sai số ngang tối đa cho phép để chuyển sang pha hạ cánh thẳng đứng (m)
+    final_descent_alt_m: 0.70             # Độ cao bắt đầu pha hạ cánh thẳng đứng cuối cùng (m)
+    final_uncertainty_max_2sigma_m: 0.35  # Độ bất định hiệp phương sai 2-sigma tối đa cho phép để tiến hành hạ thẳng đứng (m)
+    max_state_age_s: 0.30                 # Thời gian tối đa giữ trạng thái mục tiêu từ EKF trước khi coi là mất tín hiệu (s)
+    max_covariance_age_s: 0.30            # Thời gian tối đa giữ dữ liệu cổng hiệp phương sai trước khi timeout (s)
+    control_rate_hz: 20.0                 # Tần số chu kỳ tính toán luật điều khiển trượt SMC (Hz)
 
+# ----------------------------------------------------------------------------
+# 6. BỘ ĐIỀU KHIỂN THỊ GIÁC SERVO GIMBAL & YAW (IBVS CONTROLLER)
+# ----------------------------------------------------------------------------
 ibvs_controller:
   ros__parameters:
-    use_sim_time: true
-    K_pitch: 0.92
-    K_yaw: 0.92
-    focal_x: 466.0
-    focal_y: 466.0
-    u0: 320.0
-    v0: 240.0
-    search_yaw_rate: 0.15
-    pitch_rate_limit: 2.0
-    approach_pitch_rate_limit: 0.50
-    pitch_ema_alpha: 0.42
-    pitch_pixel_trim_gain: 0.75
-    yaw_rate_limit: 0.80
-    yaw_feedforward_min_target_speed: 0.30
-    yaw_feedforward_max_rate: 0.15
-    target_state_timeout: 0.50
-    target_prediction_horizon: 0.25
-    landing_pitch_rate_limit: 0.50
-    bbox_timeout: 0.30
-    drone_model: x500_depth_0
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng
+    K_pitch: 0.92                         # Hệ số tỉ lệ P điều khiển góc pitch gimbal bám theo sai số pixel dọc (v - v0)
+    K_yaw: 0.92                           # Hệ số tỉ lệ P điều khiển góc xoay yaw của drone bám theo sai số pixel ngang (u - u0)
+    focal_x: 466.0                        # Tiêu cự camera góc rộng FOV 1.204 rad trên ảnh 640x480 (pixels)
+    focal_y: 466.0                        # Tiêu cự camera góc rộng FOV 1.204 rad trên ảnh 640x480 (pixels)
+    u0: 320.0                             # Tọa độ tâm ảnh theo trục X (pixels) trên ảnh 640x480
+    v0: 240.0                             # Tọa độ tâm ảnh theo trục Y (pixels) trên ảnh 640x480
+    search_yaw_rate: 0.0                  # ĐÃ ĐẶT 0.0: Bỏ quay tròn thân drone khi mất dấu để drone ổn định tuyệt đối
+    search_pitch_sweep_enable: true       # Bật quét góc pitch của servo gimbal để tìm kiếm mục tiêu
+    search_pitch_sweep_min_deg: -55.0     # Góc pitch thấp nhất khi quét (nhìn chếch xuống đất phía trước)
+    search_pitch_sweep_max_deg: -25.0     # Góc pitch cao nhất khi quét (nhìn tầm xa 6-7m)
+    search_pitch_sweep_speed_deg: 15.0    # Tốc độ quét góc pitch của servo gimbal (độ/s)
+    pitch_rate_limit: 2.0                 # Giới hạn tốc độ thay đổi góc pitch tối đa của servo gimbal (rad/s)
+    approach_pitch_rate_limit: 1.50       # Giới hạn tốc độ thay đổi góc pitch trong pha tiếp cận APPROACH (rad/s)
+    pitch_ema_alpha: 0.65                 # Hệ số lọc thông thấp EMA [0.0 - 1.0] làm mịn chuyển động góc pitch gimbal
+    pitch_pixel_trim_gain: 0.75           # Hệ số vi chỉnh góc pitch theo sai số pixel để giữ mục tiêu chính xác ở tâm
+    yaw_rate_limit: 0.80                  # Giới hạn vận tốc quay góc yaw tối đa của thân drone (rad/s)
+    yaw_feedforward_min_target_speed: 0.30 # Vận tốc mục tiêu tối thiểu để kích hoạt feedforward xoay yaw đón đầu (m/s)
+    yaw_feedforward_max_rate: 0.15        # Tốc độ xoay yaw feedforward tối đa cho phép (rad/s)
+    target_state_timeout: 0.50            # Thời gian tối đa chấp nhận trạng thái mục tiêu trước khi coi là mất dấu (s)
+    target_prediction_horizon: 0.25       # Khoảng thời gian dự đoán vị trí mục tiêu phía trước để hướng camera đón đầu (s)
+    landing_pitch_rate_limit: 1.80        # Giới hạn tốc độ gập góc pitch gimbal trong pha hạ cánh LAND (rad/s)
+    bbox_timeout: 0.30                    # Thời gian timeout của bounding box phát hiện thị giác (s)
+    drone_model: x500_depth_0             # Tên model mô phỏng của drone trong Gazebo
 
+# ----------------------------------------------------------------------------
+# 7. MÁY TRẠNG THÁI NHIỆM VỤ TRUNG TÂM (MISSION FINITE STATE MACHINE - FSM)
+# ----------------------------------------------------------------------------
 mission_fsm:
   ros__parameters:
-    use_sim_time: true
-    follow_distance: 3.5
-    search_timeout: 3.0
-    approach_timeout: 3.0
-    smc_command_timeout: 0.20
-    apf_command_timeout: 0.25
-    covariance_status_timeout: 0.30
-    covariance_revert_timeout: 3.0
-    max_uncertainty_enter_glide_2sigma_m: 0.20
-    max_uncertainty_continue_glide_2sigma_m: 0.30
-    final_descent_rxy_m: 1.00
-    final_descent_alt_m: 1.50
-    final_uncertainty_max_2sigma_m: 0.12
-    takeoff_altitude: 3.0
-    yaw_align_enable: true
-    yaw_align_enter_deg: 25.0
-    yaw_align_exit_deg: 10.0
-    yaw_align_u0_px: 320.0
-    yaw_align_v0_px: 240.0
-    yaw_align_u_tolerance_px: 50.0
-    yaw_align_u_stop_px: 250.0
-    yaw_align_min_speed_scale: 0.60
-    yaw_align_speed_filter_alpha: 0.35
-    reacquire_confirm_time: 0.30
-    reacquire_hold_timeout: 4.0
-    reacquire_lost_timeout: 2.0
-    reacquire_bbox_timeout: 0.80
-    follow_bbox_timeout: 0.30
-    follow_detection_hold_timeout: 0.25
-    landing_tracking_timeout: 0.30
-    reacquire_max_yaw_rate_deg: 20.0
-    follow_entry_hold_time: 0.10
-    search_entry_hold_time: 0.30
-    follow_speed_limit: 1.50
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng
+    follow_distance: 3.5                  # Cự ly ngang mong muốn khi bám đuổi mục tiêu trong pha FOLLOW (m)
+    search_timeout: 3.0                   # Thời gian mất dấu mục tiêu trước khi FSM chuyển từ FOLLOW quay về SEARCH (s)
+    approach_timeout: 3.0                 # Thời gian mất dấu trong pha APPROACH trước khi hủy hạ cánh quay về SEARCH (s)
+    smc_command_timeout: 0.20             # Thời gian timeout của lệnh vận tốc từ bộ điều khiển SMC (s)
+    apf_command_timeout: 0.25             # Thời gian timeout của lệnh vận tốc từ bộ quy hoạch APF (s)
+    covariance_status_timeout: 0.30       # Thời gian timeout của bản tin trạng thái từ Covariance Gate (s)
+    covariance_revert_timeout: 4.0        # Thời gian chờ tối đa khi điều kiện cổng hiệp phương sai không đạt trước khi hủy hạ cánh về FOLLOW (s)
+    max_uncertainty_enter_glide_2sigma_m: 0.45  # Ngưỡng độ bất định 2-sigma tối đa để FSM cho phép bắt đầu trượt glide (m)
+    max_uncertainty_continue_glide_2sigma_m: 0.50 # Ngưỡng độ bất định 2-sigma tối đa để FSM duy trì giai đoạn trượt glide (m)
+    final_descent_rxy_m: 0.60             # Bán kính sai số ngang tối đa để chuyển sang hạ cánh thẳng đứng LAND (m)
+    final_descent_alt_m: 0.70             # Độ cao trần bắt đầu chuyển sang hạ cánh thẳng đứng LAND (m)
+    final_uncertainty_max_2sigma_m: 0.35  # Ngưỡng sai số 2-sigma tối đa cho phép tiến hành hạ cánh thẳng đứng (m)
+    takeoff_altitude: 3.0                 # Độ cao cất cánh ban đầu mong muốn (m)
+    # Cơ chế điều hòa vận tốc theo độ thẳng hàng góc yaw (Yaw alignment scaling)
+    yaw_align_enable: true                # Bật/tắt tính năng giảm tốc độ bay tịnh tiến khi góc yaw chưa thẳng hàng với mục tiêu
+    yaw_align_enter_deg: 25.0             # Sai lệch góc yaw bắt đầu kích hoạt giảm tốc độ tịnh tiến (độ)
+    yaw_align_exit_deg: 10.0              # Sai lệch góc yaw đủ nhỏ để phục hồi toàn bộ 100% tốc độ bay tịnh tiến (độ)
+    yaw_align_u0_px: 320.0                # Tọa độ pixel tâm ảnh trục X dùng kiểm tra cân chỉnh tâm trên 640x480
+    yaw_align_v0_px: 240.0                # Tọa độ pixel tâm ảnh trục Y dùng kiểm tra cân chỉnh tâm trên 640x480
+    yaw_align_u_tolerance_px: 40.0        # Dung sai pixel trục ngang cho phép coi như mục tiêu đã ở giữa khung hình (pixels)
+    yaw_align_u_stop_px: 240.0            # Sai lệch pixel tối đa mà tại đó drone dừng bay tịnh tiến để ưu tiên xoay yaw (pixels)
+    yaw_align_min_speed_scale: 0.60       # Tỉ lệ vận tốc tối thiểu (0.60 = 60%) khi sai lệch yaw/pixel lớn
+    yaw_align_speed_filter_alpha: 0.35    # Hệ số lọc làm mịn biến thiên tỉ lệ tốc độ tịnh tiến
+    # Cơ chế xác nhận bắt lại mục tiêu ổn định (Reacquisition handshake)
+    reacquire_confirm_time: 0.30          # Thời gian quan sát mục tiêu liên tục ổn định để xác nhận bắt lại mục tiêu thành công (s)
+    reacquire_hold_timeout: 4.0           # Thời gian tối đa dừng xoay yaw chờ bắt lại mục tiêu trước khi chuyển trạng thái (s)
+    reacquire_lost_timeout: 2.0           # Thời gian mất dấu hoàn toàn trước khi khởi động lại vòng quét tìm kiếm (s)
+    reacquire_bbox_timeout: 0.80          # Thời gian tối đa chấp nhận bounding box cũ sau khi kích hoạt bắt lại mục tiêu (s)
+    follow_bbox_timeout: 0.30             # Thời gian timeout của bounding box trong pha FOLLOW (s)
+    follow_detection_hold_timeout: 0.25   # Thời gian duy trì trạng thái phát hiện khi mất dấu tức thời trong FOLLOW (s)
+    landing_tracking_timeout: 0.30        # Thời gian timeout của tín hiệu bám mục tiêu trong pha hạ cánh (s)
+    reacquire_max_yaw_rate_deg: 20.0      # Vận tốc quay yaw tối đa cho phép khi xác nhận bắt lại mục tiêu (độ/s) - tránh chốt bám khi còn quay giật
+    follow_entry_hold_time: 0.10          # Thời gian giữ ổn định khi vừa bước vào pha FOLLOW trước khi kích hoạt di chuyển (s)
+    search_entry_hold_time: 0.30          # Thời gian giữ ổn định khi vừa bước vào pha SEARCH trước khi xoay quét (s)
+    follow_speed_limit: 1.50              # Giới hạn tốc độ bay tối đa trong pha bám đuổi FOLLOW (m/s)
 
+# ----------------------------------------------------------------------------
+# 8. BỘ CHỈ HUY VÀ GIAO TIẾP OFFBOARD VỚI AUTOPILOT PX4 (OFFBOARD COMMANDER)
+# ----------------------------------------------------------------------------
 offboard_commander:
   ros__parameters:
-    use_sim_time: true
-    auto_arm: true
-    auto_offboard: true
-    min_offboard_alt: 2.0
-    max_accel: 0.8
-    max_yaw_rate: 0.80
-    enable_alt_hold: true
-    target_altitude: 3.0
-    alt_hold_kp: 1.0
-    mission_command_timeout: 0.25
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng
+    auto_arm: true                        # Tự động gửi lệnh ARM tới PX4 khi khởi động node
+    auto_offboard: true                   # Tự động gửi lệnh chuyển sang chế độ OFFBOARD khi đủ điều kiện
+    min_offboard_alt: 2.0                 # Độ cao an toàn tối thiểu để cho phép kích hoạt OFFBOARD (m) - tránh bật khi còn ở mặt đất
+    max_accel: 0.8                        # Giới hạn gia tốc ngang tối đa (m/s^2) giúp mượt mà lệnh vận tốc (Slew-rate limiting)
+    max_yaw_rate: 0.80                    # Giới hạn vận tốc quay góc yaw tối đa (rad/s) tránh drone xoay giật đột ngột
+    enable_alt_hold: true                 # Bật thuật toán tự động giữ độ cao khép kín (Closed-loop Altitude Hold)
+    target_altitude: 3.0                  # Độ cao mục tiêu duy trì khi giữ độ cao (m)
+    alt_hold_kp: 1.0                      # Hệ số tỉ lệ P cho bộ điều khiển giữ độ cao
+    mission_command_timeout: 0.25         # Thời gian an toàn tối đa nếu mất lệnh từ Mission FSM thì drone tự động hãm vận tốc về 0 (s)
 
+# ----------------------------------------------------------------------------
+# 9. BỘ PHÁT HIỆN TIẾP ĐẤT AN TOÀN (TOUCHDOWN DETECTOR)
+# ----------------------------------------------------------------------------
 touchdown_detector:
   ros__parameters:
-    use_sim_time: true
-    optical_height_threshold_m: 0.40
-    descent_cmd_threshold_mps: -0.10
-    stoppage_vz_max_mps: 0.08
-    stoppage_dz_dt_max_mps: 0.05
-    jerk_impact_threshold: 3.50
-    confirmation_duration_s: 0.35
-    altitude_ceiling_m: 0.80
-    rate_hz: 20.0
+    use_sim_time: true                    # Sử dụng thời gian mô phỏng
+    optical_height_threshold_m: 0.40      # Ngưỡng độ cao đo từ camera tới marker để bắt đầu kiểm tra chạm đất (m)
+    descent_cmd_threshold_mps: -0.10      # Ngưỡng vận tốc hạ yêu cầu (vz < -0.10 m/s) xác nhận drone đang trong hành trình hạ cánh
+    stoppage_vz_max_mps: 0.08             # Ngưỡng vận tốc thẳng đứng vz tối đa khi drone chạm đất và dừng lại (m/s)
+    stoppage_dz_dt_max_mps: 0.05          # Ngưỡng biến thiên độ cao dz/dt tối đa xác nhận drone đã nằm yên trên bãi đáp (m/s)
+    jerk_impact_threshold: 3.50           # Ngưỡng phát hiện lực phản chấn/giật gia tốc khi chân drone va chạm bề mặt bãi đáp (m/s^3)
+    confirmation_duration_s: 0.35         # Thời gian duy trì các điều kiện dừng liên tục trước khi chốt phát tín hiệu TOUCHDOWN (s)
+    altitude_ceiling_m: 0.80              # Trần độ cao tối đa (m) - trên độ cao này bộ phát hiện chạm đất tuyệt đối không kích hoạt
+    rate_hz: 20.0                         # Tần số chu kỳ đánh giá trạng thái tiếp đất (Hz)

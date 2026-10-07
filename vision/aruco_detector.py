@@ -136,7 +136,7 @@ class ArUcoDetector:
 
         # The A0 board uses two separated tags, so keep OpenCV's normal
         # duplicate-contour spacing instead of treating one nested tag as two.
-        self.parameters.minMarkerDistanceRate = 0.05
+        self.parameters.minMarkerDistanceRate = 0.01
 
     def get_marker_size(self, marker_id: int) -> float:
         """Get physical side length in meters for a specific marker ID."""
@@ -584,21 +584,24 @@ class DualScaleArUcoDetector:
         if not detected_ids or K is None:
             return result
 
-        # Prefer the large marker whenever it's visible: its four corners have
-        # lower pixel noise than the small tag in the overlap range. Both IDs
-        # have board-frame corners, so either single tag yields the pad origin.
-        pose_marker_id = self.big_id if self.big_id in detected_ids else self.small_id
-
-        # 2. Extract only the selected marker for this pose solve.
-        selected_markers = [res for res in single_results if res["id"] == pose_marker_id]
-        selected_marker = max(
-            selected_markers,
-            key=lambda res: abs(float(cv2.contourArea(np.asarray(res["corners"]).reshape(-1, 2)))),
-        )
-        board_corners = [selected_marker["corners"]]
-        board_ids_list = [pose_marker_id]
+        # 2. Collect corners and IDs for board PnP solve.
+        # When both markers are visible, fuse both markers (8 corners) so PnP
+        # transitions smoothly without depth jumps or EKF innovation spikes.
+        # When only one marker is visible, use the visible marker.
+        board_corners = []
+        board_ids_list = []
+        for mid in (self.big_id, self.small_id):
+            mid_markers = [res for res in single_results if res["id"] == mid]
+            if mid_markers:
+                best_m = max(
+                    mid_markers,
+                    key=lambda res: abs(float(cv2.contourArea(np.asarray(res["corners"]).reshape(-1, 2)))),
+                )
+                board_corners.append(best_m["corners"])
+                board_ids_list.append(mid)
 
         board_ids_arr = np.array(board_ids_list, dtype=np.int32)
+        pose_marker_id = self.big_id if self.big_id in detected_ids else self.small_id
 
         # 3. Solve Board PnP
         retval, rvec, tvec = cv2.aruco.estimatePoseBoard(
@@ -615,13 +618,18 @@ class DualScaleArUcoDetector:
         # board frame. Keep the marker-frame fallback only for OpenCV failures.
         if (retval == 0 or rvec is None or tvec is None) and len(detected_ids) > 0:
             preferred_id = pose_marker_id
-            res_m = selected_marker
-            if res_m.get("rvec") is not None and res_m.get("tvec") is not None:
-                rvec = res_m["rvec"]
-                rotation, _ = cv2.Rodrigues(rvec)
-                marker_center = self.marker_centers_3d[preferred_id]
-                tvec = np.asarray(res_m["tvec"]).reshape(3, 1) - rotation @ marker_center
-                retval = 1
+            sel_markers = [res for res in single_results if res["id"] == preferred_id]
+            if sel_markers:
+                res_m = max(
+                    sel_markers,
+                    key=lambda res: abs(float(cv2.contourArea(np.asarray(res["corners"]).reshape(-1, 2)))),
+                )
+                if res_m.get("rvec") is not None and res_m.get("tvec") is not None:
+                    rvec = res_m["rvec"]
+                    rotation, _ = cv2.Rodrigues(rvec)
+                    marker_center = self.marker_centers_3d[preferred_id]
+                    tvec = np.asarray(res_m["tvec"]).reshape(3, 1) - rotation @ marker_center
+                    retval = 1
 
         if retval > 0 and rvec is not None and tvec is not None:
             rvec_flat = rvec.reshape(3, 1)
@@ -630,10 +638,10 @@ class DualScaleArUcoDetector:
             euler = rvec_to_euler(rvec_flat, degrees=True)
             
             # Determine tracking mode
-            if pose_marker_id == self.small_id:
-                mode = "INNER_FINE"
-            else:
+            if self.big_id in detected_ids:
                 mode = "OUTER_COARSE"
+            else:
+                mode = "INNER_FINE"
 
             result.update({
                 "board_detected": True,

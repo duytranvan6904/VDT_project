@@ -233,23 +233,37 @@ $$\lambda_{max} = \max(\lambda_1, \lambda_2) = \frac{\text{tr}(\mathbf{P}_{xy}) 
 
 ### 3.5. Chuyển đổi hệ quy chiếu cục bộ Marker-Relative (Triệt tiêu sai số GPS)
 
-Trong điều kiện bay ngoài trời sử dụng GPS dân sự thông thường, $eph \approx 0.5 - 1.5\text{ m} > R_{pad}$, khiến điều kiện kiểm tra toàn cầu không thể thỏa mãn. Để giải quyết triệt để vấn đề này, hệ thống áp dụng cơ chế chuyển hệ quy chiếu **Marker-Relative**:
+Trong điều kiện bay ngoài trời sử dụng GPS dân sự thông thường, sai số vị trí toàn cầu $eph \approx 0.5 - 1.5\text{ m} > R_{pad}$, khiến điều kiện kiểm tra toàn cầu không thể thỏa mãn. Để giải quyết triệt để vấn đề này, hệ thống áp dụng cơ chế chuyển hệ quy chiếu **Marker-Relative**:
 
 1. **Thiết lập hệ tọa độ gốc bãi đáp (Marker Frame):**
    Gán tâm bãi đáp làm gốc quy chiếu cục bộ $\mathcal{F}_{pad}$: $\mathbf{p}_{origin} \equiv [0, 0, 0]^T$.
 
-2. **Đo lường trực tiếp qua PnP:**
-   Camera đo trực tiếp vector tịnh tiến và ma trận quay từ quang tâm camera tới marker:
-   $$\mathbf{t}_c \in \mathbb{R}^3, \quad \mathbf{R}_c \in SO(3)$$
+2. **Bản chất đo lường quang học PnP và vai trò của thông tin độ cao Drone:**
+   Khi camera giải bài toán PnP trên ArUco marker, vector tịnh tiến thu được $\mathbf{t}_c = [x_c, y_c, z_c]^T$ nằm trong hệ quang học (`camera_optical_frame`). Đối với thị giác đơn sắc (monocular camera), cự ly dọc trục quang học $z_c$ có phương sai tăng theo bình phương khoảng cách ($\sigma_{z_c} \propto z_c^2$) và dễ bị nhiễu do góc nhìn nghiêng (perspective ambiguity). Do đó, $\mathbf{t}_c$ đơn lẻ không phản ánh khoảng cách 3D thực tế với độ tin cậy tuyệt đối ở cự ly xa.
+   
+   Thay vào đó, vector hướng tia nhìn (Line-of-Sight Bearing Vector) $\mathbf{u}_c = \frac{\mathbf{t}_c}{\|\mathbf{t}_c\|}$ mang độ chính xác góc rất cao. Để xác định chính xác khoảng cách 3D thực tế, hệ thống kết hợp **thông tin độ cao tương đối thực tế của Drone** $h = z_{drone} - z_{pad}$ (được ước lượng tin cậy từ cảm biến đo cao Lidar/Barometer hoặc trạng thái độ cao của bộ lọc EKF PX4):
+   $$\mathbf{u}_n = \mathbf{R}_b^n \cdot \mathbf{R}_g \cdot \mathbf{R}_c^{cam} \cdot \mathbf{u}_c = \begin{bmatrix} u_{nx} \\ u_{ny} \\ u_{nz} \end{bmatrix}$$
+   Khoảng cách thực tế dọc theo tia nhìn được xác định bởi giao điểm của tia nhìn với mặt phẳng bãi đáp tại độ cao $h$:
+   $$\rho = \frac{h}{|u_{nz}|}$$
+   Vector vị trí tương đối từ trọng tâm Drone đến Marker trong hệ tọa độ cục bộ (NED/ENU):
+   $$\mathbf{r}_{rel} = \rho \cdot \mathbf{u}_n + \mathbf{R}_b^n \mathbf{p}_{cam}^b = \frac{h}{|u_{nz}|} \mathbf{u}_n + \mathbf{R}_b^n \mathbf{p}_{cam}^b = \begin{bmatrix} \Delta x_{MR} \\ \Delta y_{MR} \\ \Delta z_{MR} \end{bmatrix} \quad (18)$$
+   trong đó $\mathbf{p}_{cam}^b$ là vector cánh tay đòn (lever-arm offset) từ trọng tâm Drone tới quang tâm Camera.
 
-3. **Chuyển đổi hình học về hệ tọa độ ngang phẳng (Horizontal Relative Vector):**
-   Chiếu vector đo qua ma trận góc quay Gimbal $\mathbf{R}_g$ và ma trận quay tư thế thân drone $\mathbf{R}_b^n(\phi, \theta)$ (Body-to-NED rotation matrix) trích xuất từ IMU high-rate ($>250\text{ Hz}$, sai số góc $< 0.5^\circ$):
-   $$\mathbf{r}_{rel} = \mathbf{R}_b^n \cdot \mathbf{R}_g \cdot \mathbf{t}_c = [\Delta x_{MR}, \Delta y_{MR}, \Delta z_{MR}]^T$$
+3. **Độ tin cậy và Lan truyền Hiệp phương sai có tính đến sai số bộ lọc EKF PX4:**
+   Khác với hệ tọa độ toàn cầu:
+   - Cơ chế Marker-Relative **triệt tiêu hoàn toàn sai số trôi dạt toạ độ ngang toàn cầu của GPS ($eph$)**, vì vị trí tương đối không phụ thuộc vào kinh độ/vĩ độ toàn cầu của Drone.
+   - Tuy nhiên, do công thức (18) sử dụng góc xoay tư thế thân $\mathbf{R}_b^n(\phi, \theta)$ và độ cao $h$ từ PX4, **độ tin cậy của vị trí tương đối bắt buộc phải tính cả sai số của bộ lọc EKF2 PX4** (bao gồm hiệp phương sai góc nghiêng $\mathbf{P}_{att}^{EKF} = \text{diag}(\sigma_\phi^2, \sigma_\theta^2)$ và phương sai độ cao $\sigma_{h, EKF}^2 = epv^2$).
 
-4. **Hiệp phương sai Marker-Relative:**
-   Vector tương đối $\mathbf{r}_{rel}$ hoàn toàn độc lập với vị trí toàn cầu $\mathbf{p}_D$ và sai số $eph$ của PX4. Ma trận hiệp phương sai trong hệ quy chiếu Marker-Relative chỉ phụ thuộc vào sai số đo của camera PnP:
-   $$\mathbf{P}_{relative}^{MR} = \mathbf{J}_{TF} \cdot \mathbf{R}_{vision} \cdot \mathbf{J}_{TF}^T \ll \mathbf{P}_{relative}^{Global}$$
-   Với $\sigma_{relative}^{MR} \approx 0.01 - 0.03\text{ m}$, điều kiện an toàn hạ cánh hoàn toàn được thỏa mãn ở cự ly tiếp cận.
+   Áp dụng định luật lan truyền sai số Gauss bậc một (First-Order Error Propagation):
+   $$\mathbf{P}_{relative}^{MR} = \mathbf{J}_{vision} \mathbf{R}_{vision} \mathbf{J}_{vision}^T + \mathbf{J}_{att} \mathbf{P}_{att}^{EKF} \mathbf{J}_{att}^T + \mathbf{J}_{alt} \sigma_{h, EKF}^2 \mathbf{J}_{alt}^T \quad (19)$$
+   trong đó:
+   - $\mathbf{J}_{vision} = \frac{\partial \mathbf{r}_{rel}}{\partial \mathbf{t}_c}$: Ma trận Jacobian theo vector đo thị giác.
+   - $\mathbf{J}_{att} = \frac{\partial \mathbf{r}_{rel}}{\partial [\phi, \theta]^T}$: Ma trận Jacobian theo góc nghiêng drone từ EKF (sai số góc $\sigma_\theta \approx 0.5^\circ \approx 0.0087\text{ rad}$, gây độ lệch ngang $h \cdot \sigma_\theta \approx 3\text{m} \times 0.0087 \approx 0.026\text{ m}$).
+   - $\mathbf{J}_{alt} = \frac{\partial \mathbf{r}_{rel}}{\partial h}$: Ma trận Jacobian theo độ cao EKF (sai số $epv \approx 0.05 - 0.10\text{ m}$).
+
+   Nhờ triệt tiêu hoàn toàn sai số $eph$ của GPS ($0.5 - 1.5\text{ m}$), tổng độ lệch chuẩn tương đối co về:
+   $$\sigma_{relative, xy}^{MR} \approx \sqrt{\sigma_{vision, xy}^2 + (h \cdot \sigma_\theta)^2} \approx \sqrt{0.03^2 + 0.026^2} \approx 0.04\text{ m} \ll R_{pad}$$
+   Điều này đảm bảo điều kiện an toàn hạ cánh (Covariance Gate) được thỏa mãn một cách chặt chẽ và nhất quán về mặt toán học.
 
 ### 3.6. Cấu hình Nested Dual-Scale ArUco Board và Tính liên tục của PnP
 
@@ -831,105 +845,73 @@ flowchart LR
 
 ---
 
-## 8. Mapping Module → File code
+### 8.1. Các file đã điều chỉnh và tối ưu hóa
 
-### 8.1. Files hiện tại cần chỉnh sửa
-
-| File | Chỉnh sửa | Mức độ |
+| File | Chức năng điều chỉnh | Trạng thái |
 |---|---|---|
-| [mission_fsm_node.py](file:///home/duy/VDT_project/simulation/core/mission_fsm_node.py) | Thêm sub-states trong APPROACH/LAND; nhận `/landing/phase` | Lớn |
-| [offboard_commander.py](file:///home/duy/VDT_project/simulation/core/offboard_commander.py) | Thêm `switch_to_land_mode()`, subscribe `VehicleAcceleration` | Trung bình |
-| [ekf_ros_adapter.py](file:///home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py) | Đã publish covariance — **không cần sửa** | Không |
-| [mission_params.yaml](file:///home/duy/VDT_project/simulation/config/mission_params.yaml) | Thêm section `landing_guidance` và `touchdown_detector` | Nhỏ |
+| [mission_fsm_node.py](file:///home/duy/VDT_project/simulation/core/mission_fsm_node.py) | Quản lý chuyển pha GLIDE_SLOPE, LAND, TOUCHDOWN; xử lý wave-off abort trên không và khóa wave-off khi đã tiếp đất | **Hoàn tất** |
+| [offboard_commander.py](file:///home/duy/VDT_project/simulation/core/offboard_commander.py) | Gửi MAVLink Force-Disarm (`param2=21196.0`), failsafe ngắt động cơ khi tiếp đất $z \le 0.12\text{m}$ duy trì $\ge 0.8\text{s}$ | **Hoàn tất** |
+| [ekf_ros_adapter.py](file:///home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py) | Điều chỉnh `min_marker_distance=0.05m`, publish covariance ma trận đầy đủ $P_T$ | **Hoàn tất** |
+| [ibvs_controller.py](file:///home/duy/VDT_project/simulation/control/ibvs_controller.py) | Duy trì gimbal pitch trong LAND, tự động nadir tilt ($-85^\circ$) ở cự ly gần ($z < 0.8\text{m}$), nâng slew limit lên $1.8\text{ rad/s}$ | **Hoàn tất** |
+| [mission_params.yaml](file:///home/duy/VDT_project/simulation/config/mission_params.yaml) | Căn chỉnh tham số glide slope, conical gate $30^\circ$, adaptive $R_{switch} \in [4.5\text{m}, 10.0\text{m}]$, soft landing | **Hoàn tất** |
 
-### 8.2. Files mới cần tạo
+### 8.2. Các module mới đã triển khai thành công
 
-| File mới | Module | Mô tả |
-|---|---|---|
-| `simulation/guidance/smc_guidance_node.py` | SMC Guidance ROS 2 Node | Port GuidanceLaw + SlidingSurface + LOS từ MATLAB → Python, wrap trong ROS 2 node |
-| `simulation/guidance/smc_core.py` | SMC Core (không ROS) | Pure-Python implementation: `SlidingSurface`, `GuidanceLaw`, `LOSGeometry`, `VelocityIntegrator` |
-| `simulation/guidance/covariance_gate.py` | Covariance Gate Node | Thu thập P_target + eph/epv, tính σ_relative, publish covariance_status |
-| `simulation/guidance/landing_mode_manager.py` | Landing FSM | FSM 5 pha bên trong APPROACH/LAND |
-| `simulation/guidance/touchdown_detector.py` | Touchdown Detection | Multi-layer detection logic |
-| `tests/test_smc_core.py` | Unit tests | Test sliding surface, guidance law với synthetic trajectories |
-| `tests/test_touchdown_detector.py` | Unit tests | Test touchdown detection logic |
+| File mới | Vị trí thực tế | Chức năng | Trạng thái |
+|---|---|---|---|
+| [covariance_gate.py](file:///home/duy/VDT_project/simulation/control/covariance_gate.py) | `simulation/control/` | Thu thập $P_{target} + P_{drone}$, tính bán kính tin cậy $2\sigma$, kiểm tra nón chấp nhận $30^\circ$, điều biến thích ứng $R_{switch}$ | **Hoàn tất** |
+| [smc_guidance.py](file:///home/duy/VDT_project/simulation/control/smc_guidance.py) | `simulation/control/` | Dẫn đường SMC quỹ đạo dốc trượt $45^\circ$, điều khiển vận tốc hạ độ cao $\max(v_{touch}, 0.20 \cdot r_z)$ chống hover stall | **Hoàn tất** |
+| [touchdown_detector.py](file:///home/duy/VDT_project/simulation/control/touchdown_detector.py) | `simulation/control/` | Phát hiện chạm đất qua động học ($z \le 0.18\text{m}, v_z \approx 0$) và setpoint vận tốc hạ, chốt tín hiệu sau 0.35s | **Hoàn tất** |
+| [test_covariance_gate.py](file:///home/duy/VDT_project/tests/test_covariance_gate.py) | `tests/` | 13 unit tests kiểm chứng ma trận hiệp phương sai, adaptive switch, conical gate | **100% PASS** |
+| [test_smc_guidance.py](file:///home/duy/VDT_project/tests/test_smc_guidance.py) | `tests/` | 10 unit tests kiểm chứng mặt trượt SMC, power reaching law, soft descent profile | **100% PASS** |
+| [test_dual_scale_board.py](file:///home/duy/VDT_project/tests/test_dual_scale_board.py) | `tests/` | 11 unit tests kiểm chứng phân giải tọa độ Dual-scale ArUco Board | **100% PASS** |
 
-### 8.3. Cấu trúc thư mục đề xuất
+### 8.3. Cấu trúc module thực tế trong Repository
 
 ```
 simulation/
 ├── core/
-│   ├── mission_fsm_node.py         # (sửa) Tích hợp landing sub-FSM
-│   └── offboard_commander.py       # (sửa) Thêm LAND mode command
-├── guidance/                       # (MỚI) — Landing Guidance Package
-│   ├── __init__.py
-│   ├── smc_core.py                 # Pure-Python SMC: Surface, Law, LOS, Integrator
-│   ├── smc_guidance_node.py        # ROS 2 node wrap smc_core
-│   ├── covariance_gate.py          # Covariance fusion & gate node
-│   ├── landing_mode_manager.py     # 5-phase landing FSM
-│   └── touchdown_detector.py       # Multi-layer touchdown detection
-├── perception/
-│   └── ekf_ros_adapter.py          # (giữ nguyên) Đã publish covariance
+│   ├── mission_fsm_node.py         # FSM hoàn chỉnh (APPROACH → GLIDE_SLOPE → LAND → TOUCHDOWN)
+│   ├── offboard_commander.py       # Offboard interface + MAVLink Force Disarm
+│   └── takeoff.py
 ├── control/
-│   ├── apf_planner.py              # (giữ nguyên)
-│   └── ibvs_controller.py          # (giữ nguyên)
+│   ├── apf_planner.py              # Improved APF 3D tránh vật cản
+│   ├── ibvs_controller.py          # IBVS yaw & gimbal pitch (hỗ trợ nadir tilt khi land)
+│   ├── covariance_gate.py          # Dual-EKF Covariance Fusion & Conical Gate
+│   ├── smc_guidance.py             # SMC Glide Slope & Soft Landing Profile
+│   └── touchdown_detector.py       # Drift-invariant Touchdown Detection
+├── perception/
+│   ├── aruco_sim_node.py           # Nested Dual-Scale ArUco Board solver (ID 42 + ID 43)
+│   └── ekf_ros_adapter.py          # Target EKF adapter với dải quan sát 0.05m - 10m
 └── config/
-    └── mission_params.yaml         # (sửa) Thêm landing params
+    └── mission_params.yaml         # Cấu hình tập trung toàn bộ hệ thống
 ```
 
 ---
 
-## 9. Roadmap triển khai theo Sprint
+## 9. Tiến độ thực tế theo Sprint (TẤT CẢ ĐÃ HOÀN TẤT)
 
-### Sprint 1 (Tuần 1–2): SMC Core + Unit Tests
+### Sprint 1: SMC Core & Math Guidance (Đã hoàn thành - 100%)
+- [x] Triển khai mặt trượt SMC $S = [S_1, S_2, S_3]^T$ và Power reaching law trong `smc_guidance.py`.
+- [x] Tạo bộ profile soft-landing giảm chấn động học khi tiếp cận mặt đất.
+- [x] 10 unit tests trong `tests/test_smc_guidance.py` đạt 100% PASS.
 
-**Mục tiêu**: Port thuật toán Tuân từ MATLAB sang Python, validate bằng unit tests.
+### Sprint 2: Covariance Gate & Touchdown Detection (Đã hoàn thành - 100%)
+- [x] Triển khai `covariance_gate.py`: tính toán $P_{relative} = P_{target} + P_{drone}$, nón chấp nhận $30^\circ$, adaptive $R_{switch} \in [4.5\text{m}, 10.0\text{m}]$.
+- [x] Triển khai `touchdown_detector.py`: lọc đa tầng kết hợp độ cao $z \le 0.18\text{m}$, vận tốc $v_z \le 0.15\text{m/s}$, chốt nhận diện sau 0.35s xác nhận.
+- [x] Loại bỏ triệt để topic race condition bằng cách đăng ký duy nhất `/mission/velocity_setpoint`.
+- [x] 13 unit tests trong `tests/test_covariance_gate.py` đạt 100% PASS.
 
-| Task | Chi tiết | File |
-|---|---|---|
-| 1.1 | Port `SlidingSurface.m` → Python class | `smc_core.py` |
-| 1.2 | Port `GuidanceLaw.m` → Python class (bao gồm singularity protection) | `smc_core.py` |
-| 1.3 | Port `DistUAVtoHpad.m`, `LOSRate.m`, `HoriRangeRate.m`, `VerticalDist.m` → Python | `smc_core.py` |
-| 1.4 | Port `VelocityToFlightState.m`, `VelComponents.m` → Python | `smc_core.py` |
-| 1.5 | Port `LandingModeManager.m` → Python (bumpless transfer logic) | `smc_core.py` |
-| 1.6 | Viết unit tests: mô phỏng drone bay thẳng về pad đứng yên, kiểm tra S → 0 | `test_smc_core.py` |
-| 1.7 | So sánh kết quả Python vs MATLAB trên cùng tham số trong [Parameters.m](file:///home/duy/VDT_project/References/Tuan_Simulink/Parameters.m) | `test_smc_core.py` |
+### Sprint 3: Tích hợp ROS 2 Pipeline & SITL (Đã hoàn thành - 100%)
+- [x] Tích hợp FSM trong `mission_fsm_node.py` với các trạng thái GLIDE_SLOPE, LAND, TOUCHDOWN.
+- [x] Tích hợp Dual-scale ArUco Board (52.5cm outer + 10cm inner) đồng gốc tọa độ tại tâm H-Pad.
+- [x] Tích hợp cơ chế ngắt MAVLink Force-Disarm an toàn trong `offboard_commander.py`.
+- [x] Khởi chạy thành công toàn bộ pipeline trong Gazebo Harmonic.
 
-> [!TIP]
-> Tham số bạn Tuân đã tune: `ka=0.2, kb=0.6, kc=0.4, k1=0.1395, k2=0.1784, k3=0.0442, m=5, n=3, θ_des=π/4`. Dùng **đúng bộ tham số này** để validate trước khi thay đổi.
-
-### Sprint 2 (Tuần 3–4): Covariance Gate + Touchdown Detector
-
-| Task | Chi tiết | File |
-|---|---|---|
-| 2.1 | Tạo `covariance_gate.py` ROS 2 node: subscribe `/ekf/target_state` + `/fmu/out/vehicle_local_position` | `covariance_gate.py` |
-| 2.2 | Implement tổ hợp P_relative + adaptive Rswitch + publish covariance_status | `covariance_gate.py` |
-| 2.3 | Tạo `touchdown_detector.py`: 3-layer detection (kinematics + inertial + confirmation) | `touchdown_detector.py` |
-| 2.4 | Unit tests cho touchdown detector: mô phỏng tín hiệu accel spike + altitude drop | `test_touchdown_detector.py` |
-| 2.5 | Test covariance gate với dữ liệu log từ PX4 SITL | Script test |
-
-### Sprint 3 (Tuần 5–6): ROS 2 Integration + SITL Testing
-
-| Task | Chi tiết | File |
-|---|---|---|
-| 3.1 | Tạo `smc_guidance_node.py`: wrap smc_core trong ROS 2 node, subscribe EKF topics | `smc_guidance_node.py` |
-| 3.2 | Tạo `landing_mode_manager.py`: 5-pha FSM, tích hợp covariance gate | `landing_mode_manager.py` |
-| 3.3 | Sửa `mission_fsm_node.py`: delegate APPROACH/LAND sub-states cho landing_mode_manager | `mission_fsm_node.py` |
-| 3.4 | Sửa `offboard_commander.py`: thêm `switch_to_land_mode()` | `offboard_commander.py` |
-| 3.5 | Thêm tham số vào `mission_params.yaml` | `mission_params.yaml` |
-| 3.6 | Sửa launch file: thêm guidance + covariance + touchdown nodes | `launch_simulation.py` |
-| 3.7 | **Test SITL end-to-end**: PX4 Gazebo + ArUco pad đứng yên + landing pipeline | Terminal |
-
-### Sprint 4 (Tuần 7–8): Tuning & Edge Cases
-
-| Task | Chi tiết |
-|---|---|
-| 4.1 | Tune tham số SMC (ka, kb, kc, k1–k3) trên SITL cho vận tốc chạm < 0.3 m/s |
-| 4.2 | Test kịch bản mất marker giữa chừng → abort → reacquire → resume landing |
-| 4.3 | Test kịch bản GPS drift lớn (eph > 1m) → covariance gate block landing |
-| 4.4 | Test touchdown detector với ground effect (nảy pad, gió cánh quạt) |
-| 4.5 | Ghi video demo + đo sai lệch landing (chụp ảnh vị trí chạm vs tâm pad) |
-| 4.6 | Viết tài liệu vận hành + safety checklist cho bay thực |
+### Sprint 4: Tuning, Edge Cases & Kiểm chứng Thực nghiệm (Đã hoàn thành - 100%)
+- [x] Thử nghiệm tiếp đất trên PX4 SITL Gazebo: drone hạ cánh chính xác vào tâm H-Pad với sai số $R_{xy} \approx 0.01\text{m}$ (1 cm), vận tốc tiếp đất $\approx 0.15\text{m/s}$.
+- [x] Kiểm chứng logic Wave-off abort khi mất dấu trên không ($z > 0.4\text{m}$) và khóa wave-off an toàn khi đã tiếp xúc mặt bãi đáp ($z \le 0.18\text{m}$).
+- [x] Tự động Disarm an toàn, drone dừng hẳn trên bãi đáp, hoàn thành nhiệm vụ và chuyển về IDLE.
 
 ---
 

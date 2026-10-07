@@ -303,6 +303,10 @@ class TestLandingAimAndYawHold(unittest.TestCase):
         self.assertAlmostEqual(pitch, -math.atan2(1.5, 1.0))
         self.assertGreater(pitch, math.radians(-88.0))
 
+    def test_landing_camera_points_nadir_when_directly_over_pad(self):
+        pitch = landing_pitch_from_geometry(0.2, 0.0, 0.0)
+        self.assertAlmostEqual(pitch, -math.pi / 2.0)
+
     def test_landing_yaw_latches_last_ibvs_heading_when_marker_is_lost(self):
         _, held_yaw, initialized = choose_landing_yaw(
             tracking_valid=True,

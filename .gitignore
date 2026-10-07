@@ -16,3 +16,8 @@ env/
 # IDE files
 .vscode/
 .idea/
+
+# Build artifacts & external repositories
+build/
+PX4-Autopilot/
+

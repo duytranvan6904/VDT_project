@@ -182,6 +182,46 @@ class TestCovarianceGate(unittest.TestCase):
         expected_weight = 1.0 / (1.0 + 2.0 * 0.005)
         self.assertAlmostEqual(res.sliding_weight, expected_weight, places=4)
 
+    def test_marker_relative_mode(self):
+        """Verify marker-relative mode eliminates GPS eph but incorporates EKF attitude & altitude errors."""
+        mr_gate = CovarianceGate(
+            pad_radius_m=0.25,
+            confidence_sigma=2.0,
+            use_marker_relative=True,
+            attitude_sigma_rad=0.0087,  # 0.5 deg
+            default_drone_epv_m=0.10,
+        )
+        # Even with large drone GPS covariance (eph = 1.0m)
+        P_drone_gps_drift = np.zeros(36)
+        P_drone_gps_drift[0] = 1.0 ** 2  # 1m GPS error
+        P_drone_gps_drift[7] = 1.0 ** 2  # 1m GPS error
+        P_drone_gps_drift[14] = 0.10 ** 2 # 10cm vertical error
+
+        # Small vision target covariance (sigma = 0.04m)
+        P_target = np.zeros(36)
+        P_target[0] = 0.04 ** 2
+        P_target[7] = 0.04 ** 2
+        P_target[14] = 0.05 ** 2
+
+        # At altitude h = 2.0m:
+        # Attitude projected variance = (2.0 * 0.0087)^2 = 0.0174^2 = 0.00030276
+        # Total relative xy variance = 0.04^2 + 0.00030276 = 0.0016 + 0.00030276 = 0.00190276
+        # sigma_rel_xy = sqrt(0.00190276) = 0.0436m << 1.0m (GPS eliminated!)
+        res = mr_gate.evaluate(
+            drone_pos=np.array([1.0, 1.0, 2.0]),
+            target_pos=np.array([1.0, 1.0, 0.0]),
+            drone_cov_36=P_drone_gps_drift,
+            target_cov_36=P_target,
+            is_detected=True,
+            measurement_age_s=0.05,
+        )
+
+        expected_var_xy = 0.04 ** 2 + (2.0 * 0.0087) ** 2
+        self.assertAlmostEqual(res.lambda_max_2d, expected_var_xy, places=5)
+        self.assertLess(res.r_uncertainty_2sigma, 0.15)  # Well inside landing gate!
+        self.assertTrue(res.safe_to_land)
+
 
 if __name__ == '__main__':
     unittest.main()
+

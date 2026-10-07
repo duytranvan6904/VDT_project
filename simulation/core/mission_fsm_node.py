@@ -90,8 +90,8 @@ class MissionFSMNode(Node):
         self.declare_parameter('max_uncertainty_enter_glide_2sigma_m', 0.20)
         self.declare_parameter('max_uncertainty_continue_glide_2sigma_m', 0.30)
         self.declare_parameter('final_descent_rxy_m', 1.00)
-        self.declare_parameter('final_descent_alt_m', 1.50)
-        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.12)
+        self.declare_parameter('final_descent_alt_m', 0.70)
+        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.35)
         self.declare_parameter('takeoff_altitude', 3.0)
         self.declare_parameter('yaw_align_enable', True)
         self.declare_parameter('yaw_align_enter_deg', 20.0)
@@ -242,6 +242,7 @@ class MissionFSMNode(Node):
 
         # Precision landing & Touchdown state
         self.touchdown_detected = False
+        self.ground_resting_since: Optional[float] = None
         self.safe_to_land = False
         self.has_smc_cmd = False
         self.smc_velocity = np.zeros(3)
@@ -304,6 +305,9 @@ class MissionFSMNode(Node):
         )
         self.create_subscription(
             Twist, '/landing/velocity_cmd', self.smc_vel_cb, 10,
+        )
+        self.create_subscription(
+            Bool, '/safety/manual_override', self.manual_override_cb, 10,
         )
 
         # ── Publishers ───────────────────────────────────────────────────
@@ -406,6 +410,24 @@ class MissionFSMNode(Node):
 
     def land_cmd_cb(self, msg: Bool):
         self.land_requested = msg.data
+        if msg.data:
+            valid = self._landing_tracking_is_valid()
+            self.get_logger().info(
+                f'📥 [LAND CMD] Nhận lệnh hạ cánh (/operator/land_command=True) | '
+                f'Pha hiện tại: {self.phase.name} | Tracking Lock: {valid}'
+            )
+
+    def manual_override_cb(self, msg: Bool):
+        if msg.data and self.phase != MissionPhase.IDLE:
+            self.get_logger().error(
+                '🚨 [FSM SAFETY] PHÁT HIỆN CAN THIỆP TỪ PHI CÔNG / QGC / RC! '
+                'Lập tức chuyển FSM sang IDLE và giải phóng quyền điều khiển!'
+            )
+            self.phase = MissionPhase.IDLE
+            self.land_requested = False
+            self.landing_glide_active = False
+            self.landing_hold_initialized = False
+            self.reacquire_active = False
 
     def apf_vel_cb(self, msg: Twist):
         self.apf_velocity = np.array([
@@ -548,9 +570,11 @@ class MissionFSMNode(Node):
 
         # Once the fixed yaw target has been sent, verify target tracking and
         # bounded yaw rate so the vehicle transitions cleanly to FOLLOW.
+        max_u = max(632.0, 2.0 * self.yaw_align_u0 - 8.0)
+        max_v = max(472.0, 2.0 * self.yaw_align_v0 - 8.0)
         bbox_in_roi = (
-            8.0 <= self.bbox_u <= 632.0
-            and 8.0 <= self.bbox_v <= 472.0
+            8.0 <= self.bbox_u <= max_u
+            and 8.0 <= self.bbox_v <= max_v
         )
         # A detection that arrived before the sweep was stopped cannot confirm
         # reacquisition.  Wait for a new image plus an accepted EKF update so
@@ -635,18 +659,44 @@ class MissionFSMNode(Node):
             # reference. Pixel centering is handled by translation and the
             # gimbal; chasing pixel yaw while the camera looks steeply down
             # turns the aircraft around the pad.
-            self.landing_hold_yaw = _wrap_angle(self.drone_yaw)
-            self.landing_hold_initialized = True
+            self.landing_hold_yaw = _wrap_angle(self.ibvs_yaw if self.has_odom else self.drone_yaw)
+            self.landing_hold_initialized = False
             self.get_logger().info('Operator LAND command received.')
 
     def _handle_approach(self):
         """APF approach, then covariance-gated SMC glide and final descent."""
         now = time.monotonic()
 
-        # Cancel approach if the live visual lock has been absent too long.
-        # EKF prediction alone is useful for FOLLOW, but is not enough to land.
+        # Touchdown confirmed during approach completes the mission immediately
+        if self.touchdown_detected:
+            self.phase = MissionPhase.IDLE
+            self.land_requested = False
+            self.touchdown_detected = False
+            self.landing_hold_initialized = False
+            self.landing_glide_active = False
+            self.mission_completed = True
+            self.get_logger().info('🏆 Precision landing completed! Drone safely stopped on landing pad.')
+            return
+
+        # Check if drone is already at terminal landing envelope directly over pad
+        h_err = float(np.linalg.norm(
+            self.drone_pos[:2] - self.target_pos[:2]
+        )) if self.has_target and self.has_odom else float('inf')
+        rel_alt = float(abs(self.drone_pos[2] - self.target_pos[2])) if self.has_target and self.has_odom else (self.drone_pos[2] if self.has_odom else float('inf'))
+        is_terminal = bool(self.has_odom and (self.drone_pos[2] <= 0.55 or rel_alt <= 0.55) and h_err <= 0.35)
+
+        # Cancel approach if the live visual lock has been absent too long at higher altitudes.
+        # If already at terminal landing altitude (<= 0.40m over pad), commit to landing instead of aborting!
         age = now - self.last_detection_time if self.last_detection_time > 0.0 else float('inf')
         if not self._landing_tracking_is_valid(now) and age > self.approach_timeout:
+            if is_terminal:
+                self.phase = MissionPhase.LAND
+                self.touchdown_detected = False
+                self.get_logger().info(
+                    f'[LANDING] Terminal altitude reached (z={self.drone_pos[2]:.2f}m <= 0.40m): '
+                    'committing to terminal touchdown descent.'
+                )
+                return
             self.phase = MissionPhase.FOLLOW
             self.land_requested = False
             self.landing_glide_active = False
@@ -730,6 +780,8 @@ class MissionFSMNode(Node):
         )
         if final_ready:
             self.phase = MissionPhase.LAND
+            self.landing_hold_yaw = _wrap_angle(self.ibvs_yaw if tracking_valid else self.drone_yaw)
+            self.landing_hold_initialized = True
             self.touchdown_detected = False
             self.get_logger().info(
                 '[LANDING] Final descent authorized: '
@@ -738,17 +790,59 @@ class MissionFSMNode(Node):
             )
 
     def _handle_land(self):
-        """Remain in gated final descent until touchdown is confirmed."""
-        # Never complete from altitude alone; drifted altitude can report a
-        # false touchdown while the vehicle is still above or beside the pad.
+        """Remain in gated final descent until touchdown is confirmed, or wave-off."""
+        # Never complete from altitude alone while airborne; but if vehicle has
+        # confirmed touchdown or has rested stationary on the ground (alt <= 0.12m)
+        # for >= 0.5s, complete mission safely!
+        is_resting_on_ground = bool(self.has_odom and self.drone_pos[2] <= 0.12)
+        if is_resting_on_ground:
+            if self.ground_resting_since is None:
+                self.ground_resting_since = now
+            elif now - self.ground_resting_since >= 0.5:
+                self.touchdown_detected = True
+        else:
+            self.ground_resting_since = None
+
         if self.touchdown_detected:
             self.phase = MissionPhase.IDLE
             self.land_requested = False
             self.touchdown_detected = False
+            self.ground_resting_since = None
             self.landing_hold_initialized = False
             self.landing_glide_active = False
             self.mission_completed = True
             self.get_logger().info('🏆 Precision landing completed! Drone safely stopped on landing pad.')
+            return
+
+        tracking_valid = self._landing_tracking_is_valid(now)
+        h_err = float(np.linalg.norm(
+            self.drone_pos[:2] - self.target_pos[:2]
+        )) if self.has_target and self.has_odom else float('inf')
+
+        # Safety Wave-off / Abort:
+        # If target moved away (> 0.60m) or tracking was lost for > 1.5s while AIRBORNE in LAND,
+        # wave off back to APPROACH to allow horizontal re-centering or reacquisition!
+        # Do NOT wave off if already resting near ground level (alt <= 0.18m).
+        if is_resting_on_ground or (self.has_odom and self.drone_pos[2] <= 0.18):
+            self.landing_gate_lost_since = 0.0
+        elif not tracking_valid:
+            if self.landing_gate_lost_since <= 0.0:
+                self.landing_gate_lost_since = now
+            elif now - self.landing_gate_lost_since >= 1.5:
+                self.phase = MissionPhase.APPROACH
+                self.landing_glide_active = False
+                self.landing_gate_lost_since = 0.0
+                self.get_logger().warning(
+                    '[LANDING] Lost tracking in LAND phase for > 1.5s; waving off back to APPROACH.'
+                )
+        elif h_err > 0.60:
+            self.phase = MissionPhase.APPROACH
+            self.landing_gate_lost_since = 0.0
+            self.get_logger().warning(
+                f'[LANDING] Target moved away (Herr={h_err:.2f}m > 0.60m) during LAND; waving off back to APPROACH.'
+            )
+        else:
+            self.landing_gate_lost_since = 0.0
 
     # ── Setpoint composition ─────────────────────────────────────────────
 
@@ -803,7 +897,7 @@ class MissionFSMNode(Node):
             and now - self.last_smc_time <= self.smc_command_timeout
             and self.last_smc_phase_time > 0.0
             and now - self.last_smc_phase_time <= self.smc_command_timeout
-            and self.smc_sub_phase not in ('HOLD', 'INACTIVE', 'FINAL_GATE_WAIT')
+            and self.smc_sub_phase not in ('HOLD', 'INACTIVE')
         )
 
     def _covariance_status_is_fresh(self, now: float | None = None) -> bool:
@@ -817,6 +911,10 @@ class MissionFSMNode(Node):
 
     def _landing_yaw_setpoint(self, tracking_valid: bool) -> float:
         """Hold the last visual-servo heading through a landing vision dropout."""
+        if self.phase == MissionPhase.APPROACH and tracking_valid:
+            self.landing_hold_yaw = _wrap_angle(float(self.ibvs_yaw))
+            self.landing_visual_loss_active = False
+            return self.landing_hold_yaw
         yaw, self.landing_hold_yaw, self.landing_hold_initialized = choose_landing_yaw(
             tracking_valid=tracking_valid,
             ibvs_yaw=self.ibvs_yaw,
@@ -902,12 +1000,9 @@ class MissionFSMNode(Node):
 
         elif self.phase == MissionPhase.SEARCH:
             # Hover + IBVS provides yaw rotation
-            # During reacquisition, hold the fixed yaw captured at the first
-            # detection so PX4 can actually brake the ongoing rotation.
+            # During reacquisition, IBVS actively centers the target.
             now = time.monotonic()
-            if self.reacquire_active:
-                search_yaw = self.reacquire_hold_yaw
-            elif now < self.search_entry_hold_until:
+            if now < self.search_entry_hold_until:
                 # Do not publish stale IBVS FOLLOW yaw during the first
                 # SEARCH cycle.  IBVS resets asynchronously on phase change.
                 search_yaw = self.search_entry_hold_yaw
@@ -958,7 +1053,19 @@ class MissionFSMNode(Node):
         elif self.phase == MissionPhase.APPROACH:
             now = time.monotonic()
             tracking_valid = self._landing_tracking_is_valid(now)
-            if not tracking_valid:
+            h_err = float(np.linalg.norm(
+                self.drone_pos[:2] - self.target_pos[:2]
+            )) if self.has_target and self.has_odom else float('inf')
+            rel_alt = float(abs(self.drone_pos[2] - self.target_pos[2])) if self.has_target and self.has_odom else (self.drone_pos[2] if self.has_odom else float('inf'))
+            is_terminal = bool(self.has_odom and (self.drone_pos[2] <= 0.55 or rel_alt <= 0.55) and h_err <= 0.35)
+
+            if is_terminal and not tracking_valid:
+                # Terminal touchdown safeguard in APPROACH: maintain gentle vertical descent to ground
+                vel.linear.x = 0.0
+                vel.linear.y = 0.0
+                vel.linear.z = -0.15
+                yaw.data = self._landing_yaw_setpoint(False)
+            elif not tracking_valid:
                 # Freeze all translation on detector loss; keep the vehicle
                 # pointed at its current heading while waiting for reacquire.
                 yaw.data = self._landing_yaw_setpoint(False)
@@ -969,7 +1076,7 @@ class MissionFSMNode(Node):
                     self.safe_to_land
                     and self._covariance_status_is_fresh(now)
                     and self._smc_command_is_fresh(now)
-                    and self.smc_sub_phase == 'GLIDE_SLOPE'
+                    and self.smc_sub_phase in ('GLIDE_SLOPE', 'FINAL_DESCENT', 'FINAL_GATE_WAIT')
                 ):
                     vel.linear.x = float(self.smc_velocity[0])
                     vel.linear.y = float(self.smc_velocity[1])
@@ -992,19 +1099,32 @@ class MissionFSMNode(Node):
 
         elif self.phase == MissionPhase.LAND:
             now = time.monotonic()
+            h_err = float(np.linalg.norm(
+                self.drone_pos[:2] - self.target_pos[:2]
+            )) if self.has_target and self.has_odom else 0.0
+            rel_alt = float(abs(self.drone_pos[2] - self.target_pos[2])) if self.has_target and self.has_odom else (self.drone_pos[2] if self.has_odom else 0.0)
+            is_terminal = bool(self.has_odom and (self.drone_pos[2] <= 0.55 or rel_alt <= 0.55) and h_err <= 0.35)
+
             final_command_valid = (
                 self._landing_tracking_is_valid(now)
                 and self.safe_to_land
                 and self._covariance_status_is_fresh(now)
                 and self._smc_command_is_fresh(now)
-                and self.smc_sub_phase == 'FINAL_DESCENT'
-                and self.uncertainty_radius <= self.final_uncertainty_max
+                and self.smc_sub_phase in ('FINAL_DESCENT', 'FINAL_GATE_WAIT', 'GLIDE_SLOPE')
+                and self.uncertainty_radius <= self.continue_uncertainty_max
             )
             if final_command_valid:
                 vel.linear.x = float(self.smc_velocity[0])
                 vel.linear.y = float(self.smc_velocity[1])
                 vel.linear.z = float(self.smc_velocity[2])
                 vel.angular.z = float(self.smc_yaw_rate)
+            elif is_terminal:
+                # Terminal touchdown safeguard directly over pad: maintain steady
+                # gentle vertical descent so kinematic touchdown can confirm
+                vel.linear.x = 0.0
+                vel.linear.y = 0.0
+                vel.linear.z = -0.15
+                vel.angular.z = 0.0
             # Otherwise Twist stays zero: hover until vision, covariance,
             # and a fresh final SMC command are valid again.
             yaw.data = self._landing_yaw_setpoint(

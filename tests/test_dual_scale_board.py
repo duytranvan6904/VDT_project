@@ -16,9 +16,9 @@ def board_artifacts(tmp_path):
         big_id=42,
         big_size_m=0.52,
         small_id=43,
-        small_size_m=0.05,
-        small_patch_m=0.06,
-        margin_m=0.0205,
+        small_size_m=0.10,
+        small_patch_m=0.11,
+        margin_m=0.012,
         dict_name="DICT_6X6_50",
         pixels_per_cm=25,
         paper_width_m=1.189,
@@ -38,7 +38,7 @@ def test_dual_scale_board_generation(board_artifacts):
     assert config["markers"][0]["id"] == 42
     assert config["markers"][0]["size_m"] == 0.52
     assert config["markers"][1]["id"] == 43
-    assert config["markers"][1]["size_m"] == 0.05
+    assert config["markers"][1]["size_m"] == 0.10
 
 
 def test_dual_scale_detector_initialization():
@@ -46,13 +46,13 @@ def test_dual_scale_detector_initialization():
         big_id=42,
         big_size_m=0.52,
         small_id=43,
-        small_size_m=0.05,
+        small_size_m=0.10,
         dictionary_name="DICT_6X6_50"
     )
     assert detector.big_id == 42
     assert detector.small_id == 43
     assert detector.big_size_m == 0.52
-    assert detector.small_size_m == 0.05
+    assert detector.small_size_m == 0.10
 
 
 def test_detection_at_transition_altitude(board_artifacts):

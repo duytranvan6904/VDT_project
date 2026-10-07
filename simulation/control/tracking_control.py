@@ -281,9 +281,10 @@ def landing_pitch_from_geometry(
     target_altitude: float,
     horizontal_range: float,
 ) -> float:
-    """Aim the camera at the landing target without forcing a nadir snap."""
-    dz = max(0.1, float(drone_altitude) - float(target_altitude))
-    return -math.atan2(dz, max(0.2, float(horizontal_range)))
+    """Aim the camera at the landing target based on line-of-sight geometry."""
+    dz = max(0.01, float(drone_altitude) - float(target_altitude))
+    horiz = max(0.0, float(horizontal_range))
+    return -math.atan2(dz, horiz)
 
 
 def choose_landing_yaw(

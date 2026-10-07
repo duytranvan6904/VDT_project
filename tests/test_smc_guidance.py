@@ -191,6 +191,26 @@ class TestSMCGuidance(unittest.TestCase):
             speed = np.linalg.norm(res.velocity_cmd)
             self.assertLessEqual(speed, self.params.v_max + 1e-4)
 
+    def test_final_descent_includes_target_velocity_feedforward(self):
+        """Final descent directly over a moving landing pad tracks pad velocity feedforward."""
+        drone_pos = np.array([0.0, 0.0, 0.8])
+        target_pos = np.array([0.0, 0.0, 0.0])
+        target_vel = np.array([0.20, 0.10, 0.0])
+
+        res = self.guidance.step(
+            drone_pos=drone_pos,
+            drone_vel=np.zeros(3),
+            target_pos=target_pos,
+            target_vel=target_vel,
+            dt=0.05,
+        )
+        self.assertEqual(res.sub_phase, "FINAL_DESCENT")
+        # Horizontal velocities must include target feedforward
+        self.assertAlmostEqual(res.velocity_cmd[0], 0.20, places=2)
+        self.assertAlmostEqual(res.velocity_cmd[1], 0.10, places=2)
+        # Vertical descent must be active
+        self.assertLess(res.velocity_cmd[2], 0.0)
+
 
 if __name__ == '__main__':
     unittest.main()

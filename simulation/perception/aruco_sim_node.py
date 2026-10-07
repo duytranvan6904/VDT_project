@@ -94,7 +94,7 @@ class ArucoSimulationNode(Node):
         self.create_subscription(Image, '/depth_camera', self.depth_cb, sensor_qos)
         self.create_subscription(Image, '/camera', self.image_cb, sensor_qos)
 
-        # Oak-D-Lite SDF fallback: 640x480, horizontal FOV 1.204 rad.
+        # Oak-D-Lite / Sim camera fallback: 640x480, horizontal FOV 1.204 rad.
         self.image_width = 640
         self.image_height = 480
         self.camera_matrix = self.fallback_camera_matrix(self.image_width, self.image_height)

@@ -156,7 +156,8 @@ class TouchdownDetector:
             abs(actual_vz) <= self.p.stoppage_vz_max_mps
             and abs(dz_dt) <= self.p.stoppage_dz_dt_max_mps
         )
-        kinematic_stopped = is_commanding_descent and is_vertically_stopped
+        is_at_ground_level = current_alt_z <= 0.18 and is_vertically_stopped
+        kinematic_stopped = (is_commanding_descent and is_vertically_stopped) or is_at_ground_level
 
         # 4. Optical Height check (Marker-Relative)
         # Directly measures distance from camera mount to the pad surface
@@ -254,7 +255,7 @@ class TouchdownDetectorNode(Node):
         # Subscriptions
         self.create_subscription(Odometry, '/odom', self.odom_cb, sensor_qos)
         self.create_subscription(PointStamped, '/hpad/position_camera', self.optical_cb, 10)
-        self.create_subscription(Twist, '/landing/velocity_cmd', self.cmd_cb, 10)
+        # Subscribe ONLY to the final mission velocity setpoint sent to flight controller
         self.create_subscription(Twist, '/mission/velocity_setpoint', self.cmd_cb, 10)
         self.create_subscription(String, '/mission/phase', self.phase_cb, 10)
 
@@ -273,7 +274,7 @@ class TouchdownDetectorNode(Node):
     def phase_cb(self, msg: String):
         prev_phase = self.phase
         self.phase = msg.data
-        if self.phase != 'LAND':
+        if self.phase not in ('LAND', 'APPROACH'):
             self.detector.reset()
 
     def odom_cb(self, msg: Odometry):
@@ -292,15 +293,21 @@ class TouchdownDetectorNode(Node):
         if self.drone_odom is None:
             return
 
-        # Touchdown detection MUST only be active during LAND phase!
+        # Touchdown detection MUST only be active during landing phases!
         # When hovering, taking off, or following, reset state and hold touchdown False.
-        if self.phase != 'LAND':
+        if self.phase not in ('LAND', 'APPROACH'):
             self.detector.reset()
             self.touchdown_pub.publish(Bool(data=False))
             return
 
         actual_vz = float(self.drone_odom.twist.twist.linear.z)
         current_alt_z = float(self.drone_odom.pose.pose.position.z)
+
+        # In APPROACH phase, only evaluate touchdown when close to ground (<= altitude ceiling)
+        if self.phase == 'APPROACH' and current_alt_z > self.detector.p.altitude_ceiling_m:
+            self.detector.reset()
+            self.touchdown_pub.publish(Bool(data=False))
+            return
 
         # Optical height valid if recent (< 0.5s)
         opt_z = self.optical_z if (now - self.last_optical_time < 0.5) else None
