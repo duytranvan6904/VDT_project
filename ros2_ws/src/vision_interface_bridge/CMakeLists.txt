@@ -6,14 +6,14 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(vision_msgs REQUIRED)
-find_package(fsm_state_machine REQUIRED)
+find_package(vdt_msgs REQUIRED)
 
 add_executable(vision_interface_bridge_node src/vision_interface_bridge_node.cpp)
 target_include_directories(vision_interface_bridge_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(vision_interface_bridge_node
-  rclcpp std_msgs sensor_msgs vision_msgs fsm_state_machine)
+  rclcpp std_msgs sensor_msgs vision_msgs vdt_msgs)
 
 install(TARGETS vision_interface_bridge_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})

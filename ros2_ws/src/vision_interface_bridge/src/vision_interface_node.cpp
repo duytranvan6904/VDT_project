@@ -8,7 +8,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/u_int8.hpp>
 #include <vision_msgs/msg/bounding_box2_d.hpp>
-#include "fsm_state_machine/msg/vision_marker.hpp"
+#include "vdt_msgs/msg/vision_marker.hpp"
 #include "vision_interface_bridge/bridge_logic.hpp"
 
 namespace vision_interface_bridge

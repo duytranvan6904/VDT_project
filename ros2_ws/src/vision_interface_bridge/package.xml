@@ -11,7 +11,7 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>vision_msgs</depend>
-  <depend>fsm_state_machine</depend>
+  <depend>vdt_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
