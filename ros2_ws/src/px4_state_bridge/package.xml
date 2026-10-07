@@ -14,6 +14,7 @@
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>fsm_state_machine</depend>
+  <depend>vdt_msgs</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
