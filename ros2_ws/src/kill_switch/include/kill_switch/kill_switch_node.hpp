@@ -15,14 +15,14 @@ public:
   KillSwitchNode();
 
 private:
-  void on_rc_channels(const rc_parser::msg::RcChannelsRaw::SharedPtr msg);
+  void on_rc_channels(const vdt_msgs::msg::RcChannelsRaw::SharedPtr msg);
   void update();
   void execute();
   void publish_disarm_command();
   void publish_killed_flag(bool killed);
   void log_debug(bool raw_triggered) const;
 
-  rclcpp::Subscription<rc_parser::msg::RcChannelsRaw>::SharedPtr rc_sub_;
+  rclcpp::Subscription<vdt_msgs::msg::RcChannelsRaw>::SharedPtr rc_sub_;
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr killed_flag_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
