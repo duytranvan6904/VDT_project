@@ -1,6 +1,7 @@
 #include "rc_parser/rc_uart.hpp"
 #include <algorithm>
-#include <asm/termios.h>
+#include <asm/termbits.h>
+#include <asm/ioctls.h>
 #include <cerrno>
 #include <fcntl.h>
 #include <sys/ioctl.h>
