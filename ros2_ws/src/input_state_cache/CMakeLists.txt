@@ -37,7 +37,7 @@ if(BUILD_TESTING)
   target_include_directories(input_cache_logic_test PRIVATE include)
   ament_target_dependencies(input_cache_logic_test rclcpp nav_msgs vdt_msgs)
 
-  add_launch_test(test/ros2/test_input_cache_ros.py TIMEOUT 60)
+  add_launch_test(test/ros2/test_input_cache_node_ros.py TIMEOUT 60)
   add_launch_test(test/rosbag/test_input_cache_rosbag.py TIMEOUT 120)
 endif()
 
