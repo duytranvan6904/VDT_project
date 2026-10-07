@@ -87,7 +87,7 @@ Các lệnh khác FSM publish theo state:
 
 ### Hợp đồng với các node khác
 
-- **IBVS:** tự quét yaw khi `planner/mode = SEARCH`, và phải đặt yaw rate bằng 0 ngay khi thấy marker, giữ cho đến khi mất marker hẳn. FSM chỉ kiểm tra lại bằng `yaw_settle_rate`, không thay thế việc phanh.
+- **offboard_manager:** tự quét yaw khi `planner/mode = SEARCH`, và phải đặt yaw rate bằng 0 ngay khi thấy marker, giữ cho đến khi mất marker hẳn. FSM chỉ kiểm tra lại bằng `yaw_settle_rate`, không thay thế việc phanh.
 - **Planner:** phải publish `planner/velocity_setpoint` liên tục, kể cả khi chưa có mục tiêu, nếu không `planner_timeout` luôn `true` và FSM dao động SEARCH ↔ FOLLOW.
 - **input_state_cache:** phải publish `input_cache/snapshot` đều đặn (khoảng cách giữa hai bản tin không quá 200 ms) và điền `yaw_rate` (rad/s, quanh trục yaw) vào `InputSnapshot`. Nếu `yaw_rate` là NaN thì FSM không bao giờ vào FOLLOW; nếu `align_error` hoặc `altitude` là NaN thì `valid = false` và FSM cũng không vào được FOLLOW.
 - **safety_monitor / kill_switch:** `safety/force_land` và `system/killed` là hai đường riêng. `force_land` đưa FSM vào LAND; `killed` làm FSM ngừng hoạt động hoàn toàn (không publish gì nữa).

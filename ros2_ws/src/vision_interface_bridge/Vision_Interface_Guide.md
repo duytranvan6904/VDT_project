@@ -12,7 +12,7 @@
 /hpad/bbox        --\
 /camera_info      --> vision_interface_bridge
 fsm/state         --/        │
-                             ├─► vision/marker (VisionMarker)
+                             ├─► vision/marker (vdt_msgs/VisionMarker)
                              │
                              └─► /mission/phase (String, 10Hz)
 ```
@@ -46,6 +46,7 @@ $$e = \sqrt{\left(\frac{u - w/2}{w/2}\right)^2 + \left(\frac{v - h/2}{h/2}\right
 - Tâm `bbox` ở giữa mép trái hoặc phải: `e = 1`.
 - Tâm `bbox` ở góc ảnh: `e` xấp xỉ 1.414.
 - Kích thước ảnh `w`, `h` lấy từ `camera_info`; trước khi nhận được thì dùng `image_width`, `image_height`.
+- `camera_info` phải cùng camera với ảnh phát hiện marker (IR1), vì `bbox` tính theo pixel của ảnh IR1.
 
 FSM hiện không dùng giá trị này (`align_error` của FSM là khoảng cách ngang UAV tới H-Pad tính trong `input_state_cache`). Giá trị này chỉ để tham khảo và kiểm tra tính hữu hạn.
 
@@ -64,6 +65,8 @@ FSM hiện không dùng giá trị này (`align_error` của FSM là khoảng c�
 
 Node publish ngay khi nhận `fsm/state` mới và lặp lại ở 10 Hz để node vision khởi động muộn vẫn nhận được phase hiện tại. Khi phase là `IDLE`, APF không xuất lệnh vận tốc.
 
+Consumer của `/mission/phase`: `ekf_node`, `planner_node`, `planner_merge_node`, `ibvs_controller`.
+
 ## 3. Cách chạy
 
 ```bash
@@ -76,11 +79,11 @@ Hoặc chạy trực tiếp:
 ros2 run vision_interface_bridge vision_interface_bridge_node
 ```
 
-Chạy kèm remap `camera_info` sang topic của RealSense:
+Chạy kèm tham số `camera_info_topic` trỏ tới `CameraInfo` của IR1 (cùng camera với ảnh phát hiện marker):
 
 ```bash
 ros2 run vision_interface_bridge vision_interface_bridge_node --ros-args \
-  -p camera_info_topic:=/camera/color/camera_info
+  -p camera_info_topic:=/camera/infra1/camera_info
 ```
 
 Chạy kèm tham số tùy chỉnh:
@@ -113,7 +116,7 @@ Danh sách topic:
 | `/hpad/bbox` | vào | `vision_msgs/BoundingBox2D` | reliable |
 | `/camera_info` | vào | `sensor_msgs/CameraInfo` | best effort |
 | `fsm/state` | vào | `std_msgs/UInt8` | reliable |
-| `vision/marker` | ra | `fsm_state_machine/VisionMarker` | reliable |
+| `vision/marker` | ra | `vdt_msgs/VisionMarker` | reliable |
 | `/mission/phase` | ra | `std_msgs/String` | reliable |
 
 ## 4. Cách debug
@@ -181,7 +184,7 @@ colcon test --packages-select vision_interface_bridge --ctest-args -R bridge_log
 3. **`pixel_align_error` là `NaN` khi `marker_visible = true`:**
    - `image_width` hoặc `image_height` không hợp lệ (không dương) hoặc tâm `bbox` không hữu hạn. Kiểm tra `camera_info` và tham số dự phòng.
 4. **`pixel_align_error` sai thang:**
-   - Kích thước ảnh dự phòng khác độ phân giải thật khi chưa nhận `camera_info`. Kiểm tra `camera_info_topic` có đúng topic của camera.
+   - Kích thước ảnh dự phòng khác độ phân giải thật khi chưa nhận `camera_info`. Kiểm tra `camera_info_topic` có đúng topic `CameraInfo` của IR1 (không dùng của camera màu, vì độ phân giải có thể khác ảnh phát hiện marker).
 5. **`/mission/phase` luôn là `IDLE`:**
    - `fsm/state` chưa được publish hoặc cũ hơn `fsm_state_timeout_sec`. Kiểm tra `fsm_node` đang chạy và `ros2 topic hz /fsm/state`.
    - FSM đang ở COMPLETE (state 4), phase `IDLE` là đúng.

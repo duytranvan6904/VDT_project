@@ -56,13 +56,14 @@ Mỗi chu kỳ timer (`output_rate_hz`):
 1. Tính tuổi measurement hợp lệ cuối, phân loại mode bằng `classify_tracking_mode`, publish `/ekf/tracking_mode`.
 2. Nếu track đã khởi tạo, ngoại suy một bản sao filter tới thời gian hiện tại và publish Odometry. Filter gốc không bị đổi, nên frame ảnh trễ vẫn xử lý đúng thứ tự.
 
-Chế độ tracking:
+Chế độ tracking (tên phải khớp danh sách mà `input_state_cache` chấp nhận):
 
 | Mode | Điều kiện |
 |---|---|
 | TRACKING | Có measurement hợp lệ trong 0.25 s gần nhất |
-| COASTING | Mất measurement nhưng tuổi chưa quá giới hạn (APPROACH: 1.0 s, FOLLOW: 2.0 s) |
-| LOST | Quá giới hạn hoặc chưa từng có measurement |
+| PREDICTING | Mất measurement, tuổi không quá một nửa giới hạn (APPROACH: 0.5 s, FOLLOW: 1.0 s) |
+| PREDICTING_DEGRADED | Tuổi chưa quá giới hạn (APPROACH: 1.0 s, FOLLOW: 2.0 s) |
+| EXPIRED | Quá giới hạn hoặc chưa từng có measurement |
 
 Lưu ý:
 - Mất measurement quá `decay_after_s`, vận tốc giảm theo `exp(-dt/decay_tau_s)` để không trôi vô hạn khi mục tiêu đã dừng ngoài tầm nhìn.
@@ -197,9 +198,9 @@ Nếu log báo `measurement without stamp or frame_id rejected`: `aruco_node` đ
 
 Nếu `rejected_gate` tăng liên tục và track nhảy qua lại: thường do extrinsic camera sai, hoặc `/odom` thiếu chuẩn (sai hệ NED hay ENU). Quan sát `world` trong log khi xe đứng yên và marker đứng yên, giá trị phải ổn định. Nếu chỉ lệch khi xe xoay, nghi ngờ rotation của extrinsic.
 
-Nếu mode luôn `LOST` dù `/hpad/detected` bằng true: không có measurement nào qua được TF, gate hoặc kiểm tra z. Xem bộ đếm `accepted` và `tf_rejects` trong log thống kê.
+Nếu mode luôn `EXPIRED` dù `/hpad/detected` bằng true: không có measurement nào qua được TF, gate hoặc kiểm tra z. Xem bộ đếm `accepted` và `tf_rejects` trong log thống kê.
 
-Nếu mode nhảy `TRACKING` rồi `COASTING` liên tục: tần số `/hpad/position_camera` thấp hơn 4 Hz (tuổi vượt 0.25 s giữa hai frame), hoặc nhiều frame bị loại. Kiểm tra bằng `ros2 topic hz`.
+Nếu mode nhảy `TRACKING` rồi `PREDICTING` liên tục: tần số `/hpad/position_camera` thấp hơn 4 Hz (tuổi vượt 0.25 s giữa hai frame), hoặc nhiều frame bị loại. Kiểm tra bằng `ros2 topic hz`.
 
 Nếu vị trí lọc trễ so với marker khi mục tiêu chạy nhanh: tăng `process_accel_variance`, hoặc kiểm tra `max_target_speed` có nhỏ hơn vận tốc thật không (lõi kẹp vận tốc ngang theo giá trị này).
 
@@ -207,27 +208,85 @@ Nếu vị trí lọc rung hơn mong đợi: giảm `process_accel_variance` ho�
 
 Nếu cần phát lại rosbag: đặt `use_sim_time:=true` ở launch và chạy `ros2 bag play --clock`. Bag phải chứa `/hpad/position_camera` và `/odom`, hoặc TF tương ứng.
 
-## Unit test
+## 5. Test
 
-Test chạy trên dữ liệu tổng hợp, không cần ROS2 hay phần cứng:
+Test chia 3 tầng, nằm trong `test/` của package. Tầng 1 không cần ROS 2 chạy; tầng 2 và 3 cần source ROS 2 và workspace đã build.
+
+Cài đặt:
 
 ```bash
 python3 -m pip install pytest
-cd ros2_ws/src/ekf_adapter
-python3 -m pytest test/test_ekf_logic.py
+sudo apt install ros-$ROS_DISTRO-ros2bag ros-$ROS_DISTRO-rosbag2-storage-default-plugins
 ```
 
-Nếu import lỗi khi chạy từ thư mục khác:
+`test/conftest.py` thêm thư mục gốc của package vào `sys.path` để `from ekf_adapter.ekf_logic import ...` hoạt động khi chạy `pytest` từ bất kỳ đâu. Tầng 3 gọi `ros2 run ekf_adapter odom_tf_node` và `ros2 run ekf_adapter ekf_node` nên package phải đã build và `source install/setup.bash`.
+
+### Tầng 1: logic thuần
+
+Không tạo node, chạy trong vài giây.
+
+| File | Kiểm tra |
+|---|---|
+| `test_ekf_logic.py` | `TargetStateEKF` (tham số không hợp lệ, khởi tạo, kẹp vận tốc `v_max`/`vz_max`, `decay_velocity`, ma trận chuyển trạng thái và `process_covariance`, `predict` sai thứ tự, `update` chấp nhận và loại outlier, covariance luôn đối xứng xác định dương), hình học (quaternion sang ma trận, đổi điểm, ma trận R đối xứng, xác định dương, tăng theo độ sâu, dùng floor ở gần, xoay theo TF), `classify_tracking_mode` theo tuổi và phase, `TrackerConfig` kiểm tra tham số, `TargetTracker` (khởi tạo, hội tụ vận tốc, loại stamp lệch thứ tự, gate nở theo khoảng cách thời gian, loại outlier đơn, tái bắt sau 2 frame nhất quán và theo `reacquire_frames`, ước lượng vận tốc khi tái bắt, hết hạn candidate, NIS loại không reset tuổi, decay vận tốc theo `exp(-dt/tau)`, ngoại suy không làm đổi filter, phục hồi sau mất marker) |
+| `test_ekf_simulation.py` | Chạy tracker trên 5 quỹ đạo của `target_state_simulation.py`: sai số lọc nhỏ hơn sai số đo thô, phần lớn outlier bị loại, track phục hồi sau mất marker, sai số khi mất marker không vượt 1 m |
 
 ```bash
-PYTHONPATH=ros2_ws/src/ekf_adapter python3 -m pytest ros2_ws/src/ekf_adapter/test/test_ekf_logic.py
+cd ros2_ws/src/ekf_adapter
+python3 -m pytest test/test_ekf_logic.py test/test_ekf_simulation.py -v
 ```
 
-Nội dung được kiểm tra:
-- Lõi: `decay_velocity`, `vz_max`, kiểm tra tham số không hợp lệ.
-- Hình học: quaternion sang ma trận, đổi điểm, ma trận R (đối xứng, xác định dương, tăng theo độ sâu, xoay theo TF).
-- Chính sách mode theo tuổi measurement và phase.
-- Tracker: khởi tạo, hội tụ vận tốc, loại stamp lệch thứ tự, loại outlier đơn, tái bắt sau 2 frame nhất quán, hết hạn candidate, NIS loại không reset tuổi, decay vận tốc, ngoại suy không làm đổi filter, phục hồi sau mất marker.
-- Tích hợp với `target_state_simulation.py`: trên 5 quỹ đạo, sai số lọc nhỏ hơn sai số đo thô, outlier phần lớn bị loại, track phục hồi sau mất marker.
+### Tầng 2: node ROS 2 với publisher giả
 
-Hai node ROS (`ekf_node.py`, `odom_tf_node.py`) không nằm trong unit test. Kiểm tra chúng bằng cách chạy với rosbag hoặc mô phỏng và quan sát các bộ đếm trong log thống kê.
+Tạo `EkfNode` hoặc `OdomTfNode` thật cùng một node helper trong cùng process. Helper phát TF (`world -> base_link` đúng stamp ảnh, static `base_link -> camera_optical_frame`), publish `/hpad/position_camera`, `/mission/phase`, `/odom` rồi kiểm tra topic đầu ra. `rclpy` khởi tạo một lần cho cả file, mỗi test tạo node mới.
+
+| File | Kiểm tra |
+|---|---|
+| `test_ekf_node.py` | Tham số mặc định khớp dataclass, chưa có state và mode `EXPIRED` trước measurement đầu, measurement hợp lệ ra Odometry đúng `frame_id`/`child_frame_id` và mode `TRACKING`, dùng TF tại stamp ảnh (tịnh tiến xe cộng vào vị trí world), covariance và orientation của Odometry, loại vị trí NaN/Inf/`z <= 0`, loại thiếu stamp hoặc `frame_id`, `frame_id` lạ tăng `tf_reject_count`, `/mission/phase` đổi phase, mode hết hạn sau giới hạn APPROACH, tiếp tục publish state khi mất measurement; `odom_tf_node` (TF được chuẩn hóa quaternion, dùng đồng hồ node khi stamp bằng 0, bỏ qua quaternion zero-norm, nhận odom QoS BEST_EFFORT) |
+
+```bash
+python3 -m pytest test/test_ekf_node.py -v
+```
+
+### Tầng 3: rosbag
+
+`test_ekf_rosbag.py` tự sinh một bag tổng hợp bằng `rosbag2_py`, chạy `static_transform_publisher` (identity `base_link -> camera_optical_frame`), `odom_tf_node` và `ekf_node` với `use_sim_time`, phát lại bag bằng `ros2 bag play --clock` rồi kiểm tra `/hpad/state_filtered` và `/ekf/tracking_mode`. Xe đứng yên tại gốc (odom 50 Hz), H-Pad bắt đầu tại (1.0, 0.5, 3.0) và đi theo +x với 0.5 m/s trong 8 s, measurement 15 Hz với nhiễu 0.02 m, mất measurement từ 3.0 s đến 6.0 s.
+
+| Đoạn | Thời gian | Kỳ vọng |
+|---|---|---|
+| Có measurement | 0 - 3 s | Mode `TRACKING`, sai số vị trí dưới 0.15 m (từ 2 s), vận tốc x trung bình 0.5 m/s (sai số 0.2) |
+| Mất measurement | 3 - 6 s | `PREDICTING_DEGRADED` trong khoảng 4.1 - 4.8 s, `EXPIRED` trong khoảng 5.2 - 6.0 s |
+| Tái bắt | 6 - 8 s | Sai số vị trí dưới 0.15 m (từ 7 s), mode cuối là `TRACKING` |
+
+Tổng số message state và mode phải trên 100, mọi mode thuộc 4 giá trị hợp lệ. Test chạy khoảng 15 s theo thời gian thật. Test tự bỏ qua nếu thiếu `rosbag2_py` hoặc lệnh `ros2`.
+
+```bash
+python3 -m pytest test/test_ekf_rosbag.py -v
+```
+
+Để thay bằng bag thật, ghi bag rồi sửa fixture `replay` (bỏ `static_transform_publisher` nếu bag đã có `/tf_static`, đổi đường dẫn bag) và chỉnh lại các giá trị kỳ vọng theo kịch bản đã ghi:
+
+```bash
+ros2 bag record -o sample_ekf /hpad/position_camera /odom /tf_static
+```
+
+### Chạy toàn bộ
+
+```bash
+colcon build --packages-select ekf_adapter
+source install/setup.bash
+colcon test --packages-select ekf_adapter --event-handlers console_direct+
+colcon test-result --verbose
+```
+
+### Lưu ý khi chạy test
+
+- Test tầng 2 và 3 dùng thời gian thật nên có thể chập chờn trên máy chậm; chạy lại một lần trước khi kết luận lỗi.
+- Không chạy song song nhiều test ROS trong cùng `ROS_DOMAIN_ID`, vì các node dùng chung tên topic. Nếu cần chạy cạnh hệ thống đang chạy, đặt domain riêng: `ROS_DOMAIN_ID=77 python3 -m pytest ...`.
+- Test rosbag chỉ chạy `odom_tf_node` và `ekf_node`. `aruco_node` không được chạy, measurement đến từ bag.
+- Tên mode trong test lấy theo `tracking_policy.py` (`TRACKING`, `PREDICTING`, `PREDICTING_DEGRADED`, `EXPIRED`).
+- Cú pháp `TopicMetadata` của `rosbag2_py` và tham số của `static_transform_publisher` có thể khác chút giữa các bản ROS 2 (Humble, Jazzy). Nếu lỗi, chỉnh `write_bag()` hoặc dòng `spawn(...)` tương ứng.
+- `package.xml` cần `test_depend` cho `python3-pytest`, `ros2bag`, `rosbag2_py`, `rosbag2_storage_default_plugins`.
+
+Nếu test tầng 2 báo không nhận được message: kiểm tra `ros2 topic list` trong cùng domain có node khác đang publish cùng topic không, và nhớ rằng `/odom` dùng QoS BEST_EFFORT nên publisher giả cũng phải là BEST_EFFORT hoặc RELIABLE.
+
+Nếu test rosbag báo thiếu message: tăng thời gian khởi động (`spin_for(collector, 3.0)` trong fixture `replay`, node cần thời gian chạy trước khi bag phát), hoặc kiểm tra `colcon build` đã cài entry point `odom_tf_node` và `ekf_node` để `ros2 run ekf_adapter ...` chạy được.

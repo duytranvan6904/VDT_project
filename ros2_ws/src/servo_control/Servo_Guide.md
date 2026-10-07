@@ -1,11 +1,11 @@
 # Servo Control - Guide
 
-`servo_control` nhận `gimbal/target_angle_deg` và điều khiển servo SG90 gắn vào output MAIN 1 của PX4. Pi 5 gửi lệnh qua Micro XRCE-DDS (`/fmu/in/vehicle_command`, lệnh `MAV_CMD_ACTUATOR_TEST` = 310). Node không điều khiển GPIO của Pi 5. Đây là output open-loop, không có feedback góc vật lý.
+`servo_control` nhận `gimbal/target_angle_deg` và điều khiển servo SG90 gắn vào output MAIN 1 của PX4. Pi 5 gửi lệnh qua Micro XRCE-DDS (`/fmu/in/vehicle_command`, lệnh `MAV_CMD_ACTUATOR_TEST` = 310). Node không điều khiển GPIO của Pi 5. Đây là output open-loop, không có feedback góc vật lý. Node hoạt động được cả khi PX4 disarm lẫn khi đang armed và bay.
 
 ## Yêu cầu
 
 - Micro XRCE-DDS Agent chạy trên Pi 5 và `uxrce_dds_client` trên PX4 ở trạng thái `connected`. MAVLink phải được dừng trên cổng USB đang dùng cho XRCE.
-- PX4 ở trạng thái **disarm** (actuator test bị từ chối khi đang armed).
+- PX4 có thể ở trạng thái disarm hoặc armed, lệnh actuator test được chấp nhận ở cả hai trạng thái.
 - Servo có nguồn 5 V ngoài, chung GND với FMU. Dây tín hiệu cắm MAIN 1.
 - Workspace chứa `px4_msgs` khớp version firmware PX4 được source cùng terminal chạy node.
 
@@ -44,7 +44,7 @@ Góc pitch gimbal trong khoảng -90..0 độ ứng với value 0..-1.
 | Tham số | Mặc định | Ý nghĩa |
 |---|---|---|
 | `servo_function` | 33.0 | Mã output servo 1 trong lệnh 310 (`param5`) |
-| `command_timeout_sec` | 2.5 | `param2` của lệnh 310, sau thời gian này PX4 thả output về vị trí disarm |
+| `command_timeout_sec` | 2.5 | `param2` của lệnh 310, sau thời gian này PX4 thả output nếu không có lệnh mới |
 | `min_send_interval_sec` | 0.1 | Khoảng cách tối thiểu giữa 2 lệnh khi giá trị đổi |
 | `min_send_delta` | 0.01 | Chỉ gửi lệnh mới khi value đổi ít nhất bằng ngưỡng này |
 | `keepalive_sec` | 1.5 | Gửi lại giá trị hiện tại để servo không bị thả (đặt 0.0 để tắt) |
@@ -57,12 +57,12 @@ Góc pitch gimbal trong khoảng -90..0 độ ứng với value 0..-1.
 ## Cơ chế gửi lệnh
 
 - Lệnh chỉ được gửi khi value đổi ít nhất `min_send_delta` và cách lệnh trước ít nhất `min_send_interval_sec`. Gửi liên tục ở tần số cao khiến servo giật hoặc chỉ nhúc nhích nhẹ.
-- Nếu góc đứng yên, node gửi lại giá trị hiện tại mỗi `keepalive_sec` để PX4 không thả output sau `command_timeout_sec`. Cơ chế gửi lại cùng giá trị này chưa được kiểm chứng trên phần cứng. Nếu servo giật khi đứng yên, chạy với `-p keepalive_sec:=0.0` (servo sẽ về giữa sau 2.5 s nếu góc không đổi).
+- Nếu góc đứng yên, node gửi lại giá trị hiện tại mỗi `keepalive_sec` để PX4 không thả output sau `command_timeout_sec`. Khi bay nên để `keepalive_sec` bật, vì thiếu cơ chế này servo sẽ bị thả sau `command_timeout_sec` (2.5 s) mỗi lần góc không đổi. Cơ chế gửi lại cùng giá trị này chưa được kiểm chứng trên phần cứng. Nếu servo giật khi đứng yên, chạy với `-p keepalive_sec:=0.0` (servo sẽ bị thả sau 2.5 s nếu góc không đổi).
 - Khi tắt node (Ctrl+C), node gửi NaN để PX4 nhả output.
 
 ## Timeout input
 
-Node kiểm tra lệnh gimbal mỗi 100 ms. Nếu không nhận lệnh mới trong `input_timeout_sec` (mặc định 1.0 giây), node gửi lệnh về `home_angle_deg` một lần rồi ngừng gửi. Sau `command_timeout_sec` PX4 thả output về `PWM_MAIN_DIS1`, trùng vị trí home khi `home_angle_deg` nằm giữa dải. Giá trị `Float32` NaN/vô hạn bị bỏ qua.
+Node kiểm tra lệnh gimbal mỗi 100 ms. Nếu không nhận lệnh mới trong `input_timeout_sec` (mặc định 1.0 giây), node gửi lệnh về `home_angle_deg` một lần rồi ngừng gửi. Sau `command_timeout_sec` PX4 thả output. Giá trị `Float32` NaN/vô hạn bị bỏ qua.
 
 ```bash
 ros2 run servo_control servo_node --ros-args \
@@ -90,8 +90,8 @@ Log phải hiển thị `value=-0.500`. Servo đứng yên thì kiểm tra theo 
 
 1. `ros2 topic list | grep fmu` có topic `/fmu/in/vehicle_command`.
 2. `uxrce_dds_client status` trên PX4 báo `connected`.
-3. PX4 đang disarm (`commander status`).
-4. `ros2 topic echo /fmu/out/vehicle_command_ack` trả `result: 0` cho lệnh 310.
+3. `ros2 topic echo /fmu/out/vehicle_command_ack` trả `result: 0` cho lệnh 310. Kiểm tra điều này ở cả hai trạng thái disarm và armed.
+4. `PWM_MAIN_FUNC1` và dải `PWM_MAIN_MIN1/MAX1` đã đặt đúng trong QGC → Actuators.
 
 ## Unit test
 

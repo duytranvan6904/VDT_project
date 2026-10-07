@@ -104,9 +104,9 @@ Danh sách topic đầu vào:
 | `hpad/state_filtered` | `nav_msgs/Odometry` | reliable | `/ekf/target_state` của vision (remap) |
 | `ekf/tracking_mode` | `std_msgs/String` | reliable | EKF của vision |
 | `odom` | `nav_msgs/Odometry` | best effort | `px4_state_bridge` |
-| `vision/marker` | `fsm_state_machine/VisionMarker` | reliable | `vision_interface_bridge` |
-| `alt_estimator/state` | `fsm_state_machine/AltEstimate` | reliable | `px4_state_bridge` |
-| `planner/velocity_setpoint` | `offboard_manager/PlannerOutput` | reliable | planner |
+| `vision/marker` | `vdt_msgs/VisionMarker` | reliable | `vision_interface_bridge` |
+| `alt_estimator/state` | `vdt_msgs/AltEstimate` | reliable | `px4_state_bridge` |
+| `planner/velocity_setpoint` | `vdt_msgs/PlannerOutput` | reliable | planner |
 
 ## 4. Cách debug
 

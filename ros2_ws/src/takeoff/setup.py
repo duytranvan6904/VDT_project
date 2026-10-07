@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'vdt_takeoff'
+package_name = 'takeoff'
 
 setup(
     name=package_name,
@@ -18,7 +18,7 @@ setup(
     license='Proprietary',
     entry_points={
         'console_scripts': [
-            'takeoff = vdt_takeoff.takeoff_cmd:main',
+            'takeoff = takeoff.takeoff_cmd:main',
         ],
     },
 )

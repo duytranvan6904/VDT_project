@@ -161,19 +161,19 @@ ros2 topic pub /fsm/state std_msgs/msg/UInt8 "{data: 1}" -r 10
 ```
 
 ```bash
-ros2 topic pub /input_cache/timeout_flags input_state_cache/msg/TimeoutFlags \
+ros2 topic pub /input_cache/timeout_flags vdt_msgs/msg/TimeoutFlags \
   "{ekf_timeout: false, vision_timeout: false, alt_timeout: false, planner_timeout: false}" -r 10
 ```
 
 ```bash
-ros2 topic pub /planner/velocity_setpoint offboard_manager/msg/PlannerOutput \
+ros2 topic pub /planner/velocity_setpoint vdt_msgs/msg/PlannerOutput \
   "{vx: 0.5, vy: 0.0, vz: 0.0, yaw: 0.0}" -r 10
 ```
 
 Giữ nguyên yaw hiện tại (yaw NaN):
 
 ```bash
-ros2 topic pub /planner/velocity_setpoint offboard_manager/msg/PlannerOutput \
+ros2 topic pub /planner/velocity_setpoint vdt_msgs/msg/PlannerOutput \
   "{vx: 0.5, vy: 0.0, vz: 0.0, yaw: .nan}" -r 10
 ```
 
