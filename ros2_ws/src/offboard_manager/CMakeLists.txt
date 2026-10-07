@@ -17,25 +17,23 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(vdt_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(offboard_node
   src/main.cpp
   src/offboard_node.cpp
   src/offboard_logic.cpp
 )
-
 target_include_directories(offboard_node PRIVATE include)
-target_link_libraries(offboard_node "${cpp_typesupport_target}")
 ament_target_dependencies(offboard_node rclcpp std_msgs px4_msgs vdt_msgs)
 
 install(TARGETS offboard_node DESTINATION lib/${PROJECT_NAME})
 
-enable_testing()
-add_executable(offboard_logic_test test/offboard_logic_test.cpp src/offboard_logic.cpp)
-target_include_directories(offboard_logic_test PRIVATE include)
-add_test(NAME offboard_logic_test COMMAND offboard_logic_test)
+if(BUILD_TESTING)
+  enable_testing()
+  add_executable(offboard_logic_test test/offboard_logic_test.cpp src/offboard_logic.cpp)
+  target_include_directories(offboard_logic_test PRIVATE include)
+  ament_target_dependencies(offboard_logic_test rclcpp std_msgs px4_msgs vdt_msgs)
+  add_test(NAME offboard_logic_test COMMAND offboard_logic_test)
+endif()
 
 ament_package()

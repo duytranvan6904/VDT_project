@@ -15,9 +15,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(vdt_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(rc_node
   src/main.cpp
@@ -26,18 +23,19 @@ add_executable(rc_node
   src/rc_sbus.cpp
   src/rc_uart.cpp
 )
-
 target_include_directories(rc_node PRIVATE include)
-target_link_libraries(rc_node "${cpp_typesupport_target}")
 ament_target_dependencies(rc_node rclcpp vdt_msgs)
 
 install(TARGETS rc_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/ DESTINATION include)
 ament_export_include_directories(include)
 
-enable_testing()
-add_executable(rc_logic_test test/rc_logic_test.cpp src/rc_logic.cpp)
-target_include_directories(rc_logic_test PRIVATE include)
-add_test(NAME rc_logic_test COMMAND rc_logic_test)
+if(BUILD_TESTING)
+  enable_testing()
+  add_executable(rc_logic_test test/rc_logic_test.cpp src/rc_logic.cpp)
+  target_include_directories(rc_logic_test PRIVATE include)
+  ament_target_dependencies(rc_logic_test rclcpp vdt_msgs)
+  add_test(NAME rc_logic_test COMMAND rc_logic_test)
+endif()
 
 ament_package()
