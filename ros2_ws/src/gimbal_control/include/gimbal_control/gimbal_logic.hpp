@@ -1,12 +1,12 @@
 #pragma once
 #include "gimbal_control/gimbal_types.hpp"
-#include "input_state_cache/msg/timeout_flags.hpp"
+#include "vdt_msgs/msg/timeout_flags.hpp"
 
 namespace gimbal_control
 {
-
+namespace msg = vdt_msgs::msg;
 GimbalTelemetry telemetry_validate(
-  GimbalTelemetry t, const input_state_cache::msg::TimeoutFlags & flags);
+  GimbalTelemetry t, const vdt_msgs::msg::TimeoutFlags & flags);
 
 float target_angle_search();
 float target_angle_follow(const GimbalTelemetry & t);

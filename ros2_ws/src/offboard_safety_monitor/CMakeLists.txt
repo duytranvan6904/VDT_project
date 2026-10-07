@@ -16,7 +16,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
-find_package(offboard_manager REQUIRED)
+find_package(vdt_msgs REQUIRED)
 find_package(launch_testing_ament_cmake REQUIRED)
 
 add_executable(safety_monitor_node
@@ -26,7 +26,7 @@ add_executable(safety_monitor_node
 )
 
 target_include_directories(safety_monitor_node PRIVATE include)
-ament_target_dependencies(safety_monitor_node rclcpp std_msgs px4_msgs offboard_manager)
+ament_target_dependencies(safety_monitor_node rclcpp std_msgs px4_msgs vdt_msgs)
 
 install(TARGETS safety_monitor_node DESTINATION lib/${PROJECT_NAME})
 
