@@ -1,6 +1,9 @@
 #pragma once
 #include <array>
 #include <cstdint>
+#include <cstddef>
+#include <cstdint>
+#include <array>
 #include "rc_parser/rc_types.hpp"
 
 namespace rc_parser

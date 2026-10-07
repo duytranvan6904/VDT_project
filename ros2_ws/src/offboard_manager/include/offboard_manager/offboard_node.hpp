@@ -13,9 +13,8 @@
 #include "vdt_msgs/msg/timeout_flags.hpp"
 
 namespace offboard_manager
-namespace msg = vdt_msgs::msg;
 {
-
+namespace msg = vdt_msgs::msg;
 class OffboardNode : public rclcpp::Node
 {
 public:

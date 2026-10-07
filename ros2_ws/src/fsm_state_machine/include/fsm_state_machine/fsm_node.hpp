@@ -16,7 +16,7 @@ public:
   FsmNode();
 
 private:
-  void on_snapshot(const input_state_cache::msg::InputSnapshot::SharedPtr msg);
+  void on_snapshot(const vdt_msgs::msg::InputSnapshot::SharedPtr msg);
   void on_rc(const vdt_msgs::msg::RcFsmInput::SharedPtr msg);
   void on_killed(const std_msgs::msg::Bool::SharedPtr msg);
   void on_force_land(const std_msgs::msg::Bool::SharedPtr msg);
