@@ -6,7 +6,7 @@
 #include <px4_msgs/msg/battery_status.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include "vdt_msgs/msg/offboard_status.hpp"
-#include "vdt_msgs/safety_types.hpp"
+#include "offboard_safety_monitor/safety_types.hpp"
 
 namespace offboard_safety_monitor
 {

@@ -2,7 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
-#include "rc_parser/msg/rc_channels_raw.hpp"
+#include "vdt_msgs/msg/rc_channels_raw.hpp"
 #include "rc_parser/rc_types.hpp"
 #include "kill_switch/kill_switch_types.hpp"
 
