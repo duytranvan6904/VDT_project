@@ -12,7 +12,7 @@ from sensor_msgs.msg import CameraInfo
 from std_msgs.msg import Bool, Float32, Float64, String
 from vision_msgs.msg import BoundingBox2D
 
-from ibvs_logic import (
+from ibvs.ibvs_logic import (
     YAW_DEADBAND_PX,
     clamp,
     deadband,

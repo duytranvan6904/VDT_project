@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from ibvs_logic import (
+from ibvs.ibvs_logic import (
     PITCH_DEADBAND_PX,
     YAW_DEADBAND_PX,
     YAW_FF_LIMIT,

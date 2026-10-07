@@ -5,7 +5,7 @@ package_name = 'ibvs'
 setup(
     name=package_name,
     version='0.1.0',
-    py_modules=['ibvs_controller', 'ibvs_logic'],
+    packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
@@ -20,7 +20,7 @@ setup(
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
-            'ibvs_controller = ibvs_controller:main',
+            'ibvs_controller = ibvs.ibvs_controller:main',
         ],
     },
 )

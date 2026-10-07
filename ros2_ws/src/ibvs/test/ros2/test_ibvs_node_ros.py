@@ -12,7 +12,7 @@ from std_msgs.msg import Bool, Float32, Float64, String
 from vision_msgs.msg import BoundingBox2D
 
 from ibvs_controller import IBVSController
-from ibvs_logic import pixel_pitch_correction
+from ibvs.ibvs_logic import pixel_pitch_correction
 
 BEST_EFFORT = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=5)
 
