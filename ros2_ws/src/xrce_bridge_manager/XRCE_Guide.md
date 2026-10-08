@@ -41,7 +41,7 @@ Chạy kèm tham số tùy chỉnh:
 
 ```bash
 ros2 run xrce_bridge_manager xrce_bridge_node --ros-args \
-  -p serial_port:=/dev/ttyAMA0 \
+  -p serial_port:=/dev/ttyACM0 \
   -p baudrate:=921600 \
   -p connection_timeout_sec:=2.0
 ```
@@ -50,7 +50,7 @@ Danh sách tham số:
 
 | Tên | Mặc định | Ý nghĩa |
 |---|---|---|
-| `serial_port` | /dev/ttyAMA0 | Cổng serial nối tới PX4 |
+| `serial_port` | /dev/ttyACM0 | Cổng serial nối tới PX4 |
 | `baudrate` | 921600 | Tốc độ baud của Agent |
 | `connection_timeout_sec` | 2.0 | Thời gian tối đa không nhận `VehicleStatus` trước khi coi là mất kết nối |
 | `debug_enabled` | false | Bật log mỗi chu kỳ |

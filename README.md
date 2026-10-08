@@ -2,7 +2,7 @@
 
 Workspace prototype cho hệ thống UAV PX4 + ROS 2 thực hiện phát hiện, bám và hạ cánh lên H-Pad bằng vision. Hệ thống gồm bộ máy trạng thái bay, điều khiển Offboard, điều khiển gimbal/servo, nhận RC, các lớp giám sát an toàn, các node cầu nối giữa PX4 và module vision, các package vision (`aruco_detector`, `ekf_adapter`, `ibvs`), planner tránh vật cản `apf_planner` (APF / I-APF) kèm node ghép lệnh cho Offboard, gói message dùng chung `vdt_msgs`, và công cụ phân tích log sau chuyến bay.
 
-> **Trạng thái:** Hệ thống đã có đủ các package và bộ test tới bước SITL. Đang chờ phần code module landing và bài test HITL.
+> **Trạng thái:** Hệ thống đã có đủ các package và bộ test tới bước SITL. Đã bench kết nối Pi 5 ↔ PX4 (nhận được dữ liệu `/fmu/out/*`, điều khiển servo qua PWM). Chưa bay thật; sự cố quad tự bay chưa xác định nguyên nhân. Đang chờ phần code module landing và bài test HITL.
 
 ## Mục lục
 
@@ -73,7 +73,7 @@ vdt_full.launch.py ──► vdt_system.launch.py (embedded) + aruco_detector + 
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `ros2_ws/src/` | Mười tắm ROS 2 packages của hệ thống bay, module vision, planner, cầu nối vision, message dùng chung và bringup |
+| `ros2_ws/src/` | Mười tám ROS 2 packages của hệ thống bay, module vision, planner, cầu nối vision, message dùng chung và bringup |
 | `ros2_ws/src/vdt_msgs/` | Message hub: toàn bộ 8 custom message của hệ thống |
 | `ros2_ws/src/vdt_bringup/` | Launch orchestration: `vdt_system.launch.py` (embedded) và `vdt_full.launch.py` (toàn hệ thống trừ `takeoff`), startup ordering |
 | `ros2_ws/src/px4_state_bridge/` | Cầu nối trạng thái PX4 sang `/odom`, TF và `alt_estimator/state` |
@@ -83,6 +83,7 @@ vdt_full.launch.py ──► vdt_system.launch.py (embedded) + aruco_detector + 
 | `ros2_ws/src/ibvs/` | Visual servoing: hiệu chỉnh pitch gimbal và lệnh yaw |
 | `ros2_ws/src/apf_planner/` | Planner APF / I-APF tránh vật cản, node ghép `planner/velocity_setpoint`, bộ sinh point cloud thử nghiệm |
 | `ros2_ws/src/takeoff/` | Lệnh cất cánh một lần qua uXRCE-DDS: arm, PX4 takeoff, chờ đạt độ cao rồi thoát |
+| `ros2_ws/scripts/` | `preflight_check.py` kiểm tra điều kiện trước cất cánh; `SITL/` script mô phỏng |
 | `landing_diagnostics/` | Ghi log, tính metric và đề xuất tuning từ CSV |
 | `PX4_Control/` | Hướng dẫn và template patch cho PX4 |
 
@@ -344,7 +345,7 @@ planner/velocity_setpoint ┤
 input_cache/timeout_flags ┼──► offboard_node ──┬──► /fmu/in/offboard_control_mode
 system/killed ────────────┤                    ├──► /fmu/in/trajectory_setpoint
 safety/inhibit_offboard ──┤                    ├──► /fmu/in/vehicle_command
-/fmu/out/vehicle_status ──┤                    └──► offboard/status
+/fmu/out/vehicle_status_v1 ──┤                    └──► offboard/status
 /fmu/out/vehicle_local_  ─┘
   position
 ```
@@ -357,7 +358,7 @@ safety/inhibit_offboard ──┤                    ├──► /fmu/in/vehicl
 | `planner/velocity_setpoint` | `vdt_msgs/msg/PlannerOutput` (ENU) | `planner_merge_node` |
 | `input_cache/timeout_flags` | `vdt_msgs/msg/TimeoutFlags` | `input_state_cache` |
 | `system/killed`, `safety/inhibit_offboard` | `std_msgs/msg/Bool` | `kill_switch`, `offboard_safety_monitor` (`true` thì reset engage và ngừng publish setpoint) |
-| `/fmu/out/vehicle_status`, `/fmu/out/vehicle_local_position` | `px4_msgs` | PX4 (còn fresh trong `data_freshness_timeout_sec`) |
+| `/fmu/out/vehicle_status_v1`, `/fmu/out/vehicle_local_position` | `px4_msgs` | PX4 (còn fresh trong `data_freshness_timeout_sec`) |
 
 **Output**
 
@@ -404,14 +405,14 @@ Xem [Offboard_Guide.md](ros2_ws/src/offboard_manager/Offboard_Guide.md).
 Arm và ra lệnh PX4 cất cánh tại chỗ, chờ đạt độ cao rồi thoát; không publish setpoint Offboard.
 
 ```text
-/fmu/out/vehicle_status          ──┐
+/fmu/out/vehicle_status_v1          ──┐
 /fmu/out/vehicle_local_position  ──┼──► takeoff ──► /fmu/in/vehicle_command (ARM, NAV_TAKEOFF, NAV_LAND khi timeout)
 system/killed                    ──┘
 ```
 
 | Chiều | Mô tả |
 |---|---|
-| Input | `/fmu/out/vehicle_status`, `/fmu/out/vehicle_local_position` (`px4_msgs`), `system/killed` (`std_msgs/msg/Bool`, latched) |
+| Input | `/fmu/out/vehicle_status_v1`, `/fmu/out/vehicle_local_position` (`px4_msgs`), `system/killed` (`std_msgs/msg/Bool`, latched) |
 | Output | `/fmu/in/vehicle_command` (`VEHICLE_CMD_COMPONENT_ARM_DISARM`, `VEHICLE_CMD_NAV_TAKEOFF`, `VEHICLE_CMD_NAV_LAND` khi timeout); exit code 0 nếu thành công, 1 nếu lỗi |
 
 Từ chối chạy khi `system/killed = true` hoặc UAV đã armed. Độ cao do tham số PX4 `MIS_TAKEOFF_ALT` quyết định (param7 của `NAV_TAKEOFF` là NaN); `--alt` chỉ dùng để xác nhận và phải khớp tham số này. Thành công khi `nav_state = OFFBOARD` hoặc `-z >= 0.9 * --alt`; không đạt trong `--climb-timeout` thì gửi `NAV_LAND`. Không kiểm tra `safety/force_land` và `safety/inhibit_offboard`. Chạy tay sau khi hệ thống đã lên, không đưa vào launch.
@@ -687,7 +688,7 @@ Xem [APF_Guide.md](ros2_ws/src/apf_planner/APF_Guide.md).
 Đánh giá an toàn độc lập: RC override, EKF, pin, tuổi heartbeat Offboard.
 
 ```text
-/fmu/out/vehicle_status ──────┐
+/fmu/out/vehicle_status_v1 ──────┐
 /fmu/out/vehicle_local_pos. ──┼──► safety_monitor_node ──┬──► safety/inhibit_offboard
 /fmu/out/battery_status ──────┤                          ├──► safety/force_land
 offboard/status ──────────────┘                          └──► /fmu/in/vehicle_command (HOLD/RTL)
@@ -697,7 +698,7 @@ offboard/status ──────────────┘                   
 
 | Topic | Type | Nguồn |
 |---|---|---|
-| `/fmu/out/vehicle_status`, `/fmu/out/vehicle_local_position`, `/fmu/out/battery_status` | `px4_msgs` | PX4 (chỉ đánh giá khi đã nhận và còn fresh trong `data_freshness_timeout_sec`) |
+| `/fmu/out/vehicle_status_v1`, `/fmu/out/vehicle_local_position`, `/fmu/out/battery_status` | `px4_msgs` | PX4 (chỉ đánh giá khi đã nhận và còn fresh trong `data_freshness_timeout_sec`) |
 | `offboard/status` | `vdt_msgs/msg/OffboardStatus` | `offboard_manager` |
 
 **Output**
@@ -717,6 +718,8 @@ offboard/status ──────────────┘                   
 | `RC_OVERRIDE`, `EKF_UNHEALTHY` | Theo đánh giá của node | Xem Safety_Guide |
 
 `force_land_latched=false` chỉ dùng cho bench/test với battery fresh và hợp lệ. Xem [Safety_Guide.md](ros2_ws/src/offboard_safety_monitor/Safety_Guide.md).
+
+`battery_status` chỉ có dữ liệu khi PX4 có power module hoặc pin hợp lệ. Không có dữ liệu thì node không đánh giá pin, và `preflight_check.py` luôn báo `PIN: X`.
 
 ### `rc_parser` (C++, 50 Hz)
 
@@ -762,7 +765,7 @@ rc/channels_raw ──► kill_switch_node: rc_get_kill_switch ──► debounc
 | `/fmu/in/vehicle_command` | `px4_msgs` | PX4 | `VEHICLE_CMD_COMPONENT_ARM_DISARM`, `param2=21196` (force disarm) |
 | `system/killed` | `std_msgs/msg/Bool` | `fsm_state_machine`, `offboard_manager` | QoS transient-local |
 
-Đã trigger thì latch, không tự phục hồi (muốn reset phải restart node). Kill switch không tự kích hoạt khi mất RC. Khi `system/killed` đã phát, FSM dừng update và `offboard_manager` reset engage, dừng heartbeat/setpoint.
+Đã trigger thì latch, không tự phục hồi (muốn reset phải restart node). Kill switch không tự kích hoạt khi mất RC và không hoạt động nếu `rc_node` không mở được cổng SBUS. Khi `system/killed` đã phát, FSM dừng update và `offboard_manager` reset engage, dừng heartbeat/setpoint.
 
 Xem [Kill_Switch_Guide.md](ros2_ws/src/kill_switch/Kill_Switch_Guide.md).
 
@@ -772,15 +775,15 @@ Giữ `MicroXRCEAgent` luôn chạy; không tạo topic nào.
 
 ```text
 xrce_bridge_node ──► spawn/kiểm tra `MicroXRCEAgent serial --dev <serial_port> -b <baudrate>`
-/fmu/out/vehicle_status ──► theo dõi độ tươi ──► connected / reconnect
+/fmu/out/vehicle_status_v1 ──► theo dõi độ tươi ──► connected / reconnect
 ```
 
 | Chiều | Mô tả |
 |---|---|
-| Input | `/fmu/out/vehicle_status` (`px4_msgs`) |
+| Input | `/fmu/out/vehicle_status_v1` (`px4_msgs`) |
 | Output | Tiến trình `MicroXRCEAgent`; log trạng thái `connected`, `retry_count` |
 
-`connected` yêu cầu Agent còn sống và `VehicleStatus` còn fresh (`connection_timeout_sec`, mặc định `2.0 s`); process chết hoặc status stale thì tăng `retry_count` và khởi động lại Agent.
+`connected` yêu cầu Agent còn sống và `VehicleStatus` còn fresh (`connection_timeout_sec`, mặc định `2.0 s`); process chết hoặc status stale thì tăng `retry_count` và khởi động lại Agent. Tham số `serial_port` trong `System_Params.yaml` (`/dev/ttyACM0`) ghi đè giá trị mặc định trong `xrce_node.py`. Node dùng `pgrep` để kiểm tra Agent đã chạy trên cổng đó chưa; chưa có thì tự spawn.
 
 Xem [XRCE_Guide.md](ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md).
 
@@ -836,27 +839,39 @@ Repository hiện không định nghĩa service hoặc action interface. Các to
 
 | Hướng | Topic | Dùng bởi |
 |---|---|---|
-| Từ PX4 | `/fmu/out/vehicle_status` | `offboard_manager`, `offboard_safety_monitor`, `xrce_bridge_manager`, `takeoff` |
+| Từ PX4 | `/fmu/out/vehicle_status_v1` | `offboard_manager`, `offboard_safety_monitor`, `xrce_bridge_manager`, `takeoff` |
 | Từ PX4 | `/fmu/out/vehicle_local_position` | `offboard_manager`, `offboard_safety_monitor`, `takeoff` |
 | Từ PX4 | `/fmu/out/battery_status` | `offboard_safety_monitor` |
 | Từ PX4 | `/fmu/out/vehicle_odometry` | `px4_state_bridge` |
 | Từ PX4 | `/fmu/out/vehicle_land_detected` | `px4_state_bridge` |
+| Từ PX4 | `/fmu/out/vehicle_gps_position` (`px4_msgs/msg/SensorGps`) | `preflight_check.py` |
 | Tới PX4 | `/fmu/in/offboard_control_mode`, `/fmu/in/trajectory_setpoint` | `offboard_manager` |
 | Tới PX4 | `/fmu/in/vehicle_command` | `offboard_manager`, `offboard_safety_monitor`, `kill_switch`, `servo_control`, `takeoff` |
 
 Tên topic và message PX4 còn phụ thuộc phiên bản `px4_msgs`, firmware PX4 và cấu hình `dds_topics.yaml`. `px4_state_bridge` cho phép đổi tên topic qua tham số.
 
+Firmware hiện dùng `/fmu/out/vehicle_status_v1` (cùng kiểu `px4_msgs/msg/VehicleStatus`); tên cũ `/fmu/out/vehicle_status` không có publisher. Các file `scripts/SITL/sitl_common.py`, `offboard_safety_monitor/test/hil_validation.py` và `offboard_safety_monitor/test/safety_monitor_integration_test.py` vẫn dùng tên cũ, chỉ đúng với SITL/mock.
+
+Topic `/fmu/out/*` được publish với QoS BEST_EFFORT. Subscriber phải dùng `SensorDataQoS` (hoặc `BEST_EFFORT`); dùng QoS `10` mặc định (RELIABLE) sẽ không nhận được gì và báo `incompatible QoS`. `safety_monitor_node` đã dùng `rclcpp::SensorDataQoS()`.
+
 ### Đường truyền Pi 5 - PX4
 
-Pi 5 nối PX4 bằng một cáp USB (`/dev/ttyACM0`), không dùng UART. Client uXRCE-DDS của PX4 không tự bật trên cổng USB nên được bật tay ở `nsh>`, còn Agent chạy trên Pi:
+Pi 5 nối PX4 bằng một cáp USB (`/dev/ttyACM0`), không dùng UART. Client uXRCE-DDS của PX4 không tự bật trên cổng USB nên được bật tay ở `nsh>`. Agent do `xrce_bridge_node` tự chạy khi launch.
 
 ```text
+Pi 5: python3 mavlink_shell.py /dev/ttyACM0 --baudrate 57600
 nsh> uxrce_dds_client start -t serial -d /dev/ttyACM0 -b 921600
 nsh> mavlink stop -d /dev/ttyACM0
-Pi 5: MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600
 ```
 
-Hệ quả: cấu hình này mất khi Pixhawk reboot, và sau `mavlink stop` cáp USB không còn MAVLink (QGC, `mavlink_shell`). `xrce_bridge_node` phải dùng `serial_port=/dev/ttyACM0`.
+Sau ba lệnh trên, thoát `mavlink_shell` (Ctrl+C) rồi mới `ros2 launch vdt_bringup vdt_full.launch.py`. Chỉ được có một tiến trình giữ `/dev/ttyACM0`: không chạy `MicroXRCEAgent` tay song song với launch. Khi debug riêng (không launch) mới chạy tay: `MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600 -v6`.
+
+Hệ quả:
+
+- Cấu hình ở `nsh>` mất khi Pixhawk reboot; phải gõ lại ba lệnh.
+- Sau `mavlink stop`, cáp USB không còn MAVLink: `mavlink_shell` không hiện output (kể cả `uxrce_dds_client status`), QGC không kết nối được.
+- QGC chỉ dùng được khi cắm USB trực tiếp vào laptop (hiệu chỉnh compass, accel, gyro, level), không chạy cùng lúc với Agent. Giám sát khi bay cần đường telemetry riêng (radio hoặc cổng TELEM khác).
+- `xrce_bridge_node` phải dùng `serial_port=/dev/ttyACM0`. Giá trị này nằm trong `System_Params.yaml` và ghi đè giá trị mặc định trong code; đổi cổng thì sửa file đó rồi `colcon build --packages-select vdt_bringup`.
 
 ## Tham số tập trung
 
@@ -942,6 +957,7 @@ input_cache_node + offboard_safety_monitor + fsm_node
 offboard_safety_monitor ------------> PX4
 kill_switch_node --------------------> PX4
 servo_node --------------------------> PX4
+```
 
 ```text
 vdt_full.launch.py
@@ -950,7 +966,6 @@ vdt_full.launch.py
    |-- ekf.launch.py (publish_*_tf=false)   -> ekf_node
    |-- ibvs.launch.py                       -> ibvs_controller
    '-- apf_planner.launch.py (iapf)         -> planner_node, planner_merge_node
-```
 ```
 
 Launch sequence theo thời gian là `XRCE -> PX4 state bridge -> vision bridge -> input cache -> RC/kill -> safety -> FSM/gimbal -> Offboard -> servo`. Đây là thứ tự khởi tạo process; readiness thật vẫn do các node kiểm tra freshness, timeout, health và mode PX4.
@@ -1054,6 +1069,30 @@ ros2 launch vdt_bringup vdt_system.launch.py start_hardware:=false
 ros2 launch vdt_bringup vdt_system.launch.py start_servo:=true
 ros2 launch vdt_bringup vdt_system.launch.py debug:=true
 ```
+Kiểm tra điều kiện trước cất cánh (terminal khác, chạy sau khi launch khoảng 10 giây):
+
+```bash
+source ros2_ws/install/setup.bash
+python3 ros2_ws/scripts/preflight_check.py
+```
+
+Script lặp liên tục, chỉ in khi trạng thái đổi hoặc mỗi 10 giây, và tự thoát với `KET LUAN: SAN SANG CAT CANH` khi mọi điều kiện đạt liên tiếp 5 giây. Ctrl+C để dừng.
+
+| Nhóm | Điều kiện đạt |
+|---|---|
+| GPS | `fix_type >= 3`, `satellites_used >= 8`, `eph <= 3.0`, `hdop <= 2.0` |
+| EKF | `xy_valid`, `z_valid`, không `dead_reckoning` |
+| PX4 | `pre_flight_checks_pass`, không `failsafe` |
+| PIN | `remaining > 0.3`, `voltage_v > 0` |
+
+Mỗi nhóm còn yêu cầu dữ liệu tươi (không quá 2 s). GPS cần anten thấy trời (ngoài trời, xa nhà cao tầng và kim loại lớn), thường mất 2-5 phút để có fix. Trong nhà `fix_type = 0` và `satellites_used = 0`.
+
+### Lưu ý an toàn
+
+- Tháo hết cánh quạt khi cấp nguồn (pin hoặc USB) trong nhà hoặc khi test bench.
+- Không bay khi chưa có tay điều khiển RC và kill switch hoạt động. Nếu chưa cắm receiver, `rc_node` báo `Khong mo duoc serial device /dev/ttyUSB0`, nghĩa là kill switch không hoạt động.
+- Sự cố chưa xác định nguyên nhân: quad tự bay lên khi PX4 chạy bằng pin, không có RC, và đã ngắt Pi 5. Cần phân tích log `.ulg` (thẻ SD, thư mục `log`, hoặc QGC → Analyze → Log Download) và kiểm tra tham số cho phép arm khi không có RC (`COM_RC_IN_MODE`, `COM_ARM_WO_GPS`) trước khi bay thật.
+- Quy trình trước khi bay: hiệu chỉnh cảm biến trong QGC qua USB trực tiếp, ra ngoài trời, cấp nguồn, bật client uXRCE-DDS ở `nsh>` (mục "Đường truyền Pi 5 - PX4"), launch, chạy `preflight_check.py`, chỉ bay khi có `SAN SANG CAT CANH`.
 
 Cất cánh (chạy tay ở terminal khác sau khi hệ thống đã lên, không đưa vào launch):
 
@@ -1110,6 +1149,7 @@ Thử với point cloud vật cản giả lập trong RViz2:
 ```bash
 ros2 launch apf_planner apf_planner.launch.py generator:=true planner_type:=iapf
 ```
+
 Khởi động toàn bộ hệ thống (embedded, vision, planner; không gồm takeoff):
 
 ```bash
