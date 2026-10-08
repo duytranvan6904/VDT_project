@@ -14,6 +14,8 @@ InputCacheNode::InputCacheNode()
   thresholds_.planner_timeout_sec = declare_parameter<double>("planner_timeout_sec", 1.0);
   world_frame_ = declare_parameter<std::string>("world_frame", "world");
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
+  use_landing_touchdown_ = declare_parameter<bool>("use_landing_touchdown", false);
+  landing_touchdown_timeout_ = declare_parameter<double>("landing_touchdown_timeout_sec", 0.5);
 
   rclcpp::QoS sensor_qos(5);
   sensor_qos.best_effort();
@@ -31,6 +33,9 @@ InputCacheNode::InputCacheNode()
   planner_sub_ = create_generic_subscription(
     "planner/velocity_setpoint", "vdt_msgs/msg/PlannerOutput", rclcpp::QoS(10),
     std::bind(&InputCacheNode::on_planner, this, std::placeholders::_1));
+  landing_touchdown_sub_ = create_subscription<std_msgs::msg::Bool>(
+    "landing/touchdown", 10,
+    std::bind(&InputCacheNode::on_landing_touchdown, this, std::placeholders::_1));
 
   snapshot_pub_ = create_publisher<msg::InputSnapshot>("input_cache/snapshot", 10);
   timeout_pub_ = create_publisher<msg::TimeoutFlags>("input_cache/timeout_flags", 10);
@@ -102,6 +107,12 @@ void InputCacheNode::on_alt(const vdt_msgs::msg::AltEstimate::SharedPtr msg)
   freshness_.last_alt_time = this->now().seconds();
 }
 
+void InputCacheNode::on_landing_touchdown(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  landing_touchdown_ = msg->data;
+  last_landing_touchdown_time_ = this->now().seconds();
+}
+
 void InputCacheNode::on_planner(const std::shared_ptr<rclcpp::SerializedMessage>)
 {
   freshness_.last_planner_time = this->now().seconds();
@@ -110,7 +121,13 @@ void InputCacheNode::on_planner(const std::shared_ptr<rclcpp::SerializedMessage>
 void InputCacheNode::update()
 {
   const double now_sec = this->now().seconds();
-  const auto s = build_snapshot(raw_sensors_, freshness_, thresholds_, now_sec);
+  auto raw = raw_sensors_;
+  if (use_landing_touchdown_ && landing_touchdown_ &&
+    (now_sec - last_landing_touchdown_time_) <= landing_touchdown_timeout_)
+  {
+    raw.alt.touchdown_flag = true;
+  }
+  const auto s = build_snapshot(raw, freshness_, thresholds_, now_sec);
 
   msg::InputSnapshot snapshot_msg;
   snapshot_msg.valid = s.valid;

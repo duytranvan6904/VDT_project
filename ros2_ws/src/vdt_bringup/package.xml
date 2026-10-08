@@ -21,6 +21,7 @@
   <exec_depend>gimbal_control</exec_depend>
   <exec_depend>offboard_manager</exec_depend>
   <exec_depend>servo_control</exec_depend>
+  <exec_depend>landing_guidance</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

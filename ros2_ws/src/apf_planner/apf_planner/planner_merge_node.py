@@ -6,7 +6,7 @@ import rclpy
 from geometry_msgs.msg import Twist
 from vdt_msgs.msg import PlannerOutput
 from rclpy.node import Node
-from std_msgs.msg import Float64, String
+from std_msgs.msg import Bool, Float64, String
 
 ACTIVE_PHASES = ('FOLLOW', 'APPROACH')
 
@@ -27,6 +27,11 @@ class PlannerMergeNode(Node):
             'stale_hover_sec': 0.5,
             'yaw_timeout_sec': 0.3,
             'phase_timeout_sec': 1.0,
+            'landing_source': False,
+            'landing_use_vz': False,
+            'landing_velocity_topic': '/landing/velocity_cmd',
+            'landing_active_topic': '/landing/active',
+            'landing_timeout_sec': 0.3,
         }
         for k, v in defaults.items():
             self.declare_parameter(k, v)
@@ -40,17 +45,25 @@ class PlannerMergeNode(Node):
         self.stale_hover = float(g('stale_hover_sec'))
         self.yaw_timeout = float(g('yaw_timeout_sec'))
         self.phase_timeout = float(g('phase_timeout_sec'))
+        self.landing_source = bool(g('landing_source'))
+        self.landing_use_vz = bool(g('landing_use_vz'))
+        self.landing_timeout = float(g('landing_timeout_sec'))
 
         self.phase = 'IDLE'
         self.vel = (0.0, 0.0, 0.0)
         self.apf_yaw = math.nan
         self.ibvs_yaw = math.nan
         self.t_phase = self.t_vel = self.t_apf_yaw = self.t_ibvs_yaw = None
+        self.landing_vel = (0.0, 0.0, 0.0)
+        self.landing_active = False
+        self.t_landing_vel = self.t_landing_active = None
 
         self.create_subscription(Twist, str(g('velocity_topic')), self.vel_cb, 10)
         self.create_subscription(Float64, str(g('apf_yaw_topic')), self.apf_yaw_cb, 10)
         self.create_subscription(Float64, str(g('ibvs_yaw_topic')), self.ibvs_yaw_cb, 10)
         self.create_subscription(String, str(g('phase_topic')), self.phase_cb, 10)
+        self.create_subscription(Twist, str(g('landing_velocity_topic')), self.landing_vel_cb, 10)
+        self.create_subscription(Bool, str(g('landing_active_topic')), self.landing_active_cb, 10)
         self.pub = self.create_publisher(PlannerOutput, str(g('output_topic')), 10)
         self.create_timer(1.0 / float(g('rate_hz')), self.tick)
 
@@ -75,7 +88,24 @@ class PlannerMergeNode(Node):
     def phase_cb(self, msg: String) -> None:
         self.phase = msg.data
         self.t_phase = self._now()
+    
+    def landing_vel_cb(self, msg: Twist) -> None:
+        self.landing_vel = (msg.linear.x, msg.linear.y, msg.linear.z)
+        self.t_landing_vel = self._now()
 
+    def landing_active_cb(self, msg: Bool) -> None:
+        self.landing_active = bool(msg.data)
+        self.t_landing_active = self._now()
+
+    def _landing_ok(self, phase: str) -> bool:
+        return (
+            self.landing_source
+            and phase == 'APPROACH'
+            and self.landing_active
+            and self._age(self.t_landing_vel) <= self.landing_timeout
+            and self._age(self.t_landing_active) <= self.landing_timeout
+        )
+    
     def _yaw(self) -> float:
         if self.yaw_source in ('ibvs', 'ibvs_apf'):
             if self._age(self.t_ibvs_yaw) <= self.yaw_timeout and math.isfinite(self.ibvs_yaw):
@@ -91,15 +121,21 @@ class PlannerMergeNode(Node):
         yaw = math.nan
 
         if phase in ACTIVE_PHASES:
+            landing = self._landing_ok(phase)
             age = self._age(self.t_vel)
-            if age > self.upstream_timeout + self.stale_hover:
+            if not landing and age > self.upstream_timeout + self.stale_hover:
                 return
-            if age <= self.upstream_timeout:
+            if landing:
+                vx, vy, vz = self.landing_vel
+                if not self.landing_use_vz:
+                    vz = self.vel[2] if age <= self.upstream_timeout else 0.0
+                yaw = self._yaw()
+            elif age <= self.upstream_timeout:
                 vx, vy, vz = self.vel
                 yaw = self._yaw()
-                if not all(math.isfinite(c) for c in (vx, vy, vz)):
-                    vx = vy = vz = 0.0
-                    yaw = math.nan
+            if not all(math.isfinite(c) for c in (vx, vy, vz)):
+                vx = vy = vz = 0.0
+                yaw = math.nan
 
         msg = PlannerOutput()
         if hasattr(msg, 'header'):
