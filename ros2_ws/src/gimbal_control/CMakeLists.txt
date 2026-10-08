@@ -35,4 +35,5 @@ target_include_directories(gimbal_logic_test PRIVATE include)
 ament_target_dependencies(gimbal_logic_test vdt_msgs)
 add_test(NAME gimbal_logic_test COMMAND gimbal_logic_test)
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

@@ -77,7 +77,7 @@
 
 /xrce_bridge_node:
   ros__parameters:
-    serial_port: "/dev/ttyAMA0"
+    serial_port: "/dev/ttyACM0"
     baudrate: 921600
     connection_timeout_sec: 2.0
     debug_enabled: false
@@ -173,7 +173,7 @@
 
 /planner_merge:
   ros__parameters:
-    rate_hz: 20
+    rate_hz: 20.0
     yaw_source: "ibvs_apf"
     upstream_timeout_sec: 0.3
     stale_hover_sec: 0.5

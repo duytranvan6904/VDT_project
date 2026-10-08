@@ -30,11 +30,7 @@ def generate_launch_description() -> LaunchDescription:
     ]
     
     # Load System_Params.yaml
-    config_file = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        '..', '..', '..',
-        'System_Params.yaml'
-    )
+    config_file = os.path.join(get_package_share_directory('vdt_bringup'), 'System_Params.yaml')
     
     use_sim_time = {"use_sim_time": LaunchConfiguration("use_sim_time")}
     

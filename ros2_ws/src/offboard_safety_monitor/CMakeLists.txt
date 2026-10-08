@@ -38,4 +38,5 @@ add_test(NAME safety_logic_test COMMAND safety_logic_test)
 add_launch_test(test/safety_monitor_integration_test.py)
 install(PROGRAMS test/hil_validation.py DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

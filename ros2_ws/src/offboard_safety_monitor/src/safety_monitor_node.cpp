@@ -26,13 +26,13 @@ SafetyMonitorNode::SafetyMonitorNode()
   
   data_freshness_timeout_sec_ = declare_parameter<double>("data_freshness_timeout_sec", 1.0);
   status_sub_ = create_subscription<px4_msgs::msg::VehicleStatus>(
-    "/fmu/out/vehicle_status", 10,
+    "/fmu/out/vehicle_status_v1", rclcpp::SensorDataQoS(),
     std::bind(&SafetyMonitorNode::on_vehicle_status, this, std::placeholders::_1));
   local_pos_sub_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-    "/fmu/out/vehicle_local_position", 10,
+    "/fmu/out/vehicle_local_position", rclcpp::SensorDataQoS(),
     std::bind(&SafetyMonitorNode::on_local_position, this, std::placeholders::_1));
   battery_sub_ = create_subscription<px4_msgs::msg::BatteryStatus>(
-    "/fmu/out/battery_status", 10,
+    "/fmu/out/battery_status", rclcpp::SensorDataQoS(),
     std::bind(&SafetyMonitorNode::on_battery, this, std::placeholders::_1));
   offboard_status_sub_ = create_subscription<vdt_msgs::msg::OffboardStatus>(
     "offboard/status", 10,

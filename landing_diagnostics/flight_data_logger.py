@@ -44,7 +44,7 @@ class FlightDataLogger(Node):
             self.setpoint_cb, qos_profile
         )
         self.create_subscription(
-            VehicleStatus, '/fmu/out/vehicle_status',
+            VehicleStatus, '/fmu/out/vehicle_status_v1',
             self.status_cb, qos_profile
         )
         self.create_subscription(

@@ -41,4 +41,5 @@ if(BUILD_TESTING)
   add_launch_test(test/rosbag/test_input_state_rosbag.py TIMEOUT 120)
 endif()
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

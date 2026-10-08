@@ -33,10 +33,7 @@ def build_parameters(context) -> dict:
         raise RuntimeError(f"mode must be sim or hw, got: {mode}")
     
     # Load System_Params.yaml
-    config_file = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-        'System_Params.yaml'
-    )
+    config_file = os.path.join(get_package_share_directory('vdt_bringup'), 'System_Params.yaml')
     
     parameters = dict(MODE_PARAMETERS[mode])
     parameters["marker_id"] = int(read_launch_argument(context, "marker_id"))

@@ -24,7 +24,7 @@ Workspace prototype cho hệ thống UAV PX4 + ROS 2 thực hiện phát hiện,
 ```text
 PX4 flight controller
         |
-        |  Micro XRCE-DDS
+        |  Micro XRCE-DDS (USB, /dev/ttyACM0 trên Pi 5)
         v
  px4_state_bridge ──► /odom, TF (world -> base_link -> gimbal_link -> camera_optical_frame),
         |             alt_estimator/state
@@ -65,6 +65,8 @@ takeoff (chạy tay, một lần) ──► /fmu/in/vehicle_command (ARM, NAV_TA
 ibvs_controller ──► /ibvs/pitch_trim_deg ──► gimbal_control (cộng vào góc mục tiêu)
 
 gimbal_control ──► gimbal/target_angle_deg ──► servo_control ──► /fmu/in/vehicle_command (ACTUATOR_TEST, MAIN 1) ──► PX4
+
+vdt_full.launch.py ──► vdt_system.launch.py (embedded) + aruco_detector + ekf_adapter + ibvs + apf_planner   (không gồm takeoff)
 ```
 
 ## Cấu trúc repository
@@ -73,7 +75,7 @@ gimbal_control ──► gimbal/target_angle_deg ──► servo_control ──�
 |---|---|
 | `ros2_ws/src/` | Mười tắm ROS 2 packages của hệ thống bay, module vision, planner, cầu nối vision, message dùng chung và bringup |
 | `ros2_ws/src/vdt_msgs/` | Message hub: toàn bộ 8 custom message của hệ thống |
-| `ros2_ws/src/vdt_bringup/` | Launch orchestration và startup ordering |
+| `ros2_ws/src/vdt_bringup/` | Launch orchestration: `vdt_system.launch.py` (embedded) và `vdt_full.launch.py` (toàn hệ thống trừ `takeoff`), startup ordering |
 | `ros2_ws/src/px4_state_bridge/` | Cầu nối trạng thái PX4 sang `/odom`, TF và `alt_estimator/state` |
 | `ros2_ws/src/vision_interface_bridge/` | Cầu nối topic vision sang `vision/marker` và `/mission/phase` |
 | `ros2_ws/src/aruco_detector/` | Phát hiện ArUco H-Pad, pose trong frame camera, mask depth |
@@ -784,7 +786,7 @@ Xem [XRCE_Guide.md](ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md).
 
 ### `vdt_bringup`
 
-Launch orchestration cho các node của workspace và nạp [System_Params.yaml](System_Params.yaml). Không khởi động module vision và `apf_planner`. Xem [Bringup_Guide.md](ros2_ws/src/vdt_bringup/Bringup_Guide.md).
+Launch orchestration và nạp [System_Params.yaml](System_Params.yaml), gồm hai lớp: `vdt_system.launch.py` khởi động các node embedded; `vdt_full.launch.py` include lớp đó rồi thêm module vision (`aruco_detector` với `mode:=hw`, `ekf_adapter`, `ibvs`) và `apf_planner`, mặc định `start_servo:=true`. Không gồm `takeoff`. Xem [Bringup_Guide.md](ros2_ws/src/vdt_bringup/Bringup_Guide.md).
 
 ## Giao diện giữa embedded và vision
 
@@ -844,6 +846,18 @@ Repository hiện không định nghĩa service hoặc action interface. Các to
 
 Tên topic và message PX4 còn phụ thuộc phiên bản `px4_msgs`, firmware PX4 và cấu hình `dds_topics.yaml`. `px4_state_bridge` cho phép đổi tên topic qua tham số.
 
+### Đường truyền Pi 5 - PX4
+
+Pi 5 nối PX4 bằng một cáp USB (`/dev/ttyACM0`), không dùng UART. Client uXRCE-DDS của PX4 không tự bật trên cổng USB nên được bật tay ở `nsh>`, còn Agent chạy trên Pi:
+
+```text
+nsh> uxrce_dds_client start -t serial -d /dev/ttyACM0 -b 921600
+nsh> mavlink stop -d /dev/ttyACM0
+Pi 5: MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600
+```
+
+Hệ quả: cấu hình này mất khi Pixhawk reboot, và sau `mavlink stop` cáp USB không còn MAVLink (QGC, `mavlink_shell`). `xrce_bridge_node` phải dùng `serial_port=/dev/ttyACM0`.
+
 ## Tham số tập trung
 
 Toàn bộ tham số runtime (embedded, vision, planner) được khai báo trong [System_Params.yaml](System_Params.yaml), mỗi node một khối theo tên node. Khi chạy bằng `vdt_bringup`, file này được cài vào package và nạp cho mọi node. Launch file của `ekf_adapter`, `ibvs`, `apf_planner` nạp cùng file này qua launch argument `params_file` (mặc định trỏ tới `System_Params.yaml` đã cài trong `vdt_bringup`); node chạy bằng `ros2 run` truyền `--params-file`. Giá trị truyền qua launch argument hoặc `-p` đặt sau file sẽ ghi đè giá trị trong file. Giá trị trong launch arguments của `vdt_system.launch.py` có thể ghi đè `debug_enabled`, `start_hardware` và `start_servo`.
@@ -860,13 +874,14 @@ Toàn bộ tham số runtime (embedded, vision, planner) được khai báo tron
 | `rc_node` | `serial_device=/dev/ttyUSB0`, `baudrate=100000`, `land_channel=4`, `kill_channel=5`, `low_threshold=1200`, `high_threshold=1800`, `frame_timeout=0.5`, `debug_enabled=false` |
 | `kill_switch_node` | `kill_channel=5`, `low_threshold=1200`, `high_threshold=1800`, `debounce_threshold=3`, `debug_enabled=false` |
 | `servo_node` | `servo_function=33.0`, `command_timeout_sec=2.5`, `min_send_interval_sec=0.1`, `min_send_delta=0.01`, `keepalive_sec=1.5`, `pwm_min_us=1000`, `pwm_max_us=2000`, `angle_min_deg=0`, `angle_max_deg=180`, `home_angle_deg=90`, `input_timeout_sec=1.0`, `debug_enabled=false` |
-| `xrce_bridge_node` | `serial_port=/dev/ttyAMA0`, `baudrate=921600`, `connection_timeout_sec=2.0`, `debug_enabled=false` |
+| `xrce_bridge_node` | `serial_port=/dev/ttyACM0`, `baudrate=921600`, `connection_timeout_sec=2.0`, `debug_enabled=false` |
 | `aruco_node` | `marker_id=42`, `marker_size_m=0.15` (cạnh ngoài của phần đen), `dictionary=DICT_6X6_50`, `min_detection_distance_m=0.0`, `min_z_m=0.0`, `image_topic=/camera`, `camera_info_topic=/camera_info`, `camera_frame_id=camera_optical_frame`, `fallback_horizontal_fov_rad=1.52`, `require_camera_info=true` |
 | `ekf_node` | `process_accel_variance=[1.0, 1.0, 0.5]`, `gate_threshold=16.27`, `max_target_speed=2.5`, `max_target_vz=1.5`, `target_frame=world`, `child_frame=hpad`, `tf_timeout_s=0.03`, `output_rate_hz=50.0`, `position_topic=/hpad/position_camera`, `phase_topic=/mission/phase`, `state_topic=/ekf/target_state`, `mode_topic=/ekf/tracking_mode` |
 | `ibvs_controller` | `K_pitch=0.8`, `K_yaw=0.5`, `focal_x=466.0`, `focal_y=466.0`, `u0=320.0`, `v0=240.0`, `pitch_rate_limit=1.5`, `pitch_ema_alpha=0.25`, `pitch_pixel_trim_gain=0.5`, `pitch_trim_limit_deg=20.0`, `yaw_rate_limit=0.5` |
 | `planner_node` | `planner_type=iapf` (mặc định trong code là `apf`), `obstacle_source=pointcloud`, `target_topic=/ekf/target_state`, `allowed_tracking_modes=[TRACKING, PREDICTING]`, `data_timeout_sec=0.5`, `rate_hz=30`, `d0=2.0`, `v_max=1.2`, `d_slow=1.5`, `k_att=10.0`, `k_rep=250.0`, `k_rep_approach=125.0`, `goal_threshold=0.20`, `follow_distance=3.5`, `hold_follow_altitude=true`, `target_altitude=3.0`, `k_z=0.6`, `vz_max=0.5`, `max_cloud_points=8`, `iapf_f_enter=0.10`, `iapf_f_exit=0.30`, `iapf_n_tangent=12`, `iapf_n_pred=3` |
 | `planner_merge_node` | `rate_hz=20`, `yaw_source=ibvs_apf`, `upstream_timeout_sec=0.3`, `stale_hover_sec=0.5`, `yaw_timeout_sec=0.3`, `phase_timeout_sec=1.0`, `output_topic=planner/velocity_setpoint` |
 | `apf_pointcloud_generator` | `topic=/map_generator/global_cloud`, `frame_id=world`, `rate_hz=1.0`, `num_obs=35`, `map_size=25.0`, `height=4.0`, `resolution=0.15`, `clear_radius=2.0`, `seed=-1`, `publish_static_tf=true` |
+| `vdt_full.launch.py` (`vdt_bringup`) | `start_servo=true` (chuyển cho `vdt_system.launch.py`); truyền cố định `mode=hw` cho `aruco.launch.py`, `publish_odom_tf=false` và `publish_camera_tf=false` cho `ekf.launch.py`, `planner_type=iapf` cho `apf_planner.launch.py` |
 
 Riêng `takeoff` vẫn dùng tham số dòng lệnh, không nằm trong `System_Params.yaml`:
 
@@ -927,18 +942,27 @@ input_cache_node + offboard_safety_monitor + fsm_node
 offboard_safety_monitor ------------> PX4
 kill_switch_node --------------------> PX4
 servo_node --------------------------> PX4
+
+```text
+vdt_full.launch.py
+   |-- vdt_system.launch.py (sơ đồ trên, start_servo=true)
+   |-- aruco.launch.py (mode=hw)            -> aruco_node, depth_to_image_node
+   |-- ekf.launch.py (publish_*_tf=false)   -> ekf_node
+   |-- ibvs.launch.py                       -> ibvs_controller
+   '-- apf_planner.launch.py (iapf)         -> planner_node, planner_merge_node
+```
 ```
 
 Launch sequence theo thời gian là `XRCE -> PX4 state bridge -> vision bridge -> input cache -> RC/kill -> safety -> FSM/gimbal -> Offboard -> servo`. Đây là thứ tự khởi tạo process; readiness thật vẫn do các node kiểm tra freshness, timeout, health và mode PX4.
 
-Module vision và `apf_planner` (`planner_node`, `planner_merge_node`) được khởi động riêng, xem [Chạy hệ thống](#chạy-hệ-thống).
+Module vision và `apf_planner` (`planner_node`, `planner_merge_node`) được `vdt_full.launch.py` khởi động cùng hệ thống; có thể chạy riêng từng launch để debug, xem [Chạy hệ thống](#chạy-hệ-thống).
 
 
 `takeoff` cũng không nằm trong launch: chạy tay sau khi hệ thống đã lên, xem [Chạy hệ thống](#chạy-hệ-thống).
 
 ## Luồng hoạt động
 
-1. `xrce_bridge_manager` kết nối ROS 2 với PX4 qua Micro XRCE-DDS.
+1. `xrce_bridge_manager` kết nối ROS 2 với PX4 qua Micro XRCE-DDS trên cáp USB (`/dev/ttyACM0`); client phía PX4 được bật tay ở `nsh>`, xem [Đường truyền Pi 5 - PX4](#đường-truyền-pi-5---px4).
 2. Cất cánh bằng `takeoff` (arm và PX4 takeoff, chạy tay trên Pi). `offboard_manager` chỉ engage Offboard khi UAV đã armed và đạt `min_engage_altitude_m`.
 3. `px4_state_bridge` đổi trạng thái PX4 sang `/odom`, chuỗi TF tới camera và `alt_estimator/state`.
 4. `aruco_node` phát hiện H-Pad trên ảnh IR1 và publish `/hpad/detected`, `/hpad/bbox`, `/hpad/position_camera`. `ekf_node` đổi vị trí sang `world` bằng TF tại stamp ảnh và ước lượng trạng thái H-Pad (`/ekf/target_state`, `/ekf/tracking_mode`).
@@ -1086,3 +1110,12 @@ Thử với point cloud vật cản giả lập trong RViz2:
 ```bash
 ros2 launch apf_planner apf_planner.launch.py generator:=true planner_type:=iapf
 ```
+Khởi động toàn bộ hệ thống (embedded, vision, planner; không gồm takeoff):
+
+```bash
+source /opt/ros/<ros_distro>/setup.bash
+source ros2_ws/install/setup.bash
+ros2 launch vdt_bringup vdt_full.launch.py
+```
+
+Chỉ khởi động phần embedded: `ros2 launch vdt_bringup vdt_system.launch.py`.

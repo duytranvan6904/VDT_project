@@ -31,4 +31,5 @@ target_link_libraries(kill_switch_node rc_parser::rc_parser_lib)
  
 install(TARGETS kill_switch_node DESTINATION lib/${PROJECT_NAME})
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

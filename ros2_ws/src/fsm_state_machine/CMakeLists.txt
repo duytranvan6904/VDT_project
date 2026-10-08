@@ -56,4 +56,5 @@ if(BUILD_TESTING)
   set_tests_properties(fsm_actions_test fsm_node_test PROPERTIES RESOURCE_LOCK ros_graph)
 endif()
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

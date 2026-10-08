@@ -36,4 +36,5 @@ if(BUILD_TESTING)
   add_test(NAME offboard_logic_test COMMAND offboard_logic_test)
 endif()
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

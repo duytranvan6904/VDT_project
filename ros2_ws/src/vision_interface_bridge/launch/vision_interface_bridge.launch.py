@@ -9,6 +9,6 @@ def generate_launch_description():
         get_package_share_directory('vision_interface_bridge'), 'config',
         'vision_interface_bridge.yaml')
     return LaunchDescription([
-        Node(package='vision_interface_bridge', executable='vision_interface_node',
+        Node(package='vision_interface_bridge', executable='vision_interface_bridge_node',
              name='vision_interface_bridge', parameters=[params], output='screen'),
     ])

@@ -29,7 +29,7 @@ class Takeoff(Node):
         self.pub = self.create_publisher(
             VehicleCommand, '/fmu/in/vehicle_command', PUB_QOS)
         self.create_subscription(
-            VehicleStatus, '/fmu/out/vehicle_status',
+            VehicleStatus, '/fmu/out/vehicle_status_v1',
             self.on_status, qos_profile_sensor_data)
         self.create_subscription(
             VehicleLocalPosition, '/fmu/out/vehicle_local_position',

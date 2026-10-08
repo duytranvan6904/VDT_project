@@ -60,7 +60,7 @@ OffboardNode::OffboardNode()
   inhibit_sub_ = create_subscription<std_msgs::msg::Bool>(
     "safety/inhibit_offboard", 10, std::bind(&OffboardNode::on_inhibit, this, std::placeholders::_1));
   vehicle_status_sub_ = create_subscription<px4_msgs::msg::VehicleStatus>(
-    "/fmu/out/vehicle_status", qos,
+    "/fmu/out/vehicle_status_v1", qos,
     std::bind(&OffboardNode::on_vehicle_status, this, std::placeholders::_1));
   local_position_sub_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
     "/fmu/out/vehicle_local_position", qos,

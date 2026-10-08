@@ -49,4 +49,5 @@ endif()
 
 ament_export_targets(export_rc_parser_lib HAS_LIBRARY_TARGET)
 ament_export_dependencies(rclcpp vdt_msgs)
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_package()

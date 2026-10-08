@@ -15,7 +15,7 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare('xrce_bridge_manager'),
                 'launch',
-                'xrce_bridge.launch.py'
+                'xrce_bringe_manager.launch.py'
             ])
         ),
         launch_arguments={
@@ -48,7 +48,7 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare('input_state_cache'),
                 'launch',
-                'input_cache.launch.py'
+                'input_state_cache.launch.py'
             ])
         ),
         launch_arguments={

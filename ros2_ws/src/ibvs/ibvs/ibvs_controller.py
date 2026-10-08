@@ -268,8 +268,6 @@ class IBVSController(Node):
 def main():
     rclpy.init()
     node = IBVSController()
-    node.declare_parameter('K_pitch', 0.8)
-    node.declare_parameter('K_yaw', 0.5)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

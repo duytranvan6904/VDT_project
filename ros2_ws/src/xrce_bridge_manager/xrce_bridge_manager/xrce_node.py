@@ -12,7 +12,7 @@ class XrceBridgeNode(Node):
     def __init__(self):
         super().__init__('xrce_bridge_node')
 
-        self.serial_port = self.declare_parameter('serial_port', '/dev/ttyAMA0').value
+        self.serial_port = self.declare_parameter('serial_port', '/dev/ttyACM0').value
         self.baudrate = self.declare_parameter('baudrate', 921600).value
         self.connection_timeout_sec = self.declare_parameter('connection_timeout_sec', 2.0).value
         self.debug_enabled = self.declare_parameter('debug_enabled', False).value
@@ -29,7 +29,7 @@ class XrceBridgeNode(Node):
             depth=5
         )
         self.create_subscription(
-            VehicleStatus, '/fmu/out/vehicle_status', self.status_cb, qos_profile
+            VehicleStatus, '/fmu/out/vehicle_status_v1', self.status_cb, qos_profile
         )
 
         self.start_agent()
