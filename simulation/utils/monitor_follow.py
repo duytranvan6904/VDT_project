@@ -17,7 +17,7 @@ class FollowMonitor(Node):
         self.mode = 'INIT'
         self.pitch = 0.0
         self.drone_pos = [0.0, 0.0, 0.0]
-        self.tgt_pos = [5.0, 2.0, 0.0]
+        self.tgt_pos = [3.0, 1.0, 0.0]
         self.has_odom = False
         self.has_tgt = False
         self.has_pitch = False

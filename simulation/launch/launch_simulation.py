@@ -35,8 +35,8 @@ MAP_SIZE = 20.0
 MAX_HEIGHT = 3.5
 MODEL_NAME = "x500_depth_0"
 HPAD_MODEL_NAME = "hpad_aruco"
-HPAD_X = 5.0
-HPAD_Y = 2.0
+HPAD_X = 3.0
+HPAD_Y = 1.0
 HPAD_Z = 0.02
 HPAD_MESH = "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/models/arucotag/hpad_aruco.dae"
 
@@ -417,7 +417,7 @@ class FastTrackerStyleNode(Node):
         self.hpad_pos = [p.x, p.y, p.z]
 
     def _send_initial_gimbal_pitch(self):
-        """Gửi lệnh chúc camera -30° (-0.52 rad) khi khởi động mô phỏng."""
+        """Gửi góc camera mặc định -30° khi khởi động mô phỏng."""
         msg = Float64()
         msg.data = float(self.camera_pitch)
         self.gimbal_init_pub.publish(msg)
@@ -735,10 +735,22 @@ def main():
                 sys.executable, os.path.join(sim_dir, 'perception', 'ekf_ros_adapter.py'),
                 *params_args,
             ]),
+            ('Covariance Gate', [
+                sys.executable, os.path.join(sim_dir, 'control', 'covariance_gate.py'),
+                *params_args,
+            ]),
             ('APF Planner', [
                 sys.executable, os.path.join(sim_dir, 'control', 'apf_planner.py'),
                 *params_args,
                 *apf_extra_args,
+            ]),
+            ('SMC Guidance', [
+                sys.executable, os.path.join(sim_dir, 'control', 'smc_guidance.py'),
+                *params_args,
+            ]),
+            ('Touchdown Detector', [
+                sys.executable, os.path.join(sim_dir, 'control', 'touchdown_detector.py'),
+                *params_args,
             ]),
             ('IBVS Controller', [
                 sys.executable, os.path.join(sim_dir, 'control', 'ibvs_controller.py'),

@@ -95,8 +95,8 @@ class MockTargetPublisher(Node):
 
 def main():
     parser = argparse.ArgumentParser(description='Publish mock target for independent APF test')
-    parser.add_argument('--x', type=float, default=5.0, help='Target X in meters (default: 5.0)')
-    parser.add_argument('--y', type=float, default=2.0, help='Target Y in meters (default: 2.0)')
+    parser.add_argument('--x', type=float, default=3.0, help='Target X in meters (default: 3.0)')
+    parser.add_argument('--y', type=float, default=1.0, help='Target Y in meters (default: 1.0)')
     parser.add_argument('--z', type=float, default=0.02, help='Target Z in meters (default: 0.02)')
     parser.add_argument('--min-alt', type=float, default=2.0, help='Minimum altitude before engaging FOLLOW (default: 2.0m)')
     args = parser.parse_args()

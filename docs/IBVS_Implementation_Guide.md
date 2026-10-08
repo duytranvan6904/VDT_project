@@ -297,4 +297,26 @@ public:
    - Thời gian thực thi 1 vòng lặp IBVS + EKF $< 2\text{ms}$ trên C++ / Python (đáp ứng tốt tần số $30-50\text{Hz}$ trên Pi 5).
 
 ---
-*Tài liệu này là căn cứ kỹ thuật chính thức để tiến hành lập mã nguồn mô phỏng Simulink và đóng gói ROS 2 Node.*
+
+## 6. MỞ RỘNG IBVS TRONG PHA HẠ CÁNH CHÍNH XÁC (PRECISION LANDING)
+
+Trong quá trình hạ cánh dốc trượt ($45^\circ$) và hạ cánh thẳng đứng (Final Descent), góc quan sát hình học thay đổi rất nhanh khi drone áp sát mặt đất. Module `ibvs_controller.py` được mở rộng với các đặc tính tối ưu:
+
+### 6.1. Điều khiển Pitch Chủ động trong pha LAND & Nadir Tilt
+- **Vấn đề**: Ở pha bay cao FOLLOW, góc gimbal thường giữ trong dải $-25^\circ \to -45^\circ$. Khi chuyển sang GLIDE_SLOPE và LAND, drone tiến vào thẳng đứng phía trên bãi đáp. Nếu không chủ động gập gimbal xuống, marker sẽ trôi vọt ra khỏi biên trên của ảnh.
+- **Giải pháp**:
+  - Trong pha `LAND`, thuật toán vẫn kích hoạt điều khiển gimbal pitch liên tục bám theo tâm điểm ảnh $e_v$.
+  - Khi độ cao $z < 0.8\text{m}$, kích hoạt cơ chế **Nadir Tilt tự động**: ép góc pitch mục tiêu về $-85^\circ$ (gần như chúc thẳng đứng xuống đất, tránh kỳ dị hình học $-90^\circ$).
+  - Nhờ đó, camera luôn nhìn thẳng tâm tấm H-Pad, bắt trọn vẹn marker nhỏ ID 43 ($10\text{cm}$) ở dải cự ly $0.05\text{m} \to 0.8\text{m}$.
+
+### 6.2. Nâng cao giới hạn tốc độ biến thiên góc (Slew Rate Limit)
+- Tăng giới hạn tốc độ quay gimbal pitch từ $1.0\text{ rad/s}$ lên **$1.8\text{ rad/s}$** và hệ số làm mịn Exponential Moving Average (EMA) $\alpha = 0.65$.
+- Cho phép gimbal phản ứng tức thời với tốc độ hạ dốc mà không gây trễ góc nhìn làm mất dấu mục tiêu.
+
+### 6.3. Khử rung vi sai (Pixel Error Trimming) cự ly sát đất
+- Ở khoảng cách cực gần ($z < 0.3\text{m}$), sai số pixel dù chỉ vài pixel cũng tương ứng góc rất lớn. Thuật toán áp dụng vùng chết thích ứng (deadband / trimming threshold) trong pha `LAND`, triệt tiêu hoàn toàn hiện tượng rung lắc gimbal khi chuẩn bị tiếp đất.
+
+---
+
+*Tài liệu này là căn cứ kỹ thuật chính thức để tiến hành lập mã nguồn mô phỏng Simulink, đóng gói ROS 2 Node và kiểm chứng thực nghiệm Precision Landing.*
+

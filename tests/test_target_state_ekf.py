@@ -32,6 +32,27 @@ class TestTargetStateEKF(unittest.TestCase):
         np.testing.assert_allclose(snapshot.state[:3], (2.0, -1.0, 1.5), atol=1e-12)
         np.testing.assert_allclose(snapshot.state[3:], (1.0, -0.5, 0.25), atol=1e-12)
 
+    def test_predict_snapshot_does_not_advance_measurement_filter(self):
+        state_before = self.ekf.state
+        covariance_before = self.ekf.covariance
+        timestamp_before = self.ekf.timestamp
+
+        predicted = self.ekf.predict_snapshot(0.2)
+
+        np.testing.assert_allclose(predicted.state[:3], (0.2, -0.1, 1.05), atol=1e-12)
+        self.assertEqual(predicted.timestamp, 0.2)
+        self.assertEqual(self.ekf.timestamp, timestamp_before)
+        np.testing.assert_allclose(self.ekf.state, state_before)
+        np.testing.assert_allclose(self.ekf.covariance, covariance_before)
+
+        # The subsequent capture-time update stays chronological even though
+        # a later dead-reckoning snapshot was already published.
+        self.ekf.predict(0.1)
+        accepted, _ = self.ekf.update(
+            (0.1, -0.05, 1.025), np.diag((0.02, 0.02, 0.02)) ** 2
+        )
+        self.assertTrue(accepted)
+
     def test_update_reduces_position_uncertainty(self):
         self.ekf.predict(1.0)
         before = np.trace(self.ekf.covariance[:3, :3])

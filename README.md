@@ -39,40 +39,70 @@ Hệ thống điều khiển tự hành theo kiến trúc phân tầng, cho phé
 │    [HW]  RealSense D430/D435i SDK trực tiếp                     │
 │                       │                                          │
 │                       ▼                                          │
-│           ArUco Detector ──────────────► EKF Adapter            │
-│       (aruco_sim_node / aruco_detector)  (ekf_ros_adapter)      │
-│                    │                          │                  │
-│              /hpad/bbox              /ekf/target_state           │
-└────────────────────┼──────────────────────────┼─────────────────┘
-                     │                          │
-┌────────────────────▼── TẦNG ĐIỀU KHIỂN (Control) ─────────────┐
-│                                               │                  │
-│  ibvs_controller ◄────────────────────────────┤                 │
-│       │ /ibvs/yaw_cmd                  apf_planner              │
-│       │                             /apf/velocity_cmd            │
-│       └──────────────► mission_fsm_node ◄──────────┘            │
+│      Nested Dual-Scale ArUco Board ────────► EKF Adapter        │
+│       (aruco_sim_node / aruco_detector)     (ekf_ros_adapter)   │
+│         ID 42 (52.5cm) + ID 43 (10cm)                │          │
+│                    │                                 │          │
+│              /hpad/bbox                     /ekf/target_state   │
+└────────────────────┼─────────────────────────────────┼──────────┘
+                     │                                 │
+┌────────────────────▼── TẦNG ĐIỀU KHIỂN & DẪN ĐƯỜNG (Control) ────┐
+│                                                      │           │
+│  ibvs_controller ◄───────────────────────────────────┤           │
+│   (Gimbal Pitch + Body Yaw + Nadir Tilt -85°)        │           │
+│       │ /ibvs/yaw_cmd, /ibvs/gimbal_pitch            │           │
+│       │                                              │           │
+│  apf_planner (I-APF 3D né vật cản & bám standoff) ──┤           │
+│       │ /apf/guidance_velocity_cmd                   │           │
+│       │                                              │           │
+│  covariance_gate (P_target + P_drone, Cone 30°) ────┤           │
+│       │ /landing/safe_to_land, /landing/rswitch_adaptive         │
+│       │                                              │           │
+│  smc_guidance (SMC 45° Glide Slope & Soft Landing) ──┤           │
+│       │ /landing/velocity_cmd                        │           │
+│       │                                              │           │
+│       └──────────────► mission_fsm_node ◄────────────┘           │
 │                              │ /mission/velocity_setpoint        │
-└──────────────────────────────┼──────────────────────────────────┘
+│                              ▼                                   │
+│                     touchdown_detector ──► /landing/touchdown    │
+└──────────────────────────────┼───────────────────────────────────┘
                                │
-┌──────────────── TẦNG CHẤP HÀNH (Actuation) ────────────────────┐
+┌──────────────── TẦNG CHẤP HÀNH (Actuation) ─────────────────────┐
 │              offboard_commander  (ENU → NED)                     │
+│              MAVLink Force-Disarm (param2=21196.0)               │
 │                              │                                   │
-│    [Sim]  PX4 SITL ◄── UDP :14540                               │
-│    [HW]   PX4 FC   ◄── UART /dev/ttyTHS1                        │
-└─────────────────────────────────────────────────────────────────┘
+│    [Sim]  PX4 SITL ◄── UDP :14540                                │
+│    [HW]   PX4 FC   ◄── UART /dev/ttyTHS1                         │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Pipeline trạng thái FSM
 
 ```
-IDLE ──(alt > 80% takeoff_alt)──► SEARCH ──(ArUco detected ≥5 frame)──► FOLLOW
+IDLE ──(takeoff complete)────────► SEARCH ──(stable ArUco + EKF lock)──► FOLLOW
                                      ▲                                      │
                                      │──────(EKF EXPIRED > timeout)─────────┘
                                                                              │
-                                                                   (Operator LAND cmd)
+                                                     (LAND command + fresh visual lock)
                                                                              ▼
-                                                                         APPROACH ──(align OK)──► LAND
+                                      APPROACH (APF standoff reduction)
+                                          │ Covariance 2σ ≤ 0.45m & Cone ≤ 30°
+                                          ▼
+                                      GLIDE_SLOPE (SMC 45° glide slope)
+                                          │ Rxy ≤ 0.40m, altitude ≤ 0.40m, 2σ ≤ 0.35m
+                                          ▼
+                                      LAND / FINAL_DESCENT (Nadir tilt -85°, vz = -0.15 m/s)
+                                          │ Touchdown confirmed (0.35s latch) or z ≤ 0.12m
+                                          ▼
+                                      TOUCHDOWN ──(MAVLink Force Disarm)──► IDLE
 ```
+
+- **Nested Dual-Scale ArUco Board**: Tích hợp Marker lớn ID 42 ($52.5\text{cm}$) cho cự ly xa ($1.2\text{m} - 8.0\text{m}$) và Marker nhỏ ID 43 ($10.0\text{cm}$) đồng tâm cho cự ly gần ($0.05\text{m} - 1.5\text{m}$), giải quyết triệt để bài toán tràn khung hình khi áp sát mặt đất.
+- **Covariance Gating**: Kết hợp hiệp phương sai vị trí $P_{relative} = P_{target} + P_{drone}$, kiểm tra nón chấp nhận $30^\circ$, điều biến bán kính chuyển mạch dốc trượt thích ứng $R_{switch} \in [4.5\text{m}, 10.0\text{m}]$, tự động wave-off an toàn nếu mất dấu hoặc sai số lớn trên không.
+- **SMC Glide Slope & Soft Landing**: Điều khiển bám tâm bãi đáp theo dốc nghiêng $45^\circ$, bổ sung vận tốc hạ thẳng đứng độc lập $\text{alt\_speed} = \max(v_{touch}, 0.20 \cdot r_z)$ triệt tiêu hiện tượng kẹt lơ lửng (Hover Stall).
+- **Drift-Invariant Touchdown & Force Disarm**: Kết hợp điều kiện động học ($z \le 0.18\text{m}, |v_z| \le 0.08\text{m/s}$), lệnh hạ $v_{z\_cmd} \le -0.10\text{m/s}$, chốt nhận diện sau $0.35\text{s}$ và gửi MAVLink Force Disarm (`param2=21196.0`) dứt khoát.
+
+Kết quả kiểm chứng thực nghiệm chi tiết xem tại [tracking_follow_status.md](docs/tracking_follow_status.md).
 
 ---
 
@@ -86,45 +116,53 @@ VDT_project/
 │
 ├── simulation/                  ← Toàn bộ code pipeline Gazebo simulation
 │   ├── core/                    ← Node chính điều phối nhiệm vụ
-│   │   ├── mission_fsm_node.py  ← State machine FSM
-│   │   ├── offboard_commander.py← Giao tiếp PX4 Offboard
+│   │   ├── mission_fsm_node.py  ← State machine FSM (APPROACH → GLIDE_SLOPE → LAND → TOUCHDOWN)
+│   │   ├── offboard_commander.py← Giao tiếp PX4 Offboard + MAVLink Force Disarm
 │   │   └── takeoff.py           ← Script cất cánh
 │   ├── perception/              ← Nhận thức môi trường & mục tiêu
-│   │   ├── aruco_sim_node.py    ← ArUco detection trong Gazebo
-│   │   ├── ekf_ros_adapter.py   ← EKF target state estimator
+│   │   ├── aruco_sim_node.py    ← Nested Dual-Scale ArUco detection trong Gazebo
+│   │   ├── ekf_ros_adapter.py   ← EKF target state estimator (0.05m - 8m)
 │   │   ├── depth_to_image_node.py
 │   │   └── mock_target_publisher.py
-│   ├── control/                 ← Thuật toán điều khiển
-│   │   ├── ibvs_controller.py   ← Image-Based Visual Servoing
+│   ├── control/                 ← Thuật toán điều khiển & dẫn đường
+│   │   ├── ibvs_controller.py   ← IBVS (Gimbal pitch + Body yaw + Nadir tilt -85°)
 │   │   ├── apf_planner.py       ← APF / I-APF path planner ROS 2 Node wrapper
 │   │   ├── iapf_core.py         ← Lõi Improved APF 3D (GNRON, 3D Tangent, Oscillation Suppression)
+│   │   ├── covariance_gate.py   ← Dual-EKF Covariance Fusion & Conical Safety Gate
+│   │   ├── smc_guidance.py      ← SMC 45° Glide Slope & Soft Landing Profile
+│   │   ├── touchdown_detector.py← Drift-invariant Touchdown Detection & Confirmation Latch
 │   │   └── apf_pointcloud_generator.py
 │   ├── utils/                   ← Monitoring & visualization tools
 │   ├── worlds/                  ← Gazebo world files (.sdf, .world)
 │   ├── config/
 │   │   └── mission_params.yaml  ← Tham số tập trung toàn hệ thống
 │   └── launch/
-│       ├── launch_simulation.py ← Master launcher (ĐIỂM VÀO CHÍNH, hỗ trợ flag --planner)
+│       ├── launch_simulation.py ← Master launcher (ĐIỂM VÀO CHÍNH)
 │       └── start_px4_sim.sh
 │
 ├── vision/                      ← Code vision cho hardware thực
-│   ├── aruco_detector.py        ← ArUco detector (RealSense thực)
+│   ├── aruco_detector.py        ← Nested Dual-Scale ArUco detector (RealSense thực)
 │   ├── realsense_stream.py      ← RealSense D435i interface
 │   ├── target_state_ekf.py      ← EKF standalone (không cần ROS)
-│   └── ...
+│   ├── dual_scale_board_config.yaml ← Định nghĩa tọa độ 3D Nested Board
+│   └── dual_scale_aruco_board_A0_52_5cm.pdf ← File in bãi đáp chuẩn A0
 │
 ├── hardware/
 │   └── main_aruco_detector.py   ← Entry point deploy lên board nhúng
 │
-├── avoidance/                   ← Prototype MATLAB APF (APFplanner_1_Obstacle.m, IAPF_Planner_3D_MultiObs.m)
+├── avoidance/                   ← Prototype MATLAB APF
 ├── tests/                       ← Unit & Regression tests
-│   ├── test_follow_control.py   ← Test bám mục tiêu & giữ độ cao
-│   └── test_iapf_planner.py     ← Test I-APF & Benchmark A/B đối xứng bẫy vật cản
+│   ├── test_covariance_gate.py  ← Test hiệp phương sai & conical gate
+│   ├── test_smc_guidance.py     ← Test SMC sliding surface & reaching law
+│   ├── test_dual_scale_board.py ← Test solver Nested ArUco Board
+│   ├── test_tracking_control.py ← Test bám mục tiêu & feedforward
+│   └── test_iapf_planner.py     ← Test I-APF 3D
 ├── simulation_results/          ← Benchmark EKF output (offline)
-├── docs/                        ← Tài liệu bổ sung
+├── docs/                        ← Tài liệu kỹ thuật
 │   ├── IBVS_Implementation_Guide.md
-│   ├── README_BAG.md
-│   └── archive/                 ← Tài liệu cũ / thiết kế chi tiết
+│   ├── precision_landing_proposal.tex
+│   ├── precision_landing_integration_plan.md
+│   └── tracking_follow_status.md
 └── References/                  ← Paper & tài liệu tham khảo
 ```
 
@@ -188,7 +226,7 @@ export GZ_SIM_RESOURCE_PATH="$PWD/Tools/simulation/gz/models:${GZ_SIM_RESOURCE_P
 PX4_GZ_WORLD=obstacle_avoidance make px4_sitl gz_x500_depth
 ```
 
-> ✅ Thành công khi: Cửa sổ Gazebo mở ra, drone `x500_depth_0` tại `(0,0,0)`, H-Pad tại `(5.0, 2.0, 0.02)`, các trụ vật cản đỏ/xanh hiển thị.
+> ✅ Thành công khi: Cửa sổ Gazebo mở ra, drone `x500_depth_0` tại `(0,0,0)`, H-Pad tại `(3.0, 1.0, 0.02)`, các trụ vật cản đỏ/xanh hiển thị.
 
 ---
 
@@ -209,8 +247,15 @@ python3 /home/duy/VDT_project/simulation/launch/launch_simulation.py --autonomou
 > - Cửa sổ RViz2 mở ra, hiển thị map 3D PointCloud
 > - Log xuất hiện: `[AUTONOMOUS] Started ekf_ros_adapter, apf_planner, ibvs_controller, mission_fsm, offboard_commander`
 > - Log thuật toán hiển thị: `Initialized Improved APF (I-APF) 3D Planner` (hoặc `Standard APF Planner`)
-> - Camera gimbal tự chúc xuống `-30°`
+> - Camera gimbal khởi tạo ở góc mặc định hiện tại `-30°`.
 > - Định kỳ in: `[STATUS] Phase: SEARCH | Drone: (...) | Target: (...)`
+
+Landing target uses an A0 landscape board. The printable file is
+[`vision/dual_scale_aruco_board_A0_52_5cm.pdf`](vision/dual_scale_aruco_board_A0_52_5cm.pdf);
+print at 100% scale (1189 × 841 mm). ID 42 is the 520 mm coarse tag at the
+left; ID 43 is the 50 mm fine tag at the landing origin. Gazebo's collision
+plane, RViz mesh, texture, detector config, and landing-pad radius use these
+same dimensions.
 
 ---
 
@@ -288,7 +333,7 @@ python3 simulation/utils/hpad_keyboard_controller.py --speed 0.5
 | `W` / `S` | Di chuyển tiến / lùi (trục X) |
 | `A` / `D` | Di chuyển trái / phải (trục Y) |
 | `SPACE` | Phanh dừng khẩn cấp |
-| `R` | Reset H-Pad về `(5.0, 2.0)` |
+| `R` | Reset H-Pad về `(3.0, 1.0)` |
 | `+` / `-` | Tăng / giảm tốc độ |
 
 ---
@@ -301,7 +346,7 @@ source /opt/ros/humble/setup.bash
 ros2 topic pub --once /operator/land_command std_msgs/msg/Bool "{data: true}"
 ```
 
-> ✅ Hiện tượng: FSM chuyển `APPROACH`, drone giảm độ cao, gimbal tilt xuống sâu hơn (`-45°` đến `-75°`), khi `< 0.3 m` kích hoạt `LAND`.
+> ✅ Hành vi: FSM vào `APPROACH` và IAPF tiến ngang trong khi giữ độ cao. Gimbal tiếp tục IBVS với slew chậm; mất ảnh thì giữ góc hiện tại. Chỉ khi marker đang được nhìn thấy, covariance đạt ngưỡng và SMC có lệnh mới, drone mới vào `GLIDE_SLOPE`. `LAND/FINAL_DESCENT` chỉ bắt đầu khi `Rxy ≤ 1.0 m`, độ cao tương đối `≤ 1.5 m` và topic uncertainty `≤ 0.12 m` (bán kính 2σ, tương ứng σ ≤ 0.06 m). Mất marker hoặc gate sẽ làm drone hover; touchdown detector mới kết thúc hạ cánh.
 
 ---
 
@@ -498,10 +543,28 @@ Tất cả tham số điều khiển được tập trung tại [`simulation/con
 | `iapf_k_tan` | `apf_planner` | `1.0` | Độ lớn lực tiếp tuyến khi kích hoạt thoát Local Minima |
 | `iapf_n_tangent`| `apf_planner` | `12` | Số hướng tiếp tuyến candidate trên mặt phẳng 3D |
 | `iapf_n_pred` | `apf_planner` | `3` | Số bước dự báo trước để đánh giá độ thông thoáng |
-| `search_timeout` | `mission_fsm` | `1.2` s | Timeout trước khi quay lại SEARCH |
+| `goal_threshold` | `apf_planner` | `0.30` m | Vùng dừng APF quanh standoff goal |
+| `yaw_align_min_speed_scale` | `mission_fsm` | `0.60` | Tỉ lệ tối thiểu cho APF guidance khi căn yaw; feedforward target được giữ riêng |
+| `reacquire_bbox_timeout` | `mission_fsm` | `0.80` s | Tuổi tối đa bbox mới để xác nhận reacquire; bbox phải đến sau trigger |
+| `follow_bbox_timeout` | `mission_fsm` | `0.30` s | Tuổi tối đa của bbox dùng cho lệnh FOLLOW |
+| `yaw_rate_limit` | `ibvs_controller` | `0.80` rad/s | Giới hạn slew của IBVS yaw command |
+| `yaw_feedforward_min_target_speed` | `ibvs_controller` | `0.30` m/s | Bỏ yaw lead khi chuyển động ước lượng gần nhiễu tĩnh |
+| `max_yaw_rate` | `offboard_commander` | `0.80` rad/s | Giới hạn yaw rate cuối cùng gửi PX4 |
+| `search_timeout` | `mission_fsm` | `3.0` s | Timeout trước khi quay lại SEARCH |
 | `gate_threshold` | `ekf_ros_adapter` | `16.27` | Ngưỡng Mahalanobis gate EKF |
-| `K_pitch` | `ibvs_controller` | `0.8` | Gain điều khiển gimbal pitch |
-| `K_yaw` | `ibvs_controller` | `0.5` | Gain điều khiển yaw |
+| `process_accel_variance` | `ekf_ros_adapter` | `[0.25, 0.25, 0.5]` | Nhiễu động học cho bộ lọc mục tiêu; trục ngang phù hợp với rate ảnh mô phỏng |
+| `K_pitch` | `ibvs_controller` | `0.92` | Gain điều khiển gimbal pitch |
+| `K_yaw` | `ibvs_controller` | `0.92` | Gain điều khiển yaw |
+| `max_uncertainty_enter_glide` | `covariance_gate` | `0.45` m | Ngưỡng 2σ tối đa để vào GLIDE_SLOPE |
+| `max_uncertainty_continue_glide` | `covariance_gate` | `0.50` m | Ngưỡng 2σ tối đa để duy trì GLIDE_SLOPE |
+| `final_uncertainty_max` | `covariance_gate` | `0.35` m | Ngưỡng 2σ tối đa để vào FINAL_DESCENT |
+| `r_switch_min` / `r_switch_max` | `covariance_gate` | `4.5 / 10.0` m | Dải điều biến thích ứng của bán kính dốc trượt |
+| `conical_gate_angle_deg` | `covariance_gate` | `30.0` deg | Góc phễu hình nón an toàn tiếp cận |
+| `theta_des_deg` | `landing_guidance` | `45.0` deg | Góc dốc tiếp cận mong muốn (SMC) |
+| `v_descend_glide` | `landing_guidance` | `0.35` m/s | Tốc độ hạ dốc trượt tối đa |
+| `v_descend_touch` | `landing_guidance` | `0.15` m/s | Tốc độ hạ êm ái khi tiếp đất |
+| `optical_height_threshold_m` | `touchdown_detector` | `0.40` m | Độ cao quang học tiếp đất |
+| `confirmation_duration_s` | `touchdown_detector` | `0.35` s | Thời gian xác nhận chốt tiếp đất |
 
 ### 🚀 Điểm cải tiến của Improved APF (I-APF) so với APF cơ bản
 
@@ -518,18 +581,19 @@ Tất cả tham số điều khiển được tập trung tại [`simulation/con
 
 Sau khi pipeline chạy ổn định, kiểm tra lần lượt từng tiêu chí:
 
-| STT | Hạng mục | Lệnh kiểm tra | Tiêu chí PASS |
-|---|---|---|---|
-| 1 | Tần số sensor | `ros2 topic hz /camera` | ≥ 15 Hz |
-| 2 | Tần số sensor | `ros2 topic hz /odom` | ≥ 20 Hz |
-| 3 | ArUco detection | `ros2 topic echo --once /hpad/position_camera` | Trả về tọa độ `(x,y,z)` |
-| 4 | EKF tracking | `ros2 topic echo /ekf/tracking_mode` | Chuyển thành `TRACKING` |
-| 5 | EKF dead reckoning | Che khuất H-Pad < 1s | Mode `DEAD_RECKONING`, không mất setpoint |
-| 6 | APF velocity | `ros2 topic echo /apf/velocity_cmd` | `|v| ≤ 1.2 m/s`, xuất hiện vector né khi gần vật cản |
-| 7 | IBVS gimbal | `ros2 topic echo /ibvs/gimbal_pitch` | Pitch mượt trong `[-75°, -15°]` |
-| 8 | FSM transitions | `ros2 topic echo /mission/phase` | `SEARCH → FOLLOW → APPROACH → LAND` |
-| 9 | Obstacle avoidance | Quan sát Gazebo | `d_min ≥ 0.8 m` với mọi trụ |
-| 10 | Landing accuracy | Quan sát tiếp xúc | Sai số tâm H-Pad `< 20 cm` |
+| STT | Hạng mục | Lệnh kiểm tra | Tiêu chí PASS | Kết quả kiểm chứng thực tế |
+|---|---|---|---|---|
+| 1 | Tần số sensor | `ros2 topic hz /camera` | ≥ 15 Hz | **PASS** (30 Hz) |
+| 2 | Tần số sensor | `ros2 topic hz /odom` | ≥ 20 Hz | **PASS** (30 Hz) |
+| 3 | ArUco detection | `ros2 topic echo --once /hpad/position_camera` | Trả về tọa độ `(x,y,z)` | **PASS** (Nested Board ID 42 + 43) |
+| 4 | EKF tracking | `ros2 topic echo /ekf/tracking_mode` | Chuyển thành `TRACKING` | **PASS** |
+| 5 | EKF dead reckoning | Che khuất H-Pad < 1s | Mode `DEAD_RECKONING`, không mất setpoint | **PASS** |
+| 6 | APF/FOLLOW velocity | `ros2 topic echo /mission/velocity_setpoint` | `|v_xy| ≤ 1.5 m/s`; target feedforward còn hoạt động | **PASS** |
+| 7 | IBVS yaw | `ros2 topic echo /ibvs/yaw_cmd` | yaw setpoint slew tối đa `0.8 rad/s`, bám mượt | **PASS** |
+| 8 | IBVS gimbal | `ros2 topic echo /ibvs/gimbal_pitch` | Pitch mượt `[-85°, -15°]`, nadir tilt cự ly gần | **PASS** |
+| 9 | Reacquire handoff | `ros2 topic echo /mission/phase` | Vào FOLLOW sau bbox mới, EKF `TRACKING` | **PASS** |
+| 10 | Obstacle avoidance | Quan sát Gazebo | `d_min ≥ 0.8 m` với mọi trụ né vật cản | **PASS** |
+| 11 | Landing accuracy | Quan sát tiếp xúc sàn | Sai số tâm H-Pad `< 10 cm`, tiếp đất êm, auto disarm | **PASS** ($R_{xy} \approx 0.01\text{m}$ / $1\text{cm}$, chốt 0.35s, Force Disarm) |
 
 ---
 
@@ -565,15 +629,22 @@ Sau khi pipeline chạy ổn định, kiểm tra lần lượt từng tiêu chí
 - **Debug đồng thời**:
   ```bash
   ros2 topic echo /apf/velocity_cmd
+  ros2 topic echo /apf/guidance_velocity_cmd
+  ros2 topic echo /apf/target_velocity_ff
   ros2 topic echo /ibvs/yaw_cmd
   ros2 topic echo /ekf/tracking_mode
   ```
   - Nếu `/ekf/tracking_mode` = `EXPIRED` → kiểm tra lại camera FPS và TF tree
-  - Nếu `/apf/velocity_cmd` có `linear.z ≠ 0` trong FOLLOW → kiểm tra `hold_follow_altitude: true` trong `mission_params.yaml`
+  - `/apf/velocity_cmd` là tổng APF + feedforward để quan sát; FSM lấy hai thành phần riêng để yaw alignment không giảm bù vận tốc target.
+  - Trong FOLLOW, xem `/mission/velocity_setpoint`: `linear.z` phải bằng `0`; `offboard_commander` giữ độ cao. Nếu target di chuyển mà `/apf/target_velocity_ff` khác 0 nhưng setpoint XY không theo, kiểm tra vision freshness và trạng thái FOLLOW.
 
 ### ❌ APF thay đổi độ cao trong FOLLOW
-- Trong FOLLOW, điểm đích APF được đặt cùng độ cao drone hiện tại. Pha APPROACH mới được phép hạ.
-- Lực đẩy vật cản 3D vẫn có thể tạo thành phần `z` nếu drone sát phần trên trụ. Xem `linear.z` trên `/apf/velocity_cmd` để debug.
+- FOLLOW và APF_APPROACH giữ `linear.z = 0` tại FSM; Offboard altitude hold sở hữu trục z. Chỉ SMC GLIDE_SLOPE và FINAL_DESCENT được điều khiển hạ độ cao.
+- APF dùng vùng dừng 0.30 m quanh standoff goal để tránh đổi chiều liên tục do nhiễu EKF khi marker đứng yên. Target velocity feedforward chỉ bị triệt khi tốc độ ước lượng thấp hơn 0.20 m/s.
+
+### ❌ Drone hover ở GLIDE_SLOPE hoặc FINAL_DESCENT
+- Kiểm tra `/landing/covariance_status`, `/landing/uncertainty_radius`, `/landing/sub_phase`, `/hpad/detected` và `/ekf/tracking_mode`.
+- `uncertainty_radius` là bán kính confidence 2σ: cần `≤ 0.30 m` để tiếp tục glide và `≤ 0.12 m` để vào final descent. Nếu gate đóng, zero velocity là hành vi an toàn; kiểm tra covariance odometry, TF và chất lượng marker trước khi thử lại.
 
 ---
 

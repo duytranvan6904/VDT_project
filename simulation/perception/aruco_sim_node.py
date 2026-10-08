@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """ArUco detection node for the Gazebo RGB-D camera.
 
+Supports an A0 landscape dual-scale board (ID 42 52cm, ID 43 5cm)
+for continuous precision landing guidance from 5m down to touchdown (0.05m),
+and legacy single-marker operation.
+
 Inputs:
   /camera       sensor_msgs/Image
   /camera_info  sensor_msgs/CameraInfo (optional; an SDF fallback is used)
@@ -11,10 +15,10 @@ Outputs:
   /hpad/position_camera  geometry_msgs/PointStamped (x, y, z in optical frame)
   /hpad/bbox             vision_msgs/BoundingBox2D
   /hpad/detected         std_msgs/Bool
+  /hpad/tracking_mode    std_msgs/String (OUTER_COARSE | INNER_FINE | LOST)
   /hpad/annotated        sensor_msgs/Image
 
-The PnP pose is expressed in the ROS camera optical frame.  The separate
-position topic makes x/y/z easy to inspect with ``ros2 topic echo``.
+The PnP pose is expressed in the ROS camera optical frame (x-right, y-down, z-forward).
 """
 
 import os
@@ -28,31 +32,39 @@ from geometry_msgs.msg import PointStamped, PoseStamped
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import CameraInfo, Image
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 from vision_msgs.msg import BoundingBox2D
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from vision.aruco_detector import ArUcoDetector
+from vision.aruco_detector import ArUcoDetector, DualScaleArUcoDetector
+from vision.utils import rvec_to_quaternion
 
 
 class ArucoSimulationNode(Node):
     def __init__(self):
         super().__init__('aruco_sim_node')
 
+        self.declare_parameter('use_dual_scale', True)
+        self.declare_parameter('board_config', os.path.join(REPO_ROOT, 'vision', 'dual_scale_board_config.yaml'))
         self.declare_parameter('marker_id', 42)
-        # In arucotag/model.sdf, the plane geometry is 0.90m x 0.90m.
-        # The calibrated physical dimension of the detected outer square is 0.895m,
-        # which correctly maps the estimated 3D position to the Gazebo ground-truth
-        # target coordinates (5.0, 2.0, 0.02)m without 10% distance shrinkage.
-        self.declare_parameter('marker_size_m', 0.895)
+        self.declare_parameter('marker_size_m', 0.52)
+        self.declare_parameter('small_marker_id', 43)
+        self.declare_parameter('small_marker_size_m', 0.05)
         self.declare_parameter('dictionary', 'DICT_6X6_50')
-        self.declare_parameter('min_detection_distance_m', 2.2)
+        self.declare_parameter('min_detection_distance_m', 0.0)
+        self.declare_parameter('max_detection_distance_m', 15.0)
+
+        self.use_dual_scale = bool(self.get_parameter('use_dual_scale').value)
+        self.board_config = str(self.get_parameter('board_config').value)
         self.marker_id = int(self.get_parameter('marker_id').value)
         self.marker_size = float(self.get_parameter('marker_size_m').value)
+        self.small_marker_id = int(self.get_parameter('small_marker_id').value)
+        self.small_marker_size = float(self.get_parameter('small_marker_size_m').value)
         self.min_detection_distance = float(self.get_parameter('min_detection_distance_m').value)
+        self.max_detection_distance = float(self.get_parameter('max_detection_distance_m').value)
         dictionary = str(self.get_parameter('dictionary').value)
 
         sensor_qos = QoSProfile(
@@ -75,29 +87,48 @@ class ArucoSimulationNode(Node):
         )
         self.bbox_pub = self.create_publisher(BoundingBox2D, '/hpad/bbox', 10)
         self.detected_pub = self.create_publisher(Bool, '/hpad/detected', 10)
+        self.tracking_mode_pub = self.create_publisher(String, '/hpad/tracking_mode', 10)
         self.annotated_pub = self.create_publisher(Image, '/hpad/annotated', 10)
 
         self.create_subscription(CameraInfo, '/camera_info', self.camera_info_cb, 10)
         self.create_subscription(Image, '/depth_camera', self.depth_cb, sensor_qos)
         self.create_subscription(Image, '/camera', self.image_cb, sensor_qos)
 
-        # Oak-D-Lite SDF fallback: 640x480, horizontal FOV 1.204 rad.
+        # Oak-D-Lite / Sim camera fallback: 640x480, horizontal FOV 1.204 rad.
         self.image_width = 640
         self.image_height = 480
         self.camera_matrix = self.fallback_camera_matrix(self.image_width, self.image_height)
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float64)
-        self.detector = ArUcoDetector(
-            dictionary_name=dictionary,
-            marker_size_meters=self.marker_size,
-            camera_matrix=self.camera_matrix,
-            dist_coeffs=self.dist_coeffs,
-            target_marker_ids=self.marker_id,
-        )
 
-        self.get_logger().info(
-            f'ArUco simulation node: ID={self.marker_id}, dictionary={dictionary}, '
-            f'marker_size={self.marker_size:.3f} m'
-        )
+        if self.use_dual_scale:
+            self.detector = DualScaleArUcoDetector(
+                config_path=self.board_config if os.path.exists(self.board_config) else None,
+                big_id=self.marker_id,
+                big_size_m=self.marker_size,
+                small_id=self.small_marker_id,
+                small_size_m=self.small_marker_size,
+                dictionary_name=dictionary,
+                camera_matrix=self.camera_matrix,
+                dist_coeffs=self.dist_coeffs,
+            )
+            self.get_logger().info(
+                f'Dual-Scale ArUco simulation node initialized: '
+                f'Big ID={self.marker_id} ({self.marker_size:.2f}m), '
+                f'Small ID={self.small_marker_id} ({self.small_marker_size:.2f}m), '
+                f'Dictionary={dictionary}, Config={self.board_config}'
+            )
+        else:
+            self.detector = ArUcoDetector(
+                dictionary_name=dictionary,
+                marker_size_meters=self.marker_size,
+                camera_matrix=self.camera_matrix,
+                dist_coeffs=self.dist_coeffs,
+                target_marker_ids=self.marker_id,
+            )
+            self.get_logger().info(
+                f'Single-marker ArUco simulation node: ID={self.marker_id}, '
+                f'marker_size={self.marker_size:.3f} m, dictionary={dictionary}'
+            )
 
     @staticmethod
     def fallback_camera_matrix(width, height):
@@ -180,84 +211,155 @@ class ArucoSimulationNode(Node):
             self.detector.set_camera_parameters(self.camera_matrix, self.dist_coeffs)
 
         self.frame_count += 1
-        raw_results = self.detector.process_frame(image)
-        # Filter candidate detections: reject close-range false positives (e.g. ground texture / drone legs at ~1.5m)
-        valid_results = [
-            r for r in raw_results
-            if r.get('pose') is not None
-            and r['pose'].get('distance', 999.0) >= self.min_detection_distance
-            and r['pose'].get('z', 999.0) >= 1.8
-        ]
-        found = bool(valid_results)
-        self.detected_pub.publish(Bool(data=found))
 
-        if found:
-            self.detect_count += 1
-            result = valid_results[0]
-            pose_info = result.get('pose')
-            if pose_info is not None:
+        if self.use_dual_scale:
+            res = self.detector.detect(image, self.camera_matrix, self.dist_coeffs)
+            found = bool(res.get('board_detected', False))
+            tracking_mode = str(res.get('tracking_mode', 'LOST'))
+            dist = float(res.get('distance_m', 0.0))
+
+            if found and (dist < self.min_detection_distance or dist > self.max_detection_distance):
+                found = False
+                tracking_mode = 'OUT_OF_RANGE'
+
+            self.detected_pub.publish(Bool(data=found))
+            self.tracking_mode_pub.publish(String(data=tracking_mode))
+
+            bbox = None
+            if found:
+                self.detect_count += 1
+                tvec = res['tvec']
+                rvec = res['rvec']
+
                 pose = PoseStamped()
-                # Propagate image timestamp for exact TF temporal synchronization
                 if msg.header.stamp.sec > 0 or msg.header.stamp.nanosec > 0:
                     pose.header.stamp = msg.header.stamp
                 else:
                     pose.header.stamp = self.get_clock().now().to_msg()
-                # OpenCV PnP uses x-right, y-down, z-forward. This is the
-                # ROS optical-frame convention, not Gazebo camera_link.
                 pose.header.frame_id = 'camera_optical_frame'
-                pose.pose.position.x = pose_info['x']
-                pose.pose.position.y = pose_info['y']
-                pose.pose.position.z = pose_info['z']
-                # ArUcoDetector returns quaternion in (w, x, y, z) order.
-                qw, qx, qy, qz = pose_info['quaternion']
-                pose.pose.orientation.x = qx
-                pose.pose.orientation.y = qy
-                pose.pose.orientation.z = qz
-                pose.pose.orientation.w = qw
+                pose.pose.position.x = float(tvec[0, 0])
+                pose.pose.position.y = float(tvec[1, 0])
+                pose.pose.position.z = float(tvec[2, 0])
+
+                qw, qx, qy, qz = rvec_to_quaternion(rvec)
+                pose.pose.orientation.x = float(qx)
+                pose.pose.orientation.y = float(qy)
+                pose.pose.orientation.z = float(qz)
+                pose.pose.orientation.w = float(qw)
                 self.pose_pub.publish(pose)
 
                 point = PointStamped()
                 point.header = pose.header
-                point.point.x = pose_info['x']
-                point.point.y = pose_info['y']
-                point.point.z = pose_info['z']
+                point.point.x = pose.pose.position.x
+                point.point.y = pose.pose.position.y
+                point.point.z = pose.pose.position.z
                 self.position_pub.publish(point)
+
+                single_markers = res.get('single_markers', [])
+                if single_markers:
+                    all_corners = np.vstack([m['corners'] for m in single_markers])
+                    pad_origin_px, _ = cv2.projectPoints(
+                        np.zeros((1, 3), dtype=np.float32),
+                        rvec,
+                        tvec,
+                        self.camera_matrix,
+                        self.dist_coeffs,
+                    )
+                    pad_center = pad_origin_px.reshape(2)
+                    bbox = BoundingBox2D()
+                    # Aim at the landing origin, not the off-center coarse tag.
+                    bbox.center.position.x = float(pad_center[0])
+                    bbox.center.position.y = float(pad_center[1])
+                    bbox.center.theta = 0.0
+                    bbox.size_x = float(np.max(all_corners[:, 0]) - np.min(all_corners[:, 0]))
+                    bbox.size_y = float(np.max(all_corners[:, 1]) - np.min(all_corners[:, 1]))
+                    self.bbox_pub.publish(bbox)
 
                 now_detection = time.monotonic()
                 if now_detection - self.last_detection_log > 0.5:
                     self.get_logger().info(
-                        f'[DETECTION] id={result["id"]} '
-                        f'camera_optical xyz=('
-                        f'{pose_info["x"]:.3f}, {pose_info["y"]:.3f}, '
-                        f'{pose_info["z"]:.3f}) m '
-                        f'distance={pose_info["distance"]:.3f} m'
+                        f'[DETECTION] Mode={tracking_mode} active_ids={res.get("active_ids")} '
+                        f'optical xyz=({point.point.x:.3f}, {point.point.y:.3f}, {point.point.z:.3f})m '
+                        f'dist={dist:.3f}m fused_corners={res.get("num_corners_fused", 0)}'
                     )
                     self.last_detection_log = now_detection
 
-            corners = result['corners']
-            bbox = BoundingBox2D()
-            bbox.center.position.x = float(np.mean(corners[:, 0]))
-            bbox.center.position.y = float(np.mean(corners[:, 1]))
-            bbox.center.theta = 0.0
-            bbox.size_x = float(np.max(corners[:, 0]) - np.min(corners[:, 0]))
-            bbox.size_y = float(np.max(corners[:, 1]) - np.min(corners[:, 1]))
-            self.bbox_pub.publish(bbox)
-
-            if self.latest_depth is not None and pose_info is not None:
-                cx = bbox.center.position.x * self.latest_depth.shape[1] / msg.width
-                cy = bbox.center.position.y * self.latest_depth.shape[0] / msg.height
-                x0 = max(0, int(cx) - 3)
-                x1 = min(self.latest_depth.shape[1], int(cx) + 4)
-                y0 = max(0, int(cy) - 3)
-                y1 = min(self.latest_depth.shape[0], int(cy) + 4)
+            if self.latest_depth is not None and bbox is not None:
+                cx = int(bbox.center.position.x * self.latest_depth.shape[1] / msg.width)
+                cy = int(bbox.center.position.y * self.latest_depth.shape[0] / msg.height)
+                x0 = max(0, cx - 3)
+                x1 = min(self.latest_depth.shape[1], cx + 4)
+                y0 = max(0, cy - 3)
+                y1 = min(self.latest_depth.shape[0], cy + 4)
                 patch = self.latest_depth[y0:y1, x0:x1]
-                valid = patch[np.isfinite(patch) & (patch > 0.1)]
-                if valid.size:
-                    pose_info['z_depth'] = float(np.median(valid))
+                valid = patch[np.isfinite(patch) & (patch > 0.05)]
 
-        annotated = self.detector.draw_results(
-            image, valid_results, draw_axes=True, draw_bbox_mask=True, draw_summary_table=True
-        )
+            annotated = self.detector.draw_visualizations(
+                image, res, self.camera_matrix, self.dist_coeffs
+            )
+        else:
+            raw_results = self.detector.process_frame(image)
+            valid_results = [
+                r for r in raw_results
+                if r.get('pose') is not None
+                and self.min_detection_distance <= r['pose'].get('distance', 999.0) <= self.max_detection_distance
+            ]
+            found = bool(valid_results)
+            self.detected_pub.publish(Bool(data=found))
+            self.tracking_mode_pub.publish(String(data='SINGLE_MARKER' if found else 'LOST'))
+
+            if found:
+                self.detect_count += 1
+                result = valid_results[0]
+                pose_info = result.get('pose')
+                if pose_info is not None:
+                    pose = PoseStamped()
+                    if msg.header.stamp.sec > 0 or msg.header.stamp.nanosec > 0:
+                        pose.header.stamp = msg.header.stamp
+                    else:
+                        pose.header.stamp = self.get_clock().now().to_msg()
+                    pose.header.frame_id = 'camera_optical_frame'
+                    pose.pose.position.x = pose_info['x']
+                    pose.pose.position.y = pose_info['y']
+                    pose.pose.position.z = pose_info['z']
+                    qw, qx, qy, qz = pose_info['quaternion']
+                    pose.pose.orientation.x = qx
+                    pose.pose.orientation.y = qy
+                    pose.pose.orientation.z = qz
+                    pose.pose.orientation.w = qw
+                    self.pose_pub.publish(pose)
+
+                    point = PointStamped()
+                    point.header = pose.header
+                    point.point.x = pose_info['x']
+                    point.point.y = pose_info['y']
+                    point.point.z = pose_info['z']
+                    self.position_pub.publish(point)
+
+                    now_detection = time.monotonic()
+                    if now_detection - self.last_detection_log > 0.5:
+                        self.get_logger().info(
+                            f'[DETECTION] id={result["id"]} '
+                            f'camera_optical xyz=('
+                            f'{pose_info["x"]:.3f}, {pose_info["y"]:.3f}, '
+                            f'{pose_info["z"]:.3f}) m '
+                            f'distance={pose_info["distance"]:.3f} m'
+                        )
+                        self.last_detection_log = now_detection
+
+                corners = result['corners']
+                bbox = BoundingBox2D()
+                bbox.center.position.x = float(np.mean(corners[:, 0]))
+                bbox.center.position.y = float(np.mean(corners[:, 1]))
+                bbox.center.theta = 0.0
+                bbox.size_x = float(np.max(corners[:, 0]) - np.min(corners[:, 0]))
+                bbox.size_y = float(np.max(corners[:, 1]) - np.min(corners[:, 1]))
+                self.bbox_pub.publish(bbox)
+
+            annotated = self.detector.draw_results(
+                image, valid_results, draw_axes=True, draw_bbox_mask=True, draw_summary_table=True
+            )
+
         out = Image()
         out.header = msg.header
         out.height, out.width = annotated.shape[:2]

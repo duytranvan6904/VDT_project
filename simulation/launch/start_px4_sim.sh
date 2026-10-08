@@ -8,7 +8,7 @@
 set -e
 
 echo "[1/3] Dọn dẹp các tiến trình mô phỏng cũ còn chạy ngầm..."
-killall -9 gz-sim gz px4 2>/dev/null || true
+killall -9 gz-sim gz px4 ruby parameter_bridge ros_gz_bridge 2>/dev/null || true
 ros2 daemon stop >/dev/null 2>&1 || true
 # PX4 can leave an instance lock behind if the previous SITL/Gazebo process
 # was terminated abruptly.  Remove only PX4 runtime locks after confirming

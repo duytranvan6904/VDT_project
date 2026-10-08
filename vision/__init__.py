@@ -4,7 +4,7 @@ Submodule developed for Intel RealSense D430 depth camera.
 """
 
 from .realsense_stream import RealSenseCamera
-from .aruco_detector import ArUcoDetector
+from .aruco_detector import ArUcoDetector, DualScaleArUcoDetector
 from .depth_masker import DepthMasker
 from .utils import (
     rvec_to_euler,
@@ -18,6 +18,7 @@ from .target_tracking_policy import TrackingMode, classify_tracking_mode
 __all__ = [
     'RealSenseCamera',
     'ArUcoDetector',
+    'DualScaleArUcoDetector',
     'DepthMasker',
     'rvec_to_euler',
     'rvec_to_quaternion',
