@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  CycloneDDS Configuration for Mobile Hotspot / Unicast Discovery
+  LƯU Ý: Điện thoại cá nhân phát Hotspot thường CHẶN Multicast UDP!
+  File này cấu hình Unicast Peers để PC Trạm và Pi 5 tìm thấy nhau 100%.
+-->
+<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+    <Domain id="any">
+        <General>
+            <!-- Thay bằng tên interface Wi-Fi (ví dụ: wlan0, wlp2s0) hoặc để AUTO -->
+            <NetworkInterfaceAddress>auto</NetworkInterfaceAddress>
+            <AllowMulticast>false</AllowMulticast>
+        </General>
+        <Discovery>
+            <Peers>
+                <!-- Điền IP của Raspberry Pi 5 nhận từ Hotspot (vd: 192.168.43.50) -->
+                <Peer address="192.168.43.50"/>
+                <!-- Điền IP của Máy tính Host/Trạm (vd: 192.168.43.100) -->
+                <Peer address="192.168.43.100"/>
+                <Peer address="127.0.0.1"/>
+            </Peers>
+            <ParticipantIndex>auto</ParticipantIndex>
+        </Discovery>
+    </Domain>
+</CycloneDDS>
