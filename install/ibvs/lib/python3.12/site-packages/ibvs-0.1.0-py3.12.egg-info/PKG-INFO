@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: ibvs
+Version: 0.1.0
+Summary: Image-based visual servoing for gimbal pitch and drone yaw
+Maintainer: vdt
+Maintainer-email: vdt@example.com
+License: Apache-2.0
+Provides-Extra: test

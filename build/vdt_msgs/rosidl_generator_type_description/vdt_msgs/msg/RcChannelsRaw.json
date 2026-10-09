@@ -1,0 +1,46 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "vdt_msgs/msg/RcChannelsRaw",
+      "fields": [
+        {
+          "name": "ch",
+          "type": {
+            "type_id": 52,
+            "capacity": 16,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "valid",
+          "type": {
+            "type_id": 15,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "failsafe",
+          "type": {
+            "type_id": 15,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "vdt_msgs/msg/RcChannelsRaw",
+      "hash_string": "RIHS01_5bd1c9c8b092a0ca1c67999ea7a059534b0cc4ae032f9284ad2b10c5fe50f959"
+    }
+  ]
+}

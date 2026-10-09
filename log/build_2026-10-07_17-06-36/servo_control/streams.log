@@ -1,0 +1,21 @@
+[1.069s] Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control': PYTHONPATH=/home/vdt_2026/VDT_project/build/servo_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/servo_control build --build-base /home/vdt_2026/VDT_project/build/servo_control/build install --record /home/vdt_2026/VDT_project/build/servo_control/install.log --install-scripts $base/lib/servo_control --single-version-externally-managed install_data
+[1.375s] running egg_info
+[1.395s] writing ../../../build/servo_control/servo_control.egg-info/PKG-INFO
+[1.396s] writing dependency_links to ../../../build/servo_control/servo_control.egg-info/dependency_links.txt
+[1.398s] writing entry points to ../../../build/servo_control/servo_control.egg-info/entry_points.txt
+[1.399s] writing requirements to ../../../build/servo_control/servo_control.egg-info/requires.txt
+[1.400s] writing top-level names to ../../../build/servo_control/servo_control.egg-info/top_level.txt
+[1.443s] reading manifest file '../../../build/servo_control/servo_control.egg-info/SOURCES.txt'
+[1.445s] writing manifest file '../../../build/servo_control/servo_control.egg-info/SOURCES.txt'
+[1.445s] running build
+[1.445s] running build_py
+[1.448s] running install
+[1.457s] running install_lib
+[1.480s] running install_data
+[1.481s] running install_egg_info
+[1.504s] removing '/home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages/servo_control-0.1.0-py3.12.egg-info' (and everything under it)
+[1.504s] Copying ../../../build/servo_control/servo_control.egg-info to /home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages/servo_control-0.1.0-py3.12.egg-info
+[1.506s] running install_scripts
+[1.651s] Installing servo_node script to /home/vdt_2026/VDT_project/install/servo_control/lib/servo_control
+[1.652s] writing list of installed files to '/home/vdt_2026/VDT_project/build/servo_control/install.log'
+[1.741s] Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/servo_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/servo_control build --build-base /home/vdt_2026/VDT_project/build/servo_control/build install --record /home/vdt_2026/VDT_project/build/servo_control/install.log --install-scripts $base/lib/servo_control --single-version-externally-managed install_data

@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: ekf-adapter
+Version: 0.1.0
+Summary: Target state EKF adapter for ArUco H-Pad measurements
+Maintainer: maintainer
+Maintainer-email: maintainer@example.com
+License: Proprietary

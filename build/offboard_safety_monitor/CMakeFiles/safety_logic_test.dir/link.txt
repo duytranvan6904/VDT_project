@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/safety_logic_test.dir/test/safety_logic_test.cpp.o CMakeFiles/safety_logic_test.dir/src/safety_logic.cpp.o -o safety_logic_test 

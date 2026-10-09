@@ -1,0 +1,2 @@
+bool marker_visible
+float32 pixel_align_error

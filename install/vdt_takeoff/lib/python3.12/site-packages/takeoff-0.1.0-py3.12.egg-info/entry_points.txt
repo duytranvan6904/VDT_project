@@ -1,0 +1,2 @@
+[console_scripts]
+takeoff = takeoff.takeoff_cmd:main

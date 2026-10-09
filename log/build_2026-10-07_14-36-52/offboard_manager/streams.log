@@ -1,0 +1,42 @@
+[0.021s] Invoking command in '/home/vdt_2026/VDT_project/build/offboard_manager': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/offboard_manager
+[0.180s] -- The C compiler identification is GNU 13.3.0
+[0.343s] -- The CXX compiler identification is GNU 13.3.0
+[0.381s] -- Detecting C compiler ABI info
+[0.617s] -- Detecting C compiler ABI info - done
+[0.633s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.635s] -- Detecting C compile features
+[0.636s] -- Detecting C compile features - done
+[0.655s] -- Detecting CXX compiler ABI info
+[0.918s] -- Detecting CXX compiler ABI info - done
+[0.932s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.933s] -- Detecting CXX compile features
+[0.934s] -- Detecting CXX compile features - done
+[0.940s] -- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.305s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[1.531s] -- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+[1.581s] -- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[1.598s] -- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[1.620s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.646s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.746s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[1.752s] -- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[1.893s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[1.923s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[1.972s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[2.083s] -- Found std_msgs: 5.3.8 (/opt/ros/jazzy/share/std_msgs/cmake)
+[2.104s] -- Found px4_msgs: 2.0.1 (/home/vdt_2026/ros2_ws/install/px4_msgs/share/px4_msgs/cmake)
+[2.128s] -- Found vdt_msgs: 0.1.0 (/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake)
+[2.396s] -- Configuring done (2.4s)
+[2.436s] -- Generating done (0.0s)
+[2.452s] -- Build files have been written to: /home/vdt_2026/VDT_project/build/offboard_manager
+[2.484s] Invoked command in '/home/vdt_2026/VDT_project/build/offboard_manager' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/offboard_manager
+[2.486s] Invoking command in '/home/vdt_2026/VDT_project/build/offboard_manager': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/offboard_manager -- -j4 -l4
+[2.665s] [ 14%] Building CXX object CMakeFiles/offboard_node.dir/src/main.cpp.o
+[2.693s] [ 42%] Building CXX object CMakeFiles/offboard_logic_test.dir/test/offboard_logic_test.cpp.o
+[2.697s] [ 28%] Building CXX object CMakeFiles/offboard_node.dir/src/offboard_node.cpp.o
+[2.702s] [ 57%] Building CXX object CMakeFiles/offboard_node.dir/src/offboard_logic.cpp.o
+[4.075s] [ 71%] Building CXX object CMakeFiles/offboard_logic_test.dir/src/offboard_logic.cpp.o
+[5.710s] [ 85%] Linking CXX executable offboard_logic_test
+[6.243s] [ 85%] Built target offboard_logic_test
+[85.464s] [100%] Linking CXX executable offboard_node
+[86.321s] [100%] Built target offboard_node

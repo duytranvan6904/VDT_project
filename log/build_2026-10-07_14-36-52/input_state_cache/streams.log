@@ -1,0 +1,55 @@
+[0.019s] Invoking command in '/home/vdt_2026/VDT_project/build/input_state_cache': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/input_state_cache
+[0.184s] -- The C compiler identification is GNU 13.3.0
+[0.345s] -- The CXX compiler identification is GNU 13.3.0
+[0.378s] -- Detecting C compiler ABI info
+[0.603s] -- Detecting C compiler ABI info - done
+[0.620s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.621s] -- Detecting C compile features
+[0.621s] -- Detecting C compile features - done
+[0.639s] -- Detecting CXX compiler ABI info
+[0.914s] -- Detecting CXX compiler ABI info - done
+[0.927s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.928s] -- Detecting CXX compile features
+[0.929s] -- Detecting CXX compile features - done
+[0.934s] -- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.298s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[1.525s] -- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+[1.573s] -- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[1.595s] -- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[1.614s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.637s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.740s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[1.743s] -- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[1.903s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[1.926s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[1.970s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[2.089s] -- Found nav_msgs: 5.3.8 (/opt/ros/jazzy/share/nav_msgs/cmake)
+[2.182s] -- Found vdt_msgs: 0.1.0 (/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake)
+[2.214s] -- Found ament_cmake_gtest: 2.5.6 (/opt/ros/jazzy/share/ament_cmake_gtest/cmake)
+[2.216s] -- Found launch_testing_ament_cmake: 3.4.12 (/opt/ros/jazzy/share/launch_testing_ament_cmake/cmake)
+[2.219s] -- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+[2.576s] -- Found PythonExtra: /usr/bin/python3  
+[2.587s] -- Found gtest sources under '/opt/ros/jazzy/src/gtest_vendor': C++ tests using 'Google Test' will be built
+[2.600s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[3.115s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[3.116s] -- Found Threads: TRUE  
+[3.793s] -- Configuring done (3.7s)
+[3.982s] -- Generating done (0.1s)
+[4.034s] -- Build files have been written to: /home/vdt_2026/VDT_project/build/input_state_cache
+[4.156s] Invoked command in '/home/vdt_2026/VDT_project/build/input_state_cache' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/input_state_cache
+[4.157s] Invoking command in '/home/vdt_2026/VDT_project/build/input_state_cache': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/input_state_cache -- -j4 -l4
+[4.373s] [  9%] Building CXX object CMakeFiles/input_cache_node.dir/src/main.cpp.o
+[4.389s] [ 18%] Building CXX object CMakeFiles/input_cache_node.dir/src/input_cache_node.cpp.o
+[4.411s] [ 27%] Building CXX object gtest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o
+[4.413s] [ 36%] Building CXX object gtest/CMakeFiles/gtest.dir/src/gtest-all.cc.o
+[10.217s] [ 45%] Linking CXX static library libgtest_main.a
+[10.407s] [ 45%] Built target gtest_main
+[10.441s] [ 54%] Building CXX object CMakeFiles/input_cache_node.dir/src/input_cache_logic.cpp.o
+[41.844s] [ 63%] Linking CXX static library libgtest.a
+[41.962s] [ 63%] Built target gtest
+[68.896s] [ 72%] Linking CXX executable input_cache_node
+[69.429s] [ 72%] Built target input_cache_node
+[69.471s] [ 90%] Building CXX object CMakeFiles/input_cache_logic_test.dir/test/unit/input_state_logic_test.cpp.o
+[69.471s] [ 90%] Building CXX object CMakeFiles/input_cache_logic_test.dir/src/input_cache_logic.cpp.o
+[72.886s] [100%] Linking CXX executable input_cache_logic_test
+[73.160s] [100%] Built target input_cache_logic_test

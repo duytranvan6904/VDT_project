@@ -1,0 +1,2 @@
+/usr/bin/ar qc librc_parser_lib.a CMakeFiles/rc_parser_lib.dir/src/rc_logic.cpp.o
+/usr/bin/ranlib librc_parser_lib.a

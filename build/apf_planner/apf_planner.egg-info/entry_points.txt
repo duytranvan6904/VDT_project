@@ -1,0 +1,4 @@
+[console_scripts]
+planner_merge_node = apf_planner.planner_merge_node:main
+planner_node = apf_planner.planner_node:main
+pointcloud_generator = apf_planner.pointcloud_generator:main

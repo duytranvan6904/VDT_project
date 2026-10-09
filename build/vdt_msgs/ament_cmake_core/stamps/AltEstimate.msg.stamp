@@ -1,0 +1,2 @@
+float32 altitude
+bool touchdown_flag

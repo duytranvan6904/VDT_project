@@ -9,7 +9,7 @@ def generate_launch_description():
     debug = LaunchConfiguration('debug')
 
     params_file = PathJoinSubstitution([
-        FindPackageShare('vdt_bringup'),
+        FindPackageShare('bringup'),
         'System_Params.yaml'
     ])
 

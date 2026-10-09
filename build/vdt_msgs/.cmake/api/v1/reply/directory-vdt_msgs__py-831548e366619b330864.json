@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "vdt_msgs__py",
+		"source" : "/home/vdt_2026/VDT_project/build/vdt_msgs/vdt_msgs__py"
+	}
+}

@@ -1,0 +1,88 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-93c5421d93ee6e6ca2ea.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "vision_interface_bridge",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "bridge_logic_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bridge_logic_test-59f3390f159032b39aaf.json",
+					"name" : "bridge_logic_test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-ef80546d72d45d4c3be4.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vision_interface_bridge_node::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vision_interface_bridge_node-aad9aae565580606a4b0.json",
+					"name" : "vision_interface_bridge_node",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vision_interface_bridge_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vision_interface_bridge_uninstall-00aa15a45d1457d675c7.json",
+					"name" : "vision_interface_bridge_uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/vdt_2026/VDT_project/build/vision_interface_bridge",
+		"source" : "/home/vdt_2026/VDT_project/ros2_ws/src/vision_interface_bridge"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

@@ -1,0 +1,13 @@
+package.xml
+setup.cfg
+setup.py
+../../../build/vdt_takeoff/takeoff.egg-info/PKG-INFO
+../../../build/vdt_takeoff/takeoff.egg-info/SOURCES.txt
+../../../build/vdt_takeoff/takeoff.egg-info/dependency_links.txt
+../../../build/vdt_takeoff/takeoff.egg-info/entry_points.txt
+../../../build/vdt_takeoff/takeoff.egg-info/requires.txt
+../../../build/vdt_takeoff/takeoff.egg-info/top_level.txt
+../../../build/vdt_takeoff/takeoff.egg-info/zip-safe
+resource/takeoff
+takeoff/__init__.py
+takeoff/takeoff_cmd.py

@@ -1,0 +1,10 @@
+# CMake generated Testfile for 
+# Source directory: /home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor
+# Build directory: /home/vdt_2026/VDT_project/build/offboard_safety_monitor
+# 
+# This file includes the relevant testing commands required for 
+# testing this directory and lists subdirectories to be tested as well.
+add_test(safety_logic_test "/home/vdt_2026/VDT_project/build/offboard_safety_monitor/safety_logic_test")
+set_tests_properties(safety_logic_test PROPERTIES  _BACKTRACE_TRIPLES "/home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor/CMakeLists.txt;36;add_test;/home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor/CMakeLists.txt;0;")
+add_test(test_safety_monitor_integration_test.py "/usr/bin/python3" "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/home/vdt_2026/VDT_project/build/offboard_safety_monitor/test_results/offboard_safety_monitor/test_safety_monitor_integration_test.py.xunit.xml" "--package-name" "offboard_safety_monitor" "--output-file" "/home/vdt_2026/VDT_project/build/offboard_safety_monitor/launch_test/test_safety_monitor_integration_test.py.txt" "--command" "/usr/bin/python3" "-m" "launch_testing.launch_test" "/home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor/test/safety_monitor_integration_test.py" "--junit-xml=/home/vdt_2026/VDT_project/build/offboard_safety_monitor/test_results/offboard_safety_monitor/test_safety_monitor_integration_test.py.xunit.xml" "--package-name=offboard_safety_monitor")
+set_tests_properties(test_safety_monitor_integration_test.py PROPERTIES  LABELS "launch_test" TIMEOUT "60" WORKING_DIRECTORY "/home/vdt_2026/VDT_project/build/offboard_safety_monitor" _BACKTRACE_TRIPLES "/opt/ros/jazzy/share/ament_cmake_test/cmake/ament_add_test.cmake;125;add_test;/opt/ros/jazzy/share/launch_testing_ament_cmake/cmake/add_launch_test.cmake;131;ament_add_test;/home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor/CMakeLists.txt;38;add_launch_test;/home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor/CMakeLists.txt;0;")

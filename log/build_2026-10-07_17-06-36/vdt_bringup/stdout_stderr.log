@@ -1,0 +1,47 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Configuring done (1.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/vdt_2026/VDT_project/build/vdt_bringup
+Change Dir: '/home/vdt_2026/VDT_project/build/vdt_bringup'
+
+Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile -j4 -l4
+/usr/bin/cmake -S/home/vdt_2026/VDT_project/ros2_ws/src/vdt_bringup -B/home/vdt_2026/VDT_project/build/vdt_bringup --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/cmake -E cmake_progress_start /home/vdt_2026/VDT_project/build/vdt_bringup/CMakeFiles /home/vdt_2026/VDT_project/build/vdt_bringup//CMakeFiles/progress.marks
+/usr/bin/gmake  -f CMakeFiles/Makefile2 all
+gmake[1]: Entering directory '/home/vdt_2026/VDT_project/build/vdt_bringup'
+gmake[1]: Nothing to be done for 'all'.
+gmake[1]: Leaving directory '/home/vdt_2026/VDT_project/build/vdt_bringup'
+/usr/bin/cmake -E cmake_progress_start /home/vdt_2026/VDT_project/build/vdt_bringup/CMakeFiles 0
+
+-- Install configuration: ""
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/launch
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/launch/vdt_system.launch.py
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/System_Params.yaml
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/ament_index/resource_index/package_run_dependencies/vdt_bringup
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/ament_index/resource_index/parent_prefix_path/vdt_bringup
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/environment/ament_prefix_path.sh
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/environment/ament_prefix_path.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/environment/path.sh
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/environment/path.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/local_setup.bash
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/local_setup.sh
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/local_setup.zsh
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/local_setup.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/package.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/ament_index/resource_index/packages/vdt_bringup
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/cmake/vdt_bringupConfig.cmake
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/cmake/vdt_bringupConfig-version.cmake
+-- Installing: /home/vdt_2026/VDT_project/install/vdt_bringup/share/vdt_bringup/package.xml

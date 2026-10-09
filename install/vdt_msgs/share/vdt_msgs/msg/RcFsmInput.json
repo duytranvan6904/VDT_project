@@ -1,0 +1,36 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "vdt_msgs/msg/RcFsmInput",
+      "fields": [
+        {
+          "name": "land_switch",
+          "type": {
+            "type_id": 15,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "kill_switch",
+          "type": {
+            "type_id": 15,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "vdt_msgs/msg/RcFsmInput",
+      "hash_string": "RIHS01_3f29f01d155b8673fd721f73fe76a13c0f1c35f3447a4a01046cfcbcbd28cd3b"
+    }
+  ]
+}

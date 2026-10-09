@@ -1,0 +1,36 @@
+{
+  "type_description_msg": {
+    "type_description": {
+      "type_name": "vdt_msgs/msg/OffboardStatus",
+      "fields": [
+        {
+          "name": "offboard_active",
+          "type": {
+            "type_id": 15,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        },
+        {
+          "name": "heartbeat_age_sec",
+          "type": {
+            "type_id": 10,
+            "capacity": 0,
+            "string_capacity": 0,
+            "nested_type_name": ""
+          },
+          "default_value": ""
+        }
+      ]
+    },
+    "referenced_type_descriptions": []
+  },
+  "type_hashes": [
+    {
+      "type_name": "vdt_msgs/msg/OffboardStatus",
+      "hash_string": "RIHS01_1020fa2dd7689934616ce069d0329e0deea2083c083d1306e3caddcb7918bcbd"
+    }
+  ]
+}

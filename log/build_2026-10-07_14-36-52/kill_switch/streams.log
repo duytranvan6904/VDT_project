@@ -1,0 +1,43 @@
+[0.050s] Invoking command in '/home/vdt_2026/VDT_project/build/kill_switch': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/kill_switch -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/kill_switch
+[0.418s] -- The C compiler identification is GNU 13.3.0
+[0.590s] -- The CXX compiler identification is GNU 13.3.0
+[0.628s] -- Detecting C compiler ABI info
+[0.847s] -- Detecting C compiler ABI info - done
+[0.869s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.869s] -- Detecting C compile features
+[0.869s] -- Detecting C compile features - done
+[0.892s] -- Detecting CXX compiler ABI info
+[1.134s] -- Detecting CXX compiler ABI info - done
+[1.154s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.154s] -- Detecting CXX compile features
+[1.154s] -- Detecting CXX compile features - done
+[1.160s] -- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.676s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[2.009s] -- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+[2.076s] -- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[2.104s] -- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[2.135s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[2.186s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[2.363s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[2.370s] -- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[2.589s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[2.654s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[2.761s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[3.079s] -- Found std_msgs: 5.3.8 (/opt/ros/jazzy/share/std_msgs/cmake)
+[3.135s] -- Found px4_msgs: 2.0.1 (/home/vdt_2026/ros2_ws/install/px4_msgs/share/px4_msgs/cmake)
+[3.211s] -- Found vdt_msgs: 0.1.0 (/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake)
+[3.660s] -- Configuring done (3.6s)
+[3.725s] -- Generating done (0.0s)
+[3.747s] -- Build files have been written to: /home/vdt_2026/VDT_project/build/kill_switch
+[3.810s] Invoked command in '/home/vdt_2026/VDT_project/build/kill_switch' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/kill_switch -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/kill_switch
+[3.811s] Invoking command in '/home/vdt_2026/VDT_project/build/kill_switch': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/kill_switch -- -j4 -l4
+[4.052s] [ 25%] Building CXX object CMakeFiles/kill_switch_node.dir/src/main.cpp.o
+[4.791s] In file included from /home/vdt_2026/VDT_project/ros2_ws/src/kill_switch/src/main.cpp:1:
+[4.791s] /home/vdt_2026/VDT_project/ros2_ws/src/kill_switch/include/kill_switch/kill_switch_node.hpp:6:10: fatal error: rc_parser/rc_types.hpp: No such file or directory
+[4.791s]     6 | #include "rc_parser/rc_types.hpp"
+[4.792s]       |          ^~~~~~~~~~~~~~~~~~~~~~~~
+[4.792s] compilation terminated.
+[4.802s] gmake[2]: *** [CMakeFiles/kill_switch_node.dir/build.make:76: CMakeFiles/kill_switch_node.dir/src/main.cpp.o] Error 1
+[4.802s] gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/kill_switch_node.dir/all] Error 2
+[4.803s] gmake: *** [Makefile:146: all] Error 2
+[4.807s] Invoked command in '/home/vdt_2026/VDT_project/build/kill_switch' returned '2': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/kill_switch -- -j4 -l4

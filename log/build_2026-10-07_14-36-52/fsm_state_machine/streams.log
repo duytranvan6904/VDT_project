@@ -1,0 +1,68 @@
+[0.023s] Invoking command in '/home/vdt_2026/VDT_project/build/fsm_state_machine': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/fsm_state_machine
+[0.184s] -- The C compiler identification is GNU 13.3.0
+[0.347s] -- The CXX compiler identification is GNU 13.3.0
+[0.379s] -- Detecting C compiler ABI info
+[0.618s] -- Detecting C compiler ABI info - done
+[0.631s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.632s] -- Detecting C compile features
+[0.633s] -- Detecting C compile features - done
+[0.658s] -- Detecting CXX compiler ABI info
+[0.925s] -- Detecting CXX compiler ABI info - done
+[0.945s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.946s] -- Detecting CXX compile features
+[0.948s] -- Detecting CXX compile features - done
+[0.954s] -- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.375s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[1.605s] -- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+[1.655s] -- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[1.674s] -- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[1.697s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.728s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.842s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[1.847s] -- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[2.009s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[2.034s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[2.075s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[2.203s] -- Found std_msgs: 5.3.8 (/opt/ros/jazzy/share/std_msgs/cmake)
+[2.237s] -- Found nav_msgs: 5.3.8 (/opt/ros/jazzy/share/nav_msgs/cmake)
+[2.321s] -- Found vdt_msgs: 0.1.0 (/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake)
+[2.379s] -- Found ament_cmake_gtest: 2.5.6 (/opt/ros/jazzy/share/ament_cmake_gtest/cmake)
+[2.382s] -- Found launch_testing_ament_cmake: 3.4.12 (/opt/ros/jazzy/share/launch_testing_ament_cmake/cmake)
+[2.387s] -- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+[2.940s] -- Found PythonExtra: /usr/bin/python3  
+[2.942s] -- Found gtest sources under '/opt/ros/jazzy/src/gtest_vendor': C++ tests using 'Google Test' will be built
+[2.955s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[3.333s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[3.333s] -- Found Threads: TRUE  
+[3.746s] -- Configuring done (3.7s)
+[3.831s] -- Generating done (0.1s)
+[3.856s] -- Build files have been written to: /home/vdt_2026/VDT_project/build/fsm_state_machine
+[3.887s] Invoked command in '/home/vdt_2026/VDT_project/build/fsm_state_machine' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/fsm_state_machine
+[3.889s] Invoking command in '/home/vdt_2026/VDT_project/build/fsm_state_machine': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/fsm_state_machine -- -j4 -l4
+[4.153s] [  5%] Building CXX object gtest/CMakeFiles/gtest.dir/src/gtest-all.cc.o
+[4.185s] [ 16%] Building CXX object gtest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o
+[4.185s] [ 16%] Building CXX object CMakeFiles/fsm_logic.dir/src/fsm_logic.cpp.o
+[6.275s] [ 22%] Linking CXX static library libfsm_logic.a
+[6.439s] [ 22%] Built target fsm_logic
+[6.578s] [ 27%] Building CXX object CMakeFiles/fsm_actions.dir/src/fsm_actions.cpp.o
+[11.244s] [ 33%] Linking CXX static library libgtest_main.a
+[11.428s] [ 33%] Built target gtest_main
+[40.977s] [ 38%] Linking CXX static library libfsm_actions.a
+[41.180s] [ 38%] Built target fsm_actions
+[43.670s] [ 44%] Linking CXX static library libgtest.a
+[43.771s] [ 44%] Built target gtest
+[43.811s] [ 50%] Building CXX object CMakeFiles/fsm_node_lib.dir/src/fsm_node.cpp.o
+[77.920s] [ 55%] Linking CXX static library libfsm_node_lib.a
+[79.227s] [ 55%] Built target fsm_node_lib
+[79.272s] [ 61%] Building CXX object CMakeFiles/fsm_logic_test.dir/test/unit/fsm_logic_test.cpp.o
+[79.272s] [ 66%] Building CXX object CMakeFiles/fsm_node.dir/src/main.cpp.o
+[79.275s] [ 72%] Building CXX object CMakeFiles/fsm_actions_test.dir/test/ros2/fsm_actions_test.cpp.o
+[86.654s] [ 77%] Linking CXX executable fsm_node
+[87.134s] [ 77%] Built target fsm_node
+[87.173s] [ 83%] Building CXX object CMakeFiles/fsm_node_test.dir/test/ros2/fsm_node_test.cpp.o
+[89.559s] [ 88%] Linking CXX executable fsm_logic_test
+[89.873s] [ 88%] Built target fsm_logic_test
+[112.171s] [ 94%] Linking CXX executable fsm_actions_test
+[112.651s] [ 94%] Built target fsm_actions_test
+[122.234s] [100%] Linking CXX executable fsm_node_test
+[122.755s] [100%] Built target fsm_node_test

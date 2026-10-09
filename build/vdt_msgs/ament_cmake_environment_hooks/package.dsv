@@ -1,0 +1,4 @@
+source;share/vdt_msgs/local_setup.bash
+source;share/vdt_msgs/local_setup.dsv
+source;share/vdt_msgs/local_setup.sh
+source;share/vdt_msgs/local_setup.zsh

@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: takeoff
+Version: 0.1.0
+Summary: One-shot takeoff command for PX4 over uXRCE-DDS
+Maintainer: vdt
+Maintainer-email: todo@example.com
+License: Proprietary

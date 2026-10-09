@@ -57,6 +57,9 @@ class PlannerMergeNode(Node):
         self.landing_vel = (0.0, 0.0, 0.0)
         self.landing_active = False
         self.t_landing_vel = self.t_landing_active = None
+        self.landing_safe = False
+        self.t_landing_safe = None
+        self.create_subscription(Bool, '/landing/safe_to_land', self.landing_safe_cb, 10)
 
         self.create_subscription(Twist, str(g('velocity_topic')), self.vel_cb, 10)
         self.create_subscription(Float64, str(g('apf_yaw_topic')), self.apf_yaw_cb, 10)
@@ -97,6 +100,10 @@ class PlannerMergeNode(Node):
         self.landing_active = bool(msg.data)
         self.t_landing_active = self._now()
 
+    def landing_safe_cb(self, msg: Bool) -> None:
+        self.landing_safe = bool(msg.data)
+        self.t_landing_safe = self._now()
+
     def _landing_ok(self, phase: str) -> bool:
         return (
             self.landing_source
@@ -133,6 +140,9 @@ class PlannerMergeNode(Node):
             elif age <= self.upstream_timeout:
                 vx, vy, vz = self.vel
                 yaw = self._yaw()
+            if (self.landing_source and phase == 'APPROACH'
+                    and not (self.landing_safe and self._age(self.t_landing_safe) <= self.landing_timeout)):
+                vz = 0.0
             if not all(math.isfinite(c) for c in (vx, vy, vz)):
                 vx = vy = vz = 0.0
                 yaw = math.nan

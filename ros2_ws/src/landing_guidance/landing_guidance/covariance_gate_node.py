@@ -70,7 +70,7 @@ class CovarianceGateNode(Node):
         self.last_log_time = 0.0
 
         self.create_subscription(Odometry, '/odom', self._drone_cb, sensor_qos)
-        self.create_subscription(Odometry, '/ekf/target_state', self._target_cb, 10)
+        self.create_subscription(Odometry, '/hpad/state_filtered', self._target_cb, 10)
         self.create_subscription(String, '/ekf/tracking_mode', self._mode_cb, 10)
 
         self.safe_pub = self.create_publisher(Bool, '/landing/safe_to_land', 10)

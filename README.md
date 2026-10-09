@@ -75,7 +75,7 @@ vdt_full.launch.py ──► vdt_system.launch.py (embedded) + aruco_detector + 
 |---|---|
 | `ros2_ws/src/` | Mười tám ROS 2 packages của hệ thống bay, module vision, planner, cầu nối vision, message dùng chung và bringup |
 | `ros2_ws/src/vdt_msgs/` | Message hub: toàn bộ 8 custom message của hệ thống |
-| `ros2_ws/src/vdt_bringup/` | Launch orchestration: `vdt_system.launch.py` (embedded) và `vdt_full.launch.py` (toàn hệ thống trừ `takeoff`), startup ordering |
+| `ros2_ws/src/bringup/` | Launch orchestration: `vdt_system.launch.py` (embedded) và `vdt_full.launch.py` (toàn hệ thống trừ `takeoff`), startup ordering |
 | `ros2_ws/src/px4_state_bridge/` | Cầu nối trạng thái PX4 sang `/odom`, TF và `alt_estimator/state` |
 | `ros2_ws/src/vision_interface_bridge/` | Cầu nối topic vision sang `vision/marker` và `/mission/phase` |
 | `ros2_ws/src/aruco_detector/` | Phát hiện ArUco H-Pad, pose trong frame camera, mask depth |
@@ -787,9 +787,9 @@ xrce_bridge_node ──► spawn/kiểm tra `MicroXRCEAgent serial --dev <serial
 
 Xem [XRCE_Guide.md](ros2_ws/src/xrce_bridge_manager/XRCE_Guide.md).
 
-### `vdt_bringup`
+### `bringup`
 
-Launch orchestration và nạp [System_Params.yaml](System_Params.yaml), gồm hai lớp: `vdt_system.launch.py` khởi động các node embedded; `vdt_full.launch.py` include lớp đó rồi thêm module vision (`aruco_detector` với `mode:=hw`, `ekf_adapter`, `ibvs`) và `apf_planner`, mặc định `start_servo:=true`. Không gồm `takeoff`. Xem [Bringup_Guide.md](ros2_ws/src/vdt_bringup/Bringup_Guide.md).
+Launch orchestration và nạp [System_Params.yaml](System_Params.yaml), gồm hai lớp: `vdt_system.launch.py` khởi động các node embedded; `vdt_full.launch.py` include lớp đó rồi thêm module vision (`aruco_detector` với `mode:=hw`, `ekf_adapter`, `ibvs`) và `apf_planner`, mặc định `start_servo:=true`. Không gồm `takeoff`. Xem [Bringup_Guide.md](ros2_ws/src/bringup/Bringup_Guide.md).
 
 ## Giao diện giữa embedded và vision
 
@@ -864,18 +864,18 @@ nsh> uxrce_dds_client start -t serial -d /dev/ttyACM0 -b 921600
 nsh> mavlink stop -d /dev/ttyACM0
 ```
 
-Sau ba lệnh trên, thoát `mavlink_shell` (Ctrl+C) rồi mới `ros2 launch vdt_bringup vdt_full.launch.py`. Chỉ được có một tiến trình giữ `/dev/ttyACM0`: không chạy `MicroXRCEAgent` tay song song với launch. Khi debug riêng (không launch) mới chạy tay: `MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600 -v6`.
+Sau ba lệnh trên, thoát `mavlink_shell` (Ctrl+C) rồi mới `ros2 launch bringup vdt_full.launch.py`. Chỉ được có một tiến trình giữ `/dev/ttyACM0`: không chạy `MicroXRCEAgent` tay song song với launch. Khi debug riêng (không launch) mới chạy tay: `MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600 -v6`.
 
 Hệ quả:
 
 - Cấu hình ở `nsh>` mất khi Pixhawk reboot; phải gõ lại ba lệnh.
 - Sau `mavlink stop`, cáp USB không còn MAVLink: `mavlink_shell` không hiện output (kể cả `uxrce_dds_client status`), QGC không kết nối được.
 - QGC chỉ dùng được khi cắm USB trực tiếp vào laptop (hiệu chỉnh compass, accel, gyro, level), không chạy cùng lúc với Agent. Giám sát khi bay cần đường telemetry riêng (radio hoặc cổng TELEM khác).
-- `xrce_bridge_node` phải dùng `serial_port=/dev/ttyACM0`. Giá trị này nằm trong `System_Params.yaml` và ghi đè giá trị mặc định trong code; đổi cổng thì sửa file đó rồi `colcon build --packages-select vdt_bringup`.
+- `xrce_bridge_node` phải dùng `serial_port=/dev/ttyACM0`. Giá trị này nằm trong `System_Params.yaml` và ghi đè giá trị mặc định trong code; đổi cổng thì sửa file đó rồi `colcon build --packages-select bringup`.
 
 ## Tham số tập trung
 
-Toàn bộ tham số runtime (embedded, vision, planner) được khai báo trong [System_Params.yaml](System_Params.yaml), mỗi node một khối theo tên node. Khi chạy bằng `vdt_bringup`, file này được cài vào package và nạp cho mọi node. Launch file của `ekf_adapter`, `ibvs`, `apf_planner` nạp cùng file này qua launch argument `params_file` (mặc định trỏ tới `System_Params.yaml` đã cài trong `vdt_bringup`); node chạy bằng `ros2 run` truyền `--params-file`. Giá trị truyền qua launch argument hoặc `-p` đặt sau file sẽ ghi đè giá trị trong file. Giá trị trong launch arguments của `vdt_system.launch.py` có thể ghi đè `debug_enabled`, `start_hardware` và `start_servo`.
+Toàn bộ tham số runtime (embedded, vision, planner) được khai báo trong [System_Params.yaml](System_Params.yaml), mỗi node một khối theo tên node. Khi chạy bằng `bringup`, file này được cài vào package và nạp cho mọi node. Launch file của `ekf_adapter`, `ibvs`, `apf_planner` nạp cùng file này qua launch argument `params_file` (mặc định trỏ tới `System_Params.yaml` đã cài trong `bringup`); node chạy bằng `ros2 run` truyền `--params-file`. Giá trị truyền qua launch argument hoặc `-p` đặt sau file sẽ ghi đè giá trị trong file. Giá trị trong launch arguments của `vdt_system.launch.py` có thể ghi đè `debug_enabled`, `start_hardware` và `start_servo`.
 
 | Node | Nhóm tham số |
 |---|---|
@@ -896,7 +896,7 @@ Toàn bộ tham số runtime (embedded, vision, planner) được khai báo tron
 | `planner_node` | `planner_type=iapf` (mặc định trong code là `apf`), `obstacle_source=pointcloud`, `target_topic=/ekf/target_state`, `allowed_tracking_modes=[TRACKING, PREDICTING]`, `data_timeout_sec=0.5`, `rate_hz=30`, `d0=2.0`, `v_max=1.2`, `d_slow=1.5`, `k_att=10.0`, `k_rep=250.0`, `k_rep_approach=125.0`, `goal_threshold=0.20`, `follow_distance=3.5`, `hold_follow_altitude=true`, `target_altitude=3.0`, `k_z=0.6`, `vz_max=0.5`, `max_cloud_points=8`, `iapf_f_enter=0.10`, `iapf_f_exit=0.30`, `iapf_n_tangent=12`, `iapf_n_pred=3` |
 | `planner_merge_node` | `rate_hz=20`, `yaw_source=ibvs_apf`, `upstream_timeout_sec=0.3`, `stale_hover_sec=0.5`, `yaw_timeout_sec=0.3`, `phase_timeout_sec=1.0`, `output_topic=planner/velocity_setpoint` |
 | `apf_pointcloud_generator` | `topic=/map_generator/global_cloud`, `frame_id=world`, `rate_hz=1.0`, `num_obs=35`, `map_size=25.0`, `height=4.0`, `resolution=0.15`, `clear_radius=2.0`, `seed=-1`, `publish_static_tf=true` |
-| `vdt_full.launch.py` (`vdt_bringup`) | `start_servo=true` (chuyển cho `vdt_system.launch.py`); truyền cố định `mode=hw` cho `aruco.launch.py`, `publish_odom_tf=false` và `publish_camera_tf=false` cho `ekf.launch.py`, `planner_type=iapf` cho `apf_planner.launch.py` |
+| `vdt_full.launch.py` (`bringup`) | `start_servo=true` (chuyển cho `vdt_system.launch.py`); truyền cố định `mode=hw` cho `aruco.launch.py`, `publish_odom_tf=false` và `publish_camera_tf=false` cho `ekf.launch.py`, `planner_type=iapf` cho `apf_planner.launch.py` |
 
 Riêng `takeoff` vẫn dùng tham số dòng lệnh, không nằm trong `System_Params.yaml`:
 
@@ -908,10 +908,10 @@ Launch arguments:
 
 | Launch file | Arguments |
 |---|---|
-| `ekf.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `vdt_bringup`), `use_sim_time=false`, `publish_odom_tf=true`, `publish_camera_tf=true`, `odom_topic=/odom`, `world_frame=world`, `base_frame=base_link`, `camera_frame=camera_optical_frame`, `cam_x/y/z`, `cam_roll/pitch/yaw` |
-| `ibvs.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `vdt_bringup`), `use_sim_time=false` |
-| `apf_planner.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `vdt_bringup`), `generator=false`, `planner_type=iapf` |
-| `vdt_system.launch.py` (`vdt_bringup`) | `start_hardware=true` (bật `rc_node` và `kill_switch_node`; chỉ đặt `false` trong bench/SITL có cơ chế safety khác), `start_servo=false` (bật `servo_node`), `debug=false` (ghi đè `debug_enabled`) |
+| `ekf.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `bringup`), `use_sim_time=false`, `publish_odom_tf=true`, `publish_camera_tf=true`, `odom_topic=/odom`, `world_frame=world`, `base_frame=base_link`, `camera_frame=camera_optical_frame`, `cam_x/y/z`, `cam_roll/pitch/yaw` |
+| `ibvs.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `bringup`), `use_sim_time=false` |
+| `apf_planner.launch.py` | `params_file` (mặc định `System_Params.yaml` trong `bringup`), `generator=false`, `planner_type=iapf` |
+| `vdt_system.launch.py` (`bringup`) | `start_hardware=true` (bật `rc_node` và `kill_switch_node`; chỉ đặt `false` trong bench/SITL có cơ chế safety khác), `start_servo=false` (bật `servo_node`), `debug=false` (ghi đè `debug_enabled`) |
 
 ## Sơ đồ launch
 
@@ -1022,7 +1022,7 @@ colcon build
 source install/setup.bash
 ```
 
-Launch file `vdt_bringup` nạp [System_Params.yaml](System_Params.yaml) và sắp xếp thứ tự khởi động, còn readiness thực tế được kiểm tra trong từng node.
+Launch file `bringup` nạp [System_Params.yaml](System_Params.yaml) và sắp xếp thứ tự khởi động, còn readiness thực tế được kiểm tra trong từng node.
 
 ### Build module vision và planner
 
@@ -1059,15 +1059,15 @@ Khuyến nghị dùng launch orchestration:
 ```bash
 source /opt/ros/<ros_distro>/setup.bash
 source ros2_ws/install/setup.bash
-ros2 launch vdt_bringup vdt_system.launch.py
+ros2 launch bringup vdt_system.launch.py
 ```
 
 Các tùy chọn launch:
 
 ```bash
-ros2 launch vdt_bringup vdt_system.launch.py start_hardware:=false
-ros2 launch vdt_bringup vdt_system.launch.py start_servo:=true
-ros2 launch vdt_bringup vdt_system.launch.py debug:=true
+ros2 launch bringup vdt_system.launch.py start_hardware:=false
+ros2 launch bringup vdt_system.launch.py start_servo:=true
+ros2 launch bringup vdt_system.launch.py debug:=true
 ```
 Kiểm tra điều kiện trước cất cánh (terminal khác, chạy sau khi launch khoảng 10 giây):
 
@@ -1155,7 +1155,7 @@ Khởi động toàn bộ hệ thống (embedded, vision, planner; không gồm 
 ```bash
 source /opt/ros/<ros_distro>/setup.bash
 source ros2_ws/install/setup.bash
-ros2 launch vdt_bringup vdt_full.launch.py
+ros2 launch bringup vdt_full.launch.py
 ```
 
-Chỉ khởi động phần embedded: `ros2 launch vdt_bringup vdt_system.launch.py`.
+Chỉ khởi động phần embedded: `ros2 launch bringup vdt_system.launch.py`.

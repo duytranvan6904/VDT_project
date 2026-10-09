@@ -1,0 +1,41 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/alt_estimate__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/alt_estimate__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/input_snapshot__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/input_snapshot__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/offboard_status__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/offboard_status__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/planner_output__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/planner_output__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_channels_raw__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_channels_raw__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_fsm_input__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_fsm_input__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/timeout_flags__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/timeout_flags__type_support.cpp.o.d"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/vision_marker__type_support.cpp.o"
+  "CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/vision_marker__type_support.cpp.o.d"
+  "libvdt_msgs__rosidl_typesupport_introspection_cpp.pdb"
+  "libvdt_msgs__rosidl_typesupport_introspection_cpp.so"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/alt_estimate__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/alt_estimate__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/input_snapshot__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/input_snapshot__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/offboard_status__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/offboard_status__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/planner_output__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/planner_output__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_channels_raw__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_channels_raw__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_fsm_input__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_fsm_input__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/timeout_flags__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/timeout_flags__type_support.cpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/vision_marker__rosidl_typesupport_introspection_cpp.hpp"
+  "rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/vision_marker__type_support.cpp"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

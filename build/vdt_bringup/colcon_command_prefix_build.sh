@@ -1,0 +1,11 @@
+# generated from colcon_core/shell/template/command_prefix.sh.em
+. "/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/package.sh"
+. "/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.sh"
+. "/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/package.sh"
+. "/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/package.sh"
+. "/home/vdt_2026/VDT_project/install/input_state_cache/share/input_state_cache/package.sh"
+. "/home/vdt_2026/VDT_project/install/offboard_manager/share/offboard_manager/package.sh"
+. "/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.sh"
+. "/home/vdt_2026/VDT_project/install/gimbal_control/share/gimbal_control/package.sh"
+. "/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.sh"
+. "/home/vdt_2026/VDT_project/install/offboard_safety_monitor/share/offboard_safety_monitor/package.sh"

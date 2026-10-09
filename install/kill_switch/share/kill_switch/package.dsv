@@ -1,0 +1,8 @@
+source;share/kill_switch/hook/cmake_prefix_path.ps1
+source;share/kill_switch/hook/cmake_prefix_path.dsv
+source;share/kill_switch/hook/cmake_prefix_path.sh
+source;share/kill_switch/local_setup.bash
+source;share/kill_switch/local_setup.dsv
+source;share/kill_switch/local_setup.ps1
+source;share/kill_switch/local_setup.sh
+source;share/kill_switch/local_setup.zsh

@@ -1,0 +1,17 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vdt_msgs/msg/RcChannelsRaw.msg
+// generated code does not contain a copyright notice
+
+
+module vdt_msgs {
+  module msg {
+    typedef int16 int16__16[16];
+    struct RcChannelsRaw {
+      int16__16 ch;
+
+      boolean valid;
+
+      boolean failsafe;
+    };
+  };
+};

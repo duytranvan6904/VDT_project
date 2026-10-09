@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: servo-control
+Version: 0.1.0
+Summary: Servo PWM control cho gimbal actuator (MG90S, open-loop)
+Maintainer: Mier
+Maintainer-email: mier@example.com
+License: Apache-2.0

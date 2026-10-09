@@ -1,0 +1,479 @@
+[0.029s] Invoking command in '/home/vdt_2026/VDT_project/build/vdt_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/vdt_msgs
+[0.699s] -- The C compiler identification is GNU 13.3.0
+[0.700s] -- The CXX compiler identification is GNU 13.3.0
+[0.700s] -- Detecting C compiler ABI info
+[0.700s] -- Detecting C compiler ABI info - done
+[0.700s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.700s] -- Detecting C compile features
+[0.701s] -- Detecting C compile features - done
+[0.701s] -- Detecting CXX compiler ABI info
+[0.701s] -- Detecting CXX compiler ABI info - done
+[0.701s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.701s] -- Detecting CXX compile features
+[0.702s] -- Detecting CXX compile features - done
+[0.702s] -- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.032s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[1.042s] -- Found std_msgs: 5.3.8 (/opt/ros/jazzy/share/std_msgs/cmake)
+[1.103s] -- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[1.124s] -- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[1.156s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.193s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.253s] -- Found rosidl_default_generators: 1.6.1 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)
+[1.281s] -- Found rosidl_adapter: 4.6.9 (/opt/ros/jazzy/share/rosidl_adapter/cmake)
+[2.667s] -- Found ament_cmake_ros: 0.12.1 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)
+[4.179s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[4.720s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[4.729s] -- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+[5.078s] -- Found PythonExtra: /usr/bin/python3  
+[6.041s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter Development NumPy Development.Module Development.Embed 
+[6.219s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[6.233s] -- Configuring done (6.2s)
+[6.303s] -- Generating done (0.1s)
+[6.321s] -- Build files have been written to: /home/vdt_2026/VDT_project/build/vdt_msgs
+[6.336s] Invoked command in '/home/vdt_2026/VDT_project/build/vdt_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/vdt_msgs
+[6.337s] Invoking command in '/home/vdt_2026/VDT_project/build/vdt_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/vdt_msgs -- -j4 -l4
+[6.426s] [  2%] Generating Rust code for ROS interfaces
+[6.427s] [  2%] Generating type hashes for ROS interfaces
+[6.445s] [  2%] Built target ament_cmake_python_copy_vdt_msgs
+[6.738s] running egg_info
+[6.740s] creating vdt_msgs.egg-info
+[6.760s] writing vdt_msgs.egg-info/PKG-INFO
+[6.763s] writing dependency_links to vdt_msgs.egg-info/dependency_links.txt
+[6.763s] writing top-level names to vdt_msgs.egg-info/top_level.txt
+[6.763s] writing manifest file 'vdt_msgs.egg-info/SOURCES.txt'
+[6.821s] reading manifest file 'vdt_msgs.egg-info/SOURCES.txt'
+[6.822s] writing manifest file 'vdt_msgs.egg-info/SOURCES.txt'
+[6.913s] [  2%] Built target ament_cmake_python_build_vdt_msgs_egg
+[6.983s] [  2%] Built target vdt_msgs__rosidl_generator_type_description
+[7.001s] [  2%] Built target vdt_msgs__rs
+[7.003s] [  3%] Generating C code for ROS interfaces
+[7.020s] [  3%] Generating C++ code for ROS interfaces
+[7.913s] [  3%] Built target vdt_msgs__cpp
+[8.149s] [  7%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/alt_estimate__functions.c.o
+[8.150s] [  7%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/alt_estimate__type_support.c.o
+[8.150s] [  7%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/vision_marker__description.c.o
+[8.150s] [  7%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/alt_estimate__description.c.o
+[8.220s] [  8%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/vision_marker__functions.c.o
+[8.245s] [ 10%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/vision_marker__type_support.c.o
+[8.245s] [ 10%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/input_snapshot__description.c.o
+[8.305s] [ 11%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/input_snapshot__functions.c.o
+[8.315s] [ 12%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/input_snapshot__type_support.c.o
+[8.334s] [ 13%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/timeout_flags__description.c.o
+[8.337s] [ 14%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/timeout_flags__functions.c.o
+[8.390s] [ 15%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/timeout_flags__type_support.c.o
+[8.418s] [ 16%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/planner_output__functions.c.o
+[8.419s] [ 17%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/planner_output__description.c.o
+[8.449s] [ 18%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/planner_output__type_support.c.o
+[8.467s] [ 19%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/offboard_status__description.c.o
+[8.506s] [ 20%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/offboard_status__functions.c.o
+[8.526s] [ 21%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/offboard_status__type_support.c.o
+[8.534s] [ 21%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/rc_fsm_input__description.c.o
+[8.559s] [ 22%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/rc_fsm_input__functions.c.o
+[8.599s] [ 23%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/rc_fsm_input__type_support.c.o
+[8.620s] [ 25%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/rc_channels_raw__functions.c.o
+[8.622s] [ 25%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/rc_channels_raw__description.c.o
+[8.670s] [ 26%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_c.dir/rosidl_generator_c/vdt_msgs/msg/detail/rc_channels_raw__type_support.c.o
+[8.725s] [ 27%] Linking C shared library libvdt_msgs__rosidl_generator_c.so
+[8.810s] [ 27%] Built target vdt_msgs__rosidl_generator_c
+[8.834s] [ 31%] Generating C type support for eProsima Fast-RTPS
+[8.834s] [ 31%] Generating C++ type support for eProsima Fast-RTPS
+[8.834s] [ 31%] Generating C introspection for ROS interfaces
+[8.834s] [ 31%] Generating C++ type support dispatch for ROS interfaces
+[9.528s] [ 32%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/alt_estimate__type_support.cpp.o
+[9.813s] [ 33%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/alt_estimate__type_support.c.o
+[9.906s] [ 34%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/vision_marker__type_support.c.o
+[9.995s] [ 35%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/input_snapshot__type_support.c.o
+[10.017s] [ 36%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/alt_estimate__type_support.cpp.o
+[10.077s] [ 37%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/alt_estimate__type_support_c.cpp.o
+[10.077s] [ 38%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/timeout_flags__type_support.c.o
+[10.156s] [ 39%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/planner_output__type_support.c.o
+[10.238s] [ 39%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/offboard_status__type_support.c.o
+[10.294s] [ 40%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/vision_marker__type_support.cpp.o
+[10.319s] [ 41%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/rc_fsm_input__type_support.c.o
+[10.401s] [ 42%] Building C object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/vdt_msgs/msg/detail/rc_channels_raw__type_support.c.o
+[10.491s] [ 43%] Linking C shared library libvdt_msgs__rosidl_typesupport_introspection_c.so
+[10.577s] [ 43%] Built target vdt_msgs__rosidl_typesupport_introspection_c
+[10.598s] [ 44%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/input_snapshot__type_support.cpp.o
+[10.961s] [ 45%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/timeout_flags__type_support.cpp.o
+[11.038s] [ 46%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/vision_marker__type_support.cpp.o
+[11.077s] [ 47%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/vision_marker__type_support_c.cpp.o
+[11.253s] [ 48%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/input_snapshot__type_support.cpp.o
+[11.610s] [ 49%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/planner_output__type_support.cpp.o
+[12.013s] [ 50%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/input_snapshot__type_support_c.cpp.o
+[12.046s] [ 51%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/timeout_flags__type_support.cpp.o
+[12.269s] [ 52%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/offboard_status__type_support.cpp.o
+[12.279s] [ 53%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/timeout_flags__type_support_c.cpp.o
+[12.919s] [ 54%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/rc_fsm_input__type_support.cpp.o
+[12.972s] [ 55%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/vdt_msgs/msg/rc_channels_raw__type_support.cpp.o
+[13.063s] [ 56%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/planner_output__type_support.cpp.o
+[13.231s] [ 56%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/planner_output__type_support_c.cpp.o
+[13.577s] [ 57%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/offboard_status__type_support.cpp.o
+[13.634s] [ 58%] Linking CXX shared library libvdt_msgs__rosidl_typesupport_cpp.so
+[13.732s] [ 58%] Built target vdt_msgs__rosidl_typesupport_cpp
+[13.755s] [ 59%] Generating C type support dispatch for ROS interfaces
+[14.092s] [ 60%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/rc_fsm_input__type_support.cpp.o
+[14.195s] [ 61%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/offboard_status__type_support_c.cpp.o
+[14.576s] [ 62%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/alt_estimate__type_support.cpp.o
+[14.611s] [ 63%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/vdt_msgs/msg/detail/dds_fastrtps/rc_channels_raw__type_support.cpp.o
+[14.670s] [ 64%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/vision_marker__type_support.cpp.o
+[14.758s] [ 65%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/input_snapshot__type_support.cpp.o
+[14.849s] [ 65%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/timeout_flags__type_support.cpp.o
+[14.940s] [ 66%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/planner_output__type_support.cpp.o
+[15.032s] [ 67%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/offboard_status__type_support.cpp.o
+[15.112s] [ 68%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/rc_fsm_input__type_support_c.cpp.o
+[15.126s] [ 69%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/rc_fsm_input__type_support.cpp.o
+[15.168s] [ 70%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/vdt_msgs/msg/detail/rc_channels_raw__type_support_c.cpp.o
+[15.218s] [ 71%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_c.dir/rosidl_typesupport_c/vdt_msgs/msg/rc_channels_raw__type_support.cpp.o
+[15.306s] [ 72%] Linking CXX shared library libvdt_msgs__rosidl_typesupport_c.so
+[15.408s] [ 72%] Built target vdt_msgs__rosidl_typesupport_c
+[15.432s] [ 73%] Generating C++ introspection for ROS interfaces
+[15.661s] [ 74%] Linking CXX shared library libvdt_msgs__rosidl_typesupport_fastrtps_cpp.so
+[15.865s] [ 74%] Built target vdt_msgs__rosidl_typesupport_fastrtps_cpp
+[16.080s] [ 75%] Linking CXX shared library libvdt_msgs__rosidl_typesupport_fastrtps_c.so
+[16.187s] [ 75%] Built target vdt_msgs__rosidl_typesupport_fastrtps_c
+[16.259s] [ 79%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/alt_estimate__type_support.cpp.o
+[16.259s] [ 79%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/input_snapshot__type_support.cpp.o
+[16.259s] [ 79%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/vision_marker__type_support.cpp.o
+[16.260s] [ 79%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/timeout_flags__type_support.cpp.o
+[16.885s] [ 81%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/planner_output__type_support.cpp.o
+[16.886s] [ 81%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/offboard_status__type_support.cpp.o
+[16.891s] [ 82%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_fsm_input__type_support.cpp.o
+[16.898s] [ 83%] Building CXX object CMakeFiles/vdt_msgs__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/vdt_msgs/msg/detail/rc_channels_raw__type_support.cpp.o
+[17.516s] [ 84%] Linking CXX shared library libvdt_msgs__rosidl_typesupport_introspection_cpp.so
+[17.658s] [ 84%] Built target vdt_msgs__rosidl_typesupport_introspection_cpp
+[17.694s] [ 84%] Built target vdt_msgs
+[17.729s] [ 85%] Generating Python code for ROS interfaces
+[18.759s] [ 85%] Built target vdt_msgs__py
+[18.797s] [ 89%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_alt_estimate_s.c.o
+[18.797s] [ 89%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_timeout_flags_s.c.o
+[18.797s] [ 89%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_input_snapshot_s.c.o
+[18.797s] [ 89%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_vision_marker_s.c.o
+[19.121s] [ 91%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_offboard_status_s.c.o
+[19.121s] [ 91%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_planner_output_s.c.o
+[19.124s] [ 92%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_rc_fsm_input_s.c.o
+[19.142s] [ 93%] Building C object CMakeFiles/vdt_msgs__rosidl_generator_py.dir/rosidl_generator_py/vdt_msgs/msg/_rc_channels_raw_s.c.o
+[19.381s] [ 94%] Linking C shared library libvdt_msgs__rosidl_generator_py.so
+[19.466s] [ 94%] Built target vdt_msgs__rosidl_generator_py
+[19.504s] [ 97%] Building C object CMakeFiles/vdt_msgs_s__rosidl_typesupport_c.dir/rosidl_generator_py/vdt_msgs/_vdt_msgs_s.ep.rosidl_typesupport_c.c.o
+[19.504s] [ 97%] Building C object CMakeFiles/vdt_msgs_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/vdt_msgs/_vdt_msgs_s.ep.rosidl_typesupport_introspection_c.c.o
+[19.504s] [ 97%] Building C object CMakeFiles/vdt_msgs_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/vdt_msgs/_vdt_msgs_s.ep.rosidl_typesupport_fastrtps_c.c.o
+[19.707s] [ 99%] Linking C shared module rosidl_generator_py/vdt_msgs/vdt_msgs_s__rosidl_typesupport_introspection_c.so
+[19.708s] [ 99%] Linking C shared module rosidl_generator_py/vdt_msgs/vdt_msgs_s__rosidl_typesupport_c.so
+[19.719s] [100%] Linking C shared module rosidl_generator_py/vdt_msgs/vdt_msgs_s__rosidl_typesupport_fastrtps_c.so
+[19.765s] [100%] Built target vdt_msgs_s__rosidl_typesupport_c
+[19.768s] [100%] Built target vdt_msgs_s__rosidl_typesupport_introspection_c
+[19.779s] [100%] Built target vdt_msgs_s__rosidl_typesupport_fastrtps_c
+[19.801s] Invoked command in '/home/vdt_2026/VDT_project/build/vdt_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/vdt_msgs -- -j4 -l4
+[19.818s] Invoking command in '/home/vdt_2026/VDT_project/build/vdt_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/vdt_msgs
+[19.832s] -- Install configuration: ""
+[19.832s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/ament_index/resource_index/rosidl_interfaces/vdt_msgs
+[19.833s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/AltEstimate.json
+[19.833s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/VisionMarker.json
+[19.833s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/InputSnapshot.json
+[19.833s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/TimeoutFlags.json
+[19.833s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/PlannerOutput.json
+[19.834s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/OffboardStatus.json
+[19.834s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/RcFsmInput.json
+[19.834s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/RcChannelsRaw.json
+[19.834s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs
+[19.834s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/vision_marker.h
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/planner_output.h
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/input_snapshot.h
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rosidl_generator_c__visibility_control.h
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rc_channels_raw.h
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail
+[19.835s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__type_support.c
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__type_support.h
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__type_support.c
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__functions.c
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__struct.h
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__struct.h
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__functions.h
+[19.836s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__functions.c
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__type_support.c
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__functions.c
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__description.c
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__type_support.h
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__type_support.h
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__type_support.c
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__struct.h
+[19.837s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__description.c
+[19.838s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__type_support.h
+[19.838s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__struct.h
+[19.838s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__functions.h
+[19.838s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__functions.c
+[19.838s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__functions.h
+[19.838s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__functions.h
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__functions.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__description.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__description.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__functions.h
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__description.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__functions.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__description.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__description.c
+[19.839s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__struct.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__struct.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__functions.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__type_support.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__struct.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__functions.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__type_support.h
+[19.840s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__type_support.c
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__type_support.c
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__functions.h
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__type_support.h
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__type_support.c
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__type_support.c
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__type_support.h
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__functions.c
+[19.841s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__struct.h
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__functions.c
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__description.c
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/offboard_status.h
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/alt_estimate.h
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/timeout_flags.h
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rc_fsm_input.h
+[19.842s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/library_path.sh
+[19.843s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/library_path.dsv
+[19.843s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_generator_c.so
+[19.844s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_generator_c.so" to ""
+[19.844s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs
+[19.844s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg
+[19.844s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[19.844s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail
+[19.844s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__rosidl_typesupport_fastrtps_c.h
+[19.844s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__rosidl_typesupport_fastrtps_c.h
+[19.845s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_fastrtps_c.so
+[19.846s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_fastrtps_c.so" to ""
+[19.846s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs
+[19.846s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg
+[19.846s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/input_snapshot.hpp
+[19.847s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/offboard_status.hpp
+[19.847s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rc_fsm_input.hpp
+[19.847s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/planner_output.hpp
+[19.847s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/alt_estimate.hpp
+[19.847s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/timeout_flags.hpp
+[19.847s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rosidl_generator_cpp__visibility_control.hpp
+[19.847s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__type_support.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__type_support.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__traits.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__traits.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__struct.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__builder.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__struct.hpp
+[19.848s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__traits.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__type_support.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__type_support.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__type_support.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__traits.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__builder.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__builder.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__struct.hpp
+[19.849s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__struct.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__traits.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__type_support.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__builder.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__traits.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__traits.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__struct.hpp
+[19.850s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__struct.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__builder.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__traits.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__builder.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__struct.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__builder.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__type_support.hpp
+[19.851s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__type_support.hpp
+[19.852s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__struct.hpp
+[19.852s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__builder.hpp
+[19.852s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/vision_marker.hpp
+[19.852s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rc_channels_raw.hpp
+[19.852s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs
+[19.852s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg
+[19.852s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail
+[19.852s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/dds_fastrtps
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__rosidl_typesupport_fastrtps_cpp.hpp
+[19.853s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__rosidl_typesupport_fastrtps_cpp.hpp
+[19.854s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[19.854s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_fastrtps_cpp.so
+[19.854s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_fastrtps_cpp.so" to ""
+[19.855s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs
+[19.855s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg
+[19.855s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail
+[19.855s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__type_support.c
+[19.855s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__type_support.c
+[19.855s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__rosidl_typesupport_introspection_c.h
+[19.855s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__type_support.c
+[19.855s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__type_support.c
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__rosidl_typesupport_introspection_c.h
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__rosidl_typesupport_introspection_c.h
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__rosidl_typesupport_introspection_c.h
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__rosidl_typesupport_introspection_c.h
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__rosidl_typesupport_introspection_c.h
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__type_support.c
+[19.856s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__type_support.c
+[19.857s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__rosidl_typesupport_introspection_c.h
+[19.857s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__type_support.c
+[19.857s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__type_support.c
+[19.857s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__rosidl_typesupport_introspection_c.h
+[19.857s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[19.857s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_introspection_c.so
+[19.858s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_introspection_c.so" to ""
+[19.858s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_c.so
+[19.859s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_c.so" to ""
+[19.859s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs
+[19.859s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg
+[19.859s] -- Up-to-date: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail
+[19.859s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__type_support.cpp
+[19.859s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__rosidl_typesupport_introspection_cpp.hpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__type_support.cpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_channels_raw__rosidl_typesupport_introspection_cpp.hpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__rosidl_typesupport_introspection_cpp.hpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__type_support.cpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__type_support.cpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/offboard_status__rosidl_typesupport_introspection_cpp.hpp
+[19.860s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__rosidl_typesupport_introspection_cpp.hpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/vision_marker__rosidl_typesupport_introspection_cpp.hpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/timeout_flags__rosidl_typesupport_introspection_cpp.hpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/alt_estimate__type_support.cpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/input_snapshot__type_support.cpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__rosidl_typesupport_introspection_cpp.hpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/planner_output__type_support.cpp
+[19.861s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/include/vdt_msgs/vdt_msgs/msg/detail/rc_fsm_input__type_support.cpp
+[19.862s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_introspection_cpp.so
+[19.862s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_introspection_cpp.so" to ""
+[19.862s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_cpp.so
+[19.863s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_cpp.so" to ""
+[19.863s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/pythonpath.sh
+[19.863s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/pythonpath.dsv
+[19.863s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs-0.1.0-py3.12.egg-info
+[19.864s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs-0.1.0-py3.12.egg-info/dependency_links.txt
+[19.864s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs-0.1.0-py3.12.egg-info/SOURCES.txt
+[19.864s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs-0.1.0-py3.12.egg-info/PKG-INFO
+[19.864s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs-0.1.0-py3.12.egg-info/top_level.txt
+[19.864s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs
+[19.864s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/_vdt_msgs_s.ep.rosidl_typesupport_introspection_c.c
+[19.865s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_fastrtps_c.so
+[19.865s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/__init__.py
+[19.865s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/_vdt_msgs_s.ep.rosidl_typesupport_c.c
+[19.865s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/_vdt_msgs_s.ep.rosidl_typesupport_fastrtps_c.c
+[19.865s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_introspection_c.so
+[19.865s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg
+[19.866s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_input_snapshot_s.c
+[19.866s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_planner_output.py
+[19.866s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_alt_estimate.py
+[19.866s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_rc_channels_raw_s.c
+[19.866s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_input_snapshot.py
+[19.866s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/__init__.py
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_offboard_status.py
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_rc_channels_raw.py
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_planner_output_s.c
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_timeout_flags.py
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_vision_marker_s.c
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_alt_estimate_s.c
+[19.867s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_vision_marker.py
+[19.868s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_rc_fsm_input.py
+[19.868s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_rc_fsm_input_s.c
+[19.868s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_offboard_status_s.c
+[19.868s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_timeout_flags_s.c
+[19.868s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_c.so
+[19.934s] Listing '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/__init__.py'...
+[19.934s] Listing '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/__init__.py'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_alt_estimate.py'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_input_snapshot.py'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_offboard_status.py'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_planner_output.py'...
+[19.934s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_rc_channels_raw.py'...
+[19.935s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_rc_fsm_input.py'...
+[19.935s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_timeout_flags.py'...
+[19.935s] Compiling '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/msg/_vision_marker.py'...
+[19.946s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_fastrtps_c.so
+[19.947s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_fastrtps_c.so" to ""
+[19.947s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_introspection_c.so
+[19.948s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_introspection_c.so" to ""
+[19.948s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_c.so
+[19.949s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages/vdt_msgs/vdt_msgs_s__rosidl_typesupport_c.so" to ""
+[19.949s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_generator_py.so
+[19.949s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/vdt_msgs/lib/libvdt_msgs__rosidl_generator_py.so" to ""
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/Cargo.toml
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/src
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/src/msg
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/src/msg/rmw.rs
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/src/lib.rs
+[19.950s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/src/msg.rs
+[19.951s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/rust/build.rs
+[19.951s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/AltEstimate.idl
+[19.951s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/VisionMarker.idl
+[19.951s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/InputSnapshot.idl
+[19.951s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/TimeoutFlags.idl
+[19.951s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/PlannerOutput.idl
+[19.952s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/OffboardStatus.idl
+[19.952s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/RcFsmInput.idl
+[19.952s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/RcChannelsRaw.idl
+[19.952s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/AltEstimate.msg
+[19.952s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/VisionMarker.msg
+[19.953s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/InputSnapshot.msg
+[19.953s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/TimeoutFlags.msg
+[19.953s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/PlannerOutput.msg
+[19.953s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/OffboardStatus.msg
+[19.954s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/RcFsmInput.msg
+[19.954s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/msg/RcChannelsRaw.msg
+[19.954s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/ament_index/resource_index/package_run_dependencies/vdt_msgs
+[19.954s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/ament_index/resource_index/parent_prefix_path/vdt_msgs
+[19.954s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/ament_prefix_path.sh
+[19.955s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/ament_prefix_path.dsv
+[19.955s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/path.sh
+[19.955s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/environment/path.dsv
+[19.955s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/local_setup.bash
+[19.955s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/local_setup.sh
+[19.956s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/local_setup.zsh
+[19.956s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/local_setup.dsv
+[19.956s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.dsv
+[19.956s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/ament_index/resource_index/packages/vdt_msgs
+[19.957s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_generator_cExport.cmake
+[19.957s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_generator_cExport-noconfig.cmake
+[19.957s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_typesupport_fastrtps_cExport.cmake
+[19.957s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_generator_cppExport.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_typesupport_fastrtps_cppExport.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_introspection_cExport.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_cExport.cmake
+[19.959s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_cExport-noconfig.cmake
+[19.960s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_introspection_cppExport.cmake
+[19.960s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[19.960s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_cppExport.cmake
+[19.960s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgs__rosidl_typesupport_cppExport-noconfig.cmake
+[19.960s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_generator_pyExport.cmake
+[19.960s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/export_vdt_msgs__rosidl_generator_pyExport-noconfig.cmake
+[19.961s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/rosidl_cmake-extras.cmake
+[19.961s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/ament_cmake_export_dependencies-extras.cmake
+[19.961s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/ament_cmake_export_include_directories-extras.cmake
+[19.961s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/ament_cmake_export_libraries-extras.cmake
+[19.961s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/ament_cmake_export_targets-extras.cmake
+[19.962s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[19.962s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[19.962s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/rosidl_cmake_aggregate_target-extras.cmake
+[19.962s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgsConfig.cmake
+[19.962s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake/vdt_msgsConfig-version.cmake
+[19.963s] -- Installing: /home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.xml
+[19.967s] Invoked command in '/home/vdt_2026/VDT_project/build/vdt_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/vdt_msgs

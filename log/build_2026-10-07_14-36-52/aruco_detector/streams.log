@@ -1,0 +1,64 @@
+[2.151s] Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector': PYTHONPATH=/home/vdt_2026/VDT_project/build/aruco_detector/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/aruco_detector build --build-base /home/vdt_2026/VDT_project/build/aruco_detector/build install --record /home/vdt_2026/VDT_project/build/aruco_detector/install.log --install-scripts $base/lib/aruco_detector --single-version-externally-managed install_data
+[2.580s] running egg_info
+[2.581s] creating ../../../build/aruco_detector/aruco_detector.egg-info
+[2.602s] writing ../../../build/aruco_detector/aruco_detector.egg-info/PKG-INFO
+[2.605s] writing dependency_links to ../../../build/aruco_detector/aruco_detector.egg-info/dependency_links.txt
+[2.605s] writing entry points to ../../../build/aruco_detector/aruco_detector.egg-info/entry_points.txt
+[2.605s] writing requirements to ../../../build/aruco_detector/aruco_detector.egg-info/requires.txt
+[2.605s] writing top-level names to ../../../build/aruco_detector/aruco_detector.egg-info/top_level.txt
+[2.605s] writing manifest file '../../../build/aruco_detector/aruco_detector.egg-info/SOURCES.txt'
+[2.658s] reading manifest file '../../../build/aruco_detector/aruco_detector.egg-info/SOURCES.txt'
+[2.658s] writing manifest file '../../../build/aruco_detector/aruco_detector.egg-info/SOURCES.txt'
+[2.658s] running build
+[2.659s] running build_py
+[2.659s] creating /home/vdt_2026/VDT_project/build/aruco_detector/build
+[2.659s] creating /home/vdt_2026/VDT_project/build/aruco_detector/build/lib
+[2.659s] creating /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.659s] copying aruco_detector/geometry_utils.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.660s] copying aruco_detector/camera_model.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.663s] copying aruco_detector/aruco_logic.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.663s] copying aruco_detector/image_conversion.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.663s] copying aruco_detector/__init__.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.663s] copying aruco_detector/message_builders.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.664s] copying aruco_detector/depth_to_image_node.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.664s] copying aruco_detector/aruco_node.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.665s] copying aruco_detector/annotation.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.666s] copying aruco_detector/detection_filter.py -> /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector
+[2.667s] running install
+[2.682s] running install_lib
+[2.700s] creating /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.701s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/geometry_utils.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.701s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/camera_model.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.701s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/aruco_logic.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.701s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/image_conversion.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.702s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/__init__.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.702s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/message_builders.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.702s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/depth_to_image_node.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.702s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/aruco_node.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.702s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/annotation.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.704s] copying /home/vdt_2026/VDT_project/build/aruco_detector/build/lib/aruco_detector/detection_filter.py -> /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector
+[2.704s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/geometry_utils.py to geometry_utils.cpython-312.pyc
+[2.706s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/camera_model.py to camera_model.cpython-312.pyc
+[2.708s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/aruco_logic.py to aruco_logic.cpython-312.pyc
+[2.710s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/image_conversion.py to image_conversion.cpython-312.pyc
+[2.713s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/__init__.py to __init__.cpython-312.pyc
+[2.713s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/message_builders.py to message_builders.cpython-312.pyc
+[2.716s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/depth_to_image_node.py to depth_to_image_node.cpython-312.pyc
+[2.717s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/aruco_node.py to aruco_node.cpython-312.pyc
+[2.720s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/annotation.py to annotation.cpython-312.pyc
+[2.722s] byte-compiling /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector/detection_filter.py to detection_filter.cpython-312.pyc
+[2.723s] running install_data
+[2.726s] creating /home/vdt_2026/VDT_project/install/aruco_detector/share/ament_index
+[2.726s] creating /home/vdt_2026/VDT_project/install/aruco_detector/share/ament_index/resource_index
+[2.726s] creating /home/vdt_2026/VDT_project/install/aruco_detector/share/ament_index/resource_index/packages
+[2.726s] copying resource/aruco_detector -> /home/vdt_2026/VDT_project/install/aruco_detector/share/ament_index/resource_index/packages
+[2.726s] copying package.xml -> /home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector
+[2.726s] creating /home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/launch
+[2.726s] copying launch/aruco.launch.py -> /home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/launch
+[2.728s] running install_egg_info
+[2.755s] Copying ../../../build/aruco_detector/aruco_detector.egg-info to /home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages/aruco_detector-0.1.0-py3.12.egg-info
+[2.767s] running install_scripts
+[3.009s] Installing aruco_node script to /home/vdt_2026/VDT_project/install/aruco_detector/lib/aruco_detector
+[3.015s] Installing depth_to_image_node script to /home/vdt_2026/VDT_project/install/aruco_detector/lib/aruco_detector
+[3.016s] writing list of installed files to '/home/vdt_2026/VDT_project/build/aruco_detector/install.log'
+[3.457s] Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/aruco_detector/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/aruco_detector build --build-base /home/vdt_2026/VDT_project/build/aruco_detector/build install --record /home/vdt_2026/VDT_project/build/aruco_detector/install.log --install-scripts $base/lib/aruco_detector --single-version-externally-managed install_data

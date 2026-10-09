@@ -1,0 +1,88 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-9816962b59de9ebd3e34.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "gimbal_control",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "gimbal_control_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-gimbal_control_uninstall-Release-a4bed26954fbfc7baf8f.json",
+					"name" : "gimbal_control_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "gimbal_logic_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-gimbal_logic_test-Release-e60ad0f2c8b08297abc3.json",
+					"name" : "gimbal_logic_test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "gimbal_node::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-gimbal_node-Release-540340410c09c8317660.json",
+					"name" : "gimbal_node",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-Release-a06a362bd0ec95da6573.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/vdt_2026/VDT_project/build/gimbal_control",
+		"source" : "/home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

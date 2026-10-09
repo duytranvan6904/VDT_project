@@ -1,0 +1,98 @@
+Starting >>> gimbal_control
+Change Dir: '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+
+Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile -j4 -l4
+/usr/bin/cmake -S/home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control -B/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/cmake -E cmake_progress_start /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control/CMakeFiles /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control//CMakeFiles/progress.marks
+/usr/bin/gmake  -f CMakeFiles/Makefile2 all
+gmake[1]: Entering directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+/usr/bin/gmake  -f CMakeFiles/gimbal_node.dir/build.make CMakeFiles/gimbal_node.dir/depend
+/usr/bin/gmake  -f CMakeFiles/gimbal_logic_test.dir/build.make CMakeFiles/gimbal_logic_test.dir/depend
+gmake[2]: Entering directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+cd /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control && /usr/bin/cmake -E cmake_depends "Unix Makefiles" /home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control/CMakeFiles/gimbal_logic_test.dir/DependInfo.cmake "--color="
+gmake[2]: Entering directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+cd /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control && /usr/bin/cmake -E cmake_depends "Unix Makefiles" /home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control/CMakeFiles/gimbal_node.dir/DependInfo.cmake "--color="
+gmake[2]: Leaving directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+/usr/bin/gmake  -f CMakeFiles/gimbal_logic_test.dir/build.make CMakeFiles/gimbal_logic_test.dir/build
+Dependencies file "CMakeFiles/gimbal_node.dir/src/gimbal_node.cpp.o.d" is newer than depends file "/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control/CMakeFiles/gimbal_node.dir/compiler_depend.internal".
+Dependencies file "CMakeFiles/gimbal_node.dir/src/main.cpp.o.d" is newer than depends file "/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control/CMakeFiles/gimbal_node.dir/compiler_depend.internal".
+gmake[2]: Entering directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+gmake[2]: Nothing to be done for 'CMakeFiles/gimbal_logic_test.dir/build'.
+gmake[2]: Leaving directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+Consolidate compiler generated dependencies of target gimbal_node
+gmake[2]: Leaving directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+/usr/bin/gmake  -f CMakeFiles/gimbal_node.dir/build.make CMakeFiles/gimbal_node.dir/build
+[ 42%] Built target gimbal_logic_test
+gmake[2]: Entering directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+[ 71%] Building CXX object CMakeFiles/gimbal_node.dir/src/gimbal_node.cpp.o
+[ 57%] Building CXX object CMakeFiles/gimbal_node.dir/src/main.cpp.o
+/usr/bin/c++ -DDEFAULT_RMW_IMPLEMENTATION=rmw_fastrtps_cpp -DFASTCDR_DYN_LINK -I/home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control/include -isystem /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/include/vdt_msgs -isystem /opt/ros/jazzy/include/rclcpp -isystem /opt/ros/jazzy/include/std_msgs -isystem /opt/ros/jazzy/include/nav_msgs -isystem /opt/ros/jazzy/include/builtin_interfaces -isystem /opt/ros/jazzy/include/rosidl_runtime_c -isystem /opt/ros/jazzy/include/rcutils -isystem /opt/ros/jazzy/include/rosidl_typesupport_interface -isystem /opt/ros/jazzy/include/fastcdr -isystem /opt/ros/jazzy/include/rosidl_runtime_cpp -isystem /opt/ros/jazzy/include/rosidl_typesupport_fastrtps_cpp -isystem /opt/ros/jazzy/include/rmw -isystem /opt/ros/jazzy/include/rosidl_dynamic_typesupport -isystem /opt/ros/jazzy/include/rosidl_typesupport_fastrtps_c -isystem /opt/ros/jazzy/include/rosidl_typesupport_introspection_c -isystem /opt/ros/jazzy/include/rosidl_typesupport_introspection_cpp -isystem /opt/ros/jazzy/include/libstatistics_collector -isystem /opt/ros/jazzy/include/rcl -isystem /opt/ros/jazzy/include/rcl_interfaces -isystem /opt/ros/jazzy/include/service_msgs -isystem /opt/ros/jazzy/include/rcl_logging_interface -isystem /opt/ros/jazzy/include/rcl_yaml_param_parser -isystem /opt/ros/jazzy/include/type_description_interfaces -isystem /opt/ros/jazzy/include/rcpputils -isystem /opt/ros/jazzy/include/statistics_msgs -isystem /opt/ros/jazzy/include/rosgraph_msgs -isystem /opt/ros/jazzy/include/rosidl_typesupport_cpp -isystem /opt/ros/jazzy/include/rosidl_typesupport_c -isystem /opt/ros/jazzy/include/tracetools -isystem /opt/ros/jazzy/include/geometry_msgs -O3 -DNDEBUG -std=gnu++17 -MD -MT CMakeFiles/gimbal_node.dir/src/gimbal_node.cpp.o -MF CMakeFiles/gimbal_node.dir/src/gimbal_node.cpp.o.d -o CMakeFiles/gimbal_node.dir/src/gimbal_node.cpp.o -c /home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control/src/gimbal_node.cpp
+/usr/bin/c++ -DDEFAULT_RMW_IMPLEMENTATION=rmw_fastrtps_cpp -DFASTCDR_DYN_LINK -I/home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control/include -isystem /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/include/vdt_msgs -isystem /opt/ros/jazzy/include/rclcpp -isystem /opt/ros/jazzy/include/std_msgs -isystem /opt/ros/jazzy/include/nav_msgs -isystem /opt/ros/jazzy/include/builtin_interfaces -isystem /opt/ros/jazzy/include/rosidl_runtime_c -isystem /opt/ros/jazzy/include/rcutils -isystem /opt/ros/jazzy/include/rosidl_typesupport_interface -isystem /opt/ros/jazzy/include/fastcdr -isystem /opt/ros/jazzy/include/rosidl_runtime_cpp -isystem /opt/ros/jazzy/include/rosidl_typesupport_fastrtps_cpp -isystem /opt/ros/jazzy/include/rmw -isystem /opt/ros/jazzy/include/rosidl_dynamic_typesupport -isystem /opt/ros/jazzy/include/rosidl_typesupport_fastrtps_c -isystem /opt/ros/jazzy/include/rosidl_typesupport_introspection_c -isystem /opt/ros/jazzy/include/rosidl_typesupport_introspection_cpp -isystem /opt/ros/jazzy/include/libstatistics_collector -isystem /opt/ros/jazzy/include/rcl -isystem /opt/ros/jazzy/include/rcl_interfaces -isystem /opt/ros/jazzy/include/service_msgs -isystem /opt/ros/jazzy/include/rcl_logging_interface -isystem /opt/ros/jazzy/include/rcl_yaml_param_parser -isystem /opt/ros/jazzy/include/type_description_interfaces -isystem /opt/ros/jazzy/include/rcpputils -isystem /opt/ros/jazzy/include/statistics_msgs -isystem /opt/ros/jazzy/include/rosgraph_msgs -isystem /opt/ros/jazzy/include/rosidl_typesupport_cpp -isystem /opt/ros/jazzy/include/rosidl_typesupport_c -isystem /opt/ros/jazzy/include/tracetools -isystem /opt/ros/jazzy/include/geometry_msgs -O3 -DNDEBUG -std=gnu++17 -MD -MT CMakeFiles/gimbal_node.dir/src/main.cpp.o -MF CMakeFiles/gimbal_node.dir/src/main.cpp.o.d -o CMakeFiles/gimbal_node.dir/src/main.cpp.o -c /home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control/src/main.cpp
+[ 85%] Linking CXX executable gimbal_node
+[Processing: gimbal_control]
+/usr/bin/cmake -E cmake_link_script CMakeFiles/gimbal_node.dir/link.txt --verbose=1
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/gimbal_node.dir/src/main.cpp.o CMakeFiles/gimbal_node.dir/src/gimbal_node.cpp.o CMakeFiles/gimbal_node.dir/src/gimbal_logic.cpp.o -o gimbal_node  -Wl,-rpath,/opt/ros/jazzy/lib:/home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib: /opt/ros/jazzy/lib/librclcpp.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_generator_py.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_fastrtps_c.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_fastrtps_cpp.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_introspection_c.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_introspection_cpp.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_cpp.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_generator_py.so /opt/ros/jazzy/lib/liblibstatistics_collector.so /opt/ros/jazzy/lib/librcl.so /opt/ros/jazzy/lib/librmw_implementation.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_generator_py.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libtype_description_interfaces__rosidl_generator_c.so /opt/ros/jazzy/lib/librcl_yaml_param_parser.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_generator_py.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_generator_py.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_typesupport_c.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_typesupport_c.so /opt/ros/jazzy/lib/librosgraph_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/librcl_interfaces__rosidl_generator_c.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_generator_py.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libstatistics_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/libtracetools.so -llttng-ust -llttng-ust-common -rdynamic -ldl /opt/ros/jazzy/lib/librcl_logging_interface.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libnav_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libgeometry_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libservice_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_generator_py.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_typesupport_c.so /home/vdt_2026/VDT_project/ros2_ws/install/vdt_msgs/lib/libvdt_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/libstd_msgs__rosidl_generator_c.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/librosidl_typesupport_fastrtps_c.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/librosidl_typesupport_fastrtps_cpp.so /opt/ros/jazzy/lib/librmw.so /opt/ros/jazzy/lib/librosidl_dynamic_typesupport.so /opt/ros/jazzy/lib/libfastcdr.so.2.2.8 /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/librosidl_typesupport_introspection_cpp.so /opt/ros/jazzy/lib/librosidl_typesupport_introspection_c.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_cpp.so /opt/ros/jazzy/lib/librosidl_typesupport_cpp.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_generator_py.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_typesupport_c.so /opt/ros/jazzy/lib/libbuiltin_interfaces__rosidl_generator_c.so /opt/ros/jazzy/lib/librosidl_typesupport_c.so /opt/ros/jazzy/lib/librcpputils.so /opt/ros/jazzy/lib/librosidl_runtime_c.so /opt/ros/jazzy/lib/librcutils.so -ldl -latomic -Wl,-rpath-link,/opt/ros/jazzy/lib 
+gmake[2]: Leaving directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+[100%] Built target gimbal_node
+gmake[1]: Leaving directory '/home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control'
+/usr/bin/cmake -E cmake_progress_start /home/vdt_2026/VDT_project/ros2_ws/build/gimbal_control/CMakeFiles 0
+
+-- Install configuration: "Release"
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/lib/gimbal_control/gimbal_node
+-- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/lib/gimbal_control/gimbal_node" to ""
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/ament_index/resource_index/package_run_dependencies/gimbal_control
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/ament_index/resource_index/parent_prefix_path/gimbal_control
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/environment/ament_prefix_path.sh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/environment/ament_prefix_path.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/environment/path.sh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/environment/path.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/local_setup.bash
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/local_setup.sh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/local_setup.zsh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/local_setup.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/package.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/ament_index/resource_index/packages/gimbal_control
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/cmake/gimbal_controlConfig.cmake
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/cmake/gimbal_controlConfig-version.cmake
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/gimbal_control/share/gimbal_control/package.xml
+Finished <<< gimbal_control [32.5s]
+Starting >>> vdt_bringup
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Configuring done (1.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/vdt_2026/VDT_project/ros2_ws/build/vdt_bringup
+-- Install configuration: ""
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/launch
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/launch/vdt_system.launch.py
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/System_Params.yaml
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/ament_index/resource_index/package_run_dependencies/vdt_bringup
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/ament_index/resource_index/parent_prefix_path/vdt_bringup
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/environment/ament_prefix_path.sh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/environment/ament_prefix_path.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/environment/path.sh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/environment/path.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/local_setup.bash
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/local_setup.sh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/local_setup.zsh
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/local_setup.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/package.dsv
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/ament_index/resource_index/packages/vdt_bringup
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/cmake/vdt_bringupConfig.cmake
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/cmake/vdt_bringupConfig-version.cmake
+-- Installing: /home/vdt_2026/VDT_project/ros2_ws/install/vdt_bringup/share/vdt_bringup/package.xml
+Finished <<< vdt_bringup [1.32s]
+
+Summary: 2 packages finished [34.1s]

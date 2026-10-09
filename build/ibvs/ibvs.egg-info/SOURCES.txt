@@ -1,0 +1,15 @@
+package.xml
+setup.cfg
+setup.py
+../../../build/ibvs/ibvs.egg-info/PKG-INFO
+../../../build/ibvs/ibvs.egg-info/SOURCES.txt
+../../../build/ibvs/ibvs.egg-info/dependency_links.txt
+../../../build/ibvs/ibvs.egg-info/entry_points.txt
+../../../build/ibvs/ibvs.egg-info/requires.txt
+../../../build/ibvs/ibvs.egg-info/top_level.txt
+../../../build/ibvs/ibvs.egg-info/zip-safe
+ibvs/__init__.py
+ibvs/ibvs_controller.py
+ibvs/ibvs_logic.py
+launch/ibvs.launch.py
+resource/ibvs

@@ -1,0 +1,28 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vdt_msgs/msg/InputSnapshot.msg
+// generated code does not contain a copyright notice
+
+
+module vdt_msgs {
+  module msg {
+    struct InputSnapshot {
+      boolean valid;
+
+      boolean marker_detected;
+
+      float align_error;
+
+      float altitude;
+
+      float delta_h;
+
+      float d_horiz;
+
+      boolean touchdown;
+
+      boolean planner_timeout;
+
+      float yaw_rate;
+    };
+  };
+};

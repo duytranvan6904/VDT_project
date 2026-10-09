@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfsm_logic.a CMakeFiles/fsm_logic.dir/src/fsm_logic.cpp.o
+/usr/bin/ranlib libfsm_logic.a

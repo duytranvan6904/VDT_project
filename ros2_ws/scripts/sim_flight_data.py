@@ -1,0 +1,264 @@
+#!/usr/bin/env python3
+import argparse
+import math
+import sys
+import time
+
+import rclpy
+from geometry_msgs.msg import PointStamped, Twist
+from nav_msgs.msg import Odometry
+from px4_msgs.msg import VehicleLandDetected
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
+from std_msgs.msg import Bool, Float64, String, UInt8
+from vdt_msgs.msg import AltEstimate, InputSnapshot, PlannerOutput, VisionMarker
+
+SUBS = {
+    '/mission/phase': (String, 'phase'),
+    '/fsm/state': (UInt8, 'fsm'),
+    '/planner/velocity_setpoint': (PlannerOutput, 'plan'),
+    '/input_cache/snapshot': (InputSnapshot, 'snap'),
+    '/landing/safe_to_land': (Bool, 'safe'),
+    '/landing/active': (Bool, 'active'),
+    '/landing/sub_phase': (String, 'sub'),
+    '/landing/velocity_cmd': (Twist, 'lvel'),
+    '/landing/touchdown': (Bool, 'td'),
+    '/landing/uncertainty_radius': (Float64, 'unc'),
+    '/landing/rswitch_adaptive': (Float64, 'rsw'),
+}
+EVENT_KEYS = ('phase', 'fsm', 'safe', 'active', 'sub', 'td', 'snap')
+
+
+def pair(s):
+    return [float(v) for v in s.split(',')]
+
+
+class Sim(Node):
+    def __init__(self, a):
+        super().__init__('sim_flight_data')
+        self.a = a
+        self.pad = a.pad
+        self.pos = list(a.start)
+        self.auto = 'FOLLOW'
+        self.t0 = time.monotonic()
+        self.last_tick = self.t0
+        self.last_log = 0.0
+        self.last = {}
+        self.rt = {}
+        self.count = {k: 0 for _, (_, k) in SUBS.items()}
+        self.prev = {}
+
+        q = QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10)
+        self.p_odom = self.create_publisher(Odometry, '/odom', q)
+        self.p_tgt = self.create_publisher(Odometry, '/hpad/state_filtered', q)
+        self.p_mode = self.create_publisher(String, '/ekf/tracking_mode', q)
+        self.p_mark = self.create_publisher(VisionMarker, '/vision/marker', q)
+        self.p_alt = self.create_publisher(AltEstimate, '/alt_estimator/state', q)
+        self.p_opt = self.create_publisher(PointStamped, '/hpad/position_camera', q)
+        self.p_land = self.create_publisher(VehicleLandDetected, '/fmu/out/vehicle_land_detected', q)
+        self.p_phase = self.create_publisher(String, '/mission/phase', q)
+        self.rc_cls = None
+        self.p_rc = None
+        self.rc_tried = False
+
+        for topic, (typ, key) in SUBS.items():
+            self.create_subscription(
+                typ, topic, lambda m, k=key: self.on_msg(k, m), qos_profile_sensor_data)
+        self.create_timer(0.05, self.tick)
+
+    def t(self):
+        return time.monotonic() - self.t0
+
+    @staticmethod
+    def value(key, m):
+        if key == 'snap':
+            return (bool(m.valid), bool(m.marker_detected), bool(m.touchdown))
+        return m.data
+
+    def on_msg(self, key, m):
+        self.last[key] = m
+        self.rt[key] = time.monotonic()
+        self.count[key] += 1
+        if key in EVENT_KEYS:
+            v = self.value(key, m)
+            if key not in self.prev:
+                print(f'[t={self.t():6.1f}] {key}: first -> {v}', flush=True)
+            elif v != self.prev[key]:
+                print(f'[t={self.t():6.1f}] {key}: {self.prev[key]} -> {v}', flush=True)
+            self.prev[key] = v
+
+    def g(self, key, attr=None, default='-'):
+        m = self.last.get(key)
+        if m is None:
+            return default
+        return getattr(m, attr) if attr else m
+
+    def pick_phase(self, dxy):
+        a = self.a
+        if a.phase == 'observe':
+            m = self.last.get('phase')
+            return m.data if m else 'IDLE'
+        if a.phase != 'AUTO':
+            return a.phase
+        z = self.pos[2]
+        td = self.last.get('td')
+        if td is not None and td.data and self.auto == 'LAND':
+            self.auto = 'COMPLETE'
+        elif self.auto == 'FOLLOW' and dxy <= 2.0:
+            self.auto = 'APPROACH'
+        elif self.auto == 'APPROACH' and z <= 0.5 and dxy <= 0.4:
+            self.auto = 'LAND'
+        return self.auto
+
+    def odom_msg(self, x, y, z, v, var):
+        m = Odometry()
+        m.header.stamp = self.get_clock().now().to_msg()
+        m.header.frame_id = 'world'
+        m.pose.pose.position.x = float(x)
+        m.pose.pose.position.y = float(y)
+        m.pose.pose.position.z = float(z)
+        m.pose.pose.orientation.w = 1.0
+        m.twist.twist.linear.x = float(v[0])
+        m.twist.twist.linear.y = float(v[1])
+        m.twist.twist.linear.z = float(v[2])
+        cov = [0.0] * 36
+        cov[0] = cov[7] = cov[14] = var
+        m.pose.covariance = cov
+        return m
+
+    def tick(self):
+        a = self.a
+        now = time.monotonic()
+        dt = min(now - self.last_tick, 0.2)
+        self.last_tick = now
+        t = self.t()
+
+        x, y, z = self.pos
+        dxy = math.hypot(self.pad[0] - x, self.pad[1] - y)
+        phase = self.pick_phase(dxy)
+        if a.phase != 'observe':
+            self.p_phase.publish(String(data=phase))
+
+        v = (0.0, 0.0, 0.0)
+        plan = self.last.get('plan')
+        fresh = plan is not None and now - self.rt.get('plan', 0.0) < 0.5
+        if phase in ('FOLLOW', 'APPROACH') and fresh and all(
+                math.isfinite(c) for c in (plan.vx, plan.vy, plan.vz)):
+            v = (plan.vx, plan.vy, plan.vz)
+        elif phase == 'LAND':
+            v = (0.0, 0.0, -0.4)
+        x += v[0] * dt
+        y += v[1] * dt
+        z = max(0.0, z + v[2] * dt)
+        if z <= 0.0:
+            v = (v[0], v[1], max(v[2], 0.0))
+        self.pos = [x, y, z]
+        dxy = math.hypot(self.pad[0] - x, self.pad[1] - y)
+
+        dropped = a.drop is not None and a.drop[0] <= t < a.drop[0] + a.drop[1]
+        visible = (not dropped) and dxy <= z * 2.0 + 0.5
+
+        self.p_odom.publish(self.odom_msg(x, y, z, v, a.odom_sigma ** 2))
+        self.p_tgt.publish(self.odom_msg(self.pad[0], self.pad[1], 0.0, (0, 0, 0), a.tgt_sigma ** 2))
+        self.p_mode.publish(String(data='TRACKING' if visible else 'EXPIRED'))
+
+        mk = VisionMarker()
+        mk.marker_visible = bool(visible)
+        mk.pixel_align_error = float(dxy)
+        self.p_mark.publish(mk)
+
+        alt = AltEstimate()
+        alt.altitude = float(z)
+        alt.touchdown_flag = False
+        self.p_alt.publish(alt)
+
+        if visible:
+            op = PointStamped()
+            op.header.stamp = self.get_clock().now().to_msg()
+            op.header.frame_id = 'camera'
+            op.point.z = float(z + 0.30)
+            self.p_opt.publish(op)
+
+        ld = VehicleLandDetected()
+        ld.landed = bool(z <= 0.02 and not a.no_px4_landed)
+        self.p_land.publish(ld)
+        if a.land_switch is not None and t >= a.land_switch:
+            if self.rc_cls is None:
+                self.rc_tried = True
+                for name, types in self.get_topic_names_and_types():
+                    if name == '/rc/fsm_input':
+                        from rosidl_runtime_py.utilities import get_message
+                        self.rc_cls = get_message(types[0])
+                        self.p_rc = self.create_publisher(self.rc_cls, '/rc/fsm_input', QoSProfile(reliability=ReliabilityPolicy.RELIABLE, depth=10))
+            if self.p_rc is not None:
+                m = self.rc_cls()
+                m.land_switch = True
+                self.p_rc.publish(m)
+
+        if t - self.last_log >= a.log_period:
+            self.last_log = t
+            pl = self.last.get('plan')
+            lv = self.last.get('lvel')
+            plan_s = f'({pl.vx:+.2f},{pl.vy:+.2f},{pl.vz:+.2f})' if pl else '-'
+            lv_s = f'({lv.linear.x:+.2f},{lv.linear.y:+.2f},{lv.linear.z:+.2f})' if lv else '-'
+            unc = self.g('unc', 'data')
+            rsw = self.g('rsw', 'data')
+            unc_s = f'{unc:.2f}' if unc != '-' else '-'
+            rsw_s = f'{rsw:.1f}' if rsw != '-' else '-'
+            print(
+                f't={t:5.1f} ph={phase:<8} pos=({x:5.2f},{y:5.2f},{z:4.2f}) dxy={dxy:4.2f} '
+                f'vis={int(visible)} plan={plan_s} smc={lv_s} safe={self.g("safe", "data")} '
+                f'act={self.g("active", "data")} sub={self.g("sub", "data")} '
+                f'unc={unc_s} rsw={rsw_s} td={self.g("td", "data")} snap={self.prev.get("snap", "-")}',
+                flush=True)
+
+    def summary(self):
+        print('\n=== TONG KET ===')
+        for topic, (_, key) in SUBS.items():
+            n = self.count[key]
+            print(f'{"OK " if n else "KHONG NHAN"} {topic} ({n} msgs)')
+        x, y, z = self.pos
+        print(f'Vi tri cuoi: ({x:.2f},{y:.2f},{z:.2f}), dxy={math.hypot(self.pad[0]-x, self.pad[1]-y):.2f}')
+        print('Touchdown:', self.prev.get('td', '-'), '| phase cuoi:', self.prev.get('phase', '-'))
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--phase', default='observe',
+                    help='observe | FOLLOW | APPROACH | LAND | AUTO')
+    ap.add_argument('--duration', type=float, default=60.0)
+    ap.add_argument('--start', type=lambda s: pair(s), default=[6.0, 2.0, 3.0])
+    ap.add_argument('--pad', type=lambda s: pair(s), default=[0.0, 0.0])
+    ap.add_argument('--drop', type=lambda s: pair(s), default=None,
+                    help='t_bat_dau,thoi_gian: mat marker')
+    ap.add_argument('--tgt-sigma', type=float, default=0.05)
+    ap.add_argument('--odom-sigma', type=float, default=0.10)
+    ap.add_argument('--no-px4-landed', action='store_true')
+    ap.add_argument('--log-period', type=float, default=1.0)
+    ap.add_argument('--land-switch', type=float, default=None)
+    a = ap.parse_args()
+
+    rclpy.init()
+    node = Sim(a)
+    for _ in range(20):
+        rclpy.spin_once(node, timeout_sec=0.05)
+    if node.count_publishers('/fmu/out/vehicle_status_v1') > 0:
+        print('PX4 that dang publish, tu choi chay mo phong.')
+        node.destroy_node()
+        rclpy.shutdown()
+        sys.exit(1)
+
+    node.t0 = time.monotonic()
+    print(f'Mo phong: phase={a.phase} start={a.start} pad={a.pad} duration={a.duration}s')
+    try:
+        while rclpy.ok() and node.t() < a.duration:
+            rclpy.spin_once(node, timeout_sec=0.05)
+    except KeyboardInterrupt:
+        pass
+    node.summary()
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

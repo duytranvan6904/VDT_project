@@ -1,0 +1,53 @@
+running egg_info
+creating ../../../build/ekf_adapter/ekf_adapter.egg-info
+writing ../../../build/ekf_adapter/ekf_adapter.egg-info/PKG-INFO
+writing dependency_links to ../../../build/ekf_adapter/ekf_adapter.egg-info/dependency_links.txt
+writing entry points to ../../../build/ekf_adapter/ekf_adapter.egg-info/entry_points.txt
+writing requirements to ../../../build/ekf_adapter/ekf_adapter.egg-info/requires.txt
+writing top-level names to ../../../build/ekf_adapter/ekf_adapter.egg-info/top_level.txt
+writing manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+reading manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+writing manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/vdt_2026/VDT_project/build/ekf_adapter/build
+creating /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib
+creating /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/odom_tf_node.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/ekf_logic.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/__init__.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/target_state_ekf.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/tracking_policy.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/target_state_simulation.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+copying ekf_adapter/ekf_node.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+running install
+running install_lib
+creating /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/odom_tf_node.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/ekf_logic.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/__init__.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/target_state_ekf.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/tracking_policy.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/target_state_simulation.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/ekf_node.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/odom_tf_node.py to odom_tf_node.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/ekf_logic.py to ekf_logic.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/target_state_ekf.py to target_state_ekf.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/tracking_policy.py to tracking_policy.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/target_state_simulation.py to target_state_simulation.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/ekf_node.py to ekf_node.cpython-312.pyc
+running install_data
+creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index
+creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index/resource_index
+creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index/resource_index/packages
+copying resource/ekf_adapter -> /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index/resource_index/packages
+copying package.xml -> /home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter
+creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/launch
+copying launch/ekf.launch.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/launch
+running install_egg_info
+Copying ../../../build/ekf_adapter/ekf_adapter.egg-info to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter-0.1.0-py3.12.egg-info
+running install_scripts
+Installing ekf_node script to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/ekf_adapter
+Installing odom_tf_node script to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/ekf_adapter
+writing list of installed files to '/home/vdt_2026/VDT_project/build/ekf_adapter/install.log'

@@ -5,7 +5,7 @@
     alt_timeout_sec: 0.5
     planner_timeout_sec: 1.0
     debug_enabled: false
-    use_landing_touchdown: false
+    use_landing_touchdown: true
     landing_touchdown_timeout_sec: 0.5
 
 /fsm_node:
@@ -180,8 +180,8 @@
     upstream_timeout_sec: 0.3
     stale_hover_sec: 0.5
     yaw_timeout_sec: 0.3
-    landing_source: false
-    landing_use_vz: false
+    landing_source: true
+    landing_use_vz: true
     landing_timeout_sec: 0.3
 
 /covariance_gate_node:
@@ -192,8 +192,8 @@
     max_horizontal_distance_m: 5.0
     rswitch_base_m: 1.5
     rswitch_alpha: 1.0
-    r_switch_min_m: 3.0
-    r_switch_max_m: 15.0
+    r_switch_min_m: 1.5
+    r_switch_max_m: 4.0
     sigma_ideal_m: 0.05
     sigma_bad_m: 0.30
     sigma_max_continue_glide_m: 0.15

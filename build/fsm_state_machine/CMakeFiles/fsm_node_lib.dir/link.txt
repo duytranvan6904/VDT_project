@@ -1,0 +1,2 @@
+/usr/bin/ar qc libfsm_node_lib.a CMakeFiles/fsm_node_lib.dir/src/fsm_node.cpp.o
+/usr/bin/ranlib libfsm_node_lib.a

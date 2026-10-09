@@ -1,0 +1,2 @@
+[console_scripts]
+ibvs_controller = ibvs.ibvs_controller:main

@@ -1,0 +1,14 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vdt_msgs/msg/RcFsmInput.msg
+// generated code does not contain a copyright notice
+
+
+module vdt_msgs {
+  module msg {
+    struct RcFsmInput {
+      boolean land_switch;
+
+      boolean kill_switch;
+    };
+  };
+};

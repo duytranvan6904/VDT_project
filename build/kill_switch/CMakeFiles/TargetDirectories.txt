@@ -1,0 +1,10 @@
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/uninstall.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/kill_switch_uninstall.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/kill_switch_node.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/test.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/edit_cache.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/rebuild_cache.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/list_install_components.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/install.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/install/local.dir
+/home/vdt_2026/VDT_project/build/kill_switch/CMakeFiles/install/strip.dir

@@ -1,0 +1,40 @@
+[2.116s] Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager': PYTHONPATH=/home/vdt_2026/VDT_project/build/xrce_bridge_manager/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/xrce_bridge_manager build --build-base /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build install --record /home/vdt_2026/VDT_project/build/xrce_bridge_manager/install.log --install-scripts $base/lib/xrce_bridge_manager --single-version-externally-managed install_data
+[2.559s] running egg_info
+[2.561s] creating ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info
+[2.583s] writing ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/PKG-INFO
+[2.584s] writing dependency_links to ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/dependency_links.txt
+[2.587s] writing entry points to ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/entry_points.txt
+[2.587s] writing requirements to ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/requires.txt
+[2.587s] writing top-level names to ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/top_level.txt
+[2.587s] writing manifest file '../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/SOURCES.txt'
+[2.637s] reading manifest file '../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/SOURCES.txt'
+[2.637s] writing manifest file '../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/SOURCES.txt'
+[2.638s] running build
+[2.639s] running build_py
+[2.640s] creating /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build
+[2.641s] creating /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib
+[2.641s] creating /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager
+[2.641s] copying xrce_bridge_manager/__init__.py -> /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager
+[2.642s] copying xrce_bridge_manager/xrce_node.py -> /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager
+[2.642s] copying xrce_bridge_manager/xrce_logic.py -> /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager
+[2.643s] running install
+[2.654s] running install_lib
+[2.679s] creating /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager
+[2.679s] copying /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager/__init__.py -> /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager
+[2.679s] copying /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager/xrce_node.py -> /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager
+[2.679s] copying /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build/lib/xrce_bridge_manager/xrce_logic.py -> /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager
+[2.680s] byte-compiling /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager/__init__.py to __init__.cpython-312.pyc
+[2.680s] byte-compiling /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager/xrce_node.py to xrce_node.cpython-312.pyc
+[2.682s] byte-compiling /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager/xrce_logic.py to xrce_logic.cpython-312.pyc
+[2.683s] running install_data
+[2.688s] creating /home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/ament_index
+[2.688s] creating /home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/ament_index/resource_index
+[2.688s] creating /home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/ament_index/resource_index/packages
+[2.688s] copying resource/xrce_bridge_manager -> /home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/ament_index/resource_index/packages
+[2.688s] copying package.xml -> /home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager
+[2.688s] running install_egg_info
+[2.710s] Copying ../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info to /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages/xrce_bridge_manager-0.1.0-py3.12.egg-info
+[2.711s] running install_scripts
+[2.906s] Installing xrce_bridge_node script to /home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/xrce_bridge_manager
+[2.909s] writing list of installed files to '/home/vdt_2026/VDT_project/build/xrce_bridge_manager/install.log'
+[3.073s] Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/xrce_bridge_manager/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/xrce_bridge_manager build --build-base /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build install --record /home/vdt_2026/VDT_project/build/xrce_bridge_manager/install.log --install-scripts $base/lib/xrce_bridge_manager --single-version-externally-managed install_data

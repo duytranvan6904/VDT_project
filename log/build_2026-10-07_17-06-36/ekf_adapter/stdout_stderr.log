@@ -1,0 +1,20 @@
+running egg_info
+writing ../../../build/ekf_adapter/ekf_adapter.egg-info/PKG-INFO
+writing dependency_links to ../../../build/ekf_adapter/ekf_adapter.egg-info/dependency_links.txt
+writing entry points to ../../../build/ekf_adapter/ekf_adapter.egg-info/entry_points.txt
+writing requirements to ../../../build/ekf_adapter/ekf_adapter.egg-info/requires.txt
+writing top-level names to ../../../build/ekf_adapter/ekf_adapter.egg-info/top_level.txt
+reading manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+writing manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter-0.1.0-py3.12.egg-info' (and everything under it)
+Copying ../../../build/ekf_adapter/ekf_adapter.egg-info to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter-0.1.0-py3.12.egg-info
+running install_scripts
+Installing ekf_node script to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/ekf_adapter
+Installing odom_tf_node script to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/ekf_adapter
+writing list of installed files to '/home/vdt_2026/VDT_project/build/ekf_adapter/install.log'

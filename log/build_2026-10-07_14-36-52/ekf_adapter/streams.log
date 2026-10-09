@@ -1,0 +1,55 @@
+[1.704s] Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter': PYTHONPATH=/home/vdt_2026/VDT_project/build/ekf_adapter/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ekf_adapter build --build-base /home/vdt_2026/VDT_project/build/ekf_adapter/build install --record /home/vdt_2026/VDT_project/build/ekf_adapter/install.log --install-scripts $base/lib/ekf_adapter --single-version-externally-managed install_data
+[2.229s] running egg_info
+[2.231s] creating ../../../build/ekf_adapter/ekf_adapter.egg-info
+[2.263s] writing ../../../build/ekf_adapter/ekf_adapter.egg-info/PKG-INFO
+[2.267s] writing dependency_links to ../../../build/ekf_adapter/ekf_adapter.egg-info/dependency_links.txt
+[2.267s] writing entry points to ../../../build/ekf_adapter/ekf_adapter.egg-info/entry_points.txt
+[2.267s] writing requirements to ../../../build/ekf_adapter/ekf_adapter.egg-info/requires.txt
+[2.267s] writing top-level names to ../../../build/ekf_adapter/ekf_adapter.egg-info/top_level.txt
+[2.267s] writing manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+[2.328s] reading manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+[2.331s] writing manifest file '../../../build/ekf_adapter/ekf_adapter.egg-info/SOURCES.txt'
+[2.332s] running build
+[2.334s] running build_py
+[2.334s] creating /home/vdt_2026/VDT_project/build/ekf_adapter/build
+[2.334s] creating /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib
+[2.335s] creating /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.336s] copying ekf_adapter/odom_tf_node.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.336s] copying ekf_adapter/ekf_logic.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.337s] copying ekf_adapter/__init__.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.338s] copying ekf_adapter/target_state_ekf.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.339s] copying ekf_adapter/tracking_policy.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.340s] copying ekf_adapter/target_state_simulation.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.342s] copying ekf_adapter/ekf_node.py -> /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter
+[2.346s] running install
+[2.357s] running install_lib
+[2.389s] creating /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/odom_tf_node.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/ekf_logic.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/__init__.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/target_state_ekf.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/tracking_policy.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/target_state_simulation.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.389s] copying /home/vdt_2026/VDT_project/build/ekf_adapter/build/lib/ekf_adapter/ekf_node.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter
+[2.392s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/odom_tf_node.py to odom_tf_node.cpython-312.pyc
+[2.393s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/ekf_logic.py to ekf_logic.cpython-312.pyc
+[2.399s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/__init__.py to __init__.cpython-312.pyc
+[2.401s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/target_state_ekf.py to target_state_ekf.cpython-312.pyc
+[2.407s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/tracking_policy.py to tracking_policy.cpython-312.pyc
+[2.407s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/target_state_simulation.py to target_state_simulation.cpython-312.pyc
+[2.414s] byte-compiling /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter/ekf_node.py to ekf_node.cpython-312.pyc
+[2.420s] running install_data
+[2.420s] creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index
+[2.420s] creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index/resource_index
+[2.420s] creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index/resource_index/packages
+[2.420s] copying resource/ekf_adapter -> /home/vdt_2026/VDT_project/install/ekf_adapter/share/ament_index/resource_index/packages
+[2.420s] copying package.xml -> /home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter
+[2.420s] creating /home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/launch
+[2.421s] copying launch/ekf.launch.py -> /home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/launch
+[2.424s] running install_egg_info
+[2.451s] Copying ../../../build/ekf_adapter/ekf_adapter.egg-info to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages/ekf_adapter-0.1.0-py3.12.egg-info
+[2.451s] running install_scripts
+[2.664s] Installing ekf_node script to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/ekf_adapter
+[2.667s] Installing odom_tf_node script to /home/vdt_2026/VDT_project/install/ekf_adapter/lib/ekf_adapter
+[2.668s] writing list of installed files to '/home/vdt_2026/VDT_project/build/ekf_adapter/install.log'
+[2.824s] Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/ekf_adapter/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ekf_adapter build --build-base /home/vdt_2026/VDT_project/build/ekf_adapter/build install --record /home/vdt_2026/VDT_project/build/ekf_adapter/install.log --install-scripts $base/lib/ekf_adapter --single-version-externally-managed install_data

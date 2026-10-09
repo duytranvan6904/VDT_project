@@ -1,0 +1,893 @@
+[0.137s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--packages-skip-build-finished', '--event-handlers', 'console_direct+']
+[0.137s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=False, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=4, event_handlers=['console_direct+'], ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=True, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0xffff82f5d250>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0xffff830fe240>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0xffff830fe240>>)
+[0.194s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.194s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.194s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.194s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.194s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.194s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.194s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/vdt_2026/VDT_project'
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.195s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.231s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.231s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.231s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.231s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.231s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extensions ['ignore', 'ignore_ament_install']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'ignore'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'ignore_ament_install'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extensions ['colcon_pkg']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'colcon_pkg'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extensions ['colcon_meta']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'colcon_meta'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extensions ['ros']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'ros'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extensions ['cmake', 'python']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'cmake'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'python'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extensions ['python_setup_py']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control) by extension 'python_setup_py'
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extensions ['ignore', 'ignore_ament_install']
+[0.232s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'ignore'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'ignore_ament_install'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extensions ['colcon_pkg']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'colcon_pkg'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extensions ['colcon_meta']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'colcon_meta'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extensions ['ros']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'ros'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extensions ['cmake', 'python']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'cmake'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'python'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extensions ['python_setup_py']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(PX4_Control/templates) by extension 'python_setup_py'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extensions ['ignore', 'ignore_ament_install']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'ignore'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'ignore_ament_install'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extensions ['colcon_pkg']
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'colcon_pkg'
+[0.233s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extensions ['colcon_meta']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'colcon_meta'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extensions ['ros']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'ros'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extensions ['cmake', 'python']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'cmake'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'python'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extensions ['python_setup_py']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(References) by extension 'python_setup_py'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extensions ['ignore', 'ignore_ament_install']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'ignore'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'ignore_ament_install'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extensions ['colcon_pkg']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'colcon_pkg'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extensions ['colcon_meta']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'colcon_meta'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extensions ['ros']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'ros'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extensions ['cmake', 'python']
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'cmake'
+[0.234s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'python'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extensions ['python_setup_py']
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(__pycache__) by extension 'python_setup_py'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extensions ['ignore', 'ignore_ament_install']
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'ignore'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'ignore_ament_install'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extensions ['colcon_pkg']
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'colcon_pkg'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extensions ['colcon_meta']
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'colcon_meta'
+[0.235s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extensions ['ros']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'ros'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extensions ['cmake', 'python']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'cmake'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'python'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extensions ['python_setup_py']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(landing_diagnostics) by extension 'python_setup_py'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['ignore', 'ignore_ament_install']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'ignore'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'ignore_ament_install'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['colcon_pkg']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'colcon_pkg'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['colcon_meta']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'colcon_meta'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['ros']
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'ros'
+[0.236s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['cmake', 'python']
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'cmake'
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'python'
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extensions ['python_setup_py']
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws) by extension 'python_setup_py'
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/build) by extensions ['ignore', 'ignore_ament_install']
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/build) by extension 'ignore'
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/build) ignored
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/install) by extensions ['ignore', 'ignore_ament_install']
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/install) by extension 'ignore'
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/install) ignored
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/log) by extensions ['ignore', 'ignore_ament_install']
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/log) by extension 'ignore'
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/log) ignored
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extensions ['ignore', 'ignore_ament_install']
+[0.237s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'ignore'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'ignore_ament_install'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extensions ['colcon_pkg']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'colcon_pkg'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extensions ['colcon_meta']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'colcon_meta'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extensions ['ros']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'ros'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extensions ['cmake', 'python']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'cmake'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'python'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extensions ['python_setup_py']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts) by extension 'python_setup_py'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extensions ['ignore', 'ignore_ament_install']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'ignore'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'ignore_ament_install'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extensions ['colcon_pkg']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'colcon_pkg'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extensions ['colcon_meta']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'colcon_meta'
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extensions ['ros']
+[0.238s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'ros'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extensions ['cmake', 'python']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'cmake'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'python'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extensions ['python_setup_py']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/scripts/SITL) by extension 'python_setup_py'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['ignore', 'ignore_ament_install']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'ignore'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'ignore_ament_install'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['colcon_pkg']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'colcon_pkg'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['colcon_meta']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'colcon_meta'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['ros']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'ros'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['cmake', 'python']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'cmake'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'python'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extensions ['python_setup_py']
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src) by extension 'python_setup_py'
+[0.239s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extensions ['ignore', 'ignore_ament_install']
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extension 'ignore'
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extension 'ignore_ament_install'
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extensions ['colcon_pkg']
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extension 'colcon_pkg'
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extensions ['colcon_meta']
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extension 'colcon_meta'
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extensions ['ros']
+[0.240s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/apf_planner) by extension 'ros'
+[0.245s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/apf_planner' with type 'ros.ament_python' and name 'apf_planner'
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extensions ['ignore', 'ignore_ament_install']
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extension 'ignore'
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extension 'ignore_ament_install'
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extensions ['colcon_pkg']
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extension 'colcon_pkg'
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extensions ['colcon_meta']
+[0.245s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extension 'colcon_meta'
+[0.246s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extensions ['ros']
+[0.246s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/aruco_detector) by extension 'ros'
+[0.246s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/aruco_detector' with type 'ros.ament_python' and name 'aruco_detector'
+[0.246s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extensions ['ignore', 'ignore_ament_install']
+[0.246s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extension 'ignore'
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extension 'ignore_ament_install'
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extensions ['colcon_pkg']
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extension 'colcon_pkg'
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extensions ['colcon_meta']
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extension 'colcon_meta'
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extensions ['ros']
+[0.247s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ekf_adapter) by extension 'ros'
+[0.248s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/ekf_adapter' with type 'ros.ament_python' and name 'ekf_adapter'
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extensions ['ignore', 'ignore_ament_install']
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extension 'ignore'
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extension 'ignore_ament_install'
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extensions ['colcon_pkg']
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extension 'colcon_pkg'
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extensions ['colcon_meta']
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extension 'colcon_meta'
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extensions ['ros']
+[0.248s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/fsm_state_machine) by extension 'ros'
+[0.249s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/fsm_state_machine' with type 'ros.ament_cmake' and name 'fsm_state_machine'
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extensions ['ignore', 'ignore_ament_install']
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extension 'ignore'
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extension 'ignore_ament_install'
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extensions ['colcon_pkg']
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extension 'colcon_pkg'
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extensions ['colcon_meta']
+[0.249s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extension 'colcon_meta'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extensions ['ros']
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/gimbal_control) by extension 'ros'
+[0.250s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/gimbal_control' with type 'ros.ament_cmake' and name 'gimbal_control'
+[0.250s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extensions ['ignore', 'ignore_ament_install']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extension 'ignore'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extension 'ignore_ament_install'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extensions ['colcon_pkg']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extension 'colcon_pkg'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extensions ['colcon_meta']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extension 'colcon_meta'
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extensions ['ros']
+[0.251s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/ibvs) by extension 'ros'
+[0.252s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/ibvs' with type 'ros.ament_python' and name 'ibvs'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extensions ['ignore', 'ignore_ament_install']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extension 'ignore'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extension 'ignore_ament_install'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extensions ['colcon_pkg']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extension 'colcon_pkg'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extensions ['colcon_meta']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extension 'colcon_meta'
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extensions ['ros']
+[0.252s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/input_state_cache) by extension 'ros'
+[0.253s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/input_state_cache' with type 'ros.ament_cmake' and name 'input_state_cache'
+[0.253s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extensions ['ignore', 'ignore_ament_install']
+[0.253s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extension 'ignore'
+[0.253s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extension 'ignore_ament_install'
+[0.253s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extensions ['colcon_pkg']
+[0.253s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extension 'colcon_pkg'
+[0.253s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extensions ['colcon_meta']
+[0.254s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extension 'colcon_meta'
+[0.254s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extensions ['ros']
+[0.254s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/kill_switch) by extension 'ros'
+[0.254s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/kill_switch' with type 'ros.ament_cmake' and name 'kill_switch'
+[0.254s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extensions ['ignore', 'ignore_ament_install']
+[0.254s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extension 'ignore'
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extension 'ignore_ament_install'
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extensions ['colcon_pkg']
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extension 'colcon_pkg'
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extensions ['colcon_meta']
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extension 'colcon_meta'
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extensions ['ros']
+[0.255s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_manager) by extension 'ros'
+[0.255s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/offboard_manager' with type 'ros.ament_cmake' and name 'offboard_manager'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extensions ['ignore', 'ignore_ament_install']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extension 'ignore'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extension 'ignore_ament_install'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extensions ['colcon_pkg']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extension 'colcon_pkg'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extensions ['colcon_meta']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extension 'colcon_meta'
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extensions ['ros']
+[0.256s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/offboard_safety_monitor) by extension 'ros'
+[0.257s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/offboard_safety_monitor' with type 'ros.ament_cmake' and name 'offboard_safety_monitor'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extensions ['ignore', 'ignore_ament_install']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extension 'ignore'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extension 'ignore_ament_install'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extensions ['colcon_pkg']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extension 'colcon_pkg'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extensions ['colcon_meta']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extension 'colcon_meta'
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extensions ['ros']
+[0.257s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/px4_state_bridge) by extension 'ros'
+[0.258s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/px4_state_bridge' with type 'ros.ament_cmake' and name 'px4_state_bridge'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extensions ['ignore', 'ignore_ament_install']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extension 'ignore'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extension 'ignore_ament_install'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extensions ['colcon_pkg']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extension 'colcon_pkg'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extensions ['colcon_meta']
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extension 'colcon_meta'
+[0.258s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extensions ['ros']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/rc_parser) by extension 'ros'
+[0.259s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/rc_parser' with type 'ros.ament_cmake' and name 'rc_parser'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extensions ['ignore', 'ignore_ament_install']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extension 'ignore'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extension 'ignore_ament_install'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extensions ['colcon_pkg']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extension 'colcon_pkg'
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extensions ['colcon_meta']
+[0.259s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extension 'colcon_meta'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extensions ['ros']
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/servo_control) by extension 'ros'
+[0.260s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/servo_control' with type 'ros.ament_python' and name 'servo_control'
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extensions ['ignore', 'ignore_ament_install']
+[0.260s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extension 'ignore'
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extension 'ignore_ament_install'
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extensions ['colcon_pkg']
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extension 'colcon_pkg'
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extensions ['colcon_meta']
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extension 'colcon_meta'
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extensions ['ros']
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/takeoff) by extension 'ros'
+[0.261s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/takeoff' with type 'ros.ament_python' and name 'vdt_takeoff'
+[0.261s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extensions ['ignore', 'ignore_ament_install']
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extension 'ignore'
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extension 'ignore_ament_install'
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extensions ['colcon_pkg']
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extension 'colcon_pkg'
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extensions ['colcon_meta']
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extension 'colcon_meta'
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extensions ['ros']
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_bringup) by extension 'ros'
+[0.262s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/vdt_bringup' with type 'ros.ament_cmake' and name 'vdt_bringup'
+[0.262s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extension 'ignore'
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extension 'ignore_ament_install'
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extensions ['colcon_pkg']
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extension 'colcon_pkg'
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extensions ['colcon_meta']
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extension 'colcon_meta'
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extensions ['ros']
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vdt_msgs) by extension 'ros'
+[0.263s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/vdt_msgs' with type 'ros.ament_cmake' and name 'vdt_msgs'
+[0.263s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extensions ['ignore', 'ignore_ament_install']
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extension 'ignore'
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extension 'ignore_ament_install'
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extensions ['colcon_pkg']
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extension 'colcon_pkg'
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extensions ['colcon_meta']
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extension 'colcon_meta'
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extensions ['ros']
+[0.264s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/vision_interface_bridge) by extension 'ros'
+[0.265s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/vision_interface_bridge' with type 'ros.ament_cmake' and name 'vision_interface_bridge'
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extensions ['ignore', 'ignore_ament_install']
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extension 'ignore'
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extension 'ignore_ament_install'
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extensions ['colcon_pkg']
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extension 'colcon_pkg'
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extensions ['colcon_meta']
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extension 'colcon_meta'
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extensions ['ros']
+[0.265s] Level 1:colcon.colcon_core.package_identification:_identify(ros2_ws/src/xrce_bridge_manager) by extension 'ros'
+[0.266s] DEBUG:colcon.colcon_core.package_identification:Package 'ros2_ws/src/xrce_bridge_manager' with type 'ros.ament_python' and name 'xrce_bridge_manager'
+[0.266s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.266s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.266s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.266s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.266s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.298s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.298s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[0.300s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/vdt_2026/ros2_ws/install
+[0.301s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 196 installed packages in /opt/ros/jazzy
+[0.302s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'cmake_args' from command line to 'None'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'cmake_target' from command line to 'None'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'cmake_clean_cache' from command line to 'False'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'cmake_clean_first' from command line to 'False'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'cmake_force_configure' from command line to 'False'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'ament_cmake_args' from command line to 'None'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'catkin_cmake_args' from command line to 'None'
+[0.342s] Level 5:colcon.colcon_core.verb:set package 'aruco_detector' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.342s] DEBUG:colcon.colcon_core.verb:Building package 'aruco_detector' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/aruco_detector', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/aruco_detector', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector', 'symlink_install': False, 'test_result_base': None}
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'cmake_args' from command line to 'None'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'cmake_target' from command line to 'None'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'cmake_clean_cache' from command line to 'False'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'cmake_clean_first' from command line to 'False'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'cmake_force_configure' from command line to 'False'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'ament_cmake_args' from command line to 'None'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'catkin_cmake_args' from command line to 'None'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ekf_adapter' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.343s] DEBUG:colcon.colcon_core.verb:Building package 'ekf_adapter' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/ekf_adapter', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/ekf_adapter', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter', 'symlink_install': False, 'test_result_base': None}
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'cmake_args' from command line to 'None'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'cmake_target' from command line to 'None'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'cmake_clean_cache' from command line to 'False'
+[0.343s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'cmake_clean_first' from command line to 'False'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'cmake_force_configure' from command line to 'False'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'ament_cmake_args' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'catkin_cmake_args' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'ibvs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.344s] DEBUG:colcon.colcon_core.verb:Building package 'ibvs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/ibvs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/ibvs', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs', 'symlink_install': False, 'test_result_base': None}
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'cmake_args' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'cmake_target' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'cmake_clean_cache' from command line to 'False'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'cmake_clean_first' from command line to 'False'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'cmake_force_configure' from command line to 'False'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'ament_cmake_args' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'catkin_cmake_args' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'servo_control' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.344s] DEBUG:colcon.colcon_core.verb:Building package 'servo_control' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/servo_control', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/servo_control', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control', 'symlink_install': False, 'test_result_base': None}
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'cmake_args' from command line to 'None'
+[0.344s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'cmake_target' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'cmake_clean_cache' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'cmake_clean_first' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'cmake_force_configure' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'ament_cmake_args' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'catkin_cmake_args' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_msgs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.345s] DEBUG:colcon.colcon_core.verb:Building package 'vdt_msgs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/vdt_msgs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/vdt_msgs', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs', 'symlink_install': False, 'test_result_base': None}
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'cmake_args' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'cmake_target' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'cmake_clean_cache' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'cmake_clean_first' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'cmake_force_configure' from command line to 'False'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'ament_cmake_args' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'catkin_cmake_args' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'vdt_takeoff' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.345s] DEBUG:colcon.colcon_core.verb:Building package 'vdt_takeoff' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/vdt_takeoff', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/vdt_takeoff', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/takeoff', 'symlink_install': False, 'test_result_base': None}
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'cmake_args' from command line to 'None'
+[0.345s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'cmake_target' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'cmake_clean_cache' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'cmake_clean_first' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'cmake_force_configure' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'ament_cmake_args' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'catkin_cmake_args' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'xrce_bridge_manager' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.346s] DEBUG:colcon.colcon_core.verb:Building package 'xrce_bridge_manager' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/xrce_bridge_manager', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/xrce_bridge_manager', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager', 'symlink_install': False, 'test_result_base': None}
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'cmake_args' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'cmake_target' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'cmake_clean_cache' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'cmake_clean_first' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'cmake_force_configure' from command line to 'False'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'ament_cmake_args' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'catkin_cmake_args' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'fsm_state_machine' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.346s] DEBUG:colcon.colcon_core.verb:Building package 'fsm_state_machine' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/fsm_state_machine', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/fsm_state_machine', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine', 'symlink_install': False, 'test_result_base': None}
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'cmake_args' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'cmake_target' from command line to 'None'
+[0.346s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'cmake_clean_cache' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'cmake_clean_first' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'cmake_force_configure' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'ament_cmake_args' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'catkin_cmake_args' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'input_state_cache' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.347s] DEBUG:colcon.colcon_core.verb:Building package 'input_state_cache' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/input_state_cache', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/input_state_cache', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache', 'symlink_install': False, 'test_result_base': None}
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'cmake_args' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'cmake_target' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'cmake_clean_cache' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'cmake_clean_first' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'cmake_force_configure' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'ament_cmake_args' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'catkin_cmake_args' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'offboard_manager' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.347s] DEBUG:colcon.colcon_core.verb:Building package 'offboard_manager' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/offboard_manager', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/offboard_manager', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager', 'symlink_install': False, 'test_result_base': None}
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'cmake_args' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'cmake_target' from command line to 'None'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'cmake_clean_cache' from command line to 'False'
+[0.347s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'cmake_clean_first' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'cmake_force_configure' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'ament_cmake_args' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'catkin_cmake_args' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'rc_parser' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.348s] DEBUG:colcon.colcon_core.verb:Building package 'rc_parser' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/rc_parser', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/rc_parser', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/rc_parser', 'symlink_install': False, 'test_result_base': None}
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'cmake_args' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'cmake_target' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'cmake_clean_cache' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'cmake_clean_first' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'cmake_force_configure' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'ament_cmake_args' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'catkin_cmake_args' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'apf_planner' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.348s] DEBUG:colcon.colcon_core.verb:Building package 'apf_planner' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/apf_planner', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/apf_planner', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/apf_planner', 'symlink_install': False, 'test_result_base': None}
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'cmake_args' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'cmake_target' from command line to 'None'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'cmake_clean_cache' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'cmake_clean_first' from command line to 'False'
+[0.348s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'cmake_force_configure' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'ament_cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'catkin_cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'gimbal_control' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.349s] DEBUG:colcon.colcon_core.verb:Building package 'gimbal_control' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/gimbal_control', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/gimbal_control', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/gimbal_control', 'symlink_install': False, 'test_result_base': None}
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'cmake_target' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'cmake_clean_cache' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'cmake_clean_first' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'cmake_force_configure' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'ament_cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'catkin_cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'kill_switch' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.349s] DEBUG:colcon.colcon_core.verb:Building package 'kill_switch' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/kill_switch', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/kill_switch', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/kill_switch', 'symlink_install': False, 'test_result_base': None}
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'cmake_target' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'cmake_clean_cache' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'cmake_clean_first' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'cmake_force_configure' from command line to 'False'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'ament_cmake_args' from command line to 'None'
+[0.349s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'catkin_cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'offboard_safety_monitor' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.350s] DEBUG:colcon.colcon_core.verb:Building package 'offboard_safety_monitor' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/offboard_safety_monitor', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/offboard_safety_monitor', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/offboard_safety_monitor', 'symlink_install': False, 'test_result_base': None}
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'cmake_target' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'cmake_clean_cache' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'cmake_clean_first' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'cmake_force_configure' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'ament_cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'catkin_cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'px4_state_bridge' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.350s] DEBUG:colcon.colcon_core.verb:Building package 'px4_state_bridge' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/px4_state_bridge', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/px4_state_bridge', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/px4_state_bridge', 'symlink_install': False, 'test_result_base': None}
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'cmake_target' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'cmake_clean_cache' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'cmake_clean_first' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'cmake_force_configure' from command line to 'False'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'ament_cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'catkin_cmake_args' from command line to 'None'
+[0.350s] Level 5:colcon.colcon_core.verb:set package 'vision_interface_bridge' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.351s] DEBUG:colcon.colcon_core.verb:Building package 'vision_interface_bridge' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/vision_interface_bridge', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/vision_interface_bridge', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/vision_interface_bridge', 'symlink_install': False, 'test_result_base': None}
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'cmake_args' from command line to 'None'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'cmake_target' from command line to 'None'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'cmake_clean_cache' from command line to 'False'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'cmake_clean_first' from command line to 'False'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'cmake_force_configure' from command line to 'False'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'ament_cmake_args' from command line to 'None'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'catkin_cmake_args' from command line to 'None'
+[0.351s] Level 5:colcon.colcon_core.verb:set package 'vdt_bringup' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.351s] DEBUG:colcon.colcon_core.verb:Building package 'vdt_bringup' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/vdt_2026/VDT_project/build/vdt_bringup', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/vdt_2026/VDT_project/install/vdt_bringup', 'merge_install': False, 'path': '/home/vdt_2026/VDT_project/ros2_ws/src/vdt_bringup', 'symlink_install': False, 'test_result_base': None}
+[0.351s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.353s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.353s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs' with build type 'ament_cmake'
+[0.353s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs'
+[0.356s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.356s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.356s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.360s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control' with build type 'ament_python'
+[0.360s] Level 1:colcon.colcon_core.shell:create_environment_hook('servo_control', 'ament_prefix_path')
+[0.360s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/hook/ament_prefix_path.ps1'
+[0.362s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/hook/ament_prefix_path.dsv'
+[0.362s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/hook/ament_prefix_path.sh'
+[0.363s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.363s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.366s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager' with build type 'ament_python'
+[0.367s] Level 1:colcon.colcon_core.shell:create_environment_hook('xrce_bridge_manager', 'ament_prefix_path')
+[0.367s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/hook/ament_prefix_path.ps1'
+[0.368s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/hook/ament_prefix_path.dsv'
+[0.368s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/hook/ament_prefix_path.sh'
+[0.369s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.369s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.372s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector' with build type 'ament_python'
+[0.373s] Level 1:colcon.colcon_core.shell:create_environment_hook('aruco_detector', 'ament_prefix_path')
+[0.373s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/hook/ament_prefix_path.ps1'
+[0.374s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/hook/ament_prefix_path.dsv'
+[0.374s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/hook/ament_prefix_path.sh'
+[0.375s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.375s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.382s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/vdt_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/vdt_msgs
+[0.714s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control'
+[0.714s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.714s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.046s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager'
+[1.046s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.046s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.376s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector'
+[1.376s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[1.377s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.474s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: dist_info, symlink_data, bdist_dumb, build_ext, compile_catalog, update_catalog, install_egg_info, install_scripts, sdist, easy_install, install_headers, rotate, init_catalog, egg_info, install, develop, bdist_egg, editable_wheel, extract_messages, setopt, bdist, saveopts, upload_docs, build_py, register, upload, build_clib, build_scripts, bdist_wheel, check, install_data, build, install_lib, clean, alias, bdist_rpm, test
+[2.477s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control': PYTHONPATH=/home/vdt_2026/VDT_project/build/servo_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/servo_control build --build-base /home/vdt_2026/VDT_project/build/servo_control/build install --record /home/vdt_2026/VDT_project/build/servo_control/install.log --install-scripts $base/lib/servo_control --single-version-externally-managed install_data
+[2.479s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: dist_info, symlink_data, bdist_dumb, build_ext, compile_catalog, update_catalog, install_egg_info, install_scripts, sdist, easy_install, install_headers, rotate, init_catalog, egg_info, install, develop, bdist_egg, editable_wheel, extract_messages, setopt, bdist, saveopts, upload_docs, build_py, register, upload, build_clib, build_scripts, bdist_wheel, check, install_data, build, install_lib, clean, alias, bdist_rpm, test
+[2.483s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager': PYTHONPATH=/home/vdt_2026/VDT_project/build/xrce_bridge_manager/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/xrce_bridge_manager build --build-base /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build install --record /home/vdt_2026/VDT_project/build/xrce_bridge_manager/install.log --install-scripts $base/lib/xrce_bridge_manager --single-version-externally-managed install_data
+[2.522s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: dist_info, symlink_data, bdist_dumb, build_ext, compile_catalog, update_catalog, install_egg_info, install_scripts, sdist, easy_install, install_headers, rotate, init_catalog, egg_info, install, develop, bdist_egg, editable_wheel, extract_messages, setopt, bdist, saveopts, upload_docs, build_py, register, upload, build_clib, build_scripts, bdist_wheel, check, install_data, build, install_lib, clean, alias, bdist_rpm, test
+[2.524s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector': PYTHONPATH=/home/vdt_2026/VDT_project/build/aruco_detector/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/aruco_detector build --build-base /home/vdt_2026/VDT_project/build/aruco_detector/build install --record /home/vdt_2026/VDT_project/build/aruco_detector/install.log --install-scripts $base/lib/aruco_detector --single-version-externally-managed install_data
+[3.440s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/xrce_bridge_manager' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/xrce_bridge_manager/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/xrce_bridge_manager build --build-base /home/vdt_2026/VDT_project/build/xrce_bridge_manager/build install --record /home/vdt_2026/VDT_project/build/xrce_bridge_manager/install.log --install-scripts $base/lib/xrce_bridge_manager --single-version-externally-managed install_data
+[3.444s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager' for CMake module files
+[3.446s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager' for CMake config files
+[3.447s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib'
+[3.448s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/bin'
+[3.448s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/pkgconfig/xrce_bridge_manager.pc'
+[3.448s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/lib/python3.12/site-packages'
+[3.449s] Level 1:colcon.colcon_core.shell:create_environment_hook('xrce_bridge_manager', 'pythonpath')
+[3.449s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/hook/pythonpath.ps1'
+[3.450s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/hook/pythonpath.dsv'
+[3.451s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/hook/pythonpath.sh'
+[3.452s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/bin'
+[3.452s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(xrce_bridge_manager)
+[3.453s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/package.ps1'
+[3.455s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/package.dsv'
+[3.456s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/package.sh'
+[3.457s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/package.bash'
+[3.459s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/xrce_bridge_manager/package.zsh'
+[3.460s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/xrce_bridge_manager/share/colcon-core/packages/xrce_bridge_manager)
+[3.462s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter' with build type 'ament_python'
+[3.463s] Level 1:colcon.colcon_core.shell:create_environment_hook('ekf_adapter', 'ament_prefix_path')
+[3.464s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/hook/ament_prefix_path.ps1'
+[3.465s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/hook/ament_prefix_path.dsv'
+[3.466s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/hook/ament_prefix_path.sh'
+[3.467s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[3.468s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[3.473s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control' for CMake module files
+[3.475s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control' for CMake config files
+[3.474s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/servo_control' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/servo_control/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/servo_control build --build-base /home/vdt_2026/VDT_project/build/servo_control/build install --record /home/vdt_2026/VDT_project/build/servo_control/install.log --install-scripts $base/lib/servo_control --single-version-externally-managed install_data
+[3.476s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control/lib'
+[3.476s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control/bin'
+[3.476s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control/lib/pkgconfig/servo_control.pc'
+[3.477s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control/lib/python3.12/site-packages'
+[3.477s] Level 1:colcon.colcon_core.shell:create_environment_hook('servo_control', 'pythonpath')
+[3.477s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/hook/pythonpath.ps1'
+[3.478s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/hook/pythonpath.dsv'
+[3.479s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/hook/pythonpath.sh'
+[3.480s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/servo_control/bin'
+[3.480s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(servo_control)
+[3.481s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/package.ps1'
+[3.482s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/package.dsv'
+[3.483s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/package.sh'
+[3.484s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/package.bash'
+[3.485s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/servo_control/share/servo_control/package.zsh'
+[3.486s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/servo_control/share/colcon-core/packages/servo_control)
+[3.488s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs' with build type 'ament_python'
+[3.489s] Level 1:colcon.colcon_core.shell:create_environment_hook('ibvs', 'ament_prefix_path')
+[3.489s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/hook/ament_prefix_path.ps1'
+[3.492s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/hook/ament_prefix_path.dsv'
+[3.492s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/hook/ament_prefix_path.sh'
+[3.494s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[3.494s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[3.824s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter'
+[3.824s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[3.825s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[3.829s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector' for CMake module files
+[3.830s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector' for CMake config files
+[3.831s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector/lib'
+[3.831s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector/bin'
+[3.831s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector/lib/pkgconfig/aruco_detector.pc'
+[3.832s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages'
+[3.832s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/aruco_detector' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/aruco_detector/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/aruco_detector/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/aruco_detector build --build-base /home/vdt_2026/VDT_project/build/aruco_detector/build install --record /home/vdt_2026/VDT_project/build/aruco_detector/install.log --install-scripts $base/lib/aruco_detector --single-version-externally-managed install_data
+[3.832s] Level 1:colcon.colcon_core.shell:create_environment_hook('aruco_detector', 'pythonpath')
+[3.832s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/hook/pythonpath.ps1'
+[3.833s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/hook/pythonpath.dsv'
+[3.833s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/hook/pythonpath.sh'
+[3.834s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/aruco_detector/bin'
+[3.834s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(aruco_detector)
+[3.835s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/package.ps1'
+[3.836s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/package.dsv'
+[3.836s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/package.sh'
+[3.836s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/package.bash'
+[3.837s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/aruco_detector/share/aruco_detector/package.zsh'
+[3.837s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/aruco_detector/share/colcon-core/packages/aruco_detector)
+[3.839s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/takeoff' with build type 'ament_python'
+[3.839s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_takeoff', 'ament_prefix_path')
+[3.839s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/hook/ament_prefix_path.ps1'
+[3.840s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/hook/ament_prefix_path.dsv'
+[3.841s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/hook/ament_prefix_path.sh'
+[3.841s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[3.841s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[4.159s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs'
+[4.159s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[4.159s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[4.520s] WARNING:colcon.colcon_ros.task.ament_python.build:Package 'vdt_takeoff' doesn't explicitly install a marker in the package index (colcon-ros currently does it implicitly but that fallback will be removed in the future)
+[4.520s] WARNING:colcon.colcon_ros.task.ament_python.build:Package 'vdt_takeoff' doesn't explicitly install the 'package.xml' file (colcon-ros currently does it implicitly but that fallback will be removed in the future)
+[4.521s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/vdt_2026/VDT_project/ros2_ws/src/takeoff'
+[4.521s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[4.521s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[5.164s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: dist_info, symlink_data, bdist_dumb, build_ext, compile_catalog, update_catalog, install_egg_info, install_scripts, sdist, easy_install, install_headers, rotate, init_catalog, egg_info, install, develop, bdist_egg, editable_wheel, extract_messages, setopt, bdist, saveopts, upload_docs, build_py, register, upload, build_clib, build_scripts, bdist_wheel, check, install_data, build, install_lib, clean, alias, bdist_rpm, test
+[5.166s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter': PYTHONPATH=/home/vdt_2026/VDT_project/build/ekf_adapter/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ekf_adapter build --build-base /home/vdt_2026/VDT_project/build/ekf_adapter/build install --record /home/vdt_2026/VDT_project/build/ekf_adapter/install.log --install-scripts $base/lib/ekf_adapter --single-version-externally-managed install_data
+[5.610s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: dist_info, symlink_data, bdist_dumb, build_ext, compile_catalog, update_catalog, install_egg_info, install_scripts, sdist, easy_install, install_headers, rotate, init_catalog, egg_info, install, develop, bdist_egg, editable_wheel, extract_messages, setopt, bdist, saveopts, upload_docs, build_py, register, upload, build_clib, build_scripts, bdist_wheel, check, install_data, build, install_lib, clean, alias, bdist_rpm, test
+[5.613s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/takeoff': PYTHONPATH=/home/vdt_2026/VDT_project/build/vdt_takeoff/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/vdt_takeoff/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/vdt_takeoff build --build-base /home/vdt_2026/VDT_project/build/vdt_takeoff/build install --record /home/vdt_2026/VDT_project/build/vdt_takeoff/install.log --install-scripts $base/lib/vdt_takeoff --single-version-externally-managed install_data
+[5.619s] DEBUG:colcon.colcon_core.task.python.build:Available setuptools commands: dist_info, symlink_data, bdist_dumb, build_ext, compile_catalog, update_catalog, install_egg_info, install_scripts, sdist, easy_install, install_headers, rotate, init_catalog, egg_info, install, develop, bdist_egg, editable_wheel, extract_messages, setopt, bdist, saveopts, upload_docs, build_py, register, upload, build_clib, build_scripts, bdist_wheel, check, install_data, build, install_lib, clean, alias, bdist_rpm, test
+[5.622s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs': PYTHONPATH=/home/vdt_2026/VDT_project/build/ibvs/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ibvs build --build-base /home/vdt_2026/VDT_project/build/ibvs/build install --record /home/vdt_2026/VDT_project/build/ibvs/install.log --install-scripts $base/lib/ibvs --single-version-externally-managed install_data
+[6.271s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter' for CMake module files
+[6.273s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter' for CMake config files
+[6.274s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter/lib'
+[6.274s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter/bin'
+[6.274s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter/lib/pkgconfig/ekf_adapter.pc'
+[6.274s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages'
+[6.278s] Level 1:colcon.colcon_core.shell:create_environment_hook('ekf_adapter', 'pythonpath')
+[6.278s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/hook/pythonpath.ps1'
+[6.279s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/hook/pythonpath.dsv'
+[6.279s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/hook/pythonpath.sh'
+[6.280s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ekf_adapter/bin'
+[6.280s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ekf_adapter)
+[6.280s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/package.ps1'
+[6.284s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/package.dsv'
+[6.285s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/package.sh'
+[6.285s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/package.bash'
+[6.286s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ekf_adapter/share/ekf_adapter/package.zsh'
+[6.286s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/ekf_adapter/share/colcon-core/packages/ekf_adapter)
+[6.287s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/ekf_adapter' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/ekf_adapter/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ekf_adapter/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ekf_adapter build --build-base /home/vdt_2026/VDT_project/build/ekf_adapter/build install --record /home/vdt_2026/VDT_project/build/ekf_adapter/install.log --install-scripts $base/lib/ekf_adapter --single-version-externally-managed install_data
+[6.556s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs' for CMake module files
+[6.557s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/ibvs/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ibvs build --build-base /home/vdt_2026/VDT_project/build/ibvs/build install --record /home/vdt_2026/VDT_project/build/ibvs/install.log --install-scripts $base/lib/ibvs --single-version-externally-managed install_data
+[6.557s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs' for CMake config files
+[6.558s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs/lib'
+[6.559s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs/bin'
+[6.559s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs/lib/pkgconfig/ibvs.pc'
+[6.559s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages'
+[6.560s] Level 1:colcon.colcon_core.shell:create_environment_hook('ibvs', 'pythonpath')
+[6.560s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/hook/pythonpath.ps1'
+[6.561s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/hook/pythonpath.dsv'
+[6.562s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/hook/pythonpath.sh'
+[6.564s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/ibvs/bin'
+[6.564s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ibvs)
+[6.565s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/package.ps1'
+[6.567s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/package.dsv'
+[6.568s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/package.sh'
+[6.569s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/package.bash'
+[6.569s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/ibvs/share/ibvs/package.zsh'
+[6.570s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/ibvs/share/colcon-core/packages/ibvs)
+[6.578s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff' for CMake module files
+[6.578s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/takeoff' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/vdt_takeoff/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/vdt_takeoff/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/vdt_takeoff build --build-base /home/vdt_2026/VDT_project/build/vdt_takeoff/build install --record /home/vdt_2026/VDT_project/build/vdt_takeoff/install.log --install-scripts $base/lib/vdt_takeoff --single-version-externally-managed install_data
+[6.579s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff' for CMake config files
+[6.580s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff/lib'
+[6.580s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff/bin'
+[6.580s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff/lib/pkgconfig/vdt_takeoff.pc'
+[6.580s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff/lib/python3.12/site-packages'
+[6.580s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_takeoff', 'pythonpath')
+[6.580s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/hook/pythonpath.ps1'
+[6.581s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/hook/pythonpath.dsv'
+[6.581s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/hook/pythonpath.sh'
+[6.582s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_takeoff/bin'
+[6.582s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vdt_takeoff)
+[6.583s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/package.ps1'
+[6.583s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/package.dsv'
+[6.584s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/package.sh'
+[6.585s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/package.bash'
+[6.585s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_takeoff/share/vdt_takeoff/package.zsh'
+[6.585s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/vdt_takeoff/share/colcon-core/packages/vdt_takeoff)
+[6.689s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/vdt_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/vdt_msgs
+[6.690s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/vdt_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/vdt_msgs -- -j4 -l4
+[20.155s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/vdt_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/vdt_msgs -- -j4 -l4
+[20.171s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/vdt_msgs': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/vdt_msgs
+[20.319s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vdt_msgs)
+[20.319s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs' for CMake module files
+[20.320s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/vdt_msgs' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/vdt_msgs
+[20.321s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs' for CMake config files
+[20.321s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_msgs', 'cmake_prefix_path')
+[20.321s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/cmake_prefix_path.ps1'
+[20.322s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/cmake_prefix_path.dsv'
+[20.322s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/cmake_prefix_path.sh'
+[20.323s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/lib'
+[20.323s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_msgs', 'ld_library_path_lib')
+[20.323s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/ld_library_path_lib.ps1'
+[20.324s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/ld_library_path_lib.dsv'
+[20.324s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/ld_library_path_lib.sh'
+[20.324s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/bin'
+[20.324s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/pkgconfig/vdt_msgs.pc'
+[20.325s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages'
+[20.325s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_msgs', 'pythonpath')
+[20.325s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/pythonpath.ps1'
+[20.325s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/pythonpath.dsv'
+[20.326s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/pythonpath.sh'
+[20.327s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/bin'
+[20.327s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.ps1'
+[20.328s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.dsv'
+[20.328s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.sh'
+[20.329s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.bash'
+[20.329s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.zsh'
+[20.330s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/vdt_msgs/share/colcon-core/packages/vdt_msgs)
+[20.331s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vdt_msgs)
+[20.331s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs' for CMake module files
+[20.332s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs' for CMake config files
+[20.333s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_msgs', 'cmake_prefix_path')
+[20.333s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/cmake_prefix_path.ps1'
+[20.334s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/cmake_prefix_path.dsv'
+[20.335s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/cmake_prefix_path.sh'
+[20.335s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/lib'
+[20.336s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_msgs', 'ld_library_path_lib')
+[20.336s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/ld_library_path_lib.ps1'
+[20.336s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/ld_library_path_lib.dsv'
+[20.337s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/ld_library_path_lib.sh'
+[20.338s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/bin'
+[20.338s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/pkgconfig/vdt_msgs.pc'
+[20.338s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages'
+[20.338s] Level 1:colcon.colcon_core.shell:create_environment_hook('vdt_msgs', 'pythonpath')
+[20.339s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/pythonpath.ps1'
+[20.339s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/pythonpath.dsv'
+[20.340s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/hook/pythonpath.sh'
+[20.341s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/vdt_msgs/bin'
+[20.341s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.ps1'
+[20.342s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.dsv'
+[20.343s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.sh'
+[20.344s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.bash'
+[20.344s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/package.zsh'
+[20.345s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/vdt_msgs/share/colcon-core/packages/vdt_msgs)
+[20.346s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine' with build type 'ament_cmake'
+[20.346s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine'
+[20.347s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[20.347s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[20.351s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager' with build type 'ament_cmake'
+[20.351s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager'
+[20.351s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[20.351s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[20.356s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache' with build type 'ament_cmake'
+[20.356s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache'
+[20.356s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[20.356s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[20.361s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/rc_parser' with build type 'ament_cmake'
+[20.362s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/vdt_2026/VDT_project/ros2_ws/src/rc_parser'
+[20.362s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[20.362s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[20.371s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/fsm_state_machine': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/fsm_state_machine
+[20.373s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/offboard_manager': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/offboard_manager
+[20.375s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/input_state_cache': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/input_state_cache
+[20.386s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/rc_parser': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/rc_parser -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/rc_parser
+[22.810s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/rc_parser' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/rc_parser -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/rc_parser
+[22.811s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/rc_parser': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/rc_parser -- -j4 -l4
+[22.835s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/offboard_manager' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/offboard_manager -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/offboard_manager
+[22.837s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/offboard_manager': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/offboard_manager -- -j4 -l4
+[24.234s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/fsm_state_machine' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/fsm_state_machine
+[24.236s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/fsm_state_machine': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/fsm_state_machine -- -j4 -l4
+[24.513s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/input_state_cache' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/input_state_cache -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/input_state_cache
+[24.513s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/input_state_cache': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/input_state_cache -- -j4 -l4
+[54.714s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/rc_parser' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/rc_parser -- -j4 -l4
+[54.715s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/rc_parser': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/rc_parser
+[54.796s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(rc_parser)
+[54.796s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser' for CMake module files
+[54.798s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser' for CMake config files
+[54.798s] Level 1:colcon.colcon_core.shell:create_environment_hook('rc_parser', 'cmake_prefix_path')
+[54.803s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/hook/cmake_prefix_path.ps1'
+[54.804s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/hook/cmake_prefix_path.dsv'
+[54.805s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/hook/cmake_prefix_path.sh'
+[54.808s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/rc_parser' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/rc_parser
+[54.810s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/lib'
+[54.811s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/bin'
+[54.811s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/lib/pkgconfig/rc_parser.pc'
+[54.811s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/lib/python3.12/site-packages'
+[54.812s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/bin'
+[54.816s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.ps1'
+[54.818s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.dsv'
+[54.820s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.sh'
+[54.822s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.bash'
+[54.826s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.zsh'
+[54.827s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/rc_parser/share/colcon-core/packages/rc_parser)
+[54.828s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(rc_parser)
+[54.836s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser' for CMake module files
+[54.837s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser' for CMake config files
+[54.838s] Level 1:colcon.colcon_core.shell:create_environment_hook('rc_parser', 'cmake_prefix_path')
+[54.845s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/hook/cmake_prefix_path.ps1'
+[54.846s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/hook/cmake_prefix_path.dsv'
+[54.853s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/hook/cmake_prefix_path.sh'
+[54.854s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/lib'
+[54.855s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/bin'
+[54.855s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/lib/pkgconfig/rc_parser.pc'
+[54.855s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/lib/python3.12/site-packages'
+[54.859s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/rc_parser/bin'
+[54.860s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.ps1'
+[54.865s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.dsv'
+[54.866s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.sh'
+[54.867s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.bash'
+[54.872s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.zsh'
+[54.874s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/rc_parser/share/colcon-core/packages/rc_parser)
+[54.877s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/vdt_2026/VDT_project/ros2_ws/src/kill_switch' with build type 'ament_cmake'
+[54.877s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/vdt_2026/VDT_project/ros2_ws/src/kill_switch'
+[54.880s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[54.880s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[54.929s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/kill_switch': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/kill_switch -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/kill_switch
+[58.688s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/kill_switch' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/kill_switch -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/kill_switch
+[58.689s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/vdt_2026/VDT_project/build/kill_switch': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/kill_switch -- -j4 -l4
+[59.684s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(kill_switch)
+[59.685s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/kill_switch' for CMake module files
+[59.685s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/vdt_2026/VDT_project/build/kill_switch' returned '2': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/rc_parser:/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/kill_switch -- -j4 -l4
+[59.686s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/kill_switch' for CMake config files
+[59.687s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/kill_switch/bin'
+[59.687s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/kill_switch/lib/pkgconfig/kill_switch.pc'
+[59.688s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/kill_switch/lib/python3.12/site-packages'
+[59.688s] Level 1:colcon.colcon_core.environment:checking '/home/vdt_2026/VDT_project/install/kill_switch/bin'
+[59.689s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.ps1'
+[59.691s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.dsv'
+[59.692s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.sh'
+[59.693s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.bash'
+[59.694s] INFO:colcon.colcon_core.shell:Creating package script '/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.zsh'
+[59.695s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/vdt_2026/VDT_project/install/kill_switch/share/colcon-core/packages/kill_switch)
+[143.131s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[143.131s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[143.132s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '2'
+[143.132s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[143.133s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[143.133s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/vdt_2026/VDT_project/install/local_setup.ps1'
+[143.134s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/vdt_2026/VDT_project/install/_local_setup_util_ps1.py'
+[143.136s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/vdt_2026/VDT_project/install/setup.ps1'
+[143.137s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/vdt_2026/VDT_project/install/local_setup.sh'
+[143.138s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/vdt_2026/VDT_project/install/_local_setup_util_sh.py'
+[143.139s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/vdt_2026/VDT_project/install/setup.sh'
+[143.140s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/vdt_2026/VDT_project/install/local_setup.bash'
+[143.141s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/vdt_2026/VDT_project/install/setup.bash'
+[143.142s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/vdt_2026/VDT_project/install/local_setup.zsh'
+[143.142s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/vdt_2026/VDT_project/install/setup.zsh'

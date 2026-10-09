@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/bridge_logic_test.dir/test/bridge_logic_test.cpp.o -o bridge_logic_test 

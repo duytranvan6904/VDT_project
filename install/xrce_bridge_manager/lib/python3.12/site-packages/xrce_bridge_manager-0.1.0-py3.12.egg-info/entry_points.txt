@@ -1,0 +1,2 @@
+[console_scripts]
+xrce_bridge_node = xrce_bridge_manager.xrce_node:main

@@ -1,0 +1,1 @@
+xrce_bridge_manager

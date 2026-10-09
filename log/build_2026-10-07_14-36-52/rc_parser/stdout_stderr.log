@@ -1,0 +1,65 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+-- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+-- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+-- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+-- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+-- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Found vdt_msgs: 0.1.0 (/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake)
+-- Configuring done (2.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/vdt_2026/VDT_project/build/rc_parser
+[ 11%] Building CXX object CMakeFiles/rc_node.dir/src/main.cpp.o
+[ 22%] Building CXX object CMakeFiles/rc_node.dir/src/rc_node.cpp.o
+[ 33%] Building CXX object CMakeFiles/rc_node.dir/src/rc_logic.cpp.o
+[ 44%] Building CXX object CMakeFiles/rc_logic_test.dir/test/rc_logic_test.cpp.o
+[ 55%] Building CXX object CMakeFiles/rc_logic_test.dir/src/rc_logic.cpp.o
+[ 66%] Building CXX object CMakeFiles/rc_node.dir/src/rc_sbus.cpp.o
+[ 77%] Linking CXX executable rc_logic_test
+[ 77%] Built target rc_logic_test
+[ 88%] Building CXX object CMakeFiles/rc_node.dir/src/rc_uart.cpp.o
+[100%] Linking CXX executable rc_node
+[100%] Built target rc_node
+-- Install configuration: "Release"
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/lib/rc_parser/rc_node
+-- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/rc_parser/lib/rc_parser/rc_node" to ""
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_logic.hpp
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_sbus.hpp
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_types.hpp
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_node.hpp
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_uart.hpp
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/ament_index/resource_index/package_run_dependencies/rc_parser
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/ament_index/resource_index/parent_prefix_path/rc_parser
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/ament_prefix_path.sh
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/ament_prefix_path.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/path.sh
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/path.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.bash
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.sh
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.zsh
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.dsv
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/ament_index/resource_index/packages/rc_parser
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/cmake/ament_cmake_export_include_directories-extras.cmake
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/cmake/rc_parserConfig.cmake
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/cmake/rc_parserConfig-version.cmake
+-- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.xml

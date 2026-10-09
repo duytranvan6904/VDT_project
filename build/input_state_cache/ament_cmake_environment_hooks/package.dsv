@@ -1,0 +1,4 @@
+source;share/input_state_cache/local_setup.bash
+source;share/input_state_cache/local_setup.dsv
+source;share/input_state_cache/local_setup.sh
+source;share/input_state_cache/local_setup.zsh

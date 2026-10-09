@@ -1,0 +1,184 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-426522b6c10432dbed8a.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.15"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						10
+					]
+				},
+				{
+					"build" : "gtest",
+					"jsonFile" : "directory-gtest-Release-0908a8c91ddba5d6c989.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.8"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "/opt/ros/jazzy/src/gtest_vendor",
+					"targetIndexes" : 
+					[
+						8,
+						9
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "fsm_state_machine",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						10
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "gtest",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						8,
+						9
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_actions::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_actions-Release-6017948697ff4278060f.json",
+					"name" : "fsm_actions",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_actions_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_actions_test-Release-8ddf4078c62aa68a7f3d.json",
+					"name" : "fsm_actions_test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_logic::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_logic-Release-80f97808d2da38d1704e.json",
+					"name" : "fsm_logic",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_logic_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_logic_test-Release-ec87e3ff710d3f130edd.json",
+					"name" : "fsm_logic_test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_node::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_node-Release-d29af7bccbb5d2f56e30.json",
+					"name" : "fsm_node",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_node_lib::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_node_lib-Release-19b32c628956391bef59.json",
+					"name" : "fsm_node_lib",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_node_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_node_test-Release-c1ff27240b3cbaa3d77f.json",
+					"name" : "fsm_node_test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "fsm_state_machine_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-fsm_state_machine_uninstall-Release-cc391b5bf44d1f4a6403.json",
+					"name" : "fsm_state_machine_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "gtest::@0af4add9fe94340e763e",
+					"jsonFile" : "target-gtest-Release-d869c288b2d0496d0a21.json",
+					"name" : "gtest",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "gtest_main::@0af4add9fe94340e763e",
+					"jsonFile" : "target-gtest_main-Release-c58dea5c1b032a2b53f3.json",
+					"name" : "gtest_main",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-Release-6c6d6cb3e1b4f408fbbf.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/vdt_2026/VDT_project/build/fsm_state_machine",
+		"source" : "/home/vdt_2026/VDT_project/ros2_ws/src/fsm_state_machine"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

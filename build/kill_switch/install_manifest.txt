@@ -1,0 +1,16 @@
+/home/vdt_2026/VDT_project/install/kill_switch/lib/kill_switch/kill_switch_node
+/home/vdt_2026/VDT_project/install/kill_switch/share/ament_index/resource_index/package_run_dependencies/kill_switch
+/home/vdt_2026/VDT_project/install/kill_switch/share/ament_index/resource_index/parent_prefix_path/kill_switch
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/environment/ament_prefix_path.sh
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/environment/ament_prefix_path.dsv
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/environment/path.sh
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/environment/path.dsv
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/local_setup.bash
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/local_setup.sh
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/local_setup.zsh
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/local_setup.dsv
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.dsv
+/home/vdt_2026/VDT_project/install/kill_switch/share/ament_index/resource_index/packages/kill_switch
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/cmake/kill_switchConfig.cmake
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/cmake/kill_switchConfig-version.cmake
+/home/vdt_2026/VDT_project/install/kill_switch/share/kill_switch/package.xml

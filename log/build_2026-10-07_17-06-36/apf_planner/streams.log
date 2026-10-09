@@ -1,0 +1,59 @@
+[1.052s] Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/apf_planner': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/offboard_manager:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/offboard_manager:/home/vdt_2026/VDT_project/install/vdt_msgs:${CMAKE_PREFIX_PATH} LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/build/apf_planner/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages:/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/apf_planner build --build-base /home/vdt_2026/VDT_project/build/apf_planner/build install --record /home/vdt_2026/VDT_project/build/apf_planner/install.log --install-scripts $base/lib/apf_planner --single-version-externally-managed install_data
+[1.356s] running egg_info
+[1.357s] creating ../../../build/apf_planner/apf_planner.egg-info
+[1.376s] writing ../../../build/apf_planner/apf_planner.egg-info/PKG-INFO
+[1.376s] writing dependency_links to ../../../build/apf_planner/apf_planner.egg-info/dependency_links.txt
+[1.377s] writing entry points to ../../../build/apf_planner/apf_planner.egg-info/entry_points.txt
+[1.377s] writing requirements to ../../../build/apf_planner/apf_planner.egg-info/requires.txt
+[1.377s] writing top-level names to ../../../build/apf_planner/apf_planner.egg-info/top_level.txt
+[1.377s] writing manifest file '../../../build/apf_planner/apf_planner.egg-info/SOURCES.txt'
+[1.417s] reading manifest file '../../../build/apf_planner/apf_planner.egg-info/SOURCES.txt'
+[1.418s] writing manifest file '../../../build/apf_planner/apf_planner.egg-info/SOURCES.txt'
+[1.418s] running build
+[1.418s] running build_py
+[1.418s] creating /home/vdt_2026/VDT_project/build/apf_planner/build
+[1.419s] creating /home/vdt_2026/VDT_project/build/apf_planner/build/lib
+[1.419s] creating /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.419s] copying apf_planner/planner_node.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.420s] copying apf_planner/pointcloud_generator.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.420s] copying apf_planner/__init__.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.421s] copying apf_planner/apf_core.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.421s] copying apf_planner/iapf_core.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.422s] copying apf_planner/planner_merge_node.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.422s] copying apf_planner/obstacles.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.423s] copying apf_planner/markers.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+[1.424s] running install
+[1.434s] running install_lib
+[1.454s] creating /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.454s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/planner_node.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.455s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/pointcloud_generator.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.455s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/__init__.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.455s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/apf_core.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.455s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/iapf_core.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.455s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/planner_merge_node.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.455s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/obstacles.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.456s] copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/markers.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+[1.456s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/planner_node.py to planner_node.cpython-312.pyc
+[1.461s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/pointcloud_generator.py to pointcloud_generator.cpython-312.pyc
+[1.463s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/__init__.py to __init__.cpython-312.pyc
+[1.463s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/apf_core.py to apf_core.cpython-312.pyc
+[1.465s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/iapf_core.py to iapf_core.cpython-312.pyc
+[1.468s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/planner_merge_node.py to planner_merge_node.cpython-312.pyc
+[1.470s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/obstacles.py to obstacles.cpython-312.pyc
+[1.471s] byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/markers.py to markers.cpython-312.pyc
+[1.473s] running install_data
+[1.473s] creating /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index
+[1.473s] creating /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index/resource_index
+[1.474s] creating /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index/resource_index/packages
+[1.474s] copying resource/apf_planner -> /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index/resource_index/packages
+[1.474s] copying package.xml -> /home/vdt_2026/VDT_project/install/apf_planner/share/apf_planner
+[1.474s] creating /home/vdt_2026/VDT_project/install/apf_planner/share/apf_planner/launch
+[1.474s] copying launch/apf_planner.launch.py -> /home/vdt_2026/VDT_project/install/apf_planner/share/apf_planner/launch
+[1.474s] running install_egg_info
+[1.496s] Copying ../../../build/apf_planner/apf_planner.egg-info to /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner-0.1.0-py3.12.egg-info
+[1.497s] running install_scripts
+[1.641s] Installing planner_merge_node script to /home/vdt_2026/VDT_project/install/apf_planner/lib/apf_planner
+[1.641s] Installing planner_node script to /home/vdt_2026/VDT_project/install/apf_planner/lib/apf_planner
+[1.641s] Installing pointcloud_generator script to /home/vdt_2026/VDT_project/install/apf_planner/lib/apf_planner
+[1.641s] writing list of installed files to '/home/vdt_2026/VDT_project/build/apf_planner/install.log'
+[1.719s] Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/apf_planner' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/offboard_manager:/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/offboard_manager:/home/vdt_2026/VDT_project/install/vdt_msgs:${CMAKE_PREFIX_PATH} LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/build/apf_planner/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages:/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/apf_planner build --build-base /home/vdt_2026/VDT_project/build/apf_planner/build install --record /home/vdt_2026/VDT_project/build/apf_planner/install.log --install-scripts $base/lib/apf_planner --single-version-externally-managed install_data

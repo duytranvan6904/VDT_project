@@ -1,0 +1,42 @@
+[2.131s] Invoking command in '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs': PYTHONPATH=/home/vdt_2026/VDT_project/build/ibvs/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ibvs build --build-base /home/vdt_2026/VDT_project/build/ibvs/build install --record /home/vdt_2026/VDT_project/build/ibvs/install.log --install-scripts $base/lib/ibvs --single-version-externally-managed install_data
+[2.556s] running egg_info
+[2.557s] creating ../../../build/ibvs/ibvs.egg-info
+[2.578s] writing ../../../build/ibvs/ibvs.egg-info/PKG-INFO
+[2.579s] writing dependency_links to ../../../build/ibvs/ibvs.egg-info/dependency_links.txt
+[2.581s] writing entry points to ../../../build/ibvs/ibvs.egg-info/entry_points.txt
+[2.581s] writing requirements to ../../../build/ibvs/ibvs.egg-info/requires.txt
+[2.582s] writing top-level names to ../../../build/ibvs/ibvs.egg-info/top_level.txt
+[2.582s] writing manifest file '../../../build/ibvs/ibvs.egg-info/SOURCES.txt'
+[2.630s] reading manifest file '../../../build/ibvs/ibvs.egg-info/SOURCES.txt'
+[2.631s] writing manifest file '../../../build/ibvs/ibvs.egg-info/SOURCES.txt'
+[2.632s] running build
+[2.632s] running build_py
+[2.633s] creating /home/vdt_2026/VDT_project/build/ibvs/build
+[2.633s] creating /home/vdt_2026/VDT_project/build/ibvs/build/lib
+[2.633s] creating /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs
+[2.634s] copying ibvs/ibvs_controller.py -> /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs
+[2.634s] copying ibvs/__init__.py -> /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs
+[2.635s] copying ibvs/ibvs_logic.py -> /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs
+[2.638s] running install
+[2.654s] running install_lib
+[2.696s] creating /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs
+[2.696s] copying /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs/ibvs_controller.py -> /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs
+[2.696s] copying /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs/__init__.py -> /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs
+[2.696s] copying /home/vdt_2026/VDT_project/build/ibvs/build/lib/ibvs/ibvs_logic.py -> /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs
+[2.696s] byte-compiling /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs/ibvs_controller.py to ibvs_controller.cpython-312.pyc
+[2.700s] byte-compiling /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs/__init__.py to __init__.cpython-312.pyc
+[2.702s] byte-compiling /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs/ibvs_logic.py to ibvs_logic.cpython-312.pyc
+[2.702s] running install_data
+[2.703s] creating /home/vdt_2026/VDT_project/install/ibvs/share/ament_index
+[2.703s] creating /home/vdt_2026/VDT_project/install/ibvs/share/ament_index/resource_index
+[2.703s] creating /home/vdt_2026/VDT_project/install/ibvs/share/ament_index/resource_index/packages
+[2.703s] copying resource/ibvs -> /home/vdt_2026/VDT_project/install/ibvs/share/ament_index/resource_index/packages
+[2.703s] copying package.xml -> /home/vdt_2026/VDT_project/install/ibvs/share/ibvs
+[2.704s] creating /home/vdt_2026/VDT_project/install/ibvs/share/ibvs/launch
+[2.705s] copying launch/ibvs.launch.py -> /home/vdt_2026/VDT_project/install/ibvs/share/ibvs/launch
+[2.712s] running install_egg_info
+[2.744s] Copying ../../../build/ibvs/ibvs.egg-info to /home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages/ibvs-0.1.0-py3.12.egg-info
+[2.750s] running install_scripts
+[2.947s] Installing ibvs_controller script to /home/vdt_2026/VDT_project/install/ibvs/lib/ibvs
+[2.950s] writing list of installed files to '/home/vdt_2026/VDT_project/build/ibvs/install.log'
+[3.066s] Invoked command in '/home/vdt_2026/VDT_project/ros2_ws/src/ibvs' returned '0': PYTHONPATH=/home/vdt_2026/VDT_project/build/ibvs/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/ibvs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../../build/ibvs build --build-base /home/vdt_2026/VDT_project/build/ibvs/build install --record /home/vdt_2026/VDT_project/build/ibvs/install.log --install-scripts $base/lib/ibvs --single-version-externally-managed install_data

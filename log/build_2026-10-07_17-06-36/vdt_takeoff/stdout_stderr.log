@@ -1,0 +1,19 @@
+running egg_info
+writing ../../../build/vdt_takeoff/takeoff.egg-info/PKG-INFO
+writing dependency_links to ../../../build/vdt_takeoff/takeoff.egg-info/dependency_links.txt
+writing entry points to ../../../build/vdt_takeoff/takeoff.egg-info/entry_points.txt
+writing requirements to ../../../build/vdt_takeoff/takeoff.egg-info/requires.txt
+writing top-level names to ../../../build/vdt_takeoff/takeoff.egg-info/top_level.txt
+reading manifest file '../../../build/vdt_takeoff/takeoff.egg-info/SOURCES.txt'
+writing manifest file '../../../build/vdt_takeoff/takeoff.egg-info/SOURCES.txt'
+running build
+running build_py
+running install
+running install_lib
+running install_data
+running install_egg_info
+removing '/home/vdt_2026/VDT_project/install/vdt_takeoff/lib/python3.12/site-packages/takeoff-0.1.0-py3.12.egg-info' (and everything under it)
+Copying ../../../build/vdt_takeoff/takeoff.egg-info to /home/vdt_2026/VDT_project/install/vdt_takeoff/lib/python3.12/site-packages/takeoff-0.1.0-py3.12.egg-info
+running install_scripts
+Installing takeoff script to /home/vdt_2026/VDT_project/install/vdt_takeoff/lib/vdt_takeoff
+writing list of installed files to '/home/vdt_2026/VDT_project/build/vdt_takeoff/install.log'

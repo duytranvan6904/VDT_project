@@ -1,0 +1,11 @@
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/uninstall.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/offboard_manager_uninstall.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/offboard_node.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/offboard_logic_test.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/test.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/edit_cache.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/rebuild_cache.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/list_install_components.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/install.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/install/local.dir
+/home/vdt_2026/VDT_project/build/offboard_manager/CMakeFiles/install/strip.dir

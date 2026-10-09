@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     default_params = os.path.join(
-        get_package_share_directory('vdt_bringup'), 'System_Params.yaml'
+        get_package_share_directory('bringup'), 'System_Params.yaml'
     )
     params_file = LaunchConfiguration('params_file')
 

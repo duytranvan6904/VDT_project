@@ -1,0 +1,12 @@
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/uninstall.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/rc_parser_uninstall.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/rc_parser_lib.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/rc_node.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/rc_logic_test.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/test.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/edit_cache.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/rebuild_cache.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/list_install_components.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/install.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/install/local.dir
+/home/vdt_2026/VDT_project/build/rc_parser/CMakeFiles/install/strip.dir

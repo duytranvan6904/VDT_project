@@ -1,0 +1,16 @@
+/home/vdt_2026/VDT_project/install/fsm_state_machine/lib/fsm_state_machine/fsm_node
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/ament_index/resource_index/package_run_dependencies/fsm_state_machine
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/ament_index/resource_index/parent_prefix_path/fsm_state_machine
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/environment/ament_prefix_path.sh
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/environment/ament_prefix_path.dsv
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/environment/path.sh
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/environment/path.dsv
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/local_setup.bash
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/local_setup.sh
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/local_setup.zsh
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/local_setup.dsv
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/package.dsv
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/ament_index/resource_index/packages/fsm_state_machine
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/cmake/fsm_state_machineConfig.cmake
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/cmake/fsm_state_machineConfig-version.cmake
+/home/vdt_2026/VDT_project/install/fsm_state_machine/share/fsm_state_machine/package.xml

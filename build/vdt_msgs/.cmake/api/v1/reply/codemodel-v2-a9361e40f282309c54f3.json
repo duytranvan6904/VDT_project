@@ -1,0 +1,267 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-daa6e770bfad1a16977e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						16,
+						17,
+						18,
+						19
+					]
+				},
+				{
+					"build" : "vdt_msgs__py",
+					"jsonFile" : "directory-vdt_msgs__py-831548e366619b330864.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/home/vdt_2026/VDT_project/build/vdt_msgs/vdt_msgs__py",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "vdt_msgs__rs",
+					"jsonFile" : "directory-vdt_msgs__rs-8a196124b295818f0b97.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.20"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "/home/vdt_2026/VDT_project/build/vdt_msgs/vdt_msgs__rs",
+					"targetIndexes" : 
+					[
+						15
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2
+					],
+					"name" : "vdt_msgs",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_build_vdt_msgs_egg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_build_vdt_msgs_egg-a320342b439aca9c6396.json",
+					"name" : "ament_cmake_python_build_vdt_msgs_egg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_copy_vdt_msgs::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_copy_vdt_msgs-59af0aa9cf67e8f57900.json",
+					"name" : "ament_cmake_python_copy_vdt_msgs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-0833efb463805a03b567.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs-178f22af3e6db4a7ce87.json",
+					"name" : "vdt_msgs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__cpp-79d641b5777ec5549cab.json",
+					"name" : "vdt_msgs__cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "vdt_msgs__py::@f808657bd089f92eb1bc",
+					"jsonFile" : "target-vdt_msgs__py-6c33e64bb804cd6b81ba.json",
+					"name" : "vdt_msgs__py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_generator_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_generator_c-e7456fcc7ab84439a16c.json",
+					"name" : "vdt_msgs__rosidl_generator_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_generator_py::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_generator_py-58af5a1935b1b1818b91.json",
+					"name" : "vdt_msgs__rosidl_generator_py",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_generator_type_description::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_generator_type_description-1667f03fb8c2f1a6e2ee.json",
+					"name" : "vdt_msgs__rosidl_generator_type_description",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_typesupport_c-c6868fa145c9f2333967.json",
+					"name" : "vdt_msgs__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_typesupport_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_typesupport_cpp-adcddf7c8f6eb7e3a945.json",
+					"name" : "vdt_msgs__rosidl_typesupport_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_typesupport_fastrtps_c-25a46b2a4663373b6cf0.json",
+					"name" : "vdt_msgs__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_typesupport_fastrtps_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_typesupport_fastrtps_cpp-408ada167f2c274e6174.json",
+					"name" : "vdt_msgs__rosidl_typesupport_fastrtps_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_typesupport_introspection_c-5973cd62c04190ac54aa.json",
+					"name" : "vdt_msgs__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs__rosidl_typesupport_introspection_cpp::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs__rosidl_typesupport_introspection_cpp-129d0db11d3f48513a1a.json",
+					"name" : "vdt_msgs__rosidl_typesupport_introspection_cpp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "vdt_msgs__rs::@776879c5fe24dc51c6f2",
+					"jsonFile" : "target-vdt_msgs__rs-2a7b7d44e50473ccd018.json",
+					"name" : "vdt_msgs__rs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs_s__rosidl_typesupport_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs_s__rosidl_typesupport_c-ca42185e69b2d13659a7.json",
+					"name" : "vdt_msgs_s__rosidl_typesupport_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs_s__rosidl_typesupport_fastrtps_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs_s__rosidl_typesupport_fastrtps_c-936e4ec904a10279736d.json",
+					"name" : "vdt_msgs_s__rosidl_typesupport_fastrtps_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs_s__rosidl_typesupport_introspection_c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs_s__rosidl_typesupport_introspection_c-1add1f1f18c1b9b84c48.json",
+					"name" : "vdt_msgs_s__rosidl_typesupport_introspection_c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "vdt_msgs_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-vdt_msgs_uninstall-5b18315f0fd9fc9221fe.json",
+					"name" : "vdt_msgs_uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/vdt_2026/VDT_project/build/vdt_msgs",
+		"source" : "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

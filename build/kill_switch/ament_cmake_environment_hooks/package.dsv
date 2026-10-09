@@ -1,0 +1,4 @@
+source;share/kill_switch/local_setup.bash
+source;share/kill_switch/local_setup.dsv
+source;share/kill_switch/local_setup.sh
+source;share/kill_switch/local_setup.zsh

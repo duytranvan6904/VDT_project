@@ -1,0 +1,16 @@
+package.xml
+setup.cfg
+setup.py
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/PKG-INFO
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/SOURCES.txt
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/dependency_links.txt
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/entry_points.txt
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/requires.txt
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/top_level.txt
+../../../build/xrce_bridge_manager/xrce_bridge_manager.egg-info/zip-safe
+launch/xrce_bringe_manager.launch.py
+resource/xrce_bridge_manager
+test/test_xrce_logic.py
+xrce_bridge_manager/__init__.py
+xrce_bridge_manager/xrce_logic.py
+xrce_bridge_manager/xrce_node.py

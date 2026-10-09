@@ -1,0 +1,2 @@
+bool offboard_active
+float32 heartbeat_age_sec

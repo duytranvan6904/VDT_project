@@ -9,7 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Load System_Params.yaml
-    config_file = os.path.join(get_package_share_directory('vdt_bringup'), 'System_Params.yaml')
+    config_file = os.path.join(get_package_share_directory('bringup'), 'System_Params.yaml')
     
     return LaunchDescription([
         DeclareLaunchArgument('generator', default_value='false'),

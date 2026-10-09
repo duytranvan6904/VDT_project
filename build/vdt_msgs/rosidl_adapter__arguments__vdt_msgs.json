@@ -1,0 +1,13 @@
+{
+  "package_name": "vdt_msgs",
+  "non_idl_tuples": [
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/AltEstimate.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/VisionMarker.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/InputSnapshot.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/TimeoutFlags.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/PlannerOutput.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/OffboardStatus.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/RcFsmInput.msg",
+    "/home/vdt_2026/VDT_project/ros2_ws/src/vdt_msgs:msg/RcChannelsRaw.msg"
+  ]
+}

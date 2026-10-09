@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: xrce-bridge-manager
+Version: 0.1.0
+Summary: Khoi dong va giam sat MicroXRCEAgent, bao cao trang thai ket noi PX4
+Maintainer: Mier
+Maintainer-email: mier@example.com
+License: Apache-2.0

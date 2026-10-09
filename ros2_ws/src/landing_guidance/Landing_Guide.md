@@ -219,4 +219,4 @@ colcon build --packages-select landing_guidance
    - Subscriber phải dùng QoS best effort; reliable sẽ không nhận được.
 7. **Node không chạy trong launch:**
    - `ros2 pkg executables landing_guidance` phải có 3 node.
-   - `System_Params.yaml` trong `install/vdt_bringup` phải có đủ 3 khối tham số (build lại `vdt_bringup` sau khi sửa).
+   - `System_Params.yaml` trong `install/bringup` phải có đủ 3 khối tham số (build lại `bringup` sau khi sửa).

@@ -1,0 +1,57 @@
+running egg_info
+creating ../../../build/apf_planner/apf_planner.egg-info
+writing ../../../build/apf_planner/apf_planner.egg-info/PKG-INFO
+writing dependency_links to ../../../build/apf_planner/apf_planner.egg-info/dependency_links.txt
+writing entry points to ../../../build/apf_planner/apf_planner.egg-info/entry_points.txt
+writing requirements to ../../../build/apf_planner/apf_planner.egg-info/requires.txt
+writing top-level names to ../../../build/apf_planner/apf_planner.egg-info/top_level.txt
+writing manifest file '../../../build/apf_planner/apf_planner.egg-info/SOURCES.txt'
+reading manifest file '../../../build/apf_planner/apf_planner.egg-info/SOURCES.txt'
+writing manifest file '../../../build/apf_planner/apf_planner.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/vdt_2026/VDT_project/build/apf_planner/build
+creating /home/vdt_2026/VDT_project/build/apf_planner/build/lib
+creating /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/planner_node.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/pointcloud_generator.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/__init__.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/apf_core.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/iapf_core.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/planner_merge_node.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/obstacles.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+copying apf_planner/markers.py -> /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner
+running install
+running install_lib
+creating /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/planner_node.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/pointcloud_generator.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/__init__.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/apf_core.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/iapf_core.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/planner_merge_node.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/obstacles.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+copying /home/vdt_2026/VDT_project/build/apf_planner/build/lib/apf_planner/markers.py -> /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/planner_node.py to planner_node.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/pointcloud_generator.py to pointcloud_generator.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/apf_core.py to apf_core.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/iapf_core.py to iapf_core.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/planner_merge_node.py to planner_merge_node.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/obstacles.py to obstacles.cpython-312.pyc
+byte-compiling /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner/markers.py to markers.cpython-312.pyc
+running install_data
+creating /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index
+creating /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index/resource_index
+creating /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index/resource_index/packages
+copying resource/apf_planner -> /home/vdt_2026/VDT_project/install/apf_planner/share/ament_index/resource_index/packages
+copying package.xml -> /home/vdt_2026/VDT_project/install/apf_planner/share/apf_planner
+creating /home/vdt_2026/VDT_project/install/apf_planner/share/apf_planner/launch
+copying launch/apf_planner.launch.py -> /home/vdt_2026/VDT_project/install/apf_planner/share/apf_planner/launch
+running install_egg_info
+Copying ../../../build/apf_planner/apf_planner.egg-info to /home/vdt_2026/VDT_project/install/apf_planner/lib/python3.12/site-packages/apf_planner-0.1.0-py3.12.egg-info
+running install_scripts
+Installing planner_merge_node script to /home/vdt_2026/VDT_project/install/apf_planner/lib/apf_planner
+Installing planner_node script to /home/vdt_2026/VDT_project/install/apf_planner/lib/apf_planner
+Installing pointcloud_generator script to /home/vdt_2026/VDT_project/install/apf_planner/lib/apf_planner
+writing list of installed files to '/home/vdt_2026/VDT_project/build/apf_planner/install.log'

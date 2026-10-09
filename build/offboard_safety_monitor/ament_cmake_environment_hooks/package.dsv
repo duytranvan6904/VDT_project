@@ -1,0 +1,4 @@
+source;share/offboard_safety_monitor/local_setup.bash
+source;share/offboard_safety_monitor/local_setup.dsv
+source;share/offboard_safety_monitor/local_setup.sh
+source;share/offboard_safety_monitor/local_setup.zsh

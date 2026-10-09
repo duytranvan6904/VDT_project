@@ -1,0 +1,11 @@
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/uninstall.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/gimbal_control_uninstall.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/gimbal_node.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/gimbal_logic_test.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/test.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/edit_cache.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/rebuild_cache.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/list_install_components.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/install.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/install/local.dir
+/home/vdt_2026/VDT_project/build/gimbal_control/CMakeFiles/install/strip.dir

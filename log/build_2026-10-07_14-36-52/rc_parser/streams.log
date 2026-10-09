@@ -1,0 +1,71 @@
+[0.024s] Invoking command in '/home/vdt_2026/VDT_project/build/rc_parser': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/rc_parser -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/rc_parser
+[0.179s] -- The C compiler identification is GNU 13.3.0
+[0.340s] -- The CXX compiler identification is GNU 13.3.0
+[0.373s] -- Detecting C compiler ABI info
+[0.597s] -- Detecting C compiler ABI info - done
+[0.615s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.615s] -- Detecting C compile features
+[0.616s] -- Detecting C compile features - done
+[0.636s] -- Detecting CXX compiler ABI info
+[0.893s] -- Detecting CXX compiler ABI info - done
+[0.911s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.912s] -- Detecting CXX compile features
+[0.912s] -- Detecting CXX compile features - done
+[0.917s] -- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[1.279s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[1.509s] -- Found rclcpp: 28.1.22 (/opt/ros/jazzy/share/rclcpp/cmake)
+[1.563s] -- Found rosidl_generator_c: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[1.580s] -- Found rosidl_generator_cpp: 4.6.9 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[1.602s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.627s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.734s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[1.741s] -- Found rmw_fastrtps_cpp: 8.4.4 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[1.888s] -- Found OpenSSL: /usr/lib/aarch64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[1.914s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[1.958s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[2.068s] -- Found vdt_msgs: 0.1.0 (/home/vdt_2026/VDT_project/install/vdt_msgs/share/vdt_msgs/cmake)
+[2.361s] -- Configuring done (2.3s)
+[2.398s] -- Generating done (0.0s)
+[2.410s] -- Build files have been written to: /home/vdt_2026/VDT_project/build/rc_parser
+[2.447s] Invoked command in '/home/vdt_2026/VDT_project/build/rc_parser' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake /home/vdt_2026/VDT_project/ros2_ws/src/rc_parser -DCMAKE_INSTALL_PREFIX=/home/vdt_2026/VDT_project/install/rc_parser
+[2.448s] Invoking command in '/home/vdt_2026/VDT_project/build/rc_parser': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/rc_parser -- -j4 -l4
+[2.594s] [ 11%] Building CXX object CMakeFiles/rc_node.dir/src/main.cpp.o
+[2.597s] [ 22%] Building CXX object CMakeFiles/rc_node.dir/src/rc_node.cpp.o
+[2.602s] [ 33%] Building CXX object CMakeFiles/rc_node.dir/src/rc_logic.cpp.o
+[2.643s] [ 44%] Building CXX object CMakeFiles/rc_logic_test.dir/test/rc_logic_test.cpp.o
+[2.866s] [ 55%] Building CXX object CMakeFiles/rc_logic_test.dir/src/rc_logic.cpp.o
+[3.216s] [ 66%] Building CXX object CMakeFiles/rc_node.dir/src/rc_sbus.cpp.o
+[3.250s] [ 77%] Linking CXX executable rc_logic_test
+[3.620s] [ 77%] Built target rc_logic_test
+[3.654s] [ 88%] Building CXX object CMakeFiles/rc_node.dir/src/rc_uart.cpp.o
+[33.799s] [100%] Linking CXX executable rc_node
+[34.299s] [100%] Built target rc_node
+[34.352s] Invoked command in '/home/vdt_2026/VDT_project/build/rc_parser' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --build /home/vdt_2026/VDT_project/build/rc_parser -- -j4 -l4
+[34.353s] Invoking command in '/home/vdt_2026/VDT_project/build/rc_parser': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/rc_parser
+[34.393s] -- Install configuration: "Release"
+[34.394s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/lib/rc_parser/rc_node
+[34.395s] -- Set non-toolchain portion of runtime path of "/home/vdt_2026/VDT_project/install/rc_parser/lib/rc_parser/rc_node" to ""
+[34.395s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include
+[34.395s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser
+[34.405s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_logic.hpp
+[34.405s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_sbus.hpp
+[34.405s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_types.hpp
+[34.405s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_node.hpp
+[34.405s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/include/rc_parser/rc_uart.hpp
+[34.406s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/ament_index/resource_index/package_run_dependencies/rc_parser
+[34.406s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/ament_index/resource_index/parent_prefix_path/rc_parser
+[34.406s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/ament_prefix_path.sh
+[34.406s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/ament_prefix_path.dsv
+[34.408s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/path.sh
+[34.410s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/environment/path.dsv
+[34.416s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.bash
+[34.417s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.sh
+[34.417s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.zsh
+[34.421s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/local_setup.dsv
+[34.422s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.dsv
+[34.422s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/ament_index/resource_index/packages/rc_parser
+[34.425s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/cmake/ament_cmake_export_include_directories-extras.cmake
+[34.425s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/cmake/rc_parserConfig.cmake
+[34.428s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/cmake/rc_parserConfig-version.cmake
+[34.428s] -- Installing: /home/vdt_2026/VDT_project/install/rc_parser/share/rc_parser/package.xml
+[34.445s] Invoked command in '/home/vdt_2026/VDT_project/build/rc_parser' returned '0': AMENT_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs:/home/vdt_2026/ros2_ws/install/px4_msgs:/opt/ros/jazzy LD_LIBRARY_PATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib:${LD_LIBRARY_PATH} PYTHONPATH=/home/vdt_2026/VDT_project/install/vdt_msgs/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/cmake --install /home/vdt_2026/VDT_project/build/rc_parser
