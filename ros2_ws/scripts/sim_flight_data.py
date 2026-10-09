@@ -154,13 +154,27 @@ class Sim(Node):
             v = (v[0], v[1], max(v[2], 0.0))
         self.pos = [x, y, z]
         dxy = math.hypot(self.pad[0] - x, self.pad[1] - y)
+        if a.world and not hasattr(self, 'obs'):
+            import xml.etree.ElementTree as ET
+            self.obs = []
+            for m_ in ET.parse(a.world).getroot().findall('./world/model'):
+                if m_.attrib.get('name', '').startswith('cyl_'):
+                    ps = m_.findtext('pose', '').split()
+                    cy_ = m_.find('.//cylinder')
+                    self.obs.append((float(ps[0]), float(ps[1]), float(ps[2]), float(cy_.findtext('radius')), float(cy_.findtext('length'))))
+        clr = 99.0
+        for ox, oy, oz, orad, oh in getattr(self, 'obs', []):
+            clr = min(clr, math.hypot(max(0.0, math.hypot(x - ox, y - oy) - orad), max(0.0, abs(z - oz) - oh / 2.0)))
+        if phase in ('FOLLOW', 'APPROACH'):
+            self.min_clr = min(getattr(self, 'min_clr', 99.0), clr)
 
         dropped = a.drop is not None and a.drop[0] <= t < a.drop[0] + a.drop[1]
         visible = (not dropped) and dxy <= z * 2.0 + 0.5
 
         self.p_odom.publish(self.odom_msg(x, y, z, v, a.odom_sigma ** 2))
-        self.p_tgt.publish(self.odom_msg(self.pad[0], self.pad[1], 0.0, (0, 0, 0), a.tgt_sigma ** 2))
-        self.p_mode.publish(String(data='TRACKING' if visible else 'EXPIRED'))
+        if not a.via_ekf:
+            self.p_tgt.publish(self.odom_msg(self.pad[0], self.pad[1], 0.0, (0, 0, 0), a.tgt_sigma ** 2))
+            self.p_mode.publish(String(data='TRACKING' if visible else 'EXPIRED'))
 
         mk = VisionMarker()
         mk.marker_visible = bool(visible)
@@ -172,7 +186,31 @@ class Sim(Node):
         alt.touchdown_flag = False
         self.p_alt.publish(alt)
 
-        if visible:
+        if a.via_ekf:
+            from geometry_msgs.msg import TransformStamped
+            if not hasattr(self, 'tfb'):
+                from tf2_ros import TransformBroadcaster
+                self.tfb = TransformBroadcaster(self)
+            st = self.get_clock().now().to_msg()
+            tfm = TransformStamped()
+            tfm.header.stamp = st
+            tfm.header.frame_id = 'world'
+            tfm.child_frame_id = 'sim_camera'
+            tfm.transform.translation.x = float(x)
+            tfm.transform.translation.y = float(y)
+            tfm.transform.translation.z = float(z + 0.30)
+            tfm.transform.rotation.x = 1.0
+            tfm.transform.rotation.w = 0.0
+            self.tfb.sendTransform(tfm)
+            if visible:
+                op = PointStamped()
+                op.header.stamp = st
+                op.header.frame_id = 'sim_camera'
+                op.point.x = float(self.pad[0] - x)
+                op.point.y = float(-(self.pad[1] - y))
+                op.point.z = float(z + 0.30)
+                self.p_opt.publish(op)
+        elif visible:
             op = PointStamped()
             op.header.stamp = self.get_clock().now().to_msg()
             op.header.frame_id = 'camera'
@@ -207,12 +245,14 @@ class Sim(Node):
             rsw_s = f'{rsw:.1f}' if rsw != '-' else '-'
             print(
                 f't={t:5.1f} ph={phase:<8} pos=({x:5.2f},{y:5.2f},{z:4.2f}) dxy={dxy:4.2f} '
-                f'vis={int(visible)} plan={plan_s} smc={lv_s} safe={self.g("safe", "data")} '
+                f'vis={int(visible)} clr={clr:4.2f} plan={plan_s} smc={lv_s} safe={self.g("safe", "data")} '
                 f'act={self.g("active", "data")} sub={self.g("sub", "data")} '
                 f'unc={unc_s} rsw={rsw_s} td={self.g("td", "data")} snap={self.prev.get("snap", "-")}',
                 flush=True)
 
     def summary(self):
+        if getattr(self, 'obs', None):
+            print('Khoang cach toi thieu toi vat can: %.2f m' % getattr(self, 'min_clr', 99.0), flush=True)
         print('\n=== TONG KET ===')
         for topic, (_, key) in SUBS.items():
             n = self.count[key]
@@ -236,6 +276,8 @@ def main():
     ap.add_argument('--no-px4-landed', action='store_true')
     ap.add_argument('--log-period', type=float, default=1.0)
     ap.add_argument('--land-switch', type=float, default=None)
+    ap.add_argument('--world', default=None)
+    ap.add_argument('--via-ekf', action='store_true')
     a = ap.parse_args()
 
     rclpy.init()

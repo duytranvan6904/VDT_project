@@ -146,7 +146,8 @@
 /apf_planner:
   ros__parameters:
     planner_type: "iapf"
-    obstacle_source: "pointcloud"
+    world_sdf: "/home/vdt_2026/VDT_project/worlds/sim_obstacles.sdf"
+    obstacle_source: "sdf"
     d0: 2.0
     v_max: 1.2
     k_att: 10.0

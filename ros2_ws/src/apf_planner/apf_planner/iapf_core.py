@@ -57,8 +57,8 @@ class IAPFParams:
     m_new_1: float = 0.50          # Small turn: new weight
     m_prev_2: float = 0.70         # Medium turn: prev weight
     m_new_2: float = 0.30          # Medium turn: new weight
-    m_prev_3: float = 0.90         # Large turn: prev weight
-    m_new_3: float = 0.10          # Large turn: new weight
+    m_prev_3: float = 0.50         # Large turn: prev weight
+    m_new_3: float = 0.50          # Large turn: new weight
 
     # Speed scheduling
     min_goal_factor: float = 0.15  # Minimum speed ratio near goal

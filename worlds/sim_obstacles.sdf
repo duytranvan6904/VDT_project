@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="sim">
+    <model name="cyl_1">
+      <pose>2.5 1.25 2.0 0 0 0</pose>
+      <link name="l"><collision name="c"><geometry><cylinder><radius>0.3</radius><length>4.0</length></cylinder></geometry></collision></link>
+    </model>
+  </world>
+</sdf>
