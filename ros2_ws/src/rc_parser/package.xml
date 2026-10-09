@@ -3,7 +3,7 @@
 <package format="3">
   <name>rc_parser</name>
   <version>0.1.0</version>
-  <description>Doc va parse frame SBUS tu RC receiver, trich xuat land/kill switch</description>
+  <description>Doc va parse frame tu RC receiver, trich xuat land/kill switch</description>
   <maintainer email="mier@example.com">Mier</maintainer>
   <license>Apache-2.0</license>
 
@@ -11,6 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>vdt_msgs</depend>
+  <depend>px4_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -15,6 +15,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(vdt_msgs REQUIRED)
+find_package(px4_msgs REQUIRED)
 
 add_library(rc_parser_lib src/rc_logic.cpp)
 target_include_directories(rc_parser_lib PUBLIC
@@ -22,14 +23,9 @@ target_include_directories(rc_parser_lib PUBLIC
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(rc_parser_lib rclcpp vdt_msgs)
 
-add_executable(rc_node
-  src/main.cpp
-  src/rc_node.cpp
-  src/rc_sbus.cpp
-  src/rc_uart.cpp
-)
+add_executable(rc_node src/main.cpp src/rc_node.cpp)
 target_link_libraries(rc_node rc_parser_lib)
-ament_target_dependencies(rc_node rclcpp vdt_msgs)
+ament_target_dependencies(rc_node rclcpp vdt_msgs px4_msgs)
 
 install(TARGETS rc_parser_lib
   EXPORT export_rc_parser_lib

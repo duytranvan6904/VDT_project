@@ -22,6 +22,10 @@ RcChannels rc_validate(
 
 SwitchPos rc_get_switch_pos(const RcChannels & channels, int ch_idx, const RcConfig & cfg)
 {
+  if (ch_idx < 0 || ch_idx >= static_cast<int>(channels.ch.size())) {
+    return SwitchPos::LOW;
+  }
+  
   const int val = channels.ch[ch_idx];
   if (val < cfg.low_threshold) {
     return SwitchPos::LOW;

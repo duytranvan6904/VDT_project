@@ -1,0 +1,54 @@
+RC BRIDGE - GHI CHU THAY DOI (2026-10-09)
+
+MUC TIEU
+RC (FlySky FS-i6 + FS-iA6B) cam thang vao PX4, khong qua Pi. Thay rc_node doc SBUS UART bang rc_node doc RC tu PX4 qua DDS. Van phat rc/channels_raw va rc/fsm_input nen kill_switch_node va FSM khong phai sua.
+
+NGUON DU LIEU (PX4 1.16, chua xac nhan voi firmware that)
+- /fmu/out/manual_control_setpoint (ManualControlSetpoint): stick + aux1..aux6, valid, data_source
+- /fmu/out/failsafe_flags (FailsafeFlags): manual_control_signal_lost
+- /fmu/out/input_rc KHONG co trong dds_topics.yaml mac dinh, nen khong dung (dung thi phai sua firmware)
+- manual_control_switches / actuator_armed khong duoc phat
+
+FILE DA SUA (rc_parser)
+1. rc_node.hpp: bo include rc_uart.hpp va member uart_; them 2 subscription, on_manual_control, on_failsafe_flags, latest_channels_, has_msg_, signal_lost_
+2. rc_node.cpp: bo SbusUart/SBUS_FRAME_LEN; them to_pwm() (1500 + 500*v, NaN -> 1500); update() lay latest_channels_ roi rc_validate; callback moi
+3. rc_logic.cpp: rc_get_switch_pos tra LOW neu ch_idx ngoai [0,15] (de land_channel=-1 tat land)
+4. CMakeLists.txt: find_package(px4_msgs); rc_node chi build main.cpp + rc_node.cpp; them px4_msgs vao ament_target_dependencies
+5. package.xml: them <depend>px4_msgs</depend>, sua description
+6. System_Params.yaml /rc_node: bo serial_device, baudrate; land_channel=-1; frame_timeout=0.2
+
+QUY TAC valid
+valid = manual.valid && data_source==SOURCE_RC && !manual_control_signal_lost, va con frame moi trong frame_timeout (0.2s). Mat RC -> valid=false -> kill/land = false.
+
+BAN DO KENH TREN PI
+ch[0..3] = roll, pitch, throttle, yaw; ch[4..9] = aux1..aux6; ch[10..15] = 1500.
+Phan kenh TX: CH1-4 stick, CH5 mode (Pi khong thay), CH6 kill.
+
+CAU HINH PX4 (lam khi co PX4)
+- RC_MAP_KILL_SW = 6 va RC_MAP_AUX2 = 6 (ch[5]=aux2=kill, khop kill_channel=5, kill_switch_node khong sua)
+- Hieu chinh radio khi cong tac kill o vi tri AN TOAN (thap); neu khong aux2 co the khong len +1
+- Dat RC_FAILS_THR va failsafe throttle tren TX; test tat TX
+- Gan mode switch (CH5), kiem tra land chua noi vao RC
+
+DIEM CAN NHO
+- land_switch luon false (land_channel=-1) cho den khi noi /operator/land_command vao FSM; FSM chua vao APPROACH duoc
+- kill_switch_node van phat lenh disarm lien tuc khi triggered; test xong phai restart node
+- Callback va timer khong co mutex: ok vi main.cpp dung rclcpp::spin don luong
+- Chua co RSSI/link quality (khong co trong manual_control_setpoint)
+
+TEST KHONG CAN PX4
+ros2 topic pub /fmu/out/manual_control_setpoint px4_msgs/msg/ManualControlSetpoint "{valid: true, data_source: 1, throttle: -1.0, aux1: .nan, aux2: -1.0}" -r 50 --qos-reliability best_effort
+ros2 topic echo /rc/channels_raw        (ky vong valid: true)
+aux2: 1.0 -> rc/fsm_input.kill_switch true; valid: false hoac ngung publish >0.2s -> valid false
+ros2 topic pub /fmu/out/failsafe_flags px4_msgs/msg/FailsafeFlags "{manual_control_signal_lost: true}" -r 10 --qos-reliability best_effort
+
+CHUA XAC NHAN
+- Nhanh px4_msgs trong workspace: git -C ~/ros2_ws/src/px4_msgs branch --show-current
+- ManualControlSetpoint.msg va FailsafeFlags.msg co trong px4_msgs/msg khong
+- Phien ban firmware PX4 that, ten truong co khop khong
+- Khi co PX4: tat TX xem valid ve false; gat kill xem aux2 ~ +1
+
+VIEC TIEP THEO
+1. Noi /operator/land_command vao FSM (land_switch hieu luc = rc_land || operator_land || force_land)
+2. Sua preflight_check.py: them dieu kien RC hop le (tu manual_control_setpoint/failsafe_flags)
+3. Node emergency rieng cho GCS (NAV_LAND, force disarm 2 buoc)

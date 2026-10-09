@@ -50,10 +50,8 @@
 
 /rc_node:
   ros__parameters:
-    serial_device: "/dev/ttyUSB0"
-    baudrate: 100000
-    land_channel: 4
-    frame_timeout: 0.5
+    land_channel: -1
+    frame_timeout: 0.2
     debug_enabled: false
 
 /safety_monitor_node:
