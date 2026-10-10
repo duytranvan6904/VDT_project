@@ -116,7 +116,6 @@ class APFPlannerNode(Node):
         self.target_vel = np.zeros(3)
         self.phase = 'IDLE'
         self.tracking_mode = 'LOST'
-        self.rswitch = 0.8
         self.t_odom = None
         self.t_target = None
         self.cloud = np.empty((0, 3))
@@ -134,7 +133,6 @@ class APFPlannerNode(Node):
         self.create_subscription(Odometry, str(g('target_topic')), self.target_cb, 10)
         self.create_subscription(String, str(g('phase_topic')), self.phase_cb, 10)
         self.create_subscription(String, str(g('mode_topic')), self.mode_cb, 10)
-        self.create_subscription(Float64, '/landing/rswitch_adaptive', self.rswitch_cb, 10)
         if source in ('pointcloud', 'both'):
             self.create_subscription(PointCloud2, str(g('cloud_topic')), self.cloud_cb, 1)
 
@@ -191,9 +189,6 @@ class APFPlannerNode(Node):
             self.core.reset()
         self.phase = msg.data
 
-    def rswitch_cb(self, msg: Float64) -> None:
-        self.rswitch = float(msg.data)
-
     def mode_cb(self, msg: String) -> None:
         self.tracking_mode = msg.data
 
@@ -211,10 +206,7 @@ class APFPlannerNode(Node):
         if self.goal_pos is None:
             return None
         if self.phase != 'FOLLOW':
-            g = self.goal_pos.copy()
-            if math.hypot(g[0] - self.drone_pos[0], g[1] - self.drone_pos[1]) > self.rswitch:
-                g[2] = self.drone_pos[2]
-            return g
+            return self.goal_pos.copy()
         lead = np.zeros(3)
         if float(np.linalg.norm(self.target_vel[:2])) >= 0.18:
             lead = self.target_vel * self.lead_time

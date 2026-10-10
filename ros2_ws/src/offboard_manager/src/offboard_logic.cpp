@@ -64,9 +64,14 @@ Setpoint build_setpoint_approach(const PlannerOutput & planner_output)
   return build_setpoint_follow(planner_output);
 }
 
-Setpoint build_setpoint_land(const PlannerOutput &, float land_descent_rate)
+Setpoint build_setpoint_land(
+  const PlannerOutput & planner_output, float land_descent_rate, bool planner_stale)
 {
   Setpoint sp = build_setpoint_hold();
+  if (!planner_stale && std::isfinite(planner_output.vx) && std::isfinite(planner_output.vy)) {
+    sp.vx = planner_output.vy;
+    sp.vy = planner_output.vx;
+  }
   sp.vz = std::isfinite(land_descent_rate) ? land_descent_rate : 0.0f;
   return sp;
 }
@@ -83,7 +88,7 @@ Setpoint build_setpoint(
     case FsmState::APPROACH:
       return planner_stale ? build_setpoint_hold() : build_setpoint_approach(planner_output);
     case FsmState::LAND:
-      return build_setpoint_land(planner_output, land_descent_rate);
+      return build_setpoint_land(planner_output, land_descent_rate, planner_stale);
     default:
       return build_setpoint_search(0.0f);
   }

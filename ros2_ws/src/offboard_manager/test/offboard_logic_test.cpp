@@ -25,7 +25,7 @@ int main()
   assert(follow.vx == planner.vx);
 
   planner.yaw = std::numeric_limits<float>::infinity();
-  const Setpoint land = build_setpoint_land(planner, 0.4f);
+  const Setpoint land = build_setpoint_land(planner, 0.4f, false);
   assert(land.yaw == 0.0f);
   return 0;
 }

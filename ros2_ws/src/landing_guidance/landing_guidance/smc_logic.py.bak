@@ -30,7 +30,6 @@ class SMCParams:
     glide_centering_kp: float = 0.70
     target_velocity_ff_gain: float = 1.00
     rmin: float = 0.05
-    final_xy_gate: float = 0.30
 
 
 @dataclass
@@ -101,8 +100,6 @@ class SMCGuidance:
             dx, dy, target_vel_xy, self.p.final_centering_kp, self.p.v_final_xy_max
         )
         vz_cmd = -self.p.v_descend_fast if r_z > 0.40 else -self.p.v_descend_touch
-        if math.hypot(dx, dy) > self.p.final_xy_gate:
-            vz_cmd = 0.0
         vel_cmd = np.array([xy_cmd[0], xy_cmd[1], vz_cmd], dtype=np.float64)
         self.reset(vel_cmd)
         return SMCResult(

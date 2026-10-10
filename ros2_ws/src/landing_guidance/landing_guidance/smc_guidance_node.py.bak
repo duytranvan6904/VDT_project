@@ -19,7 +19,7 @@ class SMCGuidanceNode(Node):
         super().__init__('smc_guidance_node')
 
         self.declare_parameter('v_max', 1.50)
-        self.declare_parameter('v_final_xy_max', 1.2)
+        self.declare_parameter('v_final_xy_max', 0.35)
         self.declare_parameter('v_descend_fast', 0.35)
         self.declare_parameter('v_descend_touch', 0.15)
         self.declare_parameter('rswitch_default', 0.80)

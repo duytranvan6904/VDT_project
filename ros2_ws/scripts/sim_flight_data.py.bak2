@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import math
-import random
 import sys
 import time
 
@@ -149,9 +148,8 @@ class Sim(Node):
                 math.isfinite(c) for c in (plan.vx, plan.vy, plan.vz)):
             v = (plan.vx, plan.vy, plan.vz)
         elif phase == 'LAND':
-            land_rate = 0.4  # phai trung land_descent_rate trong System_Params.yaml
-            ok = fresh and math.isfinite(plan.vx) and math.isfinite(plan.vy)
-            v = (plan.vx if ok else 0.0, plan.vy if ok else 0.0, -land_rate)
+            lv = self.last.get('lvel')
+            v = (lv.linear.x, lv.linear.y, lv.linear.z) if lv is not None and now - self.rt.get('lvel', 0.0) < 0.5 else (0.0, 0.0, 0.0)
         x += v[0] * dt
         y += v[1] * dt
         z = max(0.0, z + v[2] * dt)
@@ -176,8 +174,7 @@ class Sim(Node):
         dropped = a.drop is not None and a.drop[0] <= t < a.drop[0] + a.drop[1]
         visible = (not dropped) and dxy <= z * 2.0 + 0.5
 
-        g_ = a.odom_noise
-        self.p_odom.publish(self.odom_msg(x + random.gauss(0.0, g_), y + random.gauss(0.0, g_), z + random.gauss(0.0, g_), v, a.odom_sigma ** 2))
+        self.p_odom.publish(self.odom_msg(x, y, z, v, a.odom_sigma ** 2))
         if not a.via_ekf:
             self.p_tgt.publish(self.odom_msg(self.pad[0], self.pad[1], 0.0, (0, 0, 0), a.tgt_sigma ** 2))
             self.p_mode.publish(String(data='TRACKING' if visible else 'EXPIRED'))
@@ -213,8 +210,7 @@ class Sim(Node):
                 op.header.stamp = st
                 op.header.frame_id = 'sim_camera'
                 op.point.x = float(self.pad[0] - x + (a.mk_off if z < a.mk_z else 0.0))
-                op.point.y = float(-(self.pad[1] - y)) + random.gauss(0.0, a.meas_noise)
-                op.point.x += random.gauss(0.0, a.meas_noise)
+                op.point.y = float(-(self.pad[1] - y))
                 op.point.z = float(z + 0.30)
                 self.p_opt.publish(op)
         elif visible:
@@ -285,8 +281,6 @@ def main():
     ap.add_argument('--land-switch', type=float, default=None)
     ap.add_argument('--world', default=None)
     ap.add_argument('--via-ekf', action='store_true')
-    ap.add_argument('--meas-noise', type=float, default=0.0)
-    ap.add_argument('--odom-noise', type=float, default=0.0)
     ap.add_argument('--mk-z', type=float, default=0.0)
     ap.add_argument('--mk-off', type=float, default=0.3225)
     ap.add_argument('--pad-vel', type=lambda s: pair(s), default=None)

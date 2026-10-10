@@ -113,6 +113,14 @@ class PlannerMergeNode(Node):
             and self._age(self.t_landing_active) <= self.landing_timeout
         )
     
+    def _landing_land_ok(self) -> bool:
+        return (
+            self.landing_source
+            and self.landing_active
+            and self._age(self.t_landing_vel) <= self.landing_timeout
+            and self._age(self.t_landing_active) <= self.landing_timeout
+        )
+
     def _yaw(self) -> float:
         if self.yaw_source in ('ibvs', 'ibvs_apf'):
             if self._age(self.t_ibvs_yaw) <= self.yaw_timeout and math.isfinite(self.ibvs_yaw):
@@ -146,6 +154,11 @@ class PlannerMergeNode(Node):
             if not all(math.isfinite(c) for c in (vx, vy, vz)):
                 vx = vy = vz = 0.0
                 yaw = math.nan
+
+        elif phase == 'LAND' and self._landing_land_ok():
+            vx, vy = self.landing_vel[0], self.landing_vel[1]
+            if not (math.isfinite(vx) and math.isfinite(vy)):
+                vx = vy = 0.0
 
         msg = PlannerOutput()
         if hasattr(msg, 'header'):
