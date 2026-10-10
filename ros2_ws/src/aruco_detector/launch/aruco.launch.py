@@ -23,6 +23,10 @@ MODE_PARAMETERS = {
 }
 
 
+# hw: marker_id -> (kich thuoc canh m, offset tu tam marker den tam pad theo truc x marker)
+HW_MARKERS = {42: (0.52, 0.3225), 43: (0.10, 0.0)}
+
+
 def read_launch_argument(context, name: str) -> str:
     return LaunchConfiguration(name).perform(context)
 
@@ -37,6 +41,10 @@ def build_parameters(context) -> dict:
     
     parameters = dict(MODE_PARAMETERS[mode])
     parameters["marker_id"] = int(read_launch_argument(context, "marker_id"))
+    if mode == "hw" and parameters["marker_id"] in HW_MARKERS:
+        size, offset_x = HW_MARKERS[parameters["marker_id"]]
+        parameters["marker_size_m"] = size
+        parameters["marker_offset_x_m"] = offset_x
     
     # Return both config file and overrides
     return [config_file, parameters]

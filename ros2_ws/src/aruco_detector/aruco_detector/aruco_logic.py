@@ -69,8 +69,10 @@ class ArUcoDetector:
         camera_matrix: np.ndarray,
         dist_coeffs: np.ndarray,
         target_marker_id: int,
+        marker_offset_m: Tuple[float, float] = (0.0, 0.0),
     ) -> None:
         self.marker_size_m = float(marker_size_m)
+        self.marker_offset_m = (float(marker_offset_m[0]), float(marker_offset_m[1]))
         self.target_marker_id = int(target_marker_id)
         self.camera_matrix = camera_matrix
         self.dist_coeffs = dist_coeffs
@@ -117,11 +119,20 @@ class ArUcoDetector:
             return None
         return rvec, tvec
 
+    def apply_marker_offset(self, rvec: np.ndarray, tvec: np.ndarray) -> np.ndarray:
+        ox, oy = self.marker_offset_m
+        if ox == 0.0 and oy == 0.0:
+            return tvec
+        rotation, _ = cv2.Rodrigues(rvec)
+        shift = rotation @ np.array([[ox], [oy], [0.0]])
+        return tvec.reshape(3, 1) + shift
+
     def build_detection(self, corners: np.ndarray) -> Optional[Detection]:
         solved = self.solve_marker_pose(corners)
         if solved is None:
             return None
         rvec, tvec = solved
+        tvec = self.apply_marker_offset(rvec, tvec)
         return {
             "id": self.target_marker_id,
             "corners": corners,

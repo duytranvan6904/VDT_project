@@ -54,6 +54,8 @@ class ArucoNode(Node):
     def declare_node_parameters(self) -> None:
         self.declare_parameter("marker_id", 42)
         self.declare_parameter("marker_size_m", 0.15)
+        self.declare_parameter("marker_offset_x_m", 0.0)
+        self.declare_parameter("marker_offset_y_m", 0.0)
         self.declare_parameter("dictionary", "DICT_6X6_50")
         self.declare_parameter("min_detection_distance_m", 0.0)
         self.declare_parameter("min_z_m", 0.0)
@@ -78,6 +80,10 @@ class ArucoNode(Node):
             camera_matrix=self.create_fallback_matrix(width, height),
             dist_coeffs=zero_distortion(),
             target_marker_id=int(self.read_parameter("marker_id")),
+            marker_offset_m=(
+                float(self.read_parameter("marker_offset_x_m")),
+                float(self.read_parameter("marker_offset_y_m")),
+            ),
         )
 
     def create_publishers(self) -> None:
