@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -7,13 +8,15 @@ from typing import Optional
 
 @dataclass
 class TouchdownParams:
-    optical_height_threshold_m: float = 0.40
+    optical_height_threshold_m: float = 0.30
+    camera_offset_m: float = 0.0
     descent_cmd_threshold_mps: float = -0.10
     stoppage_vz_max_mps: float = 0.08
     stoppage_dz_dt_max_mps: float = 0.05
+    stoppage_vxy_max_mps: float = 0.10
     jerk_impact_threshold: float = 3.50
     confirmation_duration_s: float = 0.35
-    altitude_ceiling_m: float = 0.80
+    altitude_ceiling_m: float = 0.30
     min_descent_time_s: float = 1.0
     seen_descending_vz_mps: float = -0.10
     seen_descending_hold_s: float = 0.30
@@ -59,6 +62,7 @@ class TouchdownDetector:
         accel_z_body: Optional[float] = None,
         px4_landed: bool = False,
         current_time: Optional[float] = None,
+        actual_vxy: float = 0.0,
     ) -> TouchdownResult:
         now = time.monotonic() if current_time is None else current_time
         p = self.p
@@ -67,6 +71,13 @@ class TouchdownDetector:
             return TouchdownResult(
                 True, True, True, False, p.confirmation_duration_s, 0.0, True,
                 actual_vz, commanded_vz, optical_z, 'LATCHED_TOUCHDOWN',
+            )
+
+        if not all(math.isfinite(x) for x in (actual_vz, commanded_vz, current_alt_z, actual_vxy)):
+            self.confirm_start = None
+            return TouchdownResult(
+                False, False, False, False, 0.0, 0.0, self.seen_descending,
+                actual_vz, commanded_vz, optical_z, 'INVALID_INPUT',
             )
 
         dz_dt = 0.0
@@ -100,23 +111,25 @@ class TouchdownDetector:
         else:
             self.fall_start = None
 
-        stopped = abs(actual_vz) <= p.stoppage_vz_max_mps and abs(dz_dt) <= p.stoppage_dz_dt_max_mps
+        stopped = (
+            abs(actual_vz) <= p.stoppage_vz_max_mps
+            and abs(dz_dt) <= p.stoppage_dz_dt_max_mps
+            and actual_vxy <= p.stoppage_vxy_max_mps
+        )
         descent_proven = self.seen_descending and descent_time >= p.min_descent_time_s
         kinematic_stopped = descent_proven and stopped
 
-        optical_near = optical_z is not None and optical_z <= p.optical_height_threshold_m
+        optical_near = optical_z is not None and (optical_z - p.camera_offset_m) <= p.optical_height_threshold_m
+        height_ok = optical_near or current_alt_z <= p.altitude_ceiling_m
 
         contact = False
         reason = 'DESCENT_IN_PROGRESS'
-        if px4_landed and self.seen_descending:
+        if px4_landed and self.seen_descending and height_ok:
             contact = True
             reason = 'PX4_FIRMWARE_LANDED'
         elif kinematic_stopped and optical_near:
             contact = True
             reason = f'KINEMATIC_STOPPED (vz={actual_vz:.2f}, opt_z={optical_z})'
-        elif impact and kinematic_stopped and optical_near:
-            contact = True
-            reason = 'IMPACT_JERK_STOPPED'
 
         confirm = 0.0
         if contact:

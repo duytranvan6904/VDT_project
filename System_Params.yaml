@@ -219,13 +219,14 @@
 
 /touchdown_detector_node:
   ros__parameters:
-    optical_height_threshold_m: 0.40
+    optical_height_threshold_m: 0.30
+    camera_offset_m: 0.80
     descent_cmd_threshold_mps: -0.10
     stoppage_vz_max_mps: 0.08
     stoppage_dz_dt_max_mps: 0.05
     jerk_impact_threshold: 3.50
     confirmation_duration_s: 0.35
-    altitude_ceiling_m: 0.80
+    altitude_ceiling_m: 0.30
     min_descent_time_s: 1.0
     seen_descending_vz_mps: -0.10
     seen_descending_hold_s: 0.30

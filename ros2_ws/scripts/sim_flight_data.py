@@ -204,7 +204,7 @@ class Sim(Node):
             tfm.child_frame_id = 'sim_camera'
             tfm.transform.translation.x = float(x)
             tfm.transform.translation.y = float(y)
-            tfm.transform.translation.z = float(z + 0.30)
+            tfm.transform.translation.z = float(z + a.cam_height)
             tfm.transform.rotation.x = 1.0
             tfm.transform.rotation.w = 0.0
             self.tfb.sendTransform(tfm)
@@ -215,13 +215,13 @@ class Sim(Node):
                 op.point.x = float(self.pad[0] - x + (a.mk_off if z < a.mk_z else 0.0))
                 op.point.y = float(-(self.pad[1] - y)) + random.gauss(0.0, a.meas_noise)
                 op.point.x += random.gauss(0.0, a.meas_noise)
-                op.point.z = float(z + 0.30)
+                op.point.z = float(z + a.cam_height)
                 self.p_opt.publish(op)
         elif visible:
             op = PointStamped()
             op.header.stamp = self.get_clock().now().to_msg()
             op.header.frame_id = 'camera'
-            op.point.z = float(z + 0.30)
+            op.point.z = float(z + a.cam_height)
             self.p_opt.publish(op)
 
         ld = VehicleLandDetected()
@@ -285,6 +285,7 @@ def main():
     ap.add_argument('--land-switch', type=float, default=None)
     ap.add_argument('--world', default=None)
     ap.add_argument('--via-ekf', action='store_true')
+    ap.add_argument('--cam-height', type=float, default=0.80)
     ap.add_argument('--meas-noise', type=float, default=0.0)
     ap.add_argument('--odom-noise', type=float, default=0.0)
     ap.add_argument('--mk-z', type=float, default=0.0)

@@ -19,13 +19,14 @@ class TouchdownDetectorNode(Node):
     def __init__(self):
         super().__init__('touchdown_detector_node')
 
-        self.declare_parameter('optical_height_threshold_m', 0.40)
+        self.declare_parameter('optical_height_threshold_m', 0.30)
+        self.declare_parameter('camera_offset_m', 0.80)
         self.declare_parameter('descent_cmd_threshold_mps', -0.10)
         self.declare_parameter('stoppage_vz_max_mps', 0.08)
         self.declare_parameter('stoppage_dz_dt_max_mps', 0.05)
         self.declare_parameter('jerk_impact_threshold', 3.50)
         self.declare_parameter('confirmation_duration_s', 0.35)
-        self.declare_parameter('altitude_ceiling_m', 0.80)
+        self.declare_parameter('altitude_ceiling_m', 0.30)
         self.declare_parameter('min_descent_time_s', 1.0)
         self.declare_parameter('seen_descending_vz_mps', -0.10)
         self.declare_parameter('seen_descending_hold_s', 0.30)
@@ -36,6 +37,7 @@ class TouchdownDetectorNode(Node):
 
         self.detector = TouchdownDetector(TouchdownParams(
             optical_height_threshold_m=float(p('optical_height_threshold_m')),
+            camera_offset_m=float(p('camera_offset_m')),
             descent_cmd_threshold_mps=float(p('descent_cmd_threshold_mps')),
             stoppage_vz_max_mps=float(p('stoppage_vz_max_mps')),
             stoppage_dz_dt_max_mps=float(p('stoppage_dz_dt_max_mps')),
@@ -99,7 +101,7 @@ class TouchdownDetectorNode(Node):
 
     def _phase_cb(self, msg):
         self.phase = msg.data
-        if self.phase not in ('LAND', 'APPROACH'):
+        if self.phase != 'LAND':
             self.detector.reset()
 
     def _publish_false(self):
@@ -108,17 +110,14 @@ class TouchdownDetectorNode(Node):
 
     def _eval(self):
         now = time.monotonic()
-        if self.odom is None or now - self.t_odom > 0.5:
+        if self.odom is None or now - self.t_odom > 0.15:
             self._publish_false()
             return
-        if self.phase not in ('LAND', 'APPROACH'):
+        if self.phase != 'LAND':
             self._publish_false()
             return
 
         alt = float(self.odom.pose.pose.position.z)
-        if self.phase == 'APPROACH' and alt > self.detector.p.altitude_ceiling_m:
-            self._publish_false()
-            return
 
         opt = self.optical_z if now - self.t_optical < 0.5 else None
         res = self.detector.step(
@@ -127,6 +126,9 @@ class TouchdownDetectorNode(Node):
             current_alt_z=alt,
             optical_z=opt,
             px4_landed=self.px4_landed,
+            actual_vxy=math.hypot(
+                float(self.odom.twist.twist.linear.x),
+                float(self.odom.twist.twist.linear.y)),
             current_time=now,
         )
         self.td_pub.publish(Bool(data=res.touchdown_confirmed))
