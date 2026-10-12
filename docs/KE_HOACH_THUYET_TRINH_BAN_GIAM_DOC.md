@@ -1,317 +1,349 @@
-# 📊 KẾ HOẠCH TRÌNH BÀY SLIDE THUYẾT TRÌNH BAN GIÁM ĐỐC
-## DỰ ÁN: QUADROTOR TỰ HÀNH BÁM MỤC TIÊU DI ĐỘNG, NÉ VẬT CẢN 3D & HẠ CÁNH CHÍNH XÁC (H-PAD)
+# KẾ HOẠCH TRÌNH BÀY DỰ ÁN TRƯỚC BAN GIÁM ĐỐC
 
-> **Thời lượng báo cáo**: 7 phút (420 giây)  
-> **Quy mô slide**: 15 slides (Trung bình ~28s / slide)  
-> **Đối tượng khán giả**: Ban Giám đốc, Trưởng phòng Kỹ thuật, Hội đồng nghiệm thu dự án  
-> **Mục tiêu then chốt**: Làm nổi bật tính đột phá công nghệ ("Điểm ăn tiền"), độ tin cậy an toàn, số liệu thực nghiệm thực tế và tiềm năng thương mại hóa.
+## Hệ thống quadrotor bám mục tiêu và hạ cánh chính xác trên H-Pad
 
----
+> **Thời lượng:** 7 phút · **Số slide:** 15 · **Đối tượng:** Ban Giám đốc và lãnh đạo kỹ thuật<br>
+> **Thông điệp:** Dự án đã có pipeline điều khiển tích hợp trong PX4 SITL/Gazebo; kết quả hiện tại là kết quả mô phỏng. Tích hợp phần cứng và bay thực là bước tiếp theo cần kiểm chứng.
 
-## ⏱️ BẢNG PHÂN BỔ THỜI GIAN & CẤU TRÚC TỔNG QUAN
+## Kết quả đối chiếu với dự án hiện tại
 
-| STT | Phần nội dung | Số Slide | Thời lượng (giây) | Tỷ trọng |
-|:---:|---|:---:|:---:|:---:|
-| **Phần 1** | Giới thiệu đối tượng, bài toán & Hạn chế của giải pháp hiện nay | Slide 1 – 3 | 75s (~1.25 phút) | 18% |
-| **Phần 2** | Đóng góp đột phá của nhóm ("Điểm ăn tiền") & Kiến trúc tổng quan | Slide 4 – 6 | 90s (~1.5 phút) | 21% |
-| **Phần 3** | Công nghệ lõi từng Module (Công thức & Chức năng chính) | Slide 7 – 10 | 120s (~2.0 phút) | 29% |
-| **Phần 4** | Kết quả mô phỏng (Simulink & SITL) + Thực nghiệm Hardware | Slide 11 – 13 | 95s (~1.6 phút) | 23% |
-| **Phần 5** | Kết luận, Tiềm năng thương mại & Kế hoạch phát triển | Slide 14 – 15 | 40s (~0.7 phút) | 9% |
-| **TỔNG** | **Toàn bộ bài thuyết trình** | **15 Slides** | **420s (7.0 phút)** | **100%** |
+Đề cương cũ nắm đúng các hướng kỹ thuật chính—ArUco đa tỉ lệ, EKF mục tiêu, I-APF, Covariance Gate, SMC, FSM và touchdown—nhưng nhiều tuyên bố được viết như kết quả đã xác nhận dù repo không có bằng chứng phù hợp. Nội dung dưới đây đã được điều chỉnh theo mã nguồn và hiện vật trong repo.
 
----
+| Nội dung cần chỉnh | Điều đối chiếu được trong repo | Cách thể hiện trong slide mới |
+|---|---|---|
+| Bãi đáp “nested/đồng tâm”, ID 42 52.5 cm và ID 43 10 cm | Board config đặt marker lớn lệch khỏi marker nhỏ trên cùng mặt phẳng, dùng chung hệ tọa độ. Kích thước ID 43 còn lệch giữa [board config](../vision/dual_scale_board_config.yaml) (10 cm) và [mission params](../simulation/config/mission_params.yaml) (5 cm). | Gọi là board hai tỉ lệ, chung hệ tọa độ; bỏ số đo cho đến khi xác nhận board in và đồng bộ cấu hình. Không gọi là marker đồng tâm/lồng nhau. |
+| “FSM 7 pha” | FSM có 5 pha cấp cao: IDLE, SEARCH, FOLLOW, APPROACH, LAND. Reacquire và các pha SMC là trạng thái/nhánh con, không phải 7 pha FSM. | Vẽ đúng 5 pha và nhánh mất dấu, hủy lệnh, wave-off. |
+| Ngưỡng cố định 2σ, phễu 30°, công thức vận tốc hạ và các ngưỡng touchdown | Gate tính bất định tương đối, so với vùng cho phép theo hình học, độ mới phép đo và trạng thái phát hiện. SMC có luật reaching; hạ cuối dùng điều khiển căn giữa và vận tốc hạ theo pha. ROS touchdown node hiện dùng odometry, độ cao quang học, lệnh hạ và bộ chốt thời gian; logic lõi còn có tùy chọn PX4-landed/impact nhưng node chưa nối các tín hiệu đó. | Chỉ trình bày khối, I/O và công thức thuật toán; bỏ các trị số cấu hình khỏi slide kiến trúc. |
+| Simulink đã kiểm chứng, bay ngoài trời, bench-test Pi 5, 30 Hz, PX4 250 Hz, C++20 triển khai xong | Repo có module Python, kết quả mô phỏng/benchmark và các header C++ mẫu. Không thấy mô hình `.slx`/`.mdl`, gói C++ ROS 2 có thể build, hay báo cáo bay đóng vòng trên Pi/Pixhawk. `hardware/main_aruco_detector.py` là entry point vision độc lập, không phải pipeline landing hai marker đã tích hợp. | Ghi rõ phần nào là mô phỏng, phần nào là kế hoạch. Không khẳng định đã bay phần cứng hoặc đạt thông số xử lý trên companion computer. |
+| Khóa mục tiêu 0.77 s, yaw <2.5°, né vật cản >0.85 m, sai số hạ cánh ~1 cm, 100% không nảy | `docs/tracking_follow_status.md` ghi các kết quả của một lượt SITL trước đó; các báo cáo batch trong `simulation_results/` cho kết quả khác nhau. Batch 10 lượt ghi nhận 8/10 thành công; batch 3 lượt ghi 3/3 nhưng sai số trung bình 8.61 cm và tối đa 11.87 cm. Benchmark I-APF ngoại tuyến ghi nhận 7/10 lượt không va chạm. | Dùng số liệu có tên báo cáo, cỡ mẫu và nhãn mô phỏng; không gộp kết quả giữa các batch hoặc nói “100%/đảm bảo tuyệt đối”. |
+| “Triệt tiêu 100% GPS”, “không điểm mù”, “chống lật tuyệt đối”, tuyên bố thị trường | Đây là tuyên bố tuyệt đối hoặc so sánh thị trường chưa có dữ liệu chứng minh trong repo. | Đổi thành lợi ích/kỳ vọng kỹ thuật có giới hạn và phân biệt rõ mục tiêu với kết quả đã đo. |
 
-# CHI TIẾT NỘI DUNG VÀ THIẾT KẾ TỪNG SLIDE
+**Lưu ý trước khi chốt slide:** cần xác nhận kích thước marker nhỏ đang in dùng thực tế và đồng bộ `vision/dual_scale_board_config.yaml`, `simulation/config/mission_params.yaml` cùng cấu hình detector. Không đưa kích thước hay tầm nhận diện lên slide cho đến khi đối chiếu xong.
 
----
+## Phân bổ 7 phút
 
-## PHẦN 1: ĐỐI TƯỢNG + BÀI TOÁN + HƯỚNG GIẢI QUYẾT ĐÃ CÓ (1.25 PHÚT)
+| Phần | Slide | Thời lượng |
+|---|---:|---:|
+| Bài toán và phạm vi | 1–3 | 75 giây |
+| Đóng góp và kiến trúc hệ thống | 4–6 | 90 giây |
+| Kiến trúc module và công thức | 7–10 | 120 giây |
+| Kết quả hiện có và mức sẵn sàng | 11–13 | 95 giây |
+| Giá trị, bước tiếp theo và đề nghị | 14–15 | 40 giây |
+| **Tổng** | **15 slide** | **420 giây** |
 
-### Slide 1: Trang Tiêu Đề (Title Slide)
-* **Thời lượng đề xuất**: 15 giây
-* **Tiêu đề Slide**: **HỆ THỐNG QUADROTOR TỰ HÀNH: BÁM MỤC TIÊU DI ĐỘNG, NÉ VẬT CẢN 3D VÀ HẠ CÁNH CHÍNH XÁC MILIMET**
-* **Phụ đề**: *Nghiên cứu làm chủ công nghệ điều khiển tự hành tích hợp Nested Dual-Scale Vision, Covariance Gating và Sliding Mode Control.*
-* **Thông tin trình bày**: 
-  * Đơn vị: Nhóm Nghiên cứu & Phát triển Drone Tự hành (VDT Project)
-  * Người trình bày: Kỹ sư Trưởng / Nhóm nghiên cứu
-* **Bố cục Visual**:
-  * Bên trái: Tiêu đề lớn, phong cách thiết kế tối giản, công nghệ (Dark mode hoặc Navy/Cyan hiện đại).
-  * Bên phải: Hình render 3D mô phỏng Quadrotor mang camera RealSense D435i đang khóa mục tiêu bãi đáp H-Pad.
-* **Nội dung hiển thị trên slide**:
-  * Tên đề tài & Nhóm tác giả.
-  * 3 từ khóa định vị công nghệ: *Thị giác máy tính đa tỉ lệ* – *An toàn hiệp phương sai* – *Điều khiển trượt dốc tiếp cận*.
-* **Lời thoại gợi ý (Speaker Script - 15s)**:
-  > *"Kính thưa Ban Giám đốc và Hội đồng, hôm nay nhóm xin phép báo cáo kết quả nghiên cứu và thực nghiệm giải pháp Quadrotor tự hành bám mục tiêu di động và hạ cánh chính xác xuống bãi đáp H-Pad. Đây là công nghệ nền tảng quyết định sự thành bại của các ứng dụng giao hàng tự động, tiếp vận hàng hải và tác chiến cứu hộ không người lái."*
+# Nội dung đề xuất từng slide
 
----
+## Phần 1 — Bài toán và phạm vi
 
-### Slide 2: Đặt Vấn Đề & Mục Tiêu Bài Toán (Problem Statement)
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **BÀI TOÁN TỰ HÀNH ĐẦU-CUỐI TRONG KHÔNG GIAN HẸP CÓ VẬT CẢN**
-* **Bố cục Visual**: Chia 3 khối Card đồ họa tương ứng 3 thách thức thực tế:
-  * *Card 1 (Mục tiêu cơ động)*: Bãi đáp H-Pad liên tục di chuyển tự do, có nguy cơ bị che khuất tầm nhìn bởi cây cối, địa hình.
-  * *Card 2 (Môi trường phức tạp)*: Không gian chật hẹp, nhiều chướng ngại vật dạng trụ/vách đòi hỏi né tránh 3D thời gian thực mà không làm gián đoạn bám đuổi.
-  * *Card 3 (Tiếp đất khắt khe)*: Kích thước bãi đáp hạn chế ($D_{pad} \approx 40\text{–}50\text{cm}$), yêu cầu sai số tiếp đất cực nhỏ ($< 10\text{cm}$), vận tốc hạ êm ái, chống lật đổ khi chạm đất.
-* **Nội dung hiển thị trên slide**:
-  * Thách thức: Bãi đáp cơ động ngẫu nhiên + che khuất tạm thời ($< 3\text{s}$).
-  * Ràng buộc: Né vật cản 3D giữ cự ly an toàn $\ge 0.5\text{m}$.
-  * Mục tiêu kỹ thuật: Tiếp đất chính xác $< 10\text{cm}$, hoàn toàn tự hành (End-to-End Autonomy) không cần can thiệp tay của phi công.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Trong các nhiệm vụ thực địa, bãi đáp thường xuyên di chuyển và nằm trong khu vực có nhiều vật cản. Mục tiêu cốt lõi của chúng ta là giải quyết đồng thời 3 bài toán khó: vừa bám đuổi mục tiêu di động, vừa chủ động né vật cản 3D thời gian thực, và quan trọng nhất là hạ cánh chính xác từng centimet xuống bãi đáp nhỏ gọn mà không làm hư hại thiết bị."*
+### Slide 1 — Hệ thống quadrotor bám mục tiêu và hạ cánh chính xác
 
----
+**Thời lượng:** 15 giây<br>
+**Visual:** Ảnh Gazebo/RViz của pipeline đang chạy; nếu dùng ảnh phần cứng thì ghi rõ đó là phần cứng tham chiếu, không phải bằng chứng bay thực.
 
-### Slide 3: Hạn Chế Của Các Hướng Giải Quyết Đã Có (Current Limitations)
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **4 NGHẼN CỔ CHAI KỸ THUẬT CỦA CÁC GIẢI PHÁP TRUYỀN THỐNG**
-* **Bố cục Visual**: 4 ô Box màu đỏ cảnh báo (Alert Boxes) chỉ rõ các "điểm chết" công nghệ:
-  1. **Định vị GPS toàn cầu**: Sai số trôi dạt dân sự từ $1.0\text{–}2.5\text{m}$ $\rightarrow$ *Không thể đáp trúng bãi đáp đường kính $50\text{cm}$, nguy cơ rơi lật ra ngoài*.
-  2. **Nghịch lý 1 Marker ArUco (Single Marker Paradox)**: Dùng marker lớn thì khi drone hạ thấp ($<0.4\text{m}$) sẽ bị **tràn khung ảnh (FOV)** mất dấu; dùng marker nhỏ thì bay cao ($>2\text{m}$) camera không thể nhận diện.
-  3. **Hạ cánh thẳng đứng & Trôi Barometer**: Khi drone phanh chỉnh vị trí, thân nghiêng làm camera hất ra ngoài mất mục tiêu; cảm biến áp suất khí quyển trôi $0.5\text{m}$ làm drone phán đoán sai $\rightarrow$ **hiệu ứng mặt đất (Ground effect) làm nảy và lật máy bay**.
-  4. **APF truyền thống**: Dễ bị kẹt thế năng cực tiểu địa phương (Local Minima) và bị hiện tượng GNRON đẩy văng drone ra xa khi mục tiêu ở gần vật cản.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Các giải pháp hiện nay trên thị trường gặp 4 rào cản lớn: GPS trôi dạt quá lớn không thể hạ cánh chính xác; thị giác 1 marker bị nghịch lý tràn ảnh khi tới gần; hạ cánh thẳng đứng dễ bị nảy lật do trôi khí áp kế; và các thuật toán né vật cản thông thường rất dễ bị kẹt chết ở góc chết thế năng. Đội ngũ chúng tôi đã giải quyết triệt để 4 vấn đề này bằng một kiến trúc hoàn toàn mới."*
+**Nội dung:** Tên dự án, nhóm thực hiện, ba từ khóa: thị giác ArUco đa tỉ lệ, dẫn đường tránh vật cản, hạ cánh có giám sát an toàn.
 
----
+**Lời thoại:** “Nhóm xin trình bày hệ thống quadrotor nhận biết bãi đáp H-Pad, bám mục tiêu, tránh vật cản và thực hiện quy trình hạ cánh có kiểm soát. Kết quả tích hợp hiện có được đánh giá trong môi trường PX4 SITL và Gazebo.”
 
-## PHẦN 2: ĐÓNG GÓP MỚI & KIẾN TRÚC TỔNG QUAN (1.5 PHÚT)
+### Slide 2 — Bài toán cần giải quyết
 
-### Slide 4: Điểm Mới & Đóng Góp Đột Phá — "Điểm Ăn Tiền" (Core Innovations)
-* **Thời lượng đề xuất**: 45 giây
-* **Tiêu đề Slide**: **5 ĐỘT PHÁ CÔNG NGHỆ ("ĐIỂM ĂN TIỀN" CỦA DỰ ÁN)**
-* **Bố cục Visual**: 5 biểu tượng huy hiệu công nghệ (Tech Badges) nổi bật:
-  1. 🎯 **Nested Dual-Scale ArUco Board**: Cấu trúc 2 marker đồng tâm chuẩn A0 (ID 42 $52.5\text{cm}$ + ID 43 $10\text{cm}$) cùng chung gốc tọa độ 3D $\rightarrow$ Duy trì visual lock liên tục từ $8.0\text{m}$ xuống tận $0.05\text{m}$ (không điểm mù).
-  2. 🌐 **Marker-Relative Navigation**: Đưa gốc tọa độ về tâm bãi đáp, triệt tiêu $100\%$ ảnh hưởng của trôi dạt GPS.
-  3. 🛡️ **Dual-Covariance Safety Gating**: Giám sát an toàn bằng ma trận hiệp phương sai kép $2\sigma \le 0.45\text{m}$ và phễu nón $30^\circ$, tự động hủy hạ cánh (Wave-off) nếu sai số lớn.
-  4. 📐 **SMC 45° Glide Slope & Triệt Tiêu Hover-Stall**: Dẫn đường dốc trượt $45^\circ$ bằng điều khiển trượt (SMC), camera luôn khóa mục tiêu, bù vận tốc đứng độc lập triệt tiêu hiện tượng kẹt lơ lửng.
-  5. 🛑 **Drift-Invariant Touchdown & MAVLink Force Disarm**: Dò chạm đất phi trôi dạt trong $0.35\text{s}$ kết hợp ngắt động cơ cưỡng bức tức thì (`param2=21196.0`), chống nảy lật $100\%$.
-* **Lời thoại gợi ý (Speaker Script - 45s)**:
-  > *"Điểm ăn tiền làm nên sự khác biệt của dự án gồm 5 giải pháp độc quyền: Thứ nhất, bãi đáp kép Dual-Scale xoá bỏ hoàn toàn điểm mù quang học. Thứ hai, định vị Marker-Relative độc lập với GPS. Thứ ba, cổng an toàn Covariance Gate ngăn chặn mọi rủi ro rơi tự do. Thứ tư, quỹ đạo hạ dốc nghiêng 45 độ bằng điều khiển trượt SMC triệt tiêu hiện tượng kẹt lơ lửng. Và cuối cùng là cơ chế ngắt động cơ dứt khoát trong 0.35 giây, đảm bảo tiếp đất êm ái tuyệt đối."*
+**Thời lượng:** 30 giây<br>
+**Visual:** Ba thách thức: duy trì nhận biết mục tiêu ở các cự ly khác nhau; dẫn đường trong môi trường có chướng ngại; chỉ hạ khi trạng thái và chất lượng ước lượng đủ tin cậy.
 
----
+**Nội dung:** Mục tiêu của dự án là kết hợp nhận thức, bám đuổi, tránh vật cản và hạ cánh chính xác trong một pipeline. Tách rõ **mục tiêu thiết kế** với **kịch bản đã kiểm chứng**: các thuật toán tracking có kịch bản mục tiêu chuyển động, trong khi world SITL tích hợp hiện đặt H-Pad tại vị trí cố định.
 
-### Slide 5: Kiến Trúc Phân Tầng Hệ Thống (System Architecture)
-* **Thời lượng đề xuất**: 25 giây
-* **Tiêu đề Slide**: **KIẾN TRÚC PHẦN MỀM PHÂN TẦNG ĐỒNG BỘ TRÊN NỀN TẢNG ROS 2**
-* **Bố cục Visual**: Sơ đồ phân tầng rõ ràng từ trên xuống dưới (4 tầng chức năng):
-  * **Tầng Nhận thức (Perception)**: Camera RealSense D435i $\rightarrow$ `aruco_detector` (PnP Board) $\rightarrow$ `ekf_ros_adapter` (Target EKF 6-state).
-  * **Tầng Giám sát & Dẫn đường (Guidance & Safety)**: `covariance_gate` ($2\sigma$ & Conical Gate) $\leftrightarrow$ `smc_guidance` (Glide Slope $45^\circ$).
-  * **Tầng Điều khiển & Né vật cản (Control)**: `iapf_planner` (Improved APF 3D) $\leftrightarrow$ `ibvs_controller` (Gimbal Pitch & Drone Yaw).
-  * **Tầng Chấp hành & An toàn (Execution & Failsafe)**: `mission_fsm_node` $\rightarrow$ `touchdown_detector` $\rightarrow$ `offboard_commander` (MAVLink Force Disarm) $\rightarrow$ Bo Pixhawk (PX4).
-* **Lời thoại gợi ý (Speaker Script - 25s)**:
-  > *"Hệ thống được thiết kế theo kiến trúc 4 tầng phân lập rõ ràng trên nền tảng ROS 2 Humble. Nhận thức từ camera RealSense đi qua bộ lọc Kalman 6 trạng thái, chuyển đến tầng phân tích an toàn Covariance Gate. Từ đó, bộ điều khiển dẫn đường SMC và tránh vật cản I-APF sẽ tính toán lệnh vận tốc tối ưu và hạ lệnh trực tiếp xuống bộ điều khiển bay Pixhawk thông qua MAVLink."*
+**Lời thoại:** “Bài toán không chỉ là nhìn thấy marker. Drone cần quy đổi phép đo về cùng hệ tọa độ, điều khiển bám mục tiêu, phản ứng với vật cản và kiểm tra độ tin cậy trước khi hạ. Kịch bản bãi đáp di động là hướng thiết kế; kết quả SITL tích hợp hiện tại chưa chứng minh hạ cánh lên bãi đáp chuyển động.”
 
----
+### Slide 3 — Rủi ro khi giải từng phần riêng lẻ
 
-### Slide 6: Chu Trình FSM 7 Pha & Cơ Chế Wave-off An Toàn (Mission FSM)
-* **Thời lượng đề xuất**: 20 giây
-* **Tiêu đề Slide**: **CHU TRÌNH NHIỆM VỤ FSM 7 PHA VỚI CƠ CHẾ WAVE-OFF TỰ ĐỘNG**
-* **Bố cục Visual**: Sơ đồ chuyển pha trạng thái (State Diagram) với mũi tên động lực:
-  $$\text{IDLE} \xrightarrow{\text{Takeoff}} \text{SEARCH} \xrightarrow{\text{Visual Lock}} \text{FOLLOW} \xrightarrow{\text{Land Cmd}} \text{APPROACH} \xrightarrow{2\sigma \le 0.45\text{m}} \text{GLIDE\_SLOPE} \xrightarrow{z \le 0.4\text{m}} \text{LAND} \xrightarrow{\text{Touchdown}} \text{TOUCHDOWN / DISARM}$$
-  * Nhánh rẽ cảnh báo nổi bật: **Wave-off Abort** (khi mất dấu $>1.5\text{s}$ hoặc sai số $2\sigma > 0.55\text{m}$, drone tự động hủy hạ cánh, vọt lên giữ độ cao an toàn).
-* **Lời thoại gợi ý (Speaker Script - 20s)**:
-  > *"Toàn bộ chu trình từ lúc cất cánh đến khi tắt máy được điều phối qua cỗ máy trạng thái hữu hạn 7 pha. Đặc biệt, hệ thống tích hợp cơ chế Wave-off tự động: nếu mục tiêu bị che khuất bất ngờ hoặc sai số vượt ngưỡng an toàn trong khi đang hạ dốc, drone sẽ lập tức ngắt hạ cánh và bay lượn an toàn để tái định vị."*
+**Thời lượng:** 30 giây<br>
+**Visual:** Bốn thẻ “mất dấu”, “kẹt đường đi”, “ước lượng chưa chắc chắn”, “xác nhận tiếp đất sai” nối tới các khối tương ứng trong hệ thống.
 
----
+**Nội dung:**
 
-## PHẦN 3: KIẾN TRÚC TỪNG MODULE & CÔNG THỨC CHÍNH (2.0 PHÚT)
+1. Một marker đơn lẻ có thể không phù hợp xuyên suốt các cự ly camera khác nhau.
+2. APF cơ bản có thể gặp cực tiểu địa phương hoặc bị đẩy khỏi đích gần vật cản.
+3. Điều khiển landing chỉ theo khoảng cách không phản ánh độ bất định và độ mới của phép đo.
+4. Chỉ dựa vào độ cao hoặc một tín hiệu đơn lẻ có thể xác nhận touchdown không đúng lúc.
 
-### Slide 7: Module Nhận Thức — Dual-Scale Vision & EKF 6 Trạng Thái
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **MODULE NHẬN THỨC: NESTED ARUCO BOARD & TARGET EKF 6 TRẠNG THÁI**
-* **Bố cục Visual**:
-  * Bên trái: Hình ảnh bãi đáp A0 với Marker ID 42 ($52.5\text{cm}$) và ID 43 ($10\text{cm}$) đồng tâm, ảnh chụp từ camera ở cự ly $3\text{m}$ và $0.1\text{m}$.
-  * Bên phải: Khối hộp công thức toán học và sơ đồ bộ lọc Kalman ước lượng vận tốc.
-* **Công thức toán & Chức năng chính**:
-  * **Ước lượng Pose Board đa điểm chung gốc $(0,0,0)$**:
-    $$(\mathbf{R}^*, \mathbf{t}^*) = \arg\min_{\mathbf{R}, \mathbf{t}} \sum_{k \in \mathcal{V}} \left\| \mathbf{u}_k - \pi(\mathbf{K}, \mathbf{R} \mathbf{P}_k + \mathbf{t}) \right\|^2$$
-    *(Chuyển giao liên tục $C^0$, triệt tiêu hoàn toàn bước nhảy tọa độ khi đổi marker)*.
-  * **Mô hình động học Constant Velocity (CV) 6 trạng thái**:
-    $$\mathbf{x}_w = [x_w, y_w, z_w, v_{wx}, v_{wy}, v_{wz}]^T, \quad \mathbf{x}_k = \mathbf{F}\mathbf{x}_{k-1} + \mathbf{w}_k$$
-  * **Cổng loại nhiễu Mahalanobis Gate**: $d_M^2 \le 16.27$ (loại bỏ $100\%$ outlier), duy trì Dead Reckoning quán tính khi mất dấu $<3\text{s}$.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Ở tầng nhận thức, chúng tôi giải bài toán PnP trên cụm Marker lồng nhau có chung gốc toạ độ. Nhờ đó, vector vị trí liên tục tuyệt đối khi chuyển đổi giữa tầm xa và tầm gần. Dữ liệu được đưa vào bộ lọc Kalman 6 trạng thái có cổng Mahalanobis loại bỏ nhiễu, cho phép dự đoán quán tính mượt mà ngay cả khi mục tiêu bị che khuất hoàn toàn trong 3 giây."*
+Không gắn các số liệu GPS/barometer hay khẳng định đây là giới hạn của toàn bộ giải pháp thị trường nếu chưa có nguồn đo hoặc trích dẫn.
 
----
+**Lời thoại:** “Các rủi ro này xuất hiện ở giao điểm giữa thị giác, dẫn đường và điều khiển. Dự án xử lý chúng bằng một pipeline tích hợp và các cổng kiểm tra trước khi chuyển pha.”
 
-### Slide 8: Module Né Vật Cản 3D — Thuật Toán Cải Tiến I-APF 3D
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **MODULE ĐIỀU KHIỂN NÉ VẬT CẢN: THUẬT TOÁN I-APF 3D & THOÁT BẪY KẸT**
-* **Bố cục Visual**:
-  * Hình minh họa vector lực: Drone né vật cản trụ và lướt theo vector tiếp tuyến 3D (Dynamic Tangent) màu tím.
-  * So sánh đường bay: Standard APF (bị kẹt đứng yên) vs. I-APF (lướt thoát bẫy mượt mà).
-* **Công thức toán & Chức năng chính**:
-  * **Triệt tiêu hiện tượng GNRON bằng trọng số Sigmoid**:
-    $$w_{rep} = \frac{1}{1 + e^{-d_{goal}}} - 0.5 \implies \lim_{d_{goal} \to 0} F_{rep} = 0$$
-    *(Khi drone áp sát đích, lực cản tự triệt tiêu, đưa drone về đúng tâm bãi đáp mà không bị dội ngược)*.
-  * **Thoát bẫy cực tiểu địa phương (Dynamic 3D Tangent Plane)**:
-    $$\text{Khi } |F_{total}| < F_{enter} = 0.1\text{N} \implies \text{Sinh 12 tia tiếp tuyến 3D, dự báo } N_{pred}=3 \text{ bước}$$
-  * **Khử rung lắc (Oscillation Suppression)**: Lọc hướng bay theo 3 phân đoạn góc $\Delta\alpha \le 30^\circ$, giữ chuyển động êm ái cho Quadrotor.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Để né vật cản trong không gian 3D, chúng tôi cải tiến thuật toán thế trường nhân tạo I-APF: Thứ nhất, điều biến lực đẩy bằng hàm Sigmoid giúp loại bỏ triệt để hiện tượng bị dội ngược khi bãi đáp ở gần vật cản. Thứ hai, cơ chế bẫy thế năng Schmitt Trigger tự động sinh 12 tia tiếp tuyến 3D dự báo trước đường bay để luồn lách thoát kẹt mà không bị rung giật máy bay."*
+## Phần 2 — Đóng góp và kiến trúc tổng quan
 
----
+### Slide 4 — Các đóng góp kỹ thuật của dự án
 
-### Slide 9: Module Giám Sát An Toàn — Cổng Hiệp Phương Sai Kép (Covariance Gate)
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **MODULE GIÁM SÁT AN TOÀN: DUAL-COVARIANCE GATING & PHỄU NÓN 30°**
-* **Bố cục Visual**:
-  * Đồ họa 3D Phễu nón an toàn $30^\circ$ (Conical Funnel) và Elip sai số (Error Ellipse) co cụm lại khi drone hạ thấp.
-  * Đồ thị đường cong bán kính không định $2\sigma$ giảm dần theo hàm hyperbol $1/z$.
-* **Công thức toán & Chức năng chính**:
-  * **Dung hợp sai số vị trí tương đối**:
-    $$\mathbf{P}_{relative} = \mathbf{P}_{target\_pos} + \mathbf{P}_{drone\_pos}$$
-  * **Bán kính tin cậy 2-sigma theo phương xấu nhất (Worst-Case Directional)**:
-    $$\sigma_{xy} = \sqrt{\lambda_{max}(\mathbf{P}_{relative, xy})} \implies R_{conf\_2\sigma} = 2\sqrt{\lambda_{max}}$$
-  * **Điều kiện an toàn cấp phép hạ cánh (Gate Decision)**:
-    $$\boxed{2\sigma \le 0.45\text{m} \quad \wedge \quad \theta_{cone} = \arctan\left(\frac{R_{xy}}{\Delta z}\right) \le 30^\circ}$$
-  * **Bán kính dốc trượt thích ứng**: $R_{switch} = \text{clamp}(5.0 + 2.0 \times 2\sigma, 4.5, 10.0)\text{ m}$.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Đây là chốt chặn an toàn quan trọng nhất trước khi hạ cánh: Covariance Gate dung hợp sai số của cả bộ lọc ước lượng mục tiêu và bộ lọc nội tại của drone. Bằng cách phân rã trị riêng ma trận sai số để tìm phương rủi ro cao nhất, hệ thống chỉ cho phép tiếp cận khi bán kính không định 2-sigma nhỏ hơn 45cm và drone nằm trọn trong phễu nón an toàn 30 độ."*
+**Thời lượng:** 45 giây<br>
+**Visual:** Năm khối nối tiếp, mỗi khối một động từ: nhận biết, ước lượng, dẫn đường, kiểm tra, thực thi.
 
----
+1. **Board ArUco hai tỉ lệ:** hai marker trên cùng board phẳng, quy về cùng hệ tọa độ của bãi đáp.
+2. **Target EKF:** làm mượt vị trí mục tiêu và ước lượng vận tốc để cung cấp trạng thái cho bộ điều khiển.
+3. **I-APF 3D:** kết hợp lực hút, lực đẩy và hướng tiếp tuyến để hỗ trợ thoát kẹt.
+4. **Covariance Gate + SMC:** đưa độ bất định vào quyết định cho phép tiếp cận và dẫn đường hạ cánh.
+5. **FSM + touchdown + Offboard:** điều phối nhiệm vụ, xác nhận tiếp đất từ nhiều nguồn trạng thái và gửi lệnh tới PX4.
 
-### Slide 10: Module Dẫn Đường SMC, Nadir Tilt & Dò Chạm Đất Touchdown
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **DẪN ĐƯỜNG SMC 45°, GIMBAL NADIR TILT (-85°) & DISARM TỨC THÌ**
-* **Bố cục Visual**:
-  * Hình cắt quỹ đạo tiếp cận theo dốc nghiêng $45^\circ$, camera luôn nhìn thấy bãi đáp ở trung tâm.
-  * Sơ đồ logic 4 điều kiện của bộ dò tiếp đất Touchdown Detector.
-* **Công thức toán & Chức năng chính**:
-  * **Luật tiếp cận lũy thừa Power Reaching Law (SMC)**:
-    $$\dot{S}_i = -k_i |S_i|^{3/5} \text{sgn}(S_i) \quad (i = 1, 2, 3)$$
-  * **Bù vận tốc hạ độc lập triệt tiêu kẹt lơ lửng (Hover Stall Elimination)**:
-    $$v_{z\_cmd} = -\max(v_{touch}, 0.20 \cdot r_z)$$
-  * **Chế độ Nadir Tilt của Gimbal**: Khi độ cao $z < 0.8\text{m}$, tự động ép góc pitch về **$-85^\circ$** để khóa chặt tâm marker nhỏ ID 43.
-  * **Bộ dò tiếp đất phi trôi dạt (Drift-Invariant Touchdown Latch)**:
-    $$\left( z \le 0.18\text{m} \ \wedge \ |v_z| \le 0.08\text{m/s} \ \wedge \ v_{z\_cmd} \le -0.10\text{m/s} \right) \xrightarrow{\text{chốt } 0.35\text{s}} \textbf{MAVLink Force Disarm} \ (param2=21196.0)$$
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Trong pha tiếp cận, bộ điều khiển trượt SMC dẫn đường drone theo góc dốc nghiêng 45 độ, giúp camera luôn nhìn chéo thấy bãi đáp. Khi áp sát dưới 80cm, gimbal tự động chúc thẳng -85 độ để khóa tâm marker nhỏ. Ngay khi chân đáp chạm sàn và vận tốc triệt tiêu trong 0.35 giây, lệnh Force Disarm được kích hoạt tức thì, triệt tiêu toàn bộ lực nâng và loại bỏ 100% hiện tượng nảy lật máy bay."*
+**Lời thoại:** “Giá trị chính nằm ở việc các khối phối hợp thành chu trình có phản hồi: nhận biết và ước lượng mục tiêu, tính hướng di chuyển, kiểm tra điều kiện an toàn, rồi mới phát setpoint xuống bộ điều khiển bay.”
 
----
+### Slide 5 — Kiến trúc tổng quan hệ thống
 
-## PHẦN 4: KẾT QUẢ MÔ PHỎNG (SIMULINK & SITL) + THỰC NGHIỆM HARDWARE (1.6 PHÚT)
+**Thời lượng:** 25 giây<br>
+**Visual:** Sơ đồ khối từ trái sang phải, có vòng phản hồi odometry và camera.
 
-### Slide 11: Bước 1 — Kiểm Thử & Xác Thực Thuật Toán Trên MATLAB / Simulink
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **BƯỚC 1: KIỂM THỬ THUẬT TOÁN TRÊN MATLAB / SIMULINK (MODEL-BASED DESIGN)**
-* **Phụ đề**: *Xác thực tính ổn định toán học, động lực học 6-DOF và tối ưu hóa bộ tham số trước khi tích hợp vào ROS 2 / SITL.*
-* **Bố cục Visual**: Chia 3 khối đồ thị kết quả mô phỏng toán lý tưởng:
-  1. *Đồ thị 1 (Dẫn đường SMC 45°)*: 
-     - Quỹ đạo tiếp cận nghiêng chuẩn xác $45^\circ$.
-     - Đồ thị hội tụ của 3 mặt trượt $S = [S_1, S_2, S_3]^T \to 0$ theo thời gian; triệt tiêu hoàn toàn hiện tượng rung giật (Chattering) bằng hàm bão hòa $\text{sat}(S/\epsilon)$.
-     - Vận tốc hạ $v_z$ duy trì đều $\approx -0.15\text{ m/s}$ ngay cả khi sai số ngang $R_{xy} \to 0$ $\rightarrow$ *Xác nhận triệt tiêu kẹt lơ lửng Hover Stall*.
-  2. *Đồ thị 2 (Né vật cản 3D I-APF)*: 
-     - Mô phỏng kịch bản bẫy đối xứng (Symmetric Obstacle Trap): I-APF kích hoạt lực tiếp tuyến $F_{tan}$ bứt phá khỏi Local Minima trong $< 0.8\text{ s}$ (tỷ lệ thành công $100\%$, trong khi Standard APF bị kẹt dừng hoàn toàn).
-     - Đường cong lực cản giảm về 0 nhờ hàm Sigmoid khi áp sát đích (triệt tiêu hiện tượng GNRON).
-  3. *Đồ thị 3 (IBVS Gimbal & EKF Occlusion Handling)*: 
-     - Kịch bản mất dấu mục tiêu đột ngột $3.0\text{ s}$: EKF duy trì ước lượng quán tính (Dead Reckoning), sai số pixel khi xuất hiện lại $e_u, e_v < 40\text{ px}$.
-     - Tín hiệu xung PWM điều khiển servo gimbal mượt mà qua bộ lọc EMA, tốc độ biến thiên góc $\le 180^\circ/\text{s}$, không rung lắc cơ khí.
-* **Ý nghĩa then chốt**: Tinh chỉnh và chốt bộ tham số tối ưu ($k_{att}, k_{rep}, k_1, k_2, k_3, K_p, K_s, K_{pitch}, K_{yaw}$) giúp tiết kiệm $80\%$ thời gian debug trên môi trường SITL và ngăn chặn rủi ro va chạm.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Để đảm bảo tính khoa học và an toàn tuyệt đối, nhóm tuân thủ nghiêm ngặt quy trình Model-Based Design: Toàn bộ thuật toán được mô phỏng và kiểm chứng trên mô hình 6-DOF của MATLAB/Simulink trước. Kết quả mô phỏng chứng minh: Mặt trượt SMC hội tụ mượt mà theo dốc 45 độ mà không bị chattering; thuật toán I-APF thoát bẫy cực tiểu địa phương 100% trong vòng 0.8 giây; và bộ lọc EKF giữ vững góc ngắm gimbal ngay cả khi mục tiêu bị che khuất 3 giây. Nhờ đó, chúng tôi tối ưu hóa được toàn bộ bộ thông số trước khi đưa vào SITL."*
+**Các khối và luồng dữ liệu:**
 
----
+- **Cảm biến/môi trường:** ảnh RGB-D từ Gazebo trong pipeline SITL; PX4 cung cấp odometry và trạng thái phương tiện.
+- **Nhận thức:** ArUco detector xuất pose, bounding box và cờ phát hiện; EKF adapter đổi hệ tọa độ và xuất trạng thái mục tiêu cùng covariance.
+- **Dẫn đường/giám sát:** I-APF nhận trạng thái drone, đích và vật cản; IBVS nhận bounding box; Covariance Gate và SMC nhận trạng thái mục tiêu, odometry và covariance.
+- **Điều phối/chấp hành:** Mission FSM chọn setpoint theo pha; Offboard Commander gửi lệnh vận tốc/yaw và xử lý disarm tới PX4.
+- **Phản hồi:** PX4/Gazebo trả odometry, trạng thái bay và ảnh về các khối phía trên.
 
-### Slide 12: Bước 2 — Kiểm Chứng Toàn Phần Trên Mô Phỏng PX4 SITL & Gazebo
-* **Thời lượng đề xuất**: 35 giây
-* **Tiêu đề Slide**: **BƯỚC 2: KẾT QUẢ KIỂM CHỨNG TOÀN PHẦN TRÊN PX4 SITL & GAZEBO HARMONIC**
-* **Bố cục Visual**:
-  * Hình chụp không gian Gazebo Harmonic và quỹ đạo bay 3D hiển thị trên RViz2 qua các trụ vật cản.
-  * Bảng đối chiếu chỉ số đo đạc thực tế so với tiêu chuẩn thiết kế nghiệm thu:
+**Lời thoại:** “Đây là pipeline phần mềm đang được tích hợp trong ROS 2 với PX4 SITL và Gazebo. FSM là khối điều phối trung tâm; các bộ perception và control phát dữ liệu/lệnh qua giao diện ROS 2.”
 
-| Hạng mục kiểm chứng | Tiêu chuẩn đặt ra | Kết quả đo đạc thực tế | Đánh giá |
-|---|:---:|:---:|:---:|
-| **Thời gian khóa mục tiêu ban đầu** | $< 3.0\text{ s}$ | **$0.77\text{ s}$** | Vượt tiến độ |
-| **Sai số góc hướng (Yaw) khi bám đuổi** | $< 5.0^\circ$ | **$< 2.5^\circ$** | Rất ổn định |
-| **Khoảng cách an toàn né vật cản ($d_{min}$)** | $\ge 0.5\text{ m}$ | **$\ge 0.85\text{ m}$** | Tuyệt đối an toàn |
-| **Bán kính không định khi tiếp đất ($2\sigma$)** | $\le 0.35\text{ m}$ | **$< 0.05\text{ m}$** | Siêu chính xác |
-| **Sai số tiếp đất lệch tâm ngang ($R_{xy}$)** | $< 10.0\text{ cm}$ | **$\approx 1.0\text{ cm}$ ($0.01\text{m}$)** | **XUẤT SẮC** |
-| **Thời gian chốt ngắt động cơ (Disarm)** | $< 1.0\text{ s}$ | **$0.35\text{ s}$** | Không nảy, không trôi |
+### Slide 6 — FSM nhiệm vụ và nhánh an toàn
 
-* **Lời thoại gợi ý (Speaker Script - 35s)**:
-  > *"Sau khi thuật toán đạt chuẩn trên Simulink, chúng tôi chuyển thể sang ROS 2 và đưa vào mô phỏng vật lý toàn phần PX4 SITL với Gazebo Harmonic. Ở môi trường đầy đủ nhiễu cảm biến và trễ truyền thông, hệ thống vẫn thể hiện hiệu năng xuất sắc: Drone khóa mục tiêu sau 0.77 giây, né vật cản an toàn trên 0.85m. Đặc biệt, sai số tiếp đất thực tế đạt xấp xỉ 1 centimet so với tiêu chuẩn 10 centimet, và bộ dò tiếp đất ngắt động cơ dứt khoát sau đúng 0.35 giây."*
+**Thời lượng:** 20 giây<br>
+**Visual:** State diagram năm pha:
 
----
+```text
+IDLE → SEARCH → FOLLOW → APPROACH → LAND → IDLE
+          ↑         │          │        │
+          └─ mất dấu┘          ├─ hủy/mất tracking → FOLLOW
+                               └─ wave-off/mất điều kiện ở LAND → APPROACH
+```
 
-### Slide 13: Bước 3 — Đóng Gói C++ Nhúng & Thực Nghiệm Phần Cứng
-* **Thời lượng đề xuất**: 30 giây
-* **Tiêu đề Slide**: **BƯỚC 3: ĐÓNG GÓI C++ NHÚNG TRÊN RASPBERRY PI 5 & BENCH-TEST PHẦN CỨNG**
-* **Bố cục Visual**:
-  * Ảnh chụp phần cứng thực tế: Drone gắn Companion Computer Raspberry Pi 5 / Jetson Nano, bo PX4 Pixhawk 6C, Camera Intel RealSense D435i và Gimbal Servo.
-  * Ảnh chụp màn hình Bench-test nhận diện bãi đáp A0 trên bàn Lab (cửa sổ OpenCV nhận diện, hiển thị trục 3D chuẩn tâm).
-  * Sơ đồ cấu hình mạng Hotspot Unicast UDP (CycloneDDS) giữa máy tính trạm GCS và Pi 5.
-* **Thông số kỹ thuật phần cứng đã xác nhận**:
-  * Tần số xử lý Vision: $\ge 25\text{–}30\text{ Hz}$ trên Raspberry Pi 5.
-  * Tần số điều khiển vòng kín PX4: $250\text{ Hz}$ qua kết nối UART TELEM2 ($921600\text{ baud}$).
-  * Bộ mã nguồn C++20 Header-Only tối ưu hóa riêng cho CPU ARM Cortex-A76 (`-O3 -mcpu=cortex-a76`).
-  * Bảng điều khiển GCS Operator Terminal: Phát lệnh Land, Emergency Abort và giám sát Telemetry thời gian thực.
-* **Lời thoại gợi ý (Speaker Script - 30s)**:
-  > *"Toàn bộ pipeline thuật toán đã được đóng gói hoàn chỉnh sang C++20 tối ưu cho vi xử lý ARM của Raspberry Pi 5 kết nối với Pixhawk qua UART tốc độ cao 921600 baud. Các bài bench-test trên bàn thí nghiệm với camera RealSense thực tế đã xác nhận tần số xử lý đạt 30 khung hình/giây và đo đạc khoảng cách trùng khớp với thực tế. Hệ thống đã hoàn thiện sẵn sàng cho các bài bay thực địa."*
+SEARCH/FOLLOW có logic bắt lại mục tiêu; SMC báo các sub-phase dẫn đường/hạ cuối nhưng không phải các pha cấp cao riêng của FSM. Touchdown đã xác nhận kết thúc nhiệm vụ; mất tracking hoặc mục tiêu lệch trong LAND có thể đưa FSM về APPROACH để căn chỉnh/bắt lại.
 
----
+**Lời thoại:** “FSM hiện có năm pha chính. Hạ cánh là một quy trình có điều kiện; nếu mất tracking hoặc mục tiêu dịch khỏi vùng phù hợp trong pha cuối, hệ thống quay về tiếp cận thay vì coi nhiệm vụ đã hoàn thành.”
 
-## PHẦN 5: KẾT LUẬN & HƯỚNG PHÁT TRIỂN (0.7 PHÚT)
+## Phần 3 — Kiến trúc module và công thức chính
 
-### Slide 14: Giá Trị Thực Tiễn & Tiềm Năng Thương Mại Hóa (Business Value)
-* **Thời lượng đề xuất**: 20 giây
-* **Tiêu đề Slide**: **GIÁ TRỊ THỰC TIỄN & TIỀM NĂNG THƯƠNG MẠI HÓA CÔNG NGHỆ**
-* **Bố cục Visual**: 3 khối ứng dụng thực tế với biểu tượng minh họa sinh động:
-  1. 📦 **Logistics & Giao hàng tự động chặng cuối (Last-mile Delivery)**: Tự động hạ cánh chính xác xuống trạm sạc pin thông minh hoặc thùng xe bán tải đang di chuyển.
-  2. 🚢 **Tiếp vận Hàng hải & Quân sự (Maritime & Defense)**: Đáp chính xác lên boong tàu cứu hộ hoặc xe bọc thép đang cơ động dập dềnh trên sóng nước.
-  3. ⚡ **Tự động hóa Kiểm tra Công nghiệp (Automated Inspection)**: Tuần tra đường dây điện, trạm biến áp, tự động quay về trạm sạc không dây với độ lệch chỉ vài centimet.
-* **Nội dung nhấn mạnh**: Tự chủ $100\%$ công nghệ lõi, không phụ thuộc vào giải pháp độc quyền của nước ngoài, tiết kiệm chi phí bản quyền và dễ dàng tích hợp tùy biến.
-* **Lời thoại gợi ý (Speaker Script - 20s)**:
-  > *"Giải pháp này mở ra tiềm năng ứng dụng và giá trị thương mại rất lớn cho công ty: Làm chủ công nghệ hạ cánh chính xác giúp chúng ta tự động hóa hoàn toàn các trạm sạc không người lái cho drone kiểm tra công nghiệp, triển khai các giải pháp giao hàng tự động tiếp đất trên thùng xe tải, hoặc phục vụ các nhiệm vụ trinh sát tiếp vận trên tàu thuyền quân sự."*
+> Các slide 5–10 trình bày **khối chức năng, input/output và công thức thuật toán**. Không đưa kích thước marker, tốc độ, tần số, ngưỡng hay hệ số cấu hình lên các slide kiến trúc. Nếu hội đồng hỏi sâu, mở file cấu hình/mã nguồn làm tài liệu tham chiếu.
 
----
+### Slide 7 — Nhận thức mục tiêu: ArUco Board và EKF
 
-### Slide 15: Lộ Trình Triển Khai Thực Địa & Đề Xuất Phê Duyệt (Roadmap)
-* **Thời lượng đề xuất**: 20 giây
-* **Tiêu đề Slide**: **LỘ TRÌNH TRIỂN KHAI THỰC ĐỊA & ĐỀ XUẤT PHÊ DUYỆT NGHIỆM THU**
-* **Bố cục Visual**: Trục thời gian (Milestone Roadmap) với 3 giai đoạn rõ ràng:
-  * **Giai đoạn 1 (Đã hoàn thành 100%)**: Nghiệm thu mô phỏng Simulink, mô phỏng SITL, Bench-test phần cứng, đóng gói C++ ROS 2 Node.
-  * **Giai đoạn 2 (Tháng tới)**: Bay thử nghiệm dã ngoại ngoài trời (Outdoor Flight Test) trên bãi đáp tĩnh và bãi đáp di động vận tốc $3\text{ m/s}$.
-  * **Giai đoạn 3 (Quý tới)**: Tích hợp AI Object Detection (YOLOv8-Nano) nhận diện vật cản động và hạ cánh trên mặt sàn dập dềnh sóng nước.
-* **Lời kêu gọi hành động (Call-to-Action)**:
-  * *"Kính đề nghị Ban Giám đốc phê duyệt kết quả nghiệm thu giai đoạn mô phỏng và cấp phép triển khai đợt bay thử nghiệm thực địa ngoài trời."*
-* **Lời thoại gợi ý (Speaker Script - 20s)**:
-  > *"Chúng tôi đã hoàn thành 100% mục tiêu giai đoạn 1 từ Simulink đến SITL và bench-test phần cứng. Kế hoạch tiếp theo là tổ chức đợt bay thử nghiệm ngoài trời trên bãi đáp di động trong tháng tới. Nhóm kính đề nghị Ban Giám đốc phê duyệt kết quả nghiên cứu hôm nay để chúng tôi tự tin tiến ra bãi bay thực địa. Xin trân trọng cảm ơn Ban Giám đốc!"*
+**Thời lượng:** 30 giây<br>
+**Khối kiến trúc:** Ảnh + camera info → phát hiện marker/ước lượng pose board → đổi hệ camera sang world bằng TF → Target EKF.
 
----
+**Input:** Ảnh, camera intrinsics, pose quan sát, TF/odometry.<br>
+**Output:** Pose/bounding box/cờ phát hiện và trạng thái mục tiêu `[x, y, z, vx, vy, vz]` kèm covariance.
 
-# 📚 TỔNG HỢP CÁC CÔNG THỨC & THAM SỐ ĂN TIỀN (PHỤ LỤC Q&A)
+**Công thức minh họa:**
 
-Dành cho bạn để tự tin trả lời các câu hỏi chất vấn sâu về mặt kỹ thuật của Ban Giám đốc / Hội đồng chuyên gia:
+```text
+(R*, t*) = argmin(R,t) Σk || uk − π(K, R Pk + t) ||²
+x(k|k−1) = F x(k−1|k−1)
+Kk = P(k|k−1) Hᵀ [H P(k|k−1) Hᵀ + R]⁻¹
+d² = νᵀ S⁻¹ ν
+```
 
-### 1. Công thức PnP đa điểm Nested ArUco Board
-$$(\mathbf{R}^*, \mathbf{t}^*) = \arg\min_{\mathbf{R}, \mathbf{t}} \sum_{k \in \mathcal{V}} \left\| \mathbf{u}_k - \pi(\mathbf{K}, \mathbf{R} \mathbf{P}_k + \mathbf{t}) \right\|^2$$
-*Giải thích*: Cả 8 đỉnh của Outer Marker (ID 42 - $52.5\text{cm}$) và Inner Marker (ID 43 - $10\text{cm}$) đều được định nghĩa trên cùng một hệ tọa độ phẳng $Z=0$ với gốc $(0,0,0)$ đặt tại tâm marker nhỏ. Nhờ đó, nghiệm vị trí trả về liên tục $C^0$, không xảy ra hiện tượng nhảy giật khi chuyển giao tầm nhìn.
+Trong đó nghiệm pose giảm sai số chiếu lại; EKF dự đoán/cập nhật trạng thái chuyển động và dùng innovation distance để kiểm tra measurement.
 
-### 2. Dung hợp Covariance & Trị riêng cực đại
-$$\mathbf{P}_{relative} = \mathbf{P}_{target\_pos} + \mathbf{P}_{drone\_pos}$$
-$$\lambda_{max}(\mathbf{P}_{xy}) = \frac{\text{tr}(\mathbf{P}_{xy}) + \sqrt{(\text{tr}(\mathbf{P}_{xy}))^2 - 4\det(\mathbf{P}_{xy})}}{2}$$
-$$R_{conf\_2\sigma} = 2\sqrt{\lambda_{max}(\mathbf{P}_{xy})} \le 0.45\text{m}$$
-*Giải thích*: Trị riêng cực đại đại diện cho bán kính trục dài của elip sai số (hướng rủi ro sai lệch lớn nhất). Việc kiểm tra $2\sigma \le 0.45\text{m}$ đảm bảo xác suất tin cậy $95.4\%$ vị trí tiếp xúc của chân đáp nằm trọn vẹn trong đường kính bãi đáp.
+**Lời thoại:** “Các marker được ánh xạ về cùng hệ tọa độ của bãi đáp, sau đó EKF kết hợp phép đo mới với trạng thái dự đoán. Những khối sau dùng chung một trạng thái mục tiêu và độ bất định thay vì xử lý từng ảnh độc lập.”
 
-### 3. Luật tiếp cận lũy thừa SMC Glide Slope
-$$\dot{S}_i = -k_i |S_i|^{3/5} \text{sgn}(S_i), \quad S = [S_1, S_2, S_3]^T$$
-$$v_{z\_cmd} = -\max(v_{touch}, 0.20 \cdot r_z)$$
-*Giải thích*: Tỷ số lũy thừa $3/5 = 0.6$ giúp mặt trượt hội tụ nhanh khi ở xa và trơn tru không chattering khi áp sát bề mặt. Thành phần $v_{z\_cmd}$ độc lập đảm bảo drone luôn duy trì vận tốc hạ tối thiểu $0.15\text{m/s}$, loại bỏ hiện tượng bị "treo lơ lửng" (Hover Stall) khi sai số ngang $R_{xy} \to 0$.
+### Slide 8 — Dẫn đường tránh vật cản I-APF 3D
 
-### 4. Thuật toán thoát kẹt Local Minima của I-APF 3D
-* **Ngưỡng kích hoạt**: $|F_{total}| < F_{enter} = 0.10\text{N}$, thoát ra khi $|F_{total}| > F_{exit} = 0.30\text{N}$ (cơ chế trễ Hysteresis chống chập chờn).
-* **Dynamic Tangent**: Sinh 12 tia tiếp tuyến vuông góc với vector lực cản trong không gian 3D, đánh giá hàm chi phí dựa trên độ thông thoáng và góc hướng về đích sau 3 bước dự báo trước ($N_{pred}=3$).
+**Thời lượng:** 30 giây<br>
+**Khối kiến trúc:** Vị trí drone + vị trí đích + mô tả vật cản → tính lực hút/đẩy → phát hiện cực tiểu địa phương → chọn hướng tiếp tuyến → vận tốc dẫn đường.
 
----
+**Input:** Odometry, trạng thái mục tiêu/điểm đích, vật cản.<br>
+**Output:** Vận tốc hướng dẫn, yaw mục tiêu và thông tin chẩn đoán lực/hướng thoát.
 
-# 🎯 3 KỊCH BẢN CHẤT VẤN HÓC BÚA CỦA BAN GIÁM ĐỐC & CÁCH ĐÁP
+**Công thức minh họa:**
 
-* **Câu hỏi 1**: *"Tại sao không dùng một camera có độ phân giải siêu cao (4K) để nhìn marker từ xa xuống gần thay vì phải in bãi đáp kép phức tạp?"*
-  * **Trả lời**: *"Dạ thưa Ban Giám đốc, camera 4K đòi hỏi năng lực tính toán cực lớn khiến vi xử lý nhúng trên drone bị quá tải nhiệt và giảm FPS xuống dưới 10Hz, gây trễ điều khiển bay nguy hiểm. Giải pháp bãi đáp kép Nested Board cho phép dùng camera tiêu chuẩn 720p/VGA với tần số xử lý cao tới 30Hz, tiêu thụ rất ít điện năng và chi phí rẻ hơn 5 lần."*
+```text
+Fatt = 2 katt (g − p)
+wrep(dg) = 1 / (1 + exp(−dg)) − 1/2
+Ftotal = Fatt + Frep + Ftan
+```
 
-* **Câu hỏi 2**: *"Nếu gió thổi mạnh làm drone lệch khỏi dốc trượt 45 độ thì sao?"*
-  * **Trả lời**: *"Dạ thưa Ban Giám đốc, bộ điều khiển trượt SMC có đặc tính bền vững (robustness) rất cao trước nhiễu loạn gió. Ngoài ra, Covariance Gate liên tục kiểm tra phễu nón an toàn 30 độ; nếu gió đẩy drone lệch ra ngoài nón hoặc sai số 2-sigma vượt 0.55m, FSM sẽ lập tức kích hoạt Wave-off đưa drone leo cao an toàn để tiếp cận lại."*
+Trọng số theo khoảng cách đích điều biến lực đẩy; khi phát hiện trạng thái kẹt, bộ lập kế hoạch đánh giá các hướng tiếp tuyến và chọn hướng theo đích, độ thông thoáng và tính liên tục.
 
-* **Câu hỏi 3**: *"Hệ thống này mang ra ngoài trời không có Internet thì máy tính trạm GCS kết nối với Drone kiểu gì?"*
-  * **Trả lời**: *"Dạ thưa Ban Giám đốc, hệ thống không cần Internet. Chúng tôi đã cấu hình giao thức CycloneDDS qua mạng Hotspot Wi-Fi Unicast trực tiếp giữa Laptop và Drone với ROS Domain ID riêng biệt, đảm bảo truyền nhận tin cậy và độc lập hoàn toàn với hạ tầng mạng bên ngoài."*
+**Lời thoại:** “I-APF giữ cấu trúc lực thế dễ diễn giải, đồng thời thêm thành phần tiếp tuyến và chọn hướng dựa trên vật cản. Đây là bộ tạo vận tốc dẫn đường; FSM vẫn là nơi tổng hợp lệnh cuối.”
+
+### Slide 9 — Covariance Gate: giám sát an toàn landing
+
+**Thời lượng:** 30 giây<br>
+**Khối kiến trúc:** Covariance mục tiêu + covariance drone/attitude + hình học tương đối + trạng thái detection → đánh giá vùng sai số và độ mới measurement → quyết định an toàn.
+
+**Input:** Target state/covariance, odometry/covariance, vị trí tương đối, cờ và tuổi phép đo.<br>
+**Output:** `safe_to_land`, bán kính bất định, bán kính chuyển pha thích ứng và trọng số cho SMC.
+
+**Công thức minh họa:**
+
+```text
+Prel = Ptarget + diag((h σatt)², (h σatt)², σz²)   [marker-relative]
+R2σ = 2 √λmax(Prel,xy)
+safe = fresh ∧ detected ∧ in_range ∧ (R2σ ≤ Rallow(Δz))
+```
+
+Trong chế độ marker-relative, thành phần sai số ngang được dựng từ covariance mục tiêu và bất định attitude theo hình học thay vì cộng trực tiếp sai số tọa độ toàn cục. Vùng cho phép phụ thuộc hình học bãi đáp/độ cao; không mô tả gate như một ngưỡng cố định duy nhất.
+
+**Lời thoại:** “Gate kiểm tra đồng thời chất lượng ước lượng và hình học tương đối. Kết quả của gate điều kiện hóa quyết định chuyển pha và giúp SMC thích nghi theo độ bất định.”
+
+### Slide 10 — Servo thị giác, SMC và xác nhận touchdown
+
+**Thời lượng:** 30 giây<br>
+**Ba khối:**
+
+- **IBVS:** bounding box, odometry và tracking state → lệnh góc gimbal/yaw. Sai số ảnh `eimg = [u−u0, v−v0]ᵀ` được xử lý theo điều khiển tỉ lệ có giới hạn tốc độ/làm mượt; khi tracking cũ, không tiếp tục đuổi pixel stale.
+- **SMC:** vị trí/vận tốc drone, trạng thái mục tiêu, độ bất định/gate → lệnh vận tốc ENU và sub-phase. Pha glide dùng mặt trượt theo range, góc dốc và azimuth cùng luật reaching:
+
+  ```text
+  S = [Srange, Selevation, Sazimuth]ᵀ
+  Ṡi = −ki |Si|^(n/m) sign(Si)
+  ```
+
+- **Touchdown:** altitude/velocity, lệnh hạ và khoảng cách quang học → xác nhận sau khi trạng thái dừng phù hợp với tiếp xúc và được duy trì đủ lâu; khi camera không có phép đo mới, node dùng ngưỡng altitude dự phòng. Tín hiệu đi tới FSM/Offboard để kết thúc và disarm. Dạng rút gọn: `touchdown = persist(kinematic_stop ∧ optical_near)`.
+
+**Lời thoại:** “IBVS giữ đường ngắm, SMC tạo vận tốc tiếp cận rồi chuyển sang căn giữa/hạ cuối. Bộ touchdown kiểm tra trạng thái bay và tín hiệu liên quan trước khi phát sự kiện kết thúc; các công thức được trình bày ở dạng thuật toán, không phải bộ tham số tinh chỉnh.”
+
+## Phần 4 — Kết quả hiện có và mức sẵn sàng
+
+### Slide 11 — Benchmark thuật toán ngoại tuyến
+
+**Thời lượng:** 30 giây<br>
+**Visual:** Ba ô kết quả kèm nhãn rõ “mô phỏng/benchmark phần mềm”, không dùng ảnh hoặc ngôn từ gợi ý bay thật.
+
+- **Target EKF:** báo cáo trên năm quỹ đạo tổng hợp ghi filtered position RMSE khoảng 0.080–0.109 m. Nguồn: `simulation_results/target_state_ekf/metrics.json`.
+- **I-APF tracking:** benchmark 10 kịch bản chuyển động/vật cản ghi 7/10 lượt collision-free (70%). Đây là kết quả hiện có và cũng là hạng mục cần cải thiện. Nguồn: `simulation_results/module_benchmarks/guidance_benchmark_report.json`.
+- **IBVS:** benchmark tổng hợp 10 lượt ghi mean yaw error 0.57° và settling time trung bình 0.56 s. Đây không phải phép đo phần cứng. Nguồn: `simulation_results/module_benchmarks/ibvs_benchmark_report.json`.
+
+**Lời thoại:** “Các benchmark phần mềm cho thấy một số khối đã có số liệu định lượng, đồng thời chỉ ra I-APF còn các kịch bản va chạm cần xử lý. Đây là kết quả mô phỏng module, chưa thay thế kiểm chứng tích hợp và bay thực.”
+
+### Slide 12 — Kết quả tích hợp PX4 SITL và Gazebo
+
+**Thời lượng:** 35 giây<br>
+**Visual:** Ảnh chụp Gazebo/RViz kèm bảng kết quả của một batch được nêu tên.
+
+| Báo cáo mô phỏng | Kết quả trong artifact | Cách diễn giải |
+|---|---|---|
+| `full_system_10runs_evaluation` | 8/10 lượt thành công theo evaluator (80%); sai số landing ngang trung bình 20.4 cm, p95 77.4 cm | Batch 10 lượt; chưa đạt cơ sở để tuyên bố độ tin cậy ổn định. |
+| `official_batch_evaluation` | 3/3 lượt thành công theo evaluator; sai số landing ngang trung bình 8.61 cm, tối đa 11.87 cm | Batch riêng, cỡ mẫu nhỏ; không gộp với batch 10 lượt. |
+
+**Ghi chú dưới slide:** “PX4 SITL + Gazebo; không phải bay phần cứng. Hai báo cáo khác nhau về batch/KPI, cần chuẩn hóa phiên bản code, cấu hình và tiêu chí thành công trước khi chốt KPI nghiệm thu.”
+
+**Lời thoại:** “Pipeline đã được chạy tích hợp với PX4 SITL và Gazebo. Kết quả hiện có chưa đồng nhất giữa các batch: báo cáo 10 lượt đạt 8/10, còn batch 3 lượt đạt 3/3 với sai số trung bình 8.61 cm. Nhóm cần chuẩn hóa phép đo và tăng số lượt trước khi kết luận KPI.”
+
+### Slide 13 — Mức sẵn sàng phần cứng và khoảng trống triển khai
+
+**Thời lượng:** 30 giây<br>
+**Visual:** Ba cột: “đã có trong repo”, “chưa có bằng chứng”, “bước triển khai”.
+
+- **Đã có:** vision RealSense độc lập, mã ROS 2/Python cho pipeline SITL, tài liệu bàn giao và các header C++ tham khảo.
+- **Chưa xác nhận:** board và kích thước marker thống nhất; pipeline vision đa tỉ lệ nối với companion/PX4; build/chạy C++ trên thiết bị nhúng; bench closed-loop; bay có dây hoặc bay thực.
+- **Bước tiếp theo:** đồng bộ board/cấu hình → tích hợp camera, companion và PX4 trên bàn → kiểm tra an toàn không cánh/quay cánh có kiểm soát → bay thử bãi tĩnh trong vùng an toàn.
+
+**Lời thoại:** “Repo đã có phần mềm mô phỏng và tài liệu chuyển giao, nhưng chưa có bằng chứng đủ để gọi là đã hoàn tất bench-test Raspberry Pi/Pixhawk hay bay thực. Đây là ranh giới cần nêu rõ khi báo cáo trạng thái dự án.”
+
+## Phần 5 — Giá trị và đề xuất
+
+### Slide 14 — Giá trị ứng dụng tiềm năng
+
+**Thời lượng:** 20 giây<br>
+**Visual:** Ba tình huống định hướng: quay về trạm sạc, tiếp cận bãi đáp trên phương tiện, hạ cánh trong khu vực có vật cản.
+
+**Nội dung:** Nền tảng có thể hướng tới tự động quay về/đáp vào pad, kiểm tra công nghiệp hoặc tiếp vận. Ghi đây là **tiềm năng ứng dụng**; chưa tuyên bố đã triển khai thương mại hay xác nhận hiệu năng trong môi trường thực địa.
+
+**Lời thoại:** “Nếu hoàn tất tích hợp phần cứng và kiểm chứng an toàn, kiến trúc này có thể mở rộng cho trạm sạc, kiểm tra công nghiệp và các bãi đáp trên phương tiện. Giai đoạn hiện tại tập trung chứng minh độ tin cậy trước khi mở rộng ứng dụng.”
+
+### Slide 15 — Lộ trình đề xuất và đề nghị Ban Giám đốc
+
+**Thời lượng:** 20 giây<br>
+**Visual:** Roadmap theo cổng kiểm chứng, không ghi mốc tháng/quý khi chưa có kế hoạch được phê duyệt.
+
+1. **Cổng 1 — Chuẩn hóa mô phỏng:** thống nhất board/config, KPI và evaluator; chạy lại batch SITL đủ lớn, lưu log và kết quả có thể truy xuất.
+2. **Cổng 2 — Tích hợp phần cứng:** camera + companion computer + PX4; kiểm tra theo quy trình an toàn trước khi bay.
+3. **Cổng 3 — Thử nghiệm bay:** bắt đầu với pad tĩnh và vùng bay kiểm soát; chỉ chuyển sang pad chuyển động sau khi đạt tiêu chí an toàn đã duyệt.
+
+**Đề nghị:** phê duyệt nguồn lực và điều kiện để hoàn tất Cổng 1–2; thống nhất tiêu chí nghiệm thu trước khi lên kế hoạch bay thực.
+
+**Lời thoại:** “Nhóm đề nghị Ban Giám đốc cho phép chuẩn hóa kết quả mô phỏng và triển khai giai đoạn tích hợp phần cứng theo các cổng an toàn. Sau khi có dữ liệu bench và tiêu chí đạt được thống nhất, nhóm sẽ trình kế hoạch bay thử cụ thể.”
+
+## Mermaid kiến trúc điều khiển thực tế cho draw.io
+
+Sơ đồ này mô tả **các vòng điều khiển của cấu hình quadrotor triển khai thực tế**: camera và cảm biến → máy tính đồng hành → Pixhawk/PX4 → ESC, động cơ và drone → phản hồi cảm biến. Đây là kiến trúc mục tiêu để thiết kế slide, không phải xác nhận rằng toàn bộ phần cứng đã được tích hợp và bay kiểm chứng. Trong draw.io, chọn **Arrange → Insert → Mermaid** (hoặc **Insert → Advanced → Mermaid**, tùy phiên bản) rồi dán mã.
+
+```mermaid
+flowchart LR
+    subgraph ENV["Môi trường thực tế"]
+        PAD["H-Pad di động"]
+        OBS["Vật cản"]
+    end
+
+    subgraph AIR["Quadrotor và cảm biến trên phương tiện"]
+        CAM["Camera RGB-D<br/>gắn trên gimbal"]
+        GIMBAL["Servo gimbal"]
+        IMU["IMU"]
+        BARO["Barometer"]
+        GNSS["GNSS nếu nhiệm vụ cho phép"]
+        FRAME["Khung quadrotor"]
+        ESC["ESC và động cơ"]
+    end
+
+    subgraph COMP["Máy tính đồng hành — perception, guidance và giám sát"]
+        VISION["Nhận thức thị giác<br/>ArUco pose, bbox, depth"]
+        TARGET["Ước lượng mục tiêu<br/>vị trí tương đối, vận tốc, covariance"]
+        MAP["Ước lượng vật cản<br/>từ depth / point cloud"]
+        IBVS["IBVS<br/>điều khiển gimbal và yaw"]
+        IAPF["I-APF 3D<br/>bám đuổi và tránh vật cản"]
+        GATE["Covariance Gate<br/>giám sát điều kiện tiếp cận"]
+        SMC["SMC Guidance<br/>dẫn đường hạ cánh"]
+        FSM["Mission Supervisor<br/>FSM, chọn lệnh, wave-off"]
+        TOUCH["Touchdown Monitor<br/>xác nhận tiếp đất"]
+        LINK["Giao tiếp MAVLink<br/>setpoint / disarm"]
+        GIMDRV["Bộ xuất lệnh servo gimbal"]
+    end
+
+    subgraph FC["Pixhawk / PX4 Flight Controller"]
+        EST["Ước lượng trạng thái drone<br/>EKF từ IMU, barometer, GNSS tùy chọn"]
+        CTRL["PX4 autopilot<br/>failsafe Offboard và vòng vị trí / vận tốc / tư thế / tốc độ"]
+    end
+
+    GCS["Người vận hành / GCS<br/>lệnh nhiệm vụ và giám sát"]
+    RC["RC override / kill switch"]
+
+    PAD -->|"hình ảnh và khoảng cách"| CAM
+    OBS -->|"depth của vật cản"| CAM
+    CAM -->|"ảnh RGB-D"| VISION
+    VISION -->|"pose, bbox, chất lượng phép đo"| TARGET
+    VISION -->|"depth / điểm vật cản"| MAP
+    CAM -->|"sai số ảnh"| IBVS
+    TARGET -->|"trạng thái mục tiêu"| IAPF
+    TARGET -->|"trạng thái và covariance"| GATE
+    TARGET -->|"vị trí và vận tốc tương đối"| SMC
+    MAP -->|"vị trí vật cản"| IAPF
+
+    IMU --> EST
+    BARO --> EST
+    GNSS --> EST
+    EST -->|"pose, vận tốc, attitude"| TARGET
+    EST -->|"pose và vận tốc"| IAPF
+    EST -->|"trạng thái drone"| IBVS
+    EST -->|"pose và covariance"| GATE
+    EST -->|"pose và vận tốc"| SMC
+    EST -->|"độ cao và vận tốc đứng"| TOUCH
+
+    IAPF -->|"lệnh vận tốc bám / né"| FSM
+    IBVS -->|"yaw setpoint"| FSM
+    IBVS -->|"góc pitch camera"| GIMDRV
+    GIMDRV --> GIMBAL
+    GIMBAL --> CAM
+    GATE -->|"trạng thái an toàn và độ bất định"| FSM
+    GATE -->|"độ bất định thích nghi"| SMC
+    SMC -->|"lệnh vận tốc hạ cánh"| FSM
+    GCS -->|"takeoff, land, cancel"| FSM
+    FSM -->|"setpoint vận tốc và yaw"| LINK
+    LINK -->|"MAVLink setpoint"| CTRL
+    FSM -->|"pha nhiệm vụ và lệnh hạ"| TOUCH
+    VISION -->|"khoảng cách camera–pad"| TOUCH
+    TOUCH -->|"touchdown event"| FSM
+    TOUCH -->|"yêu cầu disarm"| LINK
+    FSM -->|"trạng thái nhiệm vụ"| GCS
+
+    CTRL -->|"lệnh tư thế / lực đẩy"| ESC
+    ESC -->|"mô-men và lực nâng"| FRAME
+    FRAME -->|"chuyển động drone"| CAM
+    FRAME -->|"chuyển động drone"| IMU
+    RC -->|"quyền điều khiển khẩn cấp"| CTRL
+    LINK -->|"telemetry PX4"| GCS
+```
