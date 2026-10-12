@@ -1,0 +1,911 @@
+[INFO] [1791538701.302400686] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera (gz.msgs.Image) -> /camera (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1791538701.320410101] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[INFO] [1791538701.348178452] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/x500_depth_0/odometry_with_covariance (gz.msgs.OdometryWithCovariance) -> /model/x500_depth_0/odometry_with_covariance (nav_msgs/msg/Odometry)] (Lazy 0)
+[INFO] [1791538701.382959707] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/depth_camera (gz.msgs.Image) -> /depth_camera (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1791538701.385971276] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/depth_camera (sensor_msgs/msg/Image) -> /depth_camera (gz.msgs.Image)] (Lazy 0)
+[INFO] [1791538701.405787092] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera_info (gz.msgs.CameraInfo) -> /camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[INFO] [1791538701.409476658] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/camera (sensor_msgs/msg/Image) -> /camera (gz.msgs.Image)] (Lazy 0)
+[INFO] [1791538701.410673763] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/camera_info (sensor_msgs/msg/CameraInfo) -> /camera_info (gz.msgs.CameraInfo)] (Lazy 0)
+[INFO] [1791538701.421666753] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/x500_depth_0/command/gimbal_pitch (gz.msgs.Double) -> /model/x500_depth_0/command/gimbal_pitch (std_msgs/msg/Float64)] (Lazy 0)
+[INFO] [1791538701.424342364] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/model/x500_depth_0/command/gimbal_pitch (std_msgs/msg/Float64) -> /model/x500_depth_0/command/gimbal_pitch (gz.msgs.Double)] (Lazy 0)
+[INFO] [1791538701.426526300] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/depth_camera/points (gz.msgs.PointCloudPacked) -> /depth_camera/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[INFO] [1791538701.427503130] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/x500_depth_0/joint_state (gz.msgs.Model) -> /model/x500_depth_0/joint_state (sensor_msgs/msg/JointState)] (Lazy 0)
+[INFO] [1791538701.430438623] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/depth_camera/points (sensor_msgs/msg/PointCloud2) -> /depth_camera/points (gz.msgs.PointCloudPacked)] (Lazy 0)
+[INFO] [1791538701.488716456] [depth_to_image_converter]: Depth-to-RViz Converter active with BEST_EFFORT QoS! Publishing /depth_camera/image_mono
+[INFO] [1791538702.833797525] [touchdown_detector_node]: TouchdownDetectorNode initialized: optical_thresh=0.40m, confirm_duration=0.35s, rate=20.0Hz
+[INFO] [1791538702.862923281] [smc_guidance_node]: SMCGuidanceNode initialized: rate=20.0Hz, Rswitch_default=5.00m
+[INFO] [1791538702.901551086] [covariance_gate_node]: CovarianceGateNode initialized: pad_radius=0.42m, confidence_sigma=2.0, rate=20.0Hz
+[INFO] [1791538702.922664013] [mission_fsm]: Mission FSM ready. Starting in IDLE phase.
+[INFO] [1791538702.924575782] [offboard_commander]: Offboard Commander: Kết nối MAVLink UDP (udp:127.0.0.1:14540) thành công!
+  Drone sẽ nhận lệnh vận tốc APF thực tế trong chế độ OFFBOARD.
+[INFO] [1791538702.929043472] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538703.040667623] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538703.057252199] [aruco_sim_node]: Dual-Scale ArUco simulation node initialized: Big ID=42 (0.52m), Small ID=43 (0.05m), Dictionary=DICT_6X6_50, Config=/home/duy/VDT_project/vision/dual_scale_board_config.yaml
+[INFO] [1791538703.061227372] [ibvs_controller]: IBVS Controller ready with 3D Feedforward + Visual Servoing.
+[INFO] [1791538703.064518021] [ros_gz_bridge]: Passing message from ROS std_msgs/msg/Float64 to Gazebo gz.msgs.Double (showing msg only once per type)
+[INFO] [1791538703.156424512] [apf_planner]: Initialized Improved APF (I-APF) 3D Planner.
+[INFO] [1791538703.158163341] [apf_planner]: Loaded 12 cylinder obstacles from /home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf
+[INFO] [1791538703.164542261] [ekf_ros_adapter]: EKF ROS Adapter ready: camera_optical_frame → world, predict at 50 Hz, max_speed=2.5 m/s
+[INFO] [1791538703.204910674] [apf_planner]: APF Planner node ready.
+[INFO] [1791538703.252923959] [fast_tracker_style_node]: Fast-Tracker & PX4-Avoidance Simulation Node Active!
+[INFO] [1791538703.254484823] [aruco_sim_node]: frames=1, detected=0 (0.0%), camera_info=True
+[INFO] [1791538703.260967950] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [WAITING] | Camera PointCloud2: [WAITING] | CameraPitch: [ACTUAL -8.0°] | Drone Pos: (0.00, 0.00, 0.00)
+[INFO] [1791538704.444719562] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538705.260030710] [aruco_sim_node]: frames=16, detected=0 (0.0%), camera_info=True
+[INFO] [1791538705.645744438] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538705.646148219] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.7°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538706.837436198] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538707.396086251] [aruco_sim_node]: frames=32, detected=0 (0.0%), camera_info=True
+[INFO] [1791538708.275061660] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538709.570404580] [aruco_sim_node]: frames=41, detected=0 (0.0%), camera_info=True
+[INFO] [1791538709.746128851] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538709.752460418] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.4°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538711.185323568] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538711.603144808] [aruco_sim_node]: frames=48, detected=0 (0.0%), camera_info=True
+[INFO] [1791538712.641524608] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538713.723015482] [aruco_sim_node]: frames=57, detected=0 (0.0%), camera_info=True
+[INFO] [1791538714.128667357] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538714.146364712] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.5°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538715.568776209] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538715.864114060] [aruco_sim_node]: frames=65, detected=0 (0.0%), camera_info=True
+[INFO] [1791538717.030785623] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.0, 0.0, 0.1)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538717.941262924] [aruco_sim_node]: frames=73, detected=0 (0.0%), camera_info=True
+[INFO] [1791538718.556727854] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.1, 0.0, 1.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538718.559608561] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.8°] | Drone Pos: (0.06, 0.00, 0.99)
+[INFO] [1791538718.974576132] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.081, -0.198, 3.283)m dist=3.462m fused_corners=4
+[INFO] [1791538718.975826871] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=21.124 tf_stamp=21.124 pos=(-1.08,-0.20,3.28) world=(3.22,1.09,-0.08)
+[INFO] [1791538718.979441194] [ekf_ros_adapter]: [EKF Output] Target: (3.22, 1.09, -0.08)m | Vel: (0.00, 0.00) m/s | Mode: TRACKING   | Age: 0.18s
+[INFO] [1791538719.045594757] [covariance_gate_node]: [GATE_HOLD] r_unc=2.381m (limit 0.42m) | DistXY=3.39m | Mode=OUTER_COARSE | Msg: Uncertainty radius 2.381m > allowed funnel 0.420m; Uncertainty radius 2.381m > glide limit 0.500m (2-sigma)
+[WARN] [1791538719.369153992] [ekf_ros_adapter]: [KINEMATIC GATE] Rejected jump 0.60m > 0.60m (Measured: (2.58, 1.17) vs Predicted: (3.17, 1.06), Candidate: 1/2)
+[INFO] [1791538719.584303464] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.099, 0.062, 3.462)m dist=3.632m fused_corners=4
+[INFO] [1791538719.995939601] [aruco_sim_node]: frames=82, detected=5 (6.1%), camera_info=True
+[INFO] [1791538720.115691173] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, -0.0, 1.8)m | Target: (3.1, 1.0) | Dist: 3.81m | EKF: TRACKING | Det: True | BBox: (175,263) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538720.230043034] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.187, 0.357, 2.835)m dist=3.094m fused_corners=4
+[WARN] [1791538720.233871855] [ekf_ros_adapter]: [KINEMATIC GATE] Rejected jump 0.66m > 0.60m (Measured: (2.47, 1.15) vs Predicted: (3.12, 1.05), Candidate: 1/2)
+[INFO] [1791538721.064717689] [covariance_gate_node]: [GATE_HOLD] r_unc=0.837m (limit 0.42m) | DistXY=3.22m | Mode=LOST | Msg: Uncertainty radius 0.837m > allowed funnel 0.457m; Uncertainty radius 0.837m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538721.379574556] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.012, 0.876, 3.750)m dist=3.982m fused_corners=4
+[INFO] [1791538721.384201286] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=22.672 tf_stamp=22.672 pos=(-1.01,0.88,3.75) world=(3.05,1.03,-0.07)
+[INFO] [1791538721.425991357] [ekf_ros_adapter]: [EKF Output] Target: (3.04, 1.02, -0.07)m | Vel: (-0.09, -0.02) m/s | Mode: TRACKING   | Age: 0.15s
+[INFO] [1791538721.708051515] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.0, 0.0, 2.5)m | Target: (3.1, 1.0) | Dist: 4.06m | EKF: TRACKING | Det: True | BBox: (198,355) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538721.877115665] [mission_fsm]: Drone cất cánh đạt độ cao 2.51m. Bắt đầu SEARCH và xác nhận mục tiêu ổn định.
+[INFO] [1791538721.878502679] [mission_fsm]: [FSM] Phase transition: IDLE → SEARCH
+[INFO] [1791538721.982347303] [mission_fsm]: [REACQUIRE] detection trigger; stop sweep and hold yaw | yaw=0.0° | bbox=(200,365)
+[INFO] [1791538722.064711266] [aruco_sim_node]: frames=90, detected=10 (11.1%), camera_info=True
+[INFO] [1791538722.079496745] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-0.970, 1.045, 3.834)m dist=4.091m fused_corners=4
+[INFO] [1791538722.464343471] [mission_fsm]: [REACQUIRE] confirmed after 0.48s | bbox=(204,374) | EKF=TRACKING; entering FOLLOW
+[INFO] [1791538722.465561896] [mission_fsm]: [FSM] Phase transition: SEARCH → FOLLOW
+[INFO] [1791538722.467584033] [offboard_commander]: ✅ Đã gửi lệnh chuyển sang chế độ OFFBOARD tới PX4 SITL (MAVLink)!
+[INFO] [1791538722.468256898] [ibvs_controller]: [IBVS] SEARCH->FOLLOW: reset yaw_cmd to 0.0°
+[INFO] [1791538722.468445072] [mission_fsm]: [YAW_ALIGN] LIMIT XY | scale=0.30 | tracking=TRACKING | detected=True | yaw_err=10.9° | pixel_err=(-116,134)
+[INFO] [1791538722.528410476] [offboard_commander]: [MAVLink Offboard] State=PX4_Mode_4 | Phase=FOLLOW  | alt=2.58m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.04] m/s | yaw_NED=90.0°
+[INFO] [1791538722.847599911] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.033, -0.799, 3.095)m dist=3.359m fused_corners=4
+[INFO] [1791538723.004116804] [offboard_commander]: ✅ Đã gửi lệnh chuyển sang chế độ OFFBOARD tới PX4 SITL (MAVLink)!
+[INFO] [1791538723.142549360] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=23.596 tf_stamp=23.596 pos=(-0.95,-0.51,4.01) world=(3.07,1.04,-0.08)
+[INFO] [1791538723.148628172] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.359m (limit 0.42m) | DistXY=2.62m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538723.302774720] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (0.1, 0.0, 2.7)m | Target: (2.4, 1.1) | Dist: 2.97m | EKF: TRACKING | Det: True | BBox: (210,180) | XY scale: 0.85 | Reacq: False | Landing: -
+[INFO] [1791538723.309568577] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -26.6°] | Drone Pos: (0.09, 0.04, 2.70)
+[INFO] [1791538723.310164240] [offboard_commander]: 🎯 PX4 đã chuyển sang chế độ OFFBOARD thành công!
+[INFO] [1791538723.666931359] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-0.832, 1.374, 3.893)m dist=4.211m fused_corners=4
+[INFO] [1791538723.782794448] [ekf_ros_adapter]: [EKF Output] Target: (2.15, 1.20, 1.70)m | Vel: (-0.70, 0.13) m/s | Mode: TRACKING   | Age: 0.18s
+[WARN] [1791538723.914098159] [ekf_ros_adapter]: [KINEMATIC GATE] Rejected jump 0.83m > 0.60m (Measured: (3.06, 1.00) vs Predicted: (2.25, 1.18), Candidate: 1/2)
+[INFO] [1791538724.137266420] [aruco_sim_node]: frames=98, detected=17 (17.3%), camera_info=True
+[INFO] [1791538724.393506340] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-0.129, 0.798, 4.238)m dist=4.315m fused_corners=4
+[INFO] [1791538724.540772830] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=2.87m (tgt=3.0m) | vel_NED=[-0.13, -0.64, -0.07] m/s | yaw_NED=63.6°
+[INFO] [1791538724.621417795] [ekf_ros_adapter]: [EKF RE-ACQUIRED] Re-acquired target at (3.09, 1.01)m with vel (0.15, -0.17) m/s after dropout/maneuver
+[INFO] [1791538724.866502312] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (0.1, -0.0, 2.9)m | Target: (3.1, 1.0) | Dist: 4.24m | EKF: TRACKING | Det: True | BBox: (319,304) | XY scale: 0.99 | Reacq: False | Landing: -
+[INFO] [1791538724.877292181] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=24.852 tf_stamp=24.852 pos=(0.31,-0.53,4.31) world=(3.10,1.03,-0.07)
+[INFO] [1791538725.036762786] [mission_fsm]: [YAW_ALIGN] FULL XY | scale=1.00 | tracking=TRACKING | detected=True | yaw_err=-3.5° | pixel_err=(33,-57)
+[INFO] [1791538725.142057173] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.430, -0.341, 4.553)m dist=4.586m fused_corners=4
+[INFO] [1791538725.203236493] [covariance_gate_node]: [GATE_HOLD] r_unc=0.662m (limit 0.42m) | DistXY=3.49m | Mode=OUTER_COARSE | Msg: Uncertainty radius 0.662m > glide limit 0.500m (2-sigma)
+[INFO] [1791538725.331619594] [mission_fsm]: [YAW_ALIGN] LIMIT XY | scale=0.99 | tracking=TRACKING | detected=True | yaw_err=-5.3° | pixel_err=(44,-35)
+[WARN] [1791538725.393060040] [ekf_ros_adapter]: [KINEMATIC GATE] Rejected jump 1.06m > 0.60m (Measured: (2.36, 0.60) vs Predicted: (3.29, 1.11), Candidate: 1/2)
+[INFO] [1791538725.833308029] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.814, 0.089, 3.347)m dist=3.446m fused_corners=4
+[INFO] [1791538726.232436406] [aruco_sim_node]: frames=107, detected=26 (24.3%), camera_info=True
+[INFO] [1791538726.440757510] [ekf_ros_adapter]: [EKF Output] Target: (3.25, 1.08, -0.29)m | Vel: (0.17, 0.06) m/s | Mode: TRACKING   | Age: 0.22s
+[INFO] [1791538726.463348086] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(1.113, 0.176, 4.597)m dist=4.733m fused_corners=4
+[INFO] [1791538726.640919657] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=2.87m (tgt=3.0m) | vel_NED=[0.39, 1.04, -0.07] m/s | yaw_NED=66.1°
+[INFO] [1791538726.715041581] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (-0.2, 0.0, 2.9)m | Target: (3.2, 1.1) | Dist: 4.68m | EKF: TRACKING | Det: True | BBox: (448,238) | XY scale: 0.85 | Reacq: False | Landing: -
+[INFO] [1791538726.958106773] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=25.908 tf_stamp=25.908 pos=(1.22,-0.03,4.33) world=(3.08,1.02,-0.10)
+[INFO] [1791538727.216999709] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.334m (limit 0.42m) | DistXY=3.34m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538727.295926779] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(1.203, -0.279, 4.206)m dist=4.384m fused_corners=4
+[INFO] [1791538727.837246252] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.996, 0.296, 4.221)m dist=4.347m fused_corners=4
+[INFO] [1791538728.416130305] [aruco_sim_node]: frames=115, detected=34 (29.6%), camera_info=True
+[INFO] [1791538728.431011260] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.781, 0.129, 3.925)m dist=4.004m fused_corners=4
+[INFO] [1791538728.473851667] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (0.5, 0.5, 2.8)m | Target: (3.0, 1.0) | Dist: 3.90m | EKF: TRACKING | Det: True | BBox: (413,255) | XY scale: 0.88 | Reacq: False | Landing: -
+[INFO] [1791538728.479104831] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -51.8°] | Drone Pos: (0.48, 0.52, 2.80)
+[INFO] [1791538728.659585248] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=2.81m (tgt=3.0m) | vel_NED=[0.08, 0.45, -0.13] m/s | yaw_NED=74.6°
+[INFO] [1791538728.844793966] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=26.996 tf_stamp=26.996 pos=(0.72,0.10,3.88) world=(3.06,1.02,-0.06)
+[INFO] [1791538729.087985328] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.651, 0.315, 3.795)m dist=3.863m fused_corners=4
+[INFO] [1791538729.128308114] [ekf_ros_adapter]: [EKF Output] Target: (2.99, 1.01, 0.00)m | Vel: (-0.13, -0.02) m/s | Mode: TRACKING   | Age: 0.28s
+[INFO] [1791538729.248422951] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.316m (limit 0.42m) | DistXY=2.19m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538729.597779652] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.437, 0.425, 3.669)m dist=3.720m fused_corners=4
+[INFO] [1791538730.115810262] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.321, 0.145, 3.617)m dist=3.634m fused_corners=4
+[INFO] [1791538730.170744818] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (1.1, 0.7, 2.8)m | Target: (3.0, 1.0) | Dist: 3.40m | EKF: TRACKING | Det: True | BBox: (361,259) | XY scale: 0.98 | Reacq: False | Landing: -
+[INFO] [1791538730.489468612] [mission_fsm]: [YAW_ALIGN] FULL XY | scale=1.00 | tracking=TRACKING | detected=True | yaw_err=-1.7° | pixel_err=(28,41)
+[INFO] [1791538730.612323944] [aruco_sim_node]: frames=124, detected=43 (34.7%), camera_info=True
+[INFO] [1791538730.627111558] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.176, 0.409, 3.449)m dist=3.477m fused_corners=4
+[INFO] [1791538730.628363559] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=28.152 tf_stamp=28.152 pos=(0.18,0.41,3.45) world=(3.00,1.00,-0.03)
+[INFO] [1791538730.647582288] [mission_fsm]: 📥 [LAND CMD] Nhận lệnh hạ cánh (/operator/land_command=True) | Pha hiện tại: FOLLOW | Tracking Lock: True
+[INFO] [1791538730.753265290] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=2.76m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.18] m/s | yaw_NED=79.4°
+[INFO] [1791538730.755137264] [mission_fsm]: Operator LAND command received.
+[INFO] [1791538730.756466492] [mission_fsm]: [FSM] Phase transition: FOLLOW → APPROACH
+[INFO] [1791538730.804142011] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=1.80m, Rz=2.78m | Cmd=(1.22, 0.17, -0.45)m/s
+[INFO] [1791538730.909902357] [mission_fsm]: [LANDING] Entering SMC glide slope at Rxy=1.79m (Rswitch=7.27m, uncertainty=0.288m).
+[INFO] [1791538731.265634438] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.131, 0.149, 3.384)m dist=3.390m fused_corners=4
+[INFO] [1791538731.287889605] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.179m (limit 0.42m) | DistXY=1.78m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538731.613673992] [ekf_ros_adapter]: [EKF Output] Target: (3.00, 1.00, -0.02)m | Vel: (-0.02, -0.01) m/s | Mode: TRACKING   | Age: 0.25s
+[INFO] [1791538731.788038857] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (1.2, 0.7, 2.6)m | Target: (3.0, 1.0) | Dist: 3.15m | EKF: TRACKING | Det: True | BBox: (337,254) | XY scale: 1.00 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.29m
+[INFO] [1791538731.850698798] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.102, 0.051, 3.295)m dist=3.297m fused_corners=4
+[INFO] [1791538732.341760757] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=29.108 tf_stamp=29.108 pos=(0.15,-0.02,3.15) world=(3.01,1.00,-0.02)
+[INFO] [1791538732.552651658] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.234, -0.069, 2.995)m dist=3.005m fused_corners=4
+[INFO] [1791538732.804222023] [aruco_sim_node]: frames=132, detected=51 (38.6%), camera_info=True
+[INFO] [1791538732.838900931] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=2.23m (tgt=3.0m) | vel_NED=[0.16, 1.14, 0.45] m/s | yaw_NED=75.4°
+[INFO] [1791538732.850535414] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=1.57m, Rz=2.20m | Cmd=(1.10, 0.15, -0.45)m/s
+[INFO] [1791538733.064427753] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.303, -0.109, 2.096)m dist=2.121m fused_corners=4
+[INFO] [1791538733.319381785] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.391m (limit 0.42m) | DistXY=1.27m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538733.387503648] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (1.8, 0.9, 2.0)m | Target: (3.0, 1.0) | Dist: 2.32m | EKF: TRACKING | Det: True | BBox: (377,239) | XY scale: 1.00 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.39m
+[INFO] [1791538733.391530548] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -56.3°] | Drone Pos: (1.84, 0.86, 2.03)
+[INFO] [1791538733.605304866] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.306, 0.275, 2.370)m dist=2.406m fused_corners=8
+[INFO] [1791538734.076744197] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=30.132 tf_stamp=30.132 pos=(0.29,0.37,2.42) world=(3.00,1.00,-0.14)
+[INFO] [1791538734.088541270] [ekf_ros_adapter]: [EKF Output] Target: (3.03, 1.01, -0.22)m | Vel: (0.01, 0.01) m/s | Mode: TRACKING   | Age: 0.27s
+[INFO] [1791538734.297519827] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.216, 0.207, 2.184)m dist=2.204m fused_corners=8
+[INFO] [1791538734.815860356] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.115, 0.326, 1.930)m dist=1.960m fused_corners=4
+[INFO] [1791538734.859524131] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=1.56m (tgt=3.0m) | vel_NED=[0.00, 0.20, 0.34] m/s | yaw_NED=75.4°
+[INFO] [1791538734.864400984] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.20m, Rz=1.64m | Cmd=(0.16, -0.00, -0.33)m/s
+[INFO] [1791538735.095721342] [aruco_sim_node]: frames=141, detected=60 (42.6%), camera_info=True
+[INFO] [1791538735.138011324] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (3.0, 1.0, 1.5)m | Target: (3.0, 1.0) | Dist: 1.56m | EKF: TRACKING | Det: True | BBox: (340,324) | XY scale: 1.00 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.27m
+[INFO] [1791538735.352337193] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.292m (limit 0.42m) | DistXY=0.09m | Mode=INNER_FINE | Msg: OK
+[INFO] [1791538735.453208119] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.057, 0.366, 1.785)m dist=1.823m fused_corners=4
+[INFO] [1791538735.975753168] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(-0.045, 0.657, 1.514)m dist=1.651m fused_corners=4
+[INFO] [1791538735.977275578] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=31.420 tf_stamp=31.420 pos=(-0.05,0.66,1.51) world=(2.98,1.00,-0.03)
+[INFO] [1791538736.666743154] [ekf_ros_adapter]: [EKF Output] Target: (2.95, 1.00, -0.00)m | Vel: (-0.03, 0.00) m/s | Mode: TRACKING   | Age: 0.41s
+[INFO] [1791538736.777652976] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (3.4, 1.0, 1.1)m | Target: (3.0, 1.0) | Dist: 1.14m | EKF: TRACKING | Det: False | BBox: (299,447) | XY scale: 1.00 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.38m
+[INFO] [1791538736.860493893] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=1.04m (tgt=3.0m) | vel_NED=[0.01, -0.32, 0.32] m/s | yaw_NED=60.8°
+[INFO] [1791538737.099957309] [aruco_sim_node]: frames=148, detected=65 (43.9%), camera_info=True
+[INFO] [1791538737.419969271] [covariance_gate_node]: [GATE_HOLD] r_unc=0.753m (limit 0.42m) | DistXY=0.39m | Mode=LOST | Msg: Uncertainty radius 0.753m > allowed funnel 0.420m; Uncertainty radius 0.753m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538738.358158693] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (3.2, 0.9, 0.8)m | Target: (2.9, 1.0) | Dist: 0.82m | EKF: PREDICTING_DEGRADED | Det: False | BBox: (299,447) | XY scale: 1.00 | Reacq: False | Landing: HOLD/σ2=1.31m
+[INFO] [1791538738.363023373] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -65.3°] | Drone Pos: (3.25, 0.85, 0.79)
+[INFO] [1791538738.875150698] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=0.76m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=66.4°
+[INFO] [1791538739.162090981] [ekf_ros_adapter]: [EKF Output] Target: (2.91, 1.00, 0.08)m | Vel: (-0.02, 0.00) m/s | Mode: PREDICTING_DEGRADED | Age: 1.93s
+[INFO] [1791538739.243010361] [aruco_sim_node]: frames=158, detected=65 (41.1%), camera_info=True
+[WARN] [1791538739.334944914] [mission_fsm]: Target visual lock lost during APPROACH for 3.1s, returning to FOLLOW.
+[INFO] [1791538739.337362578] [mission_fsm]: [FSM] Phase transition: APPROACH → FOLLOW
+[INFO] [1791538739.441230224] [covariance_gate_node]: [GATE_HOLD] r_unc=2.131m (limit 0.42m) | DistXY=0.39m | Mode=LOST | Msg: Uncertainty radius 2.131m > allowed funnel 0.420m; Uncertainty radius 2.131m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538740.093016799] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (3.2, 0.8, 0.8)m | Target: (2.9, 1.0) | Dist: 0.80m | EKF: PREDICTING_DEGRADED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538740.241810725] [mission_fsm]: 📥 [LAND CMD] Nhận lệnh hạ cánh (/operator/land_command=True) | Pha hiện tại: FOLLOW | Tracking Lock: False
+[INFO] [1791538740.911525434] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=1.22m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.80] m/s | yaw_NED=-5.8°
+[WARN] [1791538740.980175176] [mission_fsm]: Target lost for 4.7s, returning to SEARCH.
+[INFO] [1791538740.981545135] [mission_fsm]: [FSM] Phase transition: FOLLOW → SEARCH
+[INFO] [1791538741.441762361] [aruco_sim_node]: frames=168, detected=65 (38.7%), camera_info=True
+[INFO] [1791538741.495709695] [covariance_gate_node]: [GATE_HOLD] r_unc=4.025m (limit 0.42m) | DistXY=0.47m | Mode=LOST | Msg: Uncertainty radius 4.025m > allowed funnel 0.420m; Uncertainty radius 4.025m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538741.682674217] [ekf_ros_adapter]: [EKF Output] Target: (2.86, 1.00, 0.16)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 3.45s
+[INFO] [1791538741.727419992] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.2, 0.7, 1.7)m | Target: (2.9, 1.0) | Dist: 1.62m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538742.985358490] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.42m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.52] m/s | yaw_NED=24.3°
+[INFO] [1791538743.381813355] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.1, 0.7, 2.6)m | Target: (2.8, 1.0) | Dist: 2.41m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538743.389167656] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -28.6°] | Drone Pos: (3.11, 0.68, 2.59)
+[INFO] [1791538743.483608045] [aruco_sim_node]: frames=177, detected=65 (36.7%), camera_info=True
+[INFO] [1791538743.556904471] [covariance_gate_node]: [GATE_HOLD] r_unc=6.235m (limit 0.42m) | DistXY=0.43m | Mode=LOST | Msg: Uncertainty radius 6.235m > allowed funnel 0.486m; Uncertainty radius 6.235m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538744.163489716] [ekf_ros_adapter]: [EKF Output] Target: (2.82, 1.00, 0.24)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 4.96s
+[INFO] [1791538745.041757914] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.1, 0.6, 2.9)m | Target: (2.8, 1.0) | Dist: 2.69m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538745.053654119] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.92m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.02] m/s | yaw_NED=24.3°
+[INFO] [1791538745.611172107] [covariance_gate_node]: [GATE_HOLD] r_unc=8.797m (limit 0.42m) | DistXY=0.45m | Mode=LOST | Msg: Uncertainty radius 8.797m > allowed funnel 0.533m; Uncertainty radius 8.797m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538745.693384755] [aruco_sim_node]: frames=185, detected=65 (35.1%), camera_info=True
+[INFO] [1791538746.647975268] [ekf_ros_adapter]: [EKF Output] Target: (2.77, 1.00, 0.32)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 6.48s
+[INFO] [1791538746.653221971] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.0, 0.6, 3.0)m | Target: (2.8, 1.0) | Dist: 2.73m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538747.059258260] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.04m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538747.617644743] [covariance_gate_node]: [GATE_HOLD] r_unc=11.590m (limit 0.42m) | DistXY=0.46m | Mode=LOST | Msg: Uncertainty radius 11.590m > allowed funnel 0.547m; Uncertainty radius 11.590m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538747.857297043] [aruco_sim_node]: frames=195, detected=65 (33.3%), camera_info=True
+[INFO] [1791538748.249154504] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.0, 0.6, 3.1)m | Target: (2.7, 1.0) | Dist: 2.80m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538748.249693439] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -40.8°] | Drone Pos: (2.98, 0.60, 3.13)
+[INFO] [1791538749.063244010] [ekf_ros_adapter]: [EKF Output] Target: (2.72, 1.00, 0.40)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 8.00s
+[INFO] [1791538749.122229567] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.18m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.12] m/s | yaw_NED=24.3°
+[INFO] [1791538749.652000475] [covariance_gate_node]: [GATE_HOLD] r_unc=14.781m (limit 0.42m) | DistXY=0.49m | Mode=LOST | Msg: Uncertainty radius 14.781m > allowed funnel 0.555m; Uncertainty radius 14.781m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538749.820660543] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.6, 3.2)m | Target: (2.7, 1.0) | Dist: 2.82m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538750.042201152] [aruco_sim_node]: frames=205, detected=65 (31.7%), camera_info=True
+[INFO] [1791538751.143348063] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.24m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.18] m/s | yaw_NED=24.3°
+[INFO] [1791538751.450578085] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.5, 3.2)m | Target: (2.7, 1.0) | Dist: 2.81m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538751.514855384] [ekf_ros_adapter]: [EKF Output] Target: (2.68, 1.00, 0.48)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 9.52s
+[INFO] [1791538751.697063740] [covariance_gate_node]: [GATE_HOLD] r_unc=18.111m (limit 0.42m) | DistXY=0.54m | Mode=LOST | Msg: Uncertainty radius 18.111m > allowed funnel 0.552m; Uncertainty radius 18.111m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538752.248845825] [aruco_sim_node]: frames=216, detected=65 (30.1%), camera_info=True
+[INFO] [1791538753.060856880] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.5, 3.3)m | Target: (2.6, 1.0) | Dist: 2.78m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538753.069798040] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -52.7°] | Drone Pos: (2.92, 0.50, 3.26)
+[INFO] [1791538753.156693869] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.25m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.19] m/s | yaw_NED=24.3°
+[INFO] [1791538753.781841328] [covariance_gate_node]: [GATE_HOLD] r_unc=21.776m (limit 0.42m) | DistXY=0.60m | Mode=LOST | Msg: Uncertainty radius 21.776m > allowed funnel 0.538m; Uncertainty radius 21.776m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538753.937548429] [ekf_ros_adapter]: [EKF Output] Target: (2.63, 1.01, 0.56)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 11.04s
+[INFO] [1791538754.327787620] [aruco_sim_node]: frames=225, detected=65 (28.9%), camera_info=True
+[INFO] [1791538754.624674498] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.5, 3.2)m | Target: (2.6, 1.0) | Dist: 2.72m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538755.239410904] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.22m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.16] m/s | yaw_NED=24.3°
+[INFO] [1791538755.870278146] [covariance_gate_node]: [GATE_HOLD] r_unc=25.475m (limit 0.42m) | DistXY=0.63m | Mode=LOST | Msg: Uncertainty radius 25.475m > allowed funnel 0.515m; Uncertainty radius 25.475m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538756.344009085] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.4, 3.2)m | Target: (2.6, 1.0) | Dist: 2.61m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538756.440693223] [ekf_ros_adapter]: [EKF Output] Target: (2.59, 1.01, 0.64)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 12.56s
+[INFO] [1791538756.527652306] [aruco_sim_node]: frames=235, detected=65 (27.7%), camera_info=True
+[INFO] [1791538757.289956835] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.14m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.08] m/s | yaw_NED=24.3°
+[INFO] [1791538757.881714304] [covariance_gate_node]: [GATE_HOLD] r_unc=29.555m (limit 0.42m) | DistXY=0.65m | Mode=LOST | Msg: Uncertainty radius 29.555m > allowed funnel 0.490m; Uncertainty radius 29.555m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538757.884086978] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.4, 3.1)m | Target: (2.6, 1.0) | Dist: 2.53m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538757.887934784] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -46.7°] | Drone Pos: (2.87, 0.44, 3.14)
+[INFO] [1791538758.698565878] [aruco_sim_node]: frames=244, detected=65 (26.6%), camera_info=True
+[INFO] [1791538758.775051458] [ekf_ros_adapter]: [EKF Output] Target: (2.54, 1.01, 0.72)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 14.07s
+[INFO] [1791538759.328453512] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538759.390146619] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.4, 3.1)m | Target: (2.5, 1.0) | Dist: 2.46m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538759.944188749] [covariance_gate_node]: [GATE_HOLD] r_unc=33.967m (limit 0.42m) | DistXY=0.66m | Mode=LOST | Msg: Uncertainty radius 33.967m > allowed funnel 0.465m; Uncertainty radius 33.967m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538760.863568216] [aruco_sim_node]: frames=253, detected=65 (25.7%), camera_info=True
+[INFO] [1791538760.967989958] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.4, 3.0)m | Target: (2.5, 1.0) | Dist: 2.35m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538761.124863051] [ekf_ros_adapter]: [EKF Output] Target: (2.49, 1.01, 0.81)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 15.59s
+[INFO] [1791538761.333186927] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.04m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538761.965911203] [covariance_gate_node]: [GATE_HOLD] r_unc=38.523m (limit 0.42m) | DistXY=0.69m | Mode=LOST | Msg: Uncertainty radius 38.523m > allowed funnel 0.443m; Uncertainty radius 38.523m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538762.528568676] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.4, 3.0)m | Target: (2.5, 1.0) | Dist: 2.31m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538762.529947422] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -38.1°] | Drone Pos: (2.83, 0.41, 3.05)
+[INFO] [1791538762.906356428] [aruco_sim_node]: frames=262, detected=65 (24.8%), camera_info=True
+[INFO] [1791538763.344206039] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.02m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538763.546213498] [ekf_ros_adapter]: [EKF Output] Target: (2.45, 1.01, 0.89)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 17.11s
+[INFO] [1791538763.992062790] [covariance_gate_node]: [GATE_HOLD] r_unc=42.872m (limit 0.42m) | DistXY=0.73m | Mode=LOST | Msg: Uncertainty radius 42.872m > allowed funnel 0.421m; Uncertainty radius 42.872m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538764.143169961] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.4, 3.0)m | Target: (2.4, 1.0) | Dist: 2.22m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538764.994120396] [aruco_sim_node]: frames=271, detected=65 (24.0%), camera_info=True
+[INFO] [1791538765.381689365] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.01m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538765.724709407] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.4, 3.0)m | Target: (2.4, 1.0) | Dist: 2.19m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538765.923700214] [ekf_ros_adapter]: [EKF Output] Target: (2.40, 1.01, 0.97)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 18.62s
+[INFO] [1791538766.027915924] [covariance_gate_node]: [GATE_HOLD] r_unc=47.766m (limit 0.42m) | DistXY=0.77m | Mode=LOST | Msg: Uncertainty radius 47.766m > allowed funnel 0.420m; Uncertainty radius 47.766m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538767.082638356] [aruco_sim_node]: frames=280, detected=65 (23.2%), camera_info=True
+[INFO] [1791538767.285368807] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.4, 3.1)m | Target: (2.4, 1.0) | Dist: 2.24m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538767.285859629] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -26.6°] | Drone Pos: (2.85, 0.36, 3.10)
+[INFO] [1791538767.431244925] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538768.053791036] [covariance_gate_node]: [GATE_HOLD] r_unc=52.755m (limit 0.42m) | DistXY=0.83m | Mode=LOST | Msg: Uncertainty radius 52.755m > allowed funnel 0.420m; Uncertainty radius 52.755m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538768.317007578] [ekf_ros_adapter]: [EKF Output] Target: (2.35, 1.01, 1.05)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 20.15s
+[INFO] [1791538768.836775204] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.3, 1.0) | Dist: 2.26m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538769.199033930] [aruco_sim_node]: frames=290, detected=65 (22.4%), camera_info=True
+[INFO] [1791538769.497325129] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.18m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.12] m/s | yaw_NED=24.3°
+[INFO] [1791538770.056588168] [covariance_gate_node]: [GATE_HOLD] r_unc=57.762m (limit 0.42m) | DistXY=0.88m | Mode=LOST | Msg: Uncertainty radius 57.762m > allowed funnel 0.420m; Uncertainty radius 57.762m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538770.432526043] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.3, 1.0) | Dist: 2.26m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538770.721463678] [ekf_ros_adapter]: [EKF Output] Target: (2.31, 1.01, 1.13)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 21.66s
+[INFO] [1791538771.206886311] [aruco_sim_node]: frames=300, detected=65 (21.7%), camera_info=True
+[INFO] [1791538771.498142725] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.19m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.13] m/s | yaw_NED=24.3°
+[INFO] [1791538772.066490013] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.3, 1.0) | Dist: 2.21m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538772.068912237] [covariance_gate_node]: [GATE_HOLD] r_unc=62.802m (limit 0.42m) | DistXY=0.91m | Mode=LOST | Msg: Uncertainty radius 62.802m > allowed funnel 0.420m; Uncertainty radius 62.802m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538772.070323323] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -32.6°] | Drone Pos: (2.87, 0.32, 3.19)
+[INFO] [1791538773.191034398] [ekf_ros_adapter]: [EKF Output] Target: (2.26, 1.01, 1.21)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 23.18s
+[INFO] [1791538773.422443990] [aruco_sim_node]: frames=310, detected=65 (21.0%), camera_info=True
+[INFO] [1791538773.503605657] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.19m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.13] m/s | yaw_NED=24.3°
+[INFO] [1791538773.643035227] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.3, 1.0) | Dist: 2.17m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538774.117241031] [covariance_gate_node]: [GATE_HOLD] r_unc=68.252m (limit 0.42m) | DistXY=0.93m | Mode=LOST | Msg: Uncertainty radius 68.252m > allowed funnel 0.420m; Uncertainty radius 68.252m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538775.188723477] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.2, 1.0) | Dist: 2.13m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538775.513626878] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.18m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.12] m/s | yaw_NED=24.3°
+[INFO] [1791538775.540923584] [aruco_sim_node]: frames=320, detected=65 (20.3%), camera_info=True
+[INFO] [1791538775.542654135] [ekf_ros_adapter]: [EKF Output] Target: (2.22, 1.01, 1.29)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 24.70s
+[INFO] [1791538776.141917312] [covariance_gate_node]: [GATE_HOLD] r_unc=73.851m (limit 0.42m) | DistXY=0.98m | Mode=LOST | Msg: Uncertainty radius 73.851m > allowed funnel 0.420m; Uncertainty radius 73.851m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538776.773748932] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.2, 1.0) | Dist: 2.10m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538776.783588241] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -43.0°] | Drone Pos: (2.87, 0.29, 3.18)
+[INFO] [1791538777.570865274] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.18m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.12] m/s | yaw_NED=24.3°
+[INFO] [1791538777.687733879] [aruco_sim_node]: frames=330, detected=65 (19.7%), camera_info=True
+[INFO] [1791538777.950454152] [ekf_ros_adapter]: [EKF Output] Target: (2.17, 1.01, 1.37)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 26.22s
+[INFO] [1791538778.213226492] [covariance_gate_node]: [GATE_HOLD] r_unc=79.596m (limit 0.42m) | DistXY=1.02m | Mode=LOST | Msg: Uncertainty radius 79.596m > allowed funnel 0.420m; Uncertainty radius 79.596m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538778.371746415] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.2)m | Target: (2.2, 1.0) | Dist: 2.06m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538779.624739092] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.14m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.08] m/s | yaw_NED=24.3°
+[INFO] [1791538779.845890754] [aruco_sim_node]: frames=339, detected=65 (19.2%), camera_info=True
+[INFO] [1791538780.051899871] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.3, 3.1)m | Target: (2.1, 1.0) | Dist: 2.00m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538780.218528572] [covariance_gate_node]: [GATE_HOLD] r_unc=85.024m (limit 0.42m) | DistXY=1.07m | Mode=LOST | Msg: Uncertainty radius 85.024m > allowed funnel 0.420m; Uncertainty radius 85.024m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538780.513897885] [ekf_ros_adapter]: [EKF Output] Target: (2.12, 1.02, 1.45)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 27.74s
+[INFO] [1791538781.658427652] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.10m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.04] m/s | yaw_NED=24.3°
+[INFO] [1791538781.808548565] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (2.1, 1.0) | Dist: 1.95m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538781.822365463] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -52.3°] | Drone Pos: (2.87, 0.23, 3.10)
+[INFO] [1791538781.906716273] [aruco_sim_node]: frames=347, detected=65 (18.7%), camera_info=True
+[INFO] [1791538782.308243363] [covariance_gate_node]: [GATE_HOLD] r_unc=90.590m (limit 0.42m) | DistXY=1.11m | Mode=LOST | Msg: Uncertainty radius 90.590m > allowed funnel 0.420m; Uncertainty radius 90.590m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538783.110826121] [ekf_ros_adapter]: [EKF Output] Target: (2.08, 1.02, 1.53)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 29.24s
+[INFO] [1791538783.510094258] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (2.1, 1.0) | Dist: 1.88m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538783.669702307] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.05m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538784.101764244] [aruco_sim_node]: frames=355, detected=65 (18.3%), camera_info=True
+[INFO] [1791538784.362292582] [covariance_gate_node]: [GATE_HOLD] r_unc=96.062m (limit 0.42m) | DistXY=1.13m | Mode=LOST | Msg: Uncertainty radius 96.062m > allowed funnel 0.420m; Uncertainty radius 96.062m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538785.290195890] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (2.0, 1.0) | Dist: 1.86m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538785.740371657] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.07m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.01] m/s | yaw_NED=24.3°
+[INFO] [1791538785.803380806] [ekf_ros_adapter]: [EKF Output] Target: (2.03, 1.02, 1.61)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 30.77s
+[INFO] [1791538786.167755587] [aruco_sim_node]: frames=362, detected=65 (18.0%), camera_info=True
+[INFO] [1791538786.415980433] [covariance_gate_node]: [GATE_HOLD] r_unc=101.718m (limit 0.42m) | DistXY=1.16m | Mode=LOST | Msg: Uncertainty radius 101.718m > allowed funnel 0.420m; Uncertainty radius 101.718m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538787.001323852] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (2.0, 1.0) | Dist: 1.86m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538787.005482677] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -35.3°] | Drone Pos: (2.85, 0.22, 3.10)
+[INFO] [1791538787.777338433] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538788.183894422] [aruco_sim_node]: frames=370, detected=65 (17.6%), camera_info=True
+[INFO] [1791538788.397944168] [ekf_ros_adapter]: [EKF Output] Target: (1.99, 1.02, 1.69)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 32.29s
+[INFO] [1791538788.464921139] [covariance_gate_node]: [GATE_HOLD] r_unc=107.698m (limit 0.42m) | DistXY=1.16m | Mode=LOST | Msg: Uncertainty radius 107.698m > allowed funnel 0.420m; Uncertainty radius 107.698m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538788.742108663] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.1)m | Target: (2.0, 1.0) | Dist: 1.82m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538789.815351514] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.08m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.02] m/s | yaw_NED=24.3°
+[INFO] [1791538790.278758941] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.1)m | Target: (2.0, 1.0) | Dist: 1.77m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538790.348364379] [aruco_sim_node]: frames=380, detected=65 (17.1%), camera_info=True
+[INFO] [1791538790.533070915] [covariance_gate_node]: [GATE_HOLD] r_unc=114.194m (limit 0.42m) | DistXY=1.18m | Mode=LOST | Msg: Uncertainty radius 114.194m > allowed funnel 0.420m; Uncertainty radius 114.194m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538790.799362404] [ekf_ros_adapter]: [EKF Output] Target: (1.94, 1.02, 1.78)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 33.80s
+[INFO] [1791538791.848840785] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.1)m | Target: (1.9, 1.0) | Dist: 1.78m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538791.852791982] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.12m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.06] m/s | yaw_NED=24.3°
+[INFO] [1791538791.855310095] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -26.3°] | Drone Pos: (2.82, 0.22, 3.12)
+[INFO] [1791538792.371285805] [aruco_sim_node]: frames=390, detected=65 (16.7%), camera_info=True
+[INFO] [1791538792.564000395] [covariance_gate_node]: [GATE_HOLD] r_unc=120.837m (limit 0.42m) | DistXY=1.22m | Mode=LOST | Msg: Uncertainty radius 120.837m > allowed funnel 0.420m; Uncertainty radius 120.837m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538793.183458429] [ekf_ros_adapter]: [EKF Output] Target: (1.89, 1.02, 1.86)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 35.33s
+[INFO] [1791538793.451697826] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.1)m | Target: (1.9, 1.0) | Dist: 1.77m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538793.940817993] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.14m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.08] m/s | yaw_NED=24.3°
+[INFO] [1791538794.393048405] [aruco_sim_node]: frames=400, detected=65 (16.2%), camera_info=True
+[INFO] [1791538794.605525004] [covariance_gate_node]: [GATE_HOLD] r_unc=127.562m (limit 0.42m) | DistXY=1.26m | Mode=LOST | Msg: Uncertainty radius 127.562m > allowed funnel 0.420m; Uncertainty radius 127.562m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538795.010093828] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.2)m | Target: (1.9, 1.0) | Dist: 1.78m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538795.575175294] [ekf_ros_adapter]: [EKF Output] Target: (1.85, 1.02, 1.94)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 36.84s
+[INFO] [1791538795.965115877] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.19m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.13] m/s | yaw_NED=24.3°
+[INFO] [1791538796.466630194] [aruco_sim_node]: frames=410, detected=65 (15.9%), camera_info=True
+[INFO] [1791538796.604779488] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.2)m | Target: (1.8, 1.0) | Dist: 1.79m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538796.611127442] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -37.3°] | Drone Pos: (2.83, 0.19, 3.20)
+[INFO] [1791538796.715881129] [covariance_gate_node]: [GATE_HOLD] r_unc=134.535m (limit 0.42m) | DistXY=1.31m | Mode=LOST | Msg: Uncertainty radius 134.535m > allowed funnel 0.420m; Uncertainty radius 134.535m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538797.976345511] [ekf_ros_adapter]: [EKF Output] Target: (1.80, 1.02, 2.02)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 38.37s
+[INFO] [1791538798.019596754] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.20m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.14] m/s | yaw_NED=24.3°
+[INFO] [1791538798.180660711] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.2)m | Target: (1.8, 1.0) | Dist: 1.78m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538798.599057418] [aruco_sim_node]: frames=420, detected=65 (15.5%), camera_info=True
+[INFO] [1791538798.727494182] [covariance_gate_node]: [GATE_HOLD] r_unc=141.413m (limit 0.42m) | DistXY=1.35m | Mode=LOST | Msg: Uncertainty radius 141.413m > allowed funnel 0.420m; Uncertainty radius 141.413m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538799.767272850] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.2)m | Target: (1.8, 1.0) | Dist: 1.78m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538800.084748922] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.21m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.15] m/s | yaw_NED=24.3°
+[INFO] [1791538800.376519581] [ekf_ros_adapter]: [EKF Output] Target: (1.75, 1.02, 2.10)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 39.88s
+[INFO] [1791538800.659494275] [aruco_sim_node]: frames=430, detected=65 (15.1%), camera_info=True
+[INFO] [1791538800.773976968] [covariance_gate_node]: [GATE_HOLD] r_unc=148.538m (limit 0.42m) | DistXY=1.39m | Mode=LOST | Msg: Uncertainty radius 148.538m > allowed funnel 0.420m; Uncertainty radius 148.538m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538801.291433219] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.2)m | Target: (1.7, 1.0) | Dist: 1.75m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538801.296637321] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -45.2°] | Drone Pos: (2.84, 0.16, 3.18)
+[INFO] [1791538802.150894752] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.15m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.09] m/s | yaw_NED=24.3°
+[INFO] [1791538802.729643456] [ekf_ros_adapter]: [EKF Output] Target: (1.71, 1.02, 2.18)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 41.40s
+[INFO] [1791538802.729926868] [aruco_sim_node]: frames=440, detected=65 (14.8%), camera_info=True
+[INFO] [1791538802.791767125] [covariance_gate_node]: [GATE_HOLD] r_unc=155.778m (limit 0.42m) | DistXY=1.43m | Mode=LOST | Msg: Uncertainty radius 155.778m > allowed funnel 0.420m; Uncertainty radius 155.778m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538802.842899163] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.7, 1.0) | Dist: 1.72m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538804.189379301] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.15m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.09] m/s | yaw_NED=24.3°
+[INFO] [1791538804.502296836] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.2)m | Target: (1.7, 1.0) | Dist: 1.73m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538804.799263135] [covariance_gate_node]: [GATE_HOLD] r_unc=162.723m (limit 0.42m) | DistXY=1.48m | Mode=LOST | Msg: Uncertainty radius 162.723m > allowed funnel 0.420m; Uncertainty radius 162.723m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538804.993221767] [aruco_sim_node]: frames=450, detected=65 (14.4%), camera_info=True
+[INFO] [1791538805.159952070] [ekf_ros_adapter]: [EKF Output] Target: (1.66, 1.03, 2.26)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 42.92s
+[INFO] [1791538806.123029530] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.6, 1.0) | Dist: 1.71m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538806.127199145] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -52.7°] | Drone Pos: (2.84, 0.12, 3.12)
+[INFO] [1791538806.216681824] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538806.848379620] [covariance_gate_node]: [GATE_HOLD] r_unc=169.929m (limit 0.42m) | DistXY=1.51m | Mode=LOST | Msg: Uncertainty radius 169.929m > allowed funnel 0.420m; Uncertainty radius 169.929m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538807.151506974] [aruco_sim_node]: frames=460, detected=65 (14.1%), camera_info=True
+[INFO] [1791538807.661303913] [ekf_ros_adapter]: [EKF Output] Target: (1.62, 1.03, 2.34)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 44.43s
+[INFO] [1791538807.726336179] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.0)m | Target: (1.6, 1.0) | Dist: 1.67m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538808.259707267] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.02m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538808.859900531] [covariance_gate_node]: [GATE_HOLD] r_unc=177.122m (limit 0.42m) | DistXY=1.53m | Mode=LOST | Msg: Uncertainty radius 177.122m > allowed funnel 0.420m; Uncertainty radius 177.122m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538809.271554782] [aruco_sim_node]: frames=469, detected=65 (13.9%), camera_info=True
+[INFO] [1791538809.340773001] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.0)m | Target: (1.6, 1.0) | Dist: 1.65m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538810.138854597] [ekf_ros_adapter]: [EKF Output] Target: (1.57, 1.03, 2.42)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 45.95s
+[INFO] [1791538810.269295082] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.05m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538810.866937577] [covariance_gate_node]: [GATE_HOLD] r_unc=184.201m (limit 0.42m) | DistXY=1.54m | Mode=LOST | Msg: Uncertainty radius 184.201m > allowed funnel 0.420m; Uncertainty radius 184.201m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538811.044531929] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.0)m | Target: (1.6, 1.0) | Dist: 1.65m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538811.047634274] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -40.3°] | Drone Pos: (2.83, 0.15, 3.04)
+[INFO] [1791538811.397083451] [aruco_sim_node]: frames=480, detected=65 (13.5%), camera_info=True
+[INFO] [1791538812.305146919] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.03m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538812.546015497] [ekf_ros_adapter]: [EKF Output] Target: (1.52, 1.03, 2.50)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 47.45s
+[INFO] [1791538812.599172141] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.0)m | Target: (1.5, 1.0) | Dist: 1.66m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538812.884764009] [covariance_gate_node]: [GATE_HOLD] r_unc=191.564m (limit 0.42m) | DistXY=1.58m | Mode=LOST | Msg: Uncertainty radius 191.564m > allowed funnel 0.420m; Uncertainty radius 191.564m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538813.560757766] [aruco_sim_node]: frames=490, detected=65 (13.3%), camera_info=True
+[INFO] [1791538814.226741929] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.5, 1.0) | Dist: 1.69m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538814.382578991] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.09m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.03] m/s | yaw_NED=24.3°
+[INFO] [1791538814.906733724] [covariance_gate_node]: [GATE_HOLD] r_unc=199.532m (limit 0.42m) | DistXY=1.62m | Mode=LOST | Msg: Uncertainty radius 199.532m > allowed funnel 0.420m; Uncertainty radius 199.532m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538814.963771101] [ekf_ros_adapter]: [EKF Output] Target: (1.48, 1.03, 2.58)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 48.96s
+[INFO] [1791538815.645537165] [aruco_sim_node]: frames=499, detected=65 (13.0%), camera_info=True
+[INFO] [1791538815.783484690] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.5, 1.0) | Dist: 1.71m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538815.787642277] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.7°] | Drone Pos: (2.82, 0.12, 3.09)
+[INFO] [1791538816.413489569] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.09m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.03] m/s | yaw_NED=24.3°
+[INFO] [1791538816.980196304] [covariance_gate_node]: [GATE_HOLD] r_unc=207.485m (limit 0.42m) | DistXY=1.66m | Mode=LOST | Msg: Uncertainty radius 207.485m > allowed funnel 0.420m; Uncertainty radius 207.485m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538817.340180986] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.4, 1.0) | Dist: 1.72m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538817.345484946] [ekf_ros_adapter]: [EKF Output] Target: (1.43, 1.03, 2.66)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 50.48s
+[INFO] [1791538817.656171332] [aruco_sim_node]: frames=508, detected=65 (12.8%), camera_info=True
+[INFO] [1791538818.487139916] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538818.998429998] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.4, 1.0) | Dist: 1.73m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538819.001840638] [covariance_gate_node]: [GATE_HOLD] r_unc=215.191m (limit 0.42m) | DistXY=1.68m | Mode=LOST | Msg: Uncertainty radius 215.191m > allowed funnel 0.420m; Uncertainty radius 215.191m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538819.756679002] [aruco_sim_node]: frames=518, detected=65 (12.5%), camera_info=True
+[INFO] [1791538819.826326714] [ekf_ros_adapter]: [EKF Output] Target: (1.39, 1.03, 2.74)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 51.99s
+[INFO] [1791538820.519769781] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.14m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.08] m/s | yaw_NED=24.3°
+[INFO] [1791538820.609379106] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.4, 1.0) | Dist: 1.75m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538820.617342838] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -31.6°] | Drone Pos: (2.81, 0.10, 3.15)
+[INFO] [1791538821.057081114] [covariance_gate_node]: [GATE_HOLD] r_unc=223.319m (limit 0.42m) | DistXY=1.72m | Mode=LOST | Msg: Uncertainty radius 223.319m > allowed funnel 0.420m; Uncertainty radius 223.319m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538821.909415195] [aruco_sim_node]: frames=527, detected=65 (12.3%), camera_info=True
+[INFO] [1791538822.135719611] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.2)m | Target: (1.3, 1.0) | Dist: 1.78m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538822.177028352] [ekf_ros_adapter]: [EKF Output] Target: (1.34, 1.03, 2.82)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 53.51s
+[INFO] [1791538822.574713267] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.19m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.13] m/s | yaw_NED=24.3°
+[INFO] [1791538823.069173891] [covariance_gate_node]: [GATE_HOLD] r_unc=231.597m (limit 0.42m) | DistXY=1.76m | Mode=LOST | Msg: Uncertainty radius 231.597m > allowed funnel 0.420m; Uncertainty radius 231.597m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538823.694791665] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.2)m | Target: (1.3, 1.0) | Dist: 1.80m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538824.072136116] [aruco_sim_node]: frames=536, detected=65 (12.1%), camera_info=True
+[INFO] [1791538824.578250212] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.15m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.09] m/s | yaw_NED=24.3°
+[INFO] [1791538824.579539007] [ekf_ros_adapter]: [EKF Output] Target: (1.29, 1.03, 2.91)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 55.03s
+[INFO] [1791538825.079264559] [covariance_gate_node]: [GATE_HOLD] r_unc=239.665m (limit 0.42m) | DistXY=1.81m | Mode=LOST | Msg: Uncertainty radius 239.665m > allowed funnel 0.420m; Uncertainty radius 239.665m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538825.314956229] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.1, 3.1)m | Target: (1.3, 1.0) | Dist: 1.82m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538825.329770062] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -41.1°] | Drone Pos: (2.85, 0.12, 3.15)
+[INFO] [1791538826.104954866] [aruco_sim_node]: frames=546, detected=65 (11.9%), camera_info=True
+[INFO] [1791538826.662535777] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.15m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.09] m/s | yaw_NED=24.3°
+[INFO] [1791538826.887240589] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.1)m | Target: (1.3, 1.0) | Dist: 1.84m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538826.981466426] [ekf_ros_adapter]: [EKF Output] Target: (1.25, 1.03, 2.99)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 56.54s
+[INFO] [1791538827.141992535] [covariance_gate_node]: [GATE_HOLD] r_unc=248.113m (limit 0.42m) | DistXY=1.84m | Mode=LOST | Msg: Uncertainty radius 248.113m > allowed funnel 0.420m; Uncertainty radius 248.113m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538828.197434528] [aruco_sim_node]: frames=555, detected=65 (11.7%), camera_info=True
+[INFO] [1791538828.428939832] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.1)m | Target: (1.2, 1.0) | Dist: 1.85m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538828.709655972] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538829.170325603] [covariance_gate_node]: [GATE_HOLD] r_unc=256.657m (limit 0.42m) | DistXY=1.86m | Mode=LOST | Msg: Uncertainty radius 256.657m > allowed funnel 0.420m; Uncertainty radius 256.657m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538829.388846634] [ekf_ros_adapter]: [EKF Output] Target: (1.20, 1.04, 3.07)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 58.07s
+[INFO] [1791538830.047846657] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.8, 0.2, 3.1)m | Target: (1.2, 1.0) | Dist: 1.87m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538830.054033246] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -51.6°] | Drone Pos: (2.84, 0.16, 3.13)
+[INFO] [1791538830.270333276] [aruco_sim_node]: frames=564, detected=65 (11.5%), camera_info=True
+[INFO] [1791538830.710732704] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.12m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.06] m/s | yaw_NED=24.3°
+[INFO] [1791538831.184233947] [covariance_gate_node]: [GATE_HOLD] r_unc=265.297m (limit 0.42m) | DistXY=1.90m | Mode=LOST | Msg: Uncertainty radius 265.297m > allowed funnel 0.420m; Uncertainty radius 265.297m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538831.587783462] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (1.2, 1.0) | Dist: 1.92m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538831.753268622] [ekf_ros_adapter]: [EKF Output] Target: (1.16, 1.04, 3.15)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 59.58s
+[INFO] [1791538832.434996236] [aruco_sim_node]: frames=573, detected=65 (11.3%), camera_info=True
+[INFO] [1791538832.773700710] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.10m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.04] m/s | yaw_NED=24.3°
+[INFO] [1791538833.157732411] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (1.1, 1.0) | Dist: 1.97m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538833.238949149] [covariance_gate_node]: [GATE_HOLD] r_unc=274.032m (limit 0.42m) | DistXY=1.97m | Mode=LOST | Msg: Uncertainty radius 274.032m > allowed funnel 0.420m; Uncertainty radius 274.032m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538834.100403787] [ekf_ros_adapter]: [EKF Output] Target: (1.11, 1.04, 3.23)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 61.10s
+[INFO] [1791538834.538218699] [aruco_sim_node]: frames=582, detected=65 (11.2%), camera_info=True
+[INFO] [1791538834.732373888] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (1.1, 1.0) | Dist: 2.02m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538834.741099208] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -50.1°] | Drone Pos: (2.92, 0.16, 3.13)
+[INFO] [1791538834.796560811] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.13m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.07] m/s | yaw_NED=24.3°
+[INFO] [1791538835.260427544] [covariance_gate_node]: [GATE_HOLD] r_unc=282.861m (limit 0.42m) | DistXY=2.04m | Mode=LOST | Msg: Uncertainty radius 282.861m > allowed funnel 0.420m; Uncertainty radius 282.861m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538836.269781310] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.2)m | Target: (1.1, 1.0) | Dist: 2.06m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538836.485632016] [ekf_ros_adapter]: [EKF Output] Target: (1.06, 1.04, 3.31)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 62.62s
+[INFO] [1791538836.648397311] [aruco_sim_node]: frames=592, detected=65 (11.0%), camera_info=True
+[INFO] [1791538836.835301829] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.16m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.10] m/s | yaw_NED=24.3°
+[INFO] [1791538837.318698497] [covariance_gate_node]: [GATE_HOLD] r_unc=291.782m (limit 0.42m) | DistXY=2.08m | Mode=LOST | Msg: Uncertainty radius 291.782m > allowed funnel 0.420m; Uncertainty radius 291.782m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538837.839027933] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (1.0, 1.0) | Dist: 2.10m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538838.716780911] [aruco_sim_node]: frames=601, detected=65 (10.8%), camera_info=True
+[INFO] [1791538838.825903511] [ekf_ros_adapter]: [EKF Output] Target: (1.02, 1.04, 3.39)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 64.14s
+[INFO] [1791538838.896240381] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.13m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.07] m/s | yaw_NED=24.3°
+[INFO] [1791538839.377969813] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (1.0, 1.0) | Dist: 2.13m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538839.379015070] [covariance_gate_node]: [GATE_HOLD] r_unc=301.075m (limit 0.42m) | DistXY=2.11m | Mode=LOST | Msg: Uncertainty radius 301.075m > allowed funnel 0.420m; Uncertainty radius 301.075m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538839.380677554] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -41.9°] | Drone Pos: (2.94, 0.18, 3.12)
+[INFO] [1791538840.850685973] [aruco_sim_node]: frames=610, detected=65 (10.7%), camera_info=True
+[INFO] [1791538840.972992325] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 3.1)m | Target: (1.0, 1.0) | Dist: 2.18m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538840.987651464] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.06m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538841.237054471] [ekf_ros_adapter]: [EKF Output] Target: (0.97, 1.04, 3.47)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 65.65s
+[INFO] [1791538841.435467864] [covariance_gate_node]: [GATE_HOLD] r_unc=310.182m (limit 0.42m) | DistXY=2.15m | Mode=LOST | Msg: Uncertainty radius 310.182m > allowed funnel 0.420m; Uncertainty radius 310.182m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538842.562037302] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.1)m | Target: (0.9, 1.0) | Dist: 2.23m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538843.045967221] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.06m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538843.089289338] [aruco_sim_node]: frames=620, detected=65 (10.5%), camera_info=True
+[INFO] [1791538843.441537879] [covariance_gate_node]: [GATE_HOLD] r_unc=319.095m (limit 0.42m) | DistXY=2.20m | Mode=LOST | Msg: Uncertainty radius 319.095m > allowed funnel 0.420m; Uncertainty radius 319.095m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538843.642199568] [ekf_ros_adapter]: [EKF Output] Target: (0.93, 1.04, 3.55)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 67.17s
+[INFO] [1791538844.122541774] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.1)m | Target: (0.9, 1.0) | Dist: 2.27m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538844.130722882] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -31.0°] | Drone Pos: (2.93, 0.11, 3.06)
+[INFO] [1791538845.107472059] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.07m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.01] m/s | yaw_NED=24.3°
+[INFO] [1791538845.194987643] [aruco_sim_node]: frames=629, detected=65 (10.3%), camera_info=True
+[INFO] [1791538845.490042651] [covariance_gate_node]: [GATE_HOLD] r_unc=328.379m (limit 0.42m) | DistXY=2.24m | Mode=LOST | Msg: Uncertainty radius 328.379m > allowed funnel 0.420m; Uncertainty radius 328.379m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538845.744786049] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.1)m | Target: (0.9, 1.0) | Dist: 2.32m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538846.064504297] [ekf_ros_adapter]: [EKF Output] Target: (0.88, 1.04, 3.63)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 68.69s
+[INFO] [1791538847.200628424] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.03m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538847.253043136] [aruco_sim_node]: frames=638, detected=65 (10.2%), camera_info=True
+[INFO] [1791538847.257897036] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.0)m | Target: (0.9, 1.0) | Dist: 2.37m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538847.510452832] [covariance_gate_node]: [GATE_HOLD] r_unc=337.751m (limit 0.42m) | DistXY=2.29m | Mode=LOST | Msg: Uncertainty radius 337.751m > allowed funnel 0.420m; Uncertainty radius 337.751m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538848.417573022] [ekf_ros_adapter]: [EKF Output] Target: (0.83, 1.04, 3.71)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 70.20s
+[INFO] [1791538848.852452040] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.0, 0.1, 3.0)m | Target: (0.8, 1.0) | Dist: 2.42m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538848.853253655] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -27.2°] | Drone Pos: (2.95, 0.11, 3.05)
+[INFO] [1791538849.270295564] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.06m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538849.406814153] [aruco_sim_node]: frames=647, detected=65 (10.0%), camera_info=True
+[INFO] [1791538849.586248377] [covariance_gate_node]: [GATE_HOLD] r_unc=347.064m (limit 0.42m) | DistXY=2.34m | Mode=LOST | Msg: Uncertainty radius 347.064m > allowed funnel 0.420m; Uncertainty radius 347.064m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538850.436137315] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (3.0, 0.1, 3.1)m | Target: (0.8, 1.0) | Dist: 2.44m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538850.801835406] [ekf_ros_adapter]: [EKF Output] Target: (0.79, 1.04, 3.79)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 71.73s
+[INFO] [1791538851.278452343] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.11m (tgt=3.0m) | vel_NED=[0.00, 0.00, 0.05] m/s | yaw_NED=24.3°
+[INFO] [1791538851.593707998] [aruco_sim_node]: frames=657, detected=65 (9.9%), camera_info=True
+[INFO] [1791538851.655583783] [covariance_gate_node]: [GATE_HOLD] r_unc=357.051m (limit 0.42m) | DistXY=2.35m | Mode=LOST | Msg: Uncertainty radius 357.051m > allowed funnel 0.420m; Uncertainty radius 357.051m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538851.972253410] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.1)m | Target: (0.8, 1.0) | Dist: 2.47m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538853.185736208] [ekf_ros_adapter]: [EKF Output] Target: (0.74, 1.05, 3.88)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 73.24s
+[INFO] [1791538853.330164836] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=3.05m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538853.549829695] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -37.5°] | Drone Pos: (2.92, 0.14, 3.05)
+[INFO] [1791538853.550674162] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.0)m | Target: (0.7, 1.0) | Dist: 2.51m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538853.698675631] [covariance_gate_node]: [GATE_HOLD] r_unc=366.686m (limit 0.42m) | DistXY=2.37m | Mode=LOST | Msg: Uncertainty radius 366.686m > allowed funnel 0.420m; Uncertainty radius 366.686m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538853.768756219] [aruco_sim_node]: frames=667, detected=65 (9.7%), camera_info=True
+[INFO] [1791538855.102525780] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.0)m | Target: (0.7, 1.0) | Dist: 2.57m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538855.350688656] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.97m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538855.555617901] [ekf_ros_adapter]: [EKF Output] Target: (0.69, 1.05, 3.96)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 74.76s
+[INFO] [1791538855.753354090] [covariance_gate_node]: [GATE_HOLD] r_unc=376.436m (limit 0.42m) | DistXY=2.39m | Mode=LOST | Msg: Uncertainty radius 376.436m > allowed funnel 0.420m; Uncertainty radius 376.436m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538855.804284727] [aruco_sim_node]: frames=677, detected=65 (9.6%), camera_info=True
+[INFO] [1791538856.773672597] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 2.9)m | Target: (0.7, 1.0) | Dist: 2.64m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538857.413284676] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.88m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.06] m/s | yaw_NED=24.3°
+[INFO] [1791538857.839567238] [aruco_sim_node]: frames=686, detected=65 (9.5%), camera_info=True
+[INFO] [1791538857.843536080] [covariance_gate_node]: [GATE_HOLD] r_unc=385.907m (limit 0.42m) | DistXY=2.43m | Mode=LOST | Msg: Uncertainty radius 385.907m > allowed funnel 0.420m; Uncertainty radius 385.907m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538858.108522774] [ekf_ros_adapter]: [EKF Output] Target: (0.65, 1.05, 4.04)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 76.28s
+[INFO] [1791538858.492488750] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -49.8°] | Drone Pos: (2.92, 0.16, 2.89)
+[INFO] [1791538858.493613278] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 2.9)m | Target: (0.6, 1.0) | Dist: 2.70m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538859.491635832] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.92m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.02] m/s | yaw_NED=24.3°
+[INFO] [1791538859.843436619] [covariance_gate_node]: [GATE_HOLD] r_unc=394.266m (limit 0.42m) | DistXY=2.47m | Mode=LOST | Msg: Uncertainty radius 394.266m > allowed funnel 0.420m; Uncertainty radius 394.266m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538860.072135307] [aruco_sim_node]: frames=695, detected=65 (9.4%), camera_info=True
+[INFO] [1791538860.259592185] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.2, 2.9)m | Target: (0.6, 1.0) | Dist: 2.74m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538860.779228441] [ekf_ros_adapter]: [EKF Output] Target: (0.60, 1.05, 4.12)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 77.80s
+[INFO] [1791538861.493979104] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.88m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.06] m/s | yaw_NED=24.3°
+[INFO] [1791538861.889984691] [covariance_gate_node]: [GATE_HOLD] r_unc=403.453m (limit 0.42m) | DistXY=2.50m | Mode=LOST | Msg: Uncertainty radius 403.453m > allowed funnel 0.420m; Uncertainty radius 403.453m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538861.969921471] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 2.9)m | Target: (0.6, 1.0) | Dist: 2.81m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538862.143267534] [aruco_sim_node]: frames=704, detected=65 (9.2%), camera_info=True
+[INFO] [1791538863.350706986] [ekf_ros_adapter]: [EKF Output] Target: (0.56, 1.05, 4.20)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 79.32s
+[INFO] [1791538863.578358297] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.91m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.03] m/s | yaw_NED=24.3°
+[INFO] [1791538863.657190826] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -43.0°] | Drone Pos: (2.92, 0.14, 2.91)
+[INFO] [1791538863.663793773] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 2.9)m | Target: (0.6, 1.0) | Dist: 2.85m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538863.932547121] [covariance_gate_node]: [GATE_HOLD] r_unc=412.710m (limit 0.42m) | DistXY=2.54m | Mode=LOST | Msg: Uncertainty radius 412.710m > allowed funnel 0.420m; Uncertainty radius 412.710m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538864.322987639] [aruco_sim_node]: frames=713, detected=65 (9.1%), camera_info=True
+[INFO] [1791538865.337478643] [mission_fsm]: [STATUS] Phase: SEARCH  | Drone: (2.9, 0.1, 3.0)m | Target: (0.5, 1.1) | Dist: 2.88m | EKF: EXPIRED | Det: False | BBox: (299,447) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538865.609582122] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=SEARCH  | alt=2.96m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=24.3°
+[INFO] [1791538865.956920307] [covariance_gate_node]: [GATE_HOLD] r_unc=421.881m (limit 0.42m) | DistXY=2.57m | Mode=LOST | Msg: Uncertainty radius 421.881m > allowed funnel 0.420m; Uncertainty radius 421.881m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538865.963244583] [ekf_ros_adapter]: [EKF Output] Target: (0.51, 1.05, 4.28)m | Vel: (-0.00, 0.00) m/s | Mode: EXPIRED    | Age: 80.84s
+[INFO] [1791538866.484763104] [aruco_sim_node]: frames=721, detected=65 (9.0%), camera_info=True
+[INFO] [1791538866.530236734] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.530739854] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.530921054] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.532129160] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.532373015] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.532418626] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.533319884] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538866.534552315] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+======================================================================
+  SIMULATION LAUNCHER (Fast-Tracker & PX4-Avoidance Architecture)
+======================================================================
+[1/4] Loading the world already used by Gazebo...
+      -> Loaded 12 obstacles from /home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf.
+[2/4] Starting Gazebo Sim -> ROS 2 Bridge...
+      -> ros_gz_bridge backend: Gazebo Harmonic (gz-msgs / gz-transport).
+      -> Gazebo sensor/odom topics detected:
+         /camera
+         /camera_info
+         /depth_camera
+         /depth_camera/points
+         /gui/camera/pose
+         /model/x500_depth_0/command/gimbal_pitch
+         /model/x500_depth_0/command/gimbal_roll
+         /model/x500_depth_0/command/gimbal_yaw
+         /model/x500_depth_0/command/motor_speed
+         /model/x500_depth_0/joint_state
+         /model/x500_depth_0/odometry
+         /model/x500_depth_0/odometry_with_covariance
+         /model/x500_depth_0/pose
+         /model/x500_depth_0/servo_0
+         /model/x500_depth_0/servo_1
+         /model/x500_depth_0/servo_2
+         /model/x500_depth_0/servo_3
+         /model/x500_depth_0/servo_4
+         /model/x500_depth_0/servo_5
+         /model/x500_depth_0/servo_6
+         /model/x500_depth_0/servo_7
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/air_pressure_sensor/air_pressure
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/imu_sensor/imu
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/magnetometer_sensor/magnetometer
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/navsat_sensor/navsat
+         /x500_depth_0/command/motor_speed
+         /model/x500_depth_0/motor_failure/motor_number
+         /world/obstacle_avoidance/model/x500_depth_0/link/airspeed_link/sensor/air_speed/air_speed
+         /world/obstacle_avoidance/model/x500_depth_0/link/camera_link/sensor/camera_imu/imu
+         /world/obstacle_avoidance/model/x500_depth_0/link/flow_link/sensor/optical_flow/optical_flow
+         /world/obstacle_avoidance/model/x500_depth_0/link/lidar_sensor_link/sensor/lidar/scan
+         /world/obstacle_avoidance/model/x500_depth_0/link/link/sensor/lidar_2d_v2/scan
+      -> RGB camera bridge: ros2 run ros_gz_bridge parameter_bridge /camera@sensor_msgs/msg/Image@gz.msgs.Image
+         started (pid=119026).
+      -> RGB camera info bridge: ros2 run ros_gz_bridge parameter_bridge /camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo
+         started (pid=119027).
+      -> Depth image bridge: ros2 run ros_gz_bridge parameter_bridge /depth_camera@sensor_msgs/msg/Image@gz.msgs.Image
+         started (pid=119028).
+      -> Depth point cloud bridge: ros2 run ros_gz_bridge parameter_bridge /depth_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked
+         started (pid=119029).
+      -> Odom bridge: ros2 run ros_gz_bridge parameter_bridge /model/x500_depth_0/odometry_with_covariance@nav_msgs/msg/Odometry[gz.msgs.OdometryWithCovariance --ros-args -r /model/x500_depth_0/odometry_with_covariance:=/odom
+      -> Odom bridge started (pid=119030).
+      -> Gimbal pitch bridge: ros2 run ros_gz_bridge parameter_bridge /model/x500_depth_0/command/gimbal_pitch@std_msgs/msg/Float64@gz.msgs.Double
+         started (pid=119031).
+      -> Joint state bridge: ros2 run ros_gz_bridge parameter_bridge /model/x500_depth_0/joint_state@sensor_msgs/msg/JointState[gz.msgs.Model --ros-args -r /model/x500_depth_0/joint_state:=/joint_states
+         started (pid=119032).
+      -> Clock bridge: ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
+         started (pid=119033).
+[3/5] Launching Autonomous Pipeline nodes...
+      -> Configured Planner algorithm: IAPF
+      -> ArUco Detector started (pid=119196).
+      -> EKF Adapter started (pid=119197).
+      -> Covariance Gate started (pid=119198).
+      -> APF Planner started (pid=119199).
+      -> SMC Guidance started (pid=119200).
+      -> Touchdown Detector started (pid=119201).
+      -> IBVS Controller started (pid=119202).
+      -> Mission FSM started (pid=119203).
+      -> Offboard Commander started (pid=119204).
+[INFO] RViz2 disabled via --no-rviz flag.
+[5/5] Starting Main ROS 2 Node...
+======================================================================
+  AUTONOMOUS MODE ACTIVE
+  Drone sẽ tự động: IDLE → SEARCH → FOLLOW → APPROACH → LAND
+  Publish Bool(data=true) to /operator/land_command để bắt đầu hạ cánh
+======================================================================
+[ERROR] [1791538866.620359366] [depth_to_image_converter]: Conversion error: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:389
+Failed to publish log message to rosout: publisher's context is invalid, at ./src/rcl/publisher.c:389
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/ibvs_controller.py", line 659, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 657, in _wait_for_ready_callbacks
+    wait_set = _rclpy.WaitSet(
+rclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/ibvs_controller.py", line 668, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/ibvs_controller.py", line 664, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/touchdown_detector.py", line 367, in main
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/touchdown_detector.py", line 376, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/touchdown_detector.py", line 372, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/apf_planner.py", line 859, in main
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/apf_planner.py", line 868, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/apf_planner.py", line 864, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/covariance_gate.py", line 447, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/covariance_gate.py", line 456, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/covariance_gate.py", line 452, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 1162, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 657, in _wait_for_ready_callbacks
+    wait_set = _rclpy.WaitSet(
+rclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 1171, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 1167, in main
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/smc_guidance.py", line 608, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/smc_guidance.py", line 617, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/smc_guidance.py", line 613, in main
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/offboard_commander.py", line 647, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    rclpy.spin(node)
+    self.__context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/offboard_commander.py", line 657, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/core/offboard_commander.py", line 653, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/depth_to_image_node.py", line 75, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/perception/depth_to_image_node.py", line 72, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py", line 465, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py", line 474, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py", line 470, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/launch/launch_simulation.py", line 812, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 657, in _wait_for_ready_callbacks
+    wait_set = _rclpy.WaitSet(
+rclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/launch/launch_simulation.py", line 832, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/launch/launch_simulation.py", line 817, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 386, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 809, in _spin_once_impl
+    raise handler.exception()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/task.py", line 309, in _execute_coroutine_step
+    result = coro.send(None)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 488, in handler
+    await call_coroutine(entity, arg)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 407, in _execute_subscription
+    await await_or_execute(sub.callback, msg)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 110, in await_or_execute
+    return callback(*args)
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 370, in image_cb
+    self.annotated_pub.publish(out)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/publisher.py", line 70, in publish
+    self.__publisher.publish(msg)
+rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:389
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 395, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 391, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241

@@ -1,0 +1,686 @@
+[INFO] [1791538256.158728760] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/depth_camera (gz.msgs.Image) -> /depth_camera (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1791538256.158764353] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/x500_depth_0/odometry_with_covariance (gz.msgs.OdometryWithCovariance) -> /model/x500_depth_0/odometry_with_covariance (nav_msgs/msg/Odometry)] (Lazy 0)
+[INFO] [1791538256.161191618] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/depth_camera (sensor_msgs/msg/Image) -> /depth_camera (gz.msgs.Image)] (Lazy 0)
+[INFO] [1791538256.216508931] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/x500_depth_0/joint_state (gz.msgs.Model) -> /model/x500_depth_0/joint_state (sensor_msgs/msg/JointState)] (Lazy 0)
+[INFO] [1791538256.222672656] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[INFO] [1791538256.249431537] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera_info (gz.msgs.CameraInfo) -> /camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[INFO] [1791538256.255299209] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/camera_info (sensor_msgs/msg/CameraInfo) -> /camera_info (gz.msgs.CameraInfo)] (Lazy 0)
+[INFO] [1791538256.263978179] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/x500_depth_0/command/gimbal_pitch (gz.msgs.Double) -> /model/x500_depth_0/command/gimbal_pitch (std_msgs/msg/Float64)] (Lazy 0)
+[INFO] [1791538256.265524051] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/model/x500_depth_0/command/gimbal_pitch (std_msgs/msg/Float64) -> /model/x500_depth_0/command/gimbal_pitch (gz.msgs.Double)] (Lazy 0)
+[INFO] [1791538256.270684297] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera (gz.msgs.Image) -> /camera (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1791538256.273867424] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/camera (sensor_msgs/msg/Image) -> /camera (gz.msgs.Image)] (Lazy 0)
+[INFO] [1791538256.282936136] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/depth_camera/points (gz.msgs.PointCloudPacked) -> /depth_camera/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[INFO] [1791538256.286294378] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/depth_camera/points (sensor_msgs/msg/PointCloud2) -> /depth_camera/points (gz.msgs.PointCloudPacked)] (Lazy 0)
+[INFO] [1791538256.339749072] [depth_to_image_converter]: Depth-to-RViz Converter active with BEST_EFFORT QoS! Publishing /depth_camera/image_mono
+[INFO] [1791538258.049182574] [smc_guidance_node]: SMCGuidanceNode initialized: rate=20.0Hz, Rswitch_default=5.00m
+[INFO] [1791538258.058378559] [covariance_gate_node]: CovarianceGateNode initialized: pad_radius=0.42m, confidence_sigma=2.0, rate=20.0Hz
+[INFO] [1791538258.108331990] [offboard_commander]: Offboard Commander: Kết nối MAVLink UDP (udp:127.0.0.1:14540) thành công!
+  Drone sẽ nhận lệnh vận tốc APF thực tế trong chế độ OFFBOARD.
+[INFO] [1791538258.120277747] [touchdown_detector_node]: TouchdownDetectorNode initialized: optical_thresh=0.40m, confirm_duration=0.35s, rate=20.0Hz
+[INFO] [1791538258.125667272] [ekf_ros_adapter]: EKF ROS Adapter ready: camera_optical_frame → world, predict at 50 Hz, max_speed=2.5 m/s
+[INFO] [1791538258.138742837] [aruco_sim_node]: Dual-Scale ArUco simulation node initialized: Big ID=42 (0.52m), Small ID=43 (0.05m), Dictionary=DICT_6X6_50, Config=/home/duy/VDT_project/vision/dual_scale_board_config.yaml
+[INFO] [1791538258.144947841] [apf_planner]: Initialized Improved APF (I-APF) 3D Planner.
+[INFO] [1791538258.147329516] [apf_planner]: Loaded 12 cylinder obstacles from /home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf
+[INFO] [1791538258.154341058] [mission_fsm]: Mission FSM ready. Starting in IDLE phase.
+[INFO] [1791538258.159495155] [ibvs_controller]: IBVS Controller ready with 3D Feedforward + Visual Servoing.
+[INFO] [1791538258.162304345] [ros_gz_bridge]: Passing message from ROS std_msgs/msg/Float64 to Gazebo gz.msgs.Double (showing msg only once per type)
+[INFO] [1791538258.173303025] [fast_tracker_style_node]: Fast-Tracker & PX4-Avoidance Simulation Node Active!
+[INFO] [1791538258.184547858] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [WAITING] | CameraPitch: [CMD -30.0°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538258.195440664] [apf_planner]: APF Planner node ready.
+[INFO] [1791538259.026020054] [aruco_sim_node]: frames=1, detected=0 (0.0%), camera_info=True
+[INFO] [1791538259.073654120] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538260.330279278] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538260.336351474] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.3°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538261.071277856] [aruco_sim_node]: frames=18, detected=0 (0.0%), camera_info=True
+[INFO] [1791538261.561961448] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538262.794557438] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538263.083308649] [aruco_sim_node]: frames=35, detected=0 (0.0%), camera_info=True
+[INFO] [1791538263.978722569] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.7°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538263.981771749] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538265.181157929] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538265.189765674] [aruco_sim_node]: frames=52, detected=0 (0.0%), camera_info=True
+[INFO] [1791538266.413305953] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538267.204847581] [aruco_sim_node]: frames=69, detected=0 (0.0%), camera_info=True
+[INFO] [1791538267.671600743] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538267.677336766] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.5°] | Drone Pos: (-0.00, 0.00, 0.01)
+[INFO] [1791538268.920758370] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (-0.0, 0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538269.254470289] [aruco_sim_node]: frames=87, detected=0 (0.0%), camera_info=True
+[INFO] [1791538270.155367505] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.0, -0.0, 0.0)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538271.282210496] [aruco_sim_node]: frames=104, detected=0 (0.0%), camera_info=True
+[INFO] [1791538271.484236376] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.0, 0.0, 0.3)m | Target: (0.0, 0.0) | Dist: N/A | EKF: EXPIRED | Det: False | BBox: N/A | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538271.489769827] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -29.8°] | Drone Pos: (0.04, 0.01, 0.31)
+[INFO] [1791538272.545889707] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-0.988, -0.097, 3.093)m dist=3.248m fused_corners=4
+[INFO] [1791538272.546607579] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=21.716 tf_stamp=21.716 pos=(-0.99,-0.10,3.09) world=(3.07,1.03,-0.07)
+[INFO] [1791538272.549911117] [ekf_ros_adapter]: [EKF Output] Target: (3.07, 1.03, -0.07)m | Vel: (0.00, 0.00) m/s | Mode: TRACKING   | Age: 0.13s
+[INFO] [1791538272.557537756] [covariance_gate_node]: [GATE_HOLD] r_unc=1.000m (limit 0.42m) | DistXY=3.15m | Mode=OUTER_COARSE | Msg: Uncertainty radius 1.000m > allowed funnel 0.420m; Uncertainty radius 1.000m > glide limit 0.500m (2-sigma)
+[INFO] [1791538272.739520979] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.1, 0.0, 1.4)m | Target: (3.1, 1.0) | Dist: 3.49m | EKF: TRACKING | Det: False | BBox: (171,225) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538273.137894908] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.065, 0.258, 3.491)m dist=3.659m fused_corners=4
+[INFO] [1791538273.402190190] [aruco_sim_node]: frames=120, detected=5 (4.2%), camera_info=True
+[INFO] [1791538273.664601228] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.108, 0.547, 3.737)m dist=3.936m fused_corners=4
+[INFO] [1791538274.035927838] [mission_fsm]: [STATUS] Phase: IDLE    | Drone: (0.0, -0.0, 2.4)m | Target: (3.2, 1.1) | Dist: 4.18m | EKF: TRACKING | Det: False | BBox: (182,308) | XY scale: 0.00 | Reacq: False | Landing: -
+[INFO] [1791538274.151898605] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=22.904 tf_stamp=22.904 pos=(-1.18,0.87,2.97) world=(2.35,1.13,0.28)
+[WARN] [1791538274.154646372] [ekf_ros_adapter]: [KINEMATIC GATE] Rejected jump 0.84m > 0.71m (Measured: (2.35, 1.13) vs Predicted: (3.18, 1.07), Candidate: 1/2)
+[INFO] [1791538274.240567087] [mission_fsm]: Drone cất cánh đạt độ cao 2.51m. Bắt đầu SEARCH và xác nhận mục tiêu ổn định.
+[INFO] [1791538274.241703084] [mission_fsm]: [FSM] Phase transition: IDLE → SEARCH
+[INFO] [1791538274.260708463] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.077, 0.872, 3.766)m dist=4.013m fused_corners=4
+[INFO] [1791538274.260813280] [mission_fsm]: [REACQUIRE] detection trigger; stop sweep and hold yaw | yaw=-0.1° | bbox=(186,338)
+[INFO] [1791538274.517619131] [ekf_ros_adapter]: [EKF Output] Target: (3.05, 1.02, -0.03)m | Vel: (-0.13, -0.06) m/s | Mode: TRACKING   | Age: 0.16s
+[INFO] [1791538274.567665997] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.196m (limit 0.42m) | DistXY=3.26m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538274.637489643] [mission_fsm]: [REACQUIRE] confirmed after 0.38s | bbox=(193,320) | EKF=TRACKING; entering FOLLOW
+[INFO] [1791538274.638361361] [mission_fsm]: [FSM] Phase transition: SEARCH → FOLLOW
+[INFO] [1791538274.639697987] [mission_fsm]: [YAW_ALIGN] LIMIT XY | scale=0.29 | tracking=TRACKING | detected=True | yaw_err=5.0° | pixel_err=(-127,80)
+[INFO] [1791538274.640658775] [offboard_commander]: ✅ Đã gửi lệnh chuyển sang chế độ OFFBOARD tới PX4 SITL (MAVLink)!
+[INFO] [1791538274.640878130] [ibvs_controller]: [IBVS] SEARCH->FOLLOW: reset yaw_cmd to -0.1°
+[INFO] [1791538274.708017522] [offboard_commander]: [MAVLink Offboard] State=PX4_Mode_4 | Phase=FOLLOW  | alt=2.75m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.04] m/s | yaw_NED=90.1°
+[INFO] [1791538274.794076199] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.137, -0.211, 4.375)m dist=4.525m fused_corners=4
+[INFO] [1791538275.300460501] [offboard_commander]: ✅ Đã gửi lệnh chuyển sang chế độ OFFBOARD tới PX4 SITL (MAVLink)!
+[INFO] [1791538275.341345519] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-1.038, 0.622, 4.305)m dist=4.472m fused_corners=4
+[INFO] [1791538275.447106894] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -47.4°] | Drone Pos: (0.04, 0.02, 2.91)
+[INFO] [1791538275.448000038] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (0.0, 0.0, 2.9)m | Target: (3.2, 1.1) | Dist: 4.55m | EKF: TRACKING | Det: True | BBox: (208,307) | XY scale: 0.85 | Reacq: False | Landing: -
+[INFO] [1791538275.474247876] [aruco_sim_node]: frames=136, detected=17 (12.5%), camera_info=True
+[INFO] [1791538275.634872403] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=23.928 tf_stamp=23.928 pos=(-1.04,0.41,4.37) world=(3.18,1.06,-0.13)
+[INFO] [1791538275.827382252] [offboard_commander]: ✅ Đã gửi lệnh chuyển sang chế độ OFFBOARD tới PX4 SITL (MAVLink)!
+[INFO] [1791538275.983468480] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-0.900, -0.174, 4.445)m dist=4.538m fused_corners=4
+[INFO] [1791538276.449095623] [offboard_commander]: ✅ Đã gửi lệnh chuyển sang chế độ OFFBOARD tới PX4 SITL (MAVLink)!
+[INFO] [1791538276.615397109] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.324m (limit 0.42m) | DistXY=2.98m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538276.651805847] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(-0.041, -0.054, 4.421)m dist=4.421m fused_corners=4
+[INFO] [1791538276.743395674] [ekf_ros_adapter]: [EKF Output] Target: (3.10, 1.00, -0.06)m | Vel: (-0.07, -0.05) m/s | Mode: TRACKING   | Age: 0.18s
+[INFO] [1791538276.821287427] [offboard_commander]: [MAVLink Offboard] State=PX4_Mode_4 | Phase=FOLLOW  | alt=3.04m (tgt=3.0m) | vel_NED=[0.23, 0.74, -0.00] m/s | yaw_NED=61.9°
+[INFO] [1791538276.972332253] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (0.3, 0.2, 3.1)m | Target: (3.1, 1.0) | Dist: 4.24m | EKF: TRACKING | Det: True | BBox: (331,240) | XY scale: 0.98 | Reacq: False | Landing: -
+[INFO] [1791538276.988999669] [offboard_commander]: 🎯 PX4 đã chuyển sang chế độ OFFBOARD thành công!
+[WARN] [1791538277.093820130] [ekf_ros_adapter]: [KINEMATIC GATE] Rejected jump 0.72m > 0.60m (Measured: (2.44, 0.73) vs Predicted: (3.10, 1.01), Candidate: 1/2)
+[INFO] [1791538277.254645788] [mission_fsm]: [YAW_ALIGN] FULL XY | scale=1.00 | tracking=TRACKING | detected=True | yaw_err=-3.3° | pixel_err=(33,5)
+[INFO] [1791538277.295657755] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.591, 0.214, 4.207)m dist=4.254m fused_corners=4
+[INFO] [1791538277.298136717] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=25.016 tf_stamp=25.016 pos=(0.59,0.21,4.21) world=(3.07,1.03,-0.06)
+[INFO] [1791538277.306272891] [mission_fsm]: [YAW_ALIGN] LIMIT XY | scale=0.98 | tracking=TRACKING | detected=True | yaw_err=-3.7° | pixel_err=(65,24)
+[INFO] [1791538277.499772629] [aruco_sim_node]: frames=146, detected=27 (18.5%), camera_info=True
+[INFO] [1791538277.979232437] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.857, 0.324, 4.003)m dist=4.106m fused_corners=4
+[INFO] [1791538278.517983627] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.743, 0.315, 3.825)m dist=3.910m fused_corners=4
+[INFO] [1791538278.666220850] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.239m (limit 0.42m) | DistXY=2.15m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538278.679144199] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (1.0, 0.5, 3.1)m | Target: (3.1, 1.0) | Dist: 3.80m | EKF: TRACKING | Det: True | BBox: (410,278) | XY scale: 0.89 | Reacq: False | Landing: -
+[INFO] [1791538278.837182054] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=3.06m (tgt=3.0m) | vel_NED=[0.07, 0.29, -0.00] m/s | yaw_NED=69.9°
+[INFO] [1791538279.006349113] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=26.040 tf_stamp=26.040 pos=(0.59,0.30,3.78) world=(3.03,1.02,-0.04)
+[INFO] [1791538279.230096895] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.506, 0.299, 3.739)m dist=3.785m fused_corners=4
+[INFO] [1791538279.377746555] [ekf_ros_adapter]: [EKF Output] Target: (2.98, 1.01, 0.01)m | Vel: (-0.14, -0.04) m/s | Mode: TRACKING   | Age: 0.21s
+[INFO] [1791538279.658546819] [aruco_sim_node]: frames=155, detected=36 (23.2%), camera_info=True
+[INFO] [1791538279.902394260] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.344, 0.333, 3.684)m dist=3.715m fused_corners=4
+[INFO] [1791538280.351502609] [mission_fsm]: [YAW_ALIGN] FULL XY | scale=1.00 | tracking=TRACKING | detected=True | yaw_err=-3.1° | pixel_err=(32,31)
+[INFO] [1791538280.477429475] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -64.0°] | Drone Pos: (1.34, 0.51, 3.00)
+[INFO] [1791538280.481838979] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (1.3, 0.5, 3.0)m | Target: (3.0, 1.0) | Dist: 3.47m | EKF: TRACKING | Det: True | BBox: (352,271) | XY scale: 1.00 | Reacq: False | Landing: -
+[INFO] [1791538280.543517369] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.222, 0.186, 3.623)m dist=3.635m fused_corners=4
+[INFO] [1791538280.695729242] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.290m (limit 0.42m) | DistXY=1.73m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538280.867781217] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=2.97m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=68.3°
+[INFO] [1791538281.053405967] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.214, 0.189, 3.568)m dist=3.579m fused_corners=4
+[INFO] [1791538281.057329343] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=27.228 tf_stamp=27.228 pos=(0.21,0.19,3.57) world=(3.01,1.01,-0.02)
+[INFO] [1791538281.714017481] [aruco_sim_node]: frames=164, detected=45 (27.4%), camera_info=True
+[INFO] [1791538281.726146237] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.248, 0.167, 3.528)m dist=3.541m fused_corners=4
+[INFO] [1791538282.045862830] [ekf_ros_adapter]: [EKF Output] Target: (3.04, 1.02, -0.00)m | Vel: (0.04, 0.01) m/s | Mode: TRACKING   | Age: 0.18s
+[INFO] [1791538282.237389664] [mission_fsm]: [STATUS] Phase: FOLLOW  | Drone: (1.3, 0.4, 2.9)m | Target: (3.0, 1.0) | Dist: 3.38m | EKF: TRACKING | Det: True | BBox: (357,264) | XY scale: 1.00 | Reacq: False | Landing: -
+[INFO] [1791538282.288133006] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.295, 0.179, 3.489)m dist=3.506m fused_corners=4
+[INFO] [1791538282.790359153] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.261m (limit 0.42m) | DistXY=1.76m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538282.799676241] [mission_fsm]: 📥 [LAND CMD] Nhận lệnh hạ cánh (/operator/land_command=True) | Pha hiện tại: FOLLOW | Tracking Lock: True
+[INFO] [1791538282.910864189] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=FOLLOW  | alt=2.81m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.13] m/s | yaw_NED=64.5°
+[INFO] [1791538282.911396947] [mission_fsm]: Operator LAND command received.
+[INFO] [1791538282.912924228] [mission_fsm]: [FSM] Phase transition: FOLLOW → APPROACH
+[INFO] [1791538282.953626324] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=28.216 tf_stamp=28.216 pos=(0.34,0.25,3.43) world=(2.98,0.99,-0.03)
+[INFO] [1791538282.953705651] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.339, 0.252, 3.428)m dist=3.454m fused_corners=4
+[INFO] [1791538282.984835524] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=1.74m, Rz=2.83m | Cmd=(1.11, 0.37, -0.45)m/s
+[INFO] [1791538283.097406645] [mission_fsm]: [LANDING] Entering SMC glide slope at Rxy=1.73m (Rswitch=9.00m, uncertainty=0.157m).
+[INFO] [1791538283.544838762] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.356, 0.147, 3.368)m dist=3.391m fused_corners=4
+[INFO] [1791538283.813188079] [aruco_sim_node]: frames=171, detected=52 (30.4%), camera_info=True
+[INFO] [1791538284.048949533] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.333, 0.074, 3.316)m dist=3.333m fused_corners=4
+[INFO] [1791538284.071739529] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (1.3, 0.4, 2.6)m | Target: (3.0, 1.0) | Dist: 3.14m | EKF: TRACKING | Det: True | BBox: (367,250) | XY scale: 0.57 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.25m
+[INFO] [1791538284.739186457] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.363, -0.071, 3.020)m dist=3.042m fused_corners=4
+[INFO] [1791538284.826344384] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.208m (limit 0.42m) | DistXY=1.68m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538284.827572336] [ekf_ros_adapter]: [EKF Output] Target: (3.01, 1.00, 0.00)m | Vel: (-0.01, -0.01) m/s | Mode: TRACKING   | Age: 0.16s
+[INFO] [1791538284.938218927] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=2.31m (tgt=3.0m) | vel_NED=[0.35, 1.13, 0.45] m/s | yaw_NED=66.7°
+[INFO] [1791538285.001979001] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=29.308 tf_stamp=29.308 pos=(0.39,-0.08,2.19) world=(2.70,0.81,0.70)
+[INFO] [1791538285.005586247] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=1.62m, Rz=2.28m | Cmd=(1.08, 0.31, -0.45)m/s
+[INFO] [1791538285.295840342] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.431, -0.049, 2.790)m dist=2.824m fused_corners=4
+[INFO] [1791538285.856850716] [aruco_sim_node]: frames=179, detected=60 (33.5%), camera_info=True
+[INFO] [1791538285.863681173] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (1.9, 0.8, 2.0)m | Target: (3.0, 1.0) | Dist: 2.23m | EKF: TRACKING | Det: True | BBox: (398,258) | XY scale: 0.57 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.26m
+[INFO] [1791538285.868217614] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -61.1°] | Drone Pos: (1.92, 0.80, 1.97)
+[INFO] [1791538285.873796196] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.412, 0.200, 2.444)m dist=2.487m fused_corners=4
+[INFO] [1791538286.413922171] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43, 43] optical xyz=(0.377, 0.237, 2.374)m dist=2.415m fused_corners=8
+[INFO] [1791538286.911626660] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.267m (limit 0.42m) | DistXY=0.45m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538286.979218721] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=1.62m (tgt=3.0m) | vel_NED=[0.00, 0.37, 0.37] m/s | yaw_NED=73.7°
+[INFO] [1791538286.980221057] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.268, 0.313, 2.040)m dist=2.081m fused_corners=8
+[INFO] [1791538286.981100596] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=30.460 tf_stamp=30.460 pos=(0.27,0.31,2.04) world=(3.00,1.00,-0.08)
+[INFO] [1791538287.100394368] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.36m, Rz=1.70m | Cmd=(0.27, -0.02, -0.34)m/s
+[INFO] [1791538287.461798627] [ekf_ros_adapter]: [EKF Output] Target: (3.00, 1.00, -0.08)m | Vel: (-0.00, -0.00) m/s | Mode: TRACKING   | Age: 0.25s
+[INFO] [1791538287.550198508] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.208, 0.313, 1.874)m dist=1.911m fused_corners=4
+[INFO] [1791538287.639458845] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (2.9, 1.1, 1.5)m | Target: (3.0, 1.0) | Dist: 1.55m | EKF: TRACKING | Det: True | BBox: (372,318) | XY scale: 0.57 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.30m
+[INFO] [1791538288.019091036] [aruco_sim_node]: frames=187, detected=68 (36.4%), camera_info=True
+[INFO] [1791538288.344284727] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.086, 0.401, 1.613)m dist=1.665m fused_corners=4
+[INFO] [1791538288.970625336] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=31.616 tf_stamp=31.616 pos=(0.01,0.46,1.51) world=(2.99,1.00,-0.04)
+[INFO] [1791538288.970693915] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.009, 0.461, 1.505)m dist=1.574m fused_corners=4
+[INFO] [1791538289.005599889] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=1.22m (tgt=3.0m) | vel_NED=[-0.04, -0.14, 0.25] m/s | yaw_NED=73.8°
+[INFO] [1791538289.010112888] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.158m (limit 0.42m) | DistXY=0.16m | Mode=INNER_FINE | Msg: OK
+[INFO] [1791538289.175292239] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.16m, Rz=1.21m | Cmd=(-0.12, -0.00, -0.25)m/s
+[INFO] [1791538289.422029130] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (3.1, 1.0, 1.2)m | Target: (3.0, 1.0) | Dist: 1.18m | EKF: TRACKING | Det: True | BBox: (318,381) | XY scale: 0.57 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.26m
+[INFO] [1791538289.519798427] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(-0.062, 0.436, 1.422)m dist=1.489m fused_corners=4
+[INFO] [1791538290.021975964] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(-0.117, 0.361, 0.975)m dist=1.047m fused_corners=4
+[INFO] [1791538290.135957890] [ekf_ros_adapter]: [EKF Output] Target: (2.98, 1.01, 0.33)m | Vel: (-0.02, 0.01) m/s | Mode: TRACKING   | Age: 0.24s
+[INFO] [1791538290.302997881] [aruco_sim_node]: frames=195, detected=76 (39.0%), camera_info=True
+[INFO] [1791538290.588331173] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(-0.161, 0.232, 1.264)m dist=1.296m fused_corners=4
+[INFO] [1791538291.045746124] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (3.0, 0.8, 0.9)m | Target: (3.0, 1.0) | Dist: 1.04m | EKF: TRACKING | Det: False | BBox: (261,326) | XY scale: 0.57 | Reacq: False | Landing: GLIDE_SLOPE/σ2=0.38m
+[INFO] [1791538291.048347763] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.404m (limit 0.42m) | DistXY=0.18m | Mode=LOST | Msg: OK
+[INFO] [1791538291.051228573] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -78.7°] | Drone Pos: (2.97, 0.84, 0.93)
+[INFO] [1791538291.053263512] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=0.93m (tgt=3.0m) | vel_NED=[0.12, 0.01, 0.25] m/s | yaw_NED=58.5°
+[INFO] [1791538291.114130153] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(-0.153, 0.445, 1.099)m dist=1.196m fused_corners=4
+[INFO] [1791538291.114843270] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=32.936 tf_stamp=32.936 pos=(-0.15,0.44,1.10) world=(3.01,1.01,-0.01)
+[INFO] [1791538291.216174147] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.19m, Rz=0.94m | Cmd=(0.07, 0.13, -0.25)m/s
+[INFO] [1791538291.644022242] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(-0.109, 0.038, 1.098)m dist=1.104m fused_corners=4
+[INFO] [1791538292.363305355] [aruco_sim_node]: frames=203, detected=82 (40.4%), camera_info=True
+[INFO] [1791538292.583700598] [ekf_ros_adapter]: [EKF Output] Target: (3.01, 1.00, 0.00)m | Vel: (0.00, -0.01) m/s | Mode: PREDICTING | Age: 0.61s
+[INFO] [1791538292.699293688] [mission_fsm]: [STATUS] Phase: APPROACH | Drone: (2.8, 0.8, 0.8)m | Target: (3.0, 1.0) | Dist: 0.80m | EKF: PREDICTING | Det: False | BBox: (277,252) | XY scale: 0.57 | Reacq: False | Landing: HOLD/σ2=0.52m
+[INFO] [1791538293.068219163] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=APPROACH | alt=0.73m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=46.6°
+[INFO] [1791538293.069081665] [covariance_gate_node]: [GATE_HOLD] r_unc=0.782m (limit 0.42m) | DistXY=0.25m | Mode=LOST | Msg: Uncertainty radius 0.782m > allowed funnel 0.420m; Uncertainty radius 0.782m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538293.178537614] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.041, 0.368, 0.890)m dist=0.964m fused_corners=4
+[INFO] [1791538293.179189287] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=34.192 tf_stamp=34.192 pos=(0.04,0.37,0.89) world=(3.01,1.01,0.00)
+[INFO] [1791538293.335063210] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.24m, Rz=0.73m | Cmd=(0.13, 0.11, -0.25)m/s
+[INFO] [1791538293.751769760] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.042, 0.057, 0.699)m dist=0.702m fused_corners=4
+[INFO] [1791538293.945246350] [mission_fsm]: [LANDING] Final descent authorized: Rxy=0.16m, Rz=0.36m, uncertainty=0.256m.
+[INFO] [1791538293.946693067] [mission_fsm]: [FSM] Phase transition: APPROACH → LAND
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 1170, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 1161, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 809, in _spin_once_impl
+    raise handler.exception()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/task.py", line 309, in _execute_coroutine_step
+    result = coro.send(None)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 488, in handler
+    await call_coroutine(entity, arg)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 396, in _execute_timer
+    await await_or_execute(tmr.callback)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 110, in await_or_execute
+    return callback(*args)
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 497, in fsm_update
+    self._handle_land()
+  File "/home/duy/VDT_project/simulation/core/mission_fsm_node.py", line 818, in _handle_land
+    tracking_valid = self._landing_tracking_is_valid(now)
+NameError: name 'now' is not defined. Did you mean: 'pow'?
+[INFO] [1791538294.260099969] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.040, 0.216, 0.910)m dist=0.936m fused_corners=4
+[INFO] [1791538294.489808666] [aruco_sim_node]: frames=212, detected=87 (41.0%), camera_info=True
+[INFO] [1791538294.966844467] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.034, 0.190, 0.812)m dist=0.835m fused_corners=4
+[INFO] [1791538294.969905653] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=35.212 tf_stamp=35.212 pos=(0.03,0.19,0.81) world=(3.00,1.00,0.01)
+[INFO] [1791538295.081933975] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.55m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=38.6°
+[INFO] [1791538295.084049177] [ekf_ros_adapter]: [EKF Output] Target: (2.99, 1.00, -0.02)m | Vel: (0.01, 0.01) m/s | Mode: TRACKING   | Age: 0.25s
+[INFO] [1791538295.087565541] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.276m (limit 0.42m) | DistXY=0.07m | Mode=INNER_FINE | Msg: OK
+[INFO] [1791538295.393827222] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.05m, Rz=0.56m | Cmd=(0.04, 0.03, -0.25)m/s
+[INFO] [1791538295.510513627] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.022, 0.176, 0.756)m dist=0.776m fused_corners=4
+[INFO] [1791538295.960552016] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -90.0°] | Drone Pos: (2.97, 1.00, 0.52)
+[INFO] [1791538296.092025732] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.017, 0.208, 0.746)m dist=0.775m fused_corners=4
+[INFO] [1791538296.529383801] [aruco_sim_node]: frames=220, detected=95 (43.2%), camera_info=True
+[INFO] [1791538296.805538541] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.017, 0.229, 0.754)m dist=0.789m fused_corners=4
+[INFO] [1791538296.807545444] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=36.368 tf_stamp=36.368 pos=(0.02,0.23,0.75) world=(3.00,1.00,0.00)
+[INFO] [1791538297.107188982] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.241m (limit 0.42m) | DistXY=0.03m | Mode=INNER_FINE | Msg: OK
+[INFO] [1791538297.113059011] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.54m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=27.3°
+[INFO] [1791538297.468887838] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.04m, Rz=0.55m | Cmd=(0.01, -0.03, -0.25)m/s
+[INFO] [1791538297.581049035] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.019, 0.235, 0.758)m dist=0.794m fused_corners=4
+[INFO] [1791538297.585428529] [ekf_ros_adapter]: [EKF Output] Target: (3.00, 1.00, 0.01)m | Vel: (0.00, -0.00) m/s | Mode: TRACKING   | Age: 0.40s
+[INFO] [1791538298.087934706] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.027, 0.254, 0.794)m dist=0.834m fused_corners=4
+[INFO] [1791538298.534334931] [aruco_sim_node]: frames=228, detected=102 (44.7%), camera_info=True
+[INFO] [1791538299.197380873] [covariance_gate_node]: [GATE_HOLD] r_unc=0.752m (limit 0.42m) | DistXY=0.14m | Mode=LOST | Msg: Uncertainty radius 0.752m > allowed funnel 0.420m; Uncertainty radius 0.752m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538299.205865281] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.78m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=12.2°
+[INFO] [1791538299.413851953] [aruco_sim_node]: [DETECTION] Mode=INNER_FINE active_ids=[43] optical xyz=(0.071, 0.225, 0.999)m dist=1.026m fused_corners=4
+[INFO] [1791538299.413847359] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=37.984 tf_stamp=37.984 pos=(0.07,0.22,1.00) world=(3.00,1.01,-0.01)
+[INFO] [1791538299.588443540] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.23m, Rz=0.85m | Cmd=(0.10, 0.14, -0.25)m/s
+[INFO] [1791538299.913937955] [ekf_ros_adapter]: [EKF Output] Target: (3.01, 1.01, -0.02)m | Vel: (0.01, 0.01) m/s | Mode: TRACKING   | Age: 0.36s
+[INFO] [1791538299.945620079] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.124, 0.099, 1.091)m dist=1.103m fused_corners=8
+[INFO] [1791538300.490631987] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.165, 0.207, 1.126)m dist=1.157m fused_corners=8
+[INFO] [1791538300.706112686] [aruco_sim_node]: frames=237, detected=107 (45.1%), camera_info=True
+[INFO] [1791538300.761958678] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -73.3°] | Drone Pos: (2.72, 0.56, 1.01)
+[INFO] [1791538301.156116239] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.340, 0.220, 1.263)m dist=1.326m fused_corners=8
+[INFO] [1791538301.157495831] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=39.140 tf_stamp=39.140 pos=(0.34,0.22,1.26) world=(3.00,1.00,0.02)
+[INFO] [1791538301.233616329] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.228m (limit 0.42m) | DistXY=0.65m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538301.237808886] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=1.06m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-7.5°
+[INFO] [1791538301.670502494] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=0.73m, Rz=0.98m | Cmd=(0.29, 0.39, -0.45)m/s
+[INFO] [1791538301.833692895] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.468, 0.194, 1.335)m dist=1.428m fused_corners=8
+[INFO] [1791538302.395862366] [ekf_ros_adapter]: [EKF Output] Target: (3.00, 1.03, -0.01)m | Vel: (-0.01, 0.07) m/s | Mode: TRACKING   | Age: 0.17s
+[INFO] [1791538302.569343703] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42, 43] optical xyz=(0.715, 0.267, 1.419)m dist=1.611m fused_corners=8
+[INFO] [1791538302.842993130] [aruco_sim_node]: frames=246, detected=116 (47.2%), camera_info=True
+[INFO] [1791538302.864017253] [ekf_ros_adapter]: [WORLD_MEAS] cam_stamp=40.096 tf_stamp=40.096 pos=(0.83,0.36,1.43) world=(3.01,0.99,0.02)
+[INFO] [1791538303.150962368] [aruco_sim_node]: [DETECTION] Mode=OUTER_COARSE active_ids=[42] optical xyz=(0.950, 0.447, 1.426)m dist=1.771m fused_corners=4
+[INFO] [1791538303.300005410] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=1.27m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-30.8°
+[INFO] [1791538303.300384304] [covariance_gate_node]: [SAFE_TO_LAND] r_unc=0.277m (limit 0.42m) | DistXY=1.21m | Mode=OUTER_COARSE | Msg: OK
+[INFO] [1791538303.698448813] [smc_guidance_node]: [GLIDE_SLOPE] Rxy=1.30m, Rz=1.28m | Cmd=(0.54, 0.73, -0.45)m/s
+[INFO] [1791538304.819506552] [ekf_ros_adapter]: [EKF Output] Target: (3.03, 0.99, -0.00)m | Vel: (0.01, -0.01) m/s | Mode: PREDICTING_DEGRADED | Age: 1.23s
+[INFO] [1791538305.016359000] [aruco_sim_node]: frames=256, detected=118 (46.1%), camera_info=True
+[INFO] [1791538305.319087838] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=1.17m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-57.3°
+[INFO] [1791538305.320865033] [covariance_gate_node]: [GATE_HOLD] r_unc=1.490m (limit 0.42m) | DistXY=1.57m | Mode=LOST | Msg: Uncertainty radius 1.490m > allowed funnel 0.420m; Uncertainty radius 1.490m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538305.548948523] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -85.8°] | Drone Pos: (1.96, -0.19, 1.15)
+[INFO] [1791538307.070080067] [aruco_sim_node]: frames=265, detected=118 (44.5%), camera_info=True
+[INFO] [1791538307.095200093] [ekf_ros_adapter]: [EKF Output] Target: (3.05, 0.97, -0.02)m | Vel: (0.00, -0.00) m/s | Mode: PREDICTING_DEGRADED | Age: 2.76s
+[INFO] [1791538307.324344610] [covariance_gate_node]: [GATE_HOLD] r_unc=3.334m (limit 0.42m) | DistXY=1.71m | Mode=LOST | Msg: Uncertainty radius 3.334m > allowed funnel 0.420m; Uncertainty radius 3.334m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538307.330432782] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.97m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-85.2°
+[INFO] [1791538309.246144965] [aruco_sim_node]: frames=275, detected=118 (42.9%), camera_info=True
+[INFO] [1791538309.381890598] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.82m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-115.6°
+[INFO] [1791538309.383486448] [covariance_gate_node]: [GATE_HOLD] r_unc=5.655m (limit 0.42m) | DistXY=1.76m | Mode=LOST | Msg: Uncertainty radius 5.655m > allowed funnel 0.420m; Uncertainty radius 5.655m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538309.428218141] [ekf_ros_adapter]: [EKF Output] Target: (3.07, 0.96, -0.04)m | Vel: (0.00, -0.00) m/s | Mode: EXPIRED    | Age: 4.27s
+[INFO] [1791538310.107930047] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -86.1°] | Drone Pos: (1.48, 0.17, 0.78)
+[INFO] [1791538311.261245292] [aruco_sim_node]: frames=285, detected=118 (41.4%), camera_info=True
+[INFO] [1791538311.446794582] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.69m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-150.5°
+[INFO] [1791538311.451258530] [covariance_gate_node]: [GATE_HOLD] r_unc=8.226m (limit 0.42m) | DistXY=1.81m | Mode=LOST | Msg: Uncertainty radius 8.226m > allowed funnel 0.420m; Uncertainty radius 8.226m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538311.813187408] [ekf_ros_adapter]: [EKF Output] Target: (3.10, 0.94, -0.06)m | Vel: (0.00, -0.00) m/s | Mode: EXPIRED    | Age: 5.79s
+[INFO] [1791538313.278183816] [aruco_sim_node]: frames=295, detected=118 (40.0%), camera_info=True
+[INFO] [1791538313.484524658] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.44m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=168.4°
+[INFO] [1791538313.485471977] [covariance_gate_node]: [GATE_HOLD] r_unc=11.110m (limit 0.42m) | DistXY=1.88m | Mode=LOST | Msg: Uncertainty radius 11.110m > allowed funnel 0.420m; Uncertainty radius 11.110m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538314.190892424] [ekf_ros_adapter]: [EKF Output] Target: (3.12, 0.92, -0.08)m | Vel: (0.00, -0.00) m/s | Mode: EXPIRED    | Age: 7.30s
+[INFO] [1791538314.839258684] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -86.1°] | Drone Pos: (1.24, 0.44, 0.34)
+[INFO] [1791538315.499108535] [aruco_sim_node]: frames=304, detected=118 (38.8%), camera_info=True
+[INFO] [1791538315.565907231] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.29m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=121.3°
+[INFO] [1791538315.567132540] [covariance_gate_node]: [GATE_HOLD] r_unc=14.260m (limit 0.42m) | DistXY=1.99m | Mode=LOST | Msg: Uncertainty radius 14.260m > allowed funnel 0.420m; Uncertainty radius 14.260m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538316.601667391] [ekf_ros_adapter]: [EKF Output] Target: (3.14, 0.91, -0.10)m | Vel: (0.00, -0.00) m/s | Mode: EXPIRED    | Age: 8.83s
+[INFO] [1791538317.526119023] [aruco_sim_node]: frames=313, detected=118 (37.7%), camera_info=True
+[INFO] [1791538317.566148263] [covariance_gate_node]: [GATE_HOLD] r_unc=17.661m (limit 0.42m) | DistXY=2.09m | Mode=LOST | Msg: Uncertainty radius 17.661m > allowed funnel 0.420m; Uncertainty radius 17.661m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538317.630319487] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.26m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=64.4°
+[INFO] [1791538319.062647017] [ekf_ros_adapter]: [EKF Output] Target: (3.17, 0.89, -0.11)m | Vel: (0.00, -0.00) m/s | Mode: EXPIRED    | Age: 10.34s
+[INFO] [1791538319.592387531] [aruco_sim_node]: frames=321, detected=118 (36.8%), camera_info=True
+[INFO] [1791538319.653958291] [covariance_gate_node]: [GATE_HOLD] r_unc=21.112m (limit 0.42m) | DistXY=2.14m | Mode=LOST | Msg: Uncertainty radius 21.112m > allowed funnel 0.420m; Uncertainty radius 21.112m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538319.661000051] [fast_tracker_style_node]: [STATUS] Gazebo Odom: [CONNECTED] | Camera PointCloud2: [RECEIVING] | CameraPitch: [ACTUAL -85.8°] | Drone Pos: (1.12, 0.28, 0.21)
+[INFO] [1791538319.666305223] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.21m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=7.1°
+[INFO] [1791538320.161801461] [touchdown_detector_node]: [CONTACT DETECTED] Confirming ground contact: 0.00s / 0.35s
+[WARN] [1791538320.552529793] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538320.641526245] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538320.756238907] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538320.817867460] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538320.906383276] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538320.975816497] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.083217135] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.154921052] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[INFO] [1791538321.269287622] [touchdown_detector_node]: 🏆 [TOUCHDOWN CONFIRMED] Motors ready for shutdown! (LATCHED_TOUCHDOWN)
+[WARN] [1791538321.275485559] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.338582211] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.412749636] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.479859566] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[INFO] [1791538321.577818148] [ekf_ros_adapter]: [EKF Output] Target: (3.19, 0.88, -0.13)m | Vel: (0.00, -0.00) m/s | Mode: EXPIRED    | Age: 11.86s
+[WARN] [1791538321.579599772] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.649056177] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[INFO] [1791538321.664054180] [covariance_gate_node]: [GATE_HOLD] r_unc=24.665m (limit 0.42m) | DistXY=2.13m | Mode=LOST | Msg: Uncertainty radius 24.665m > allowed funnel 0.420m; Uncertainty radius 24.665m > glide limit 0.500m (2-sigma); Measurement age 1.50s > timeout 0.50s; Target is not actively detected by vision
+[INFO] [1791538321.699818561] [aruco_sim_node]: frames=329, detected=118 (35.9%), camera_info=True
+[INFO] [1791538321.809345190] [offboard_commander]: [MAVLink Offboard] State=OFFBOARD | Phase=LAND    | alt=0.19m (tgt=3.0m) | vel_NED=[0.00, 0.00, -0.00] m/s | yaw_NED=-53.6°
+[WARN] [1791538321.822567166] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538321.894654866] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.013434390] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.097807903] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.201312540] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[INFO] [1791538322.270155377] [touchdown_detector_node]: 🏆 [TOUCHDOWN CONFIRMED] Motors ready for shutdown! (LATCHED_TOUCHDOWN)
+[WARN] [1791538322.277053683] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.366020435] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.457495795] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.562135878] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.653633620] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.786702816] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[WARN] [1791538322.880481283] [offboard_commander]: Ignoring premature touchdown signal while airborne (alt=0.19m > 0.18m).
+[INFO] [1791538322.883491468] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.883513259] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.883538527] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.884245985] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.887095442] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.887523468] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.892301929] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [1791538322.892866057] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[ERROR] [1791538322.934202586] [depth_to_image_converter]: Conversion error: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:389
+Failed to publish log message to rosout: publisher's context is invalid, at ./src/rcl/publisher.c:389
+======================================================================
+  SIMULATION LAUNCHER (Fast-Tracker & PX4-Avoidance Architecture)
+======================================================================
+[1/4] Loading the world already used by Gazebo...
+      -> Loaded 12 obstacles from /home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf.
+[2/4] Starting Gazebo Sim -> ROS 2 Bridge...
+      -> ros_gz_bridge backend: Gazebo Harmonic (gz-msgs / gz-transport).
+      -> Gazebo sensor/odom topics detected:
+         /camera
+         /camera_info
+         /depth_camera
+         /depth_camera/points
+         /gui/camera/pose
+         /model/x500_depth_0/command/gimbal_pitch
+         /model/x500_depth_0/command/gimbal_roll
+         /model/x500_depth_0/command/gimbal_yaw
+         /model/x500_depth_0/command/motor_speed
+         /model/x500_depth_0/joint_state
+         /model/x500_depth_0/odometry
+         /model/x500_depth_0/odometry_with_covariance
+         /model/x500_depth_0/pose
+         /model/x500_depth_0/servo_0
+         /model/x500_depth_0/servo_1
+         /model/x500_depth_0/servo_2
+         /model/x500_depth_0/servo_3
+         /model/x500_depth_0/servo_4
+         /model/x500_depth_0/servo_5
+         /model/x500_depth_0/servo_6
+         /model/x500_depth_0/servo_7
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/air_pressure_sensor/air_pressure
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/imu_sensor/imu
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/magnetometer_sensor/magnetometer
+         /world/obstacle_avoidance/model/x500_depth_0/link/base_link/sensor/navsat_sensor/navsat
+         /x500_depth_0/command/motor_speed
+         /model/x500_depth_0/motor_failure/motor_number
+         /world/obstacle_avoidance/model/x500_depth_0/link/airspeed_link/sensor/air_speed/air_speed
+         /world/obstacle_avoidance/model/x500_depth_0/link/camera_link/sensor/camera_imu/imu
+         /world/obstacle_avoidance/model/x500_depth_0/link/flow_link/sensor/optical_flow/optical_flow
+         /world/obstacle_avoidance/model/x500_depth_0/link/lidar_sensor_link/sensor/lidar/scan
+         /world/obstacle_avoidance/model/x500_depth_0/link/link/sensor/lidar_2d_v2/scan
+      -> RGB camera bridge: ros2 run ros_gz_bridge parameter_bridge /camera@sensor_msgs/msg/Image@gz.msgs.Image
+         started (pid=112372).
+      -> RGB camera info bridge: ros2 run ros_gz_bridge parameter_bridge /camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo
+         started (pid=112373).
+      -> Depth image bridge: ros2 run ros_gz_bridge parameter_bridge /depth_camera@sensor_msgs/msg/Image@gz.msgs.Image
+         started (pid=112374).
+      -> Depth point cloud bridge: ros2 run ros_gz_bridge parameter_bridge /depth_camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked
+         started (pid=112375).
+      -> Odom bridge: ros2 run ros_gz_bridge parameter_bridge /model/x500_depth_0/odometry_with_covariance@nav_msgs/msg/Odometry[gz.msgs.OdometryWithCovariance --ros-args -r /model/x500_depth_0/odometry_with_covariance:=/odom
+      -> Odom bridge started (pid=112376).
+      -> Gimbal pitch bridge: ros2 run ros_gz_bridge parameter_bridge /model/x500_depth_0/command/gimbal_pitch@std_msgs/msg/Float64@gz.msgs.Double
+         started (pid=112377).
+      -> Joint state bridge: ros2 run ros_gz_bridge parameter_bridge /model/x500_depth_0/joint_state@sensor_msgs/msg/JointState[gz.msgs.Model --ros-args -r /model/x500_depth_0/joint_state:=/joint_states
+         started (pid=112378).
+      -> Clock bridge: ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
+         started (pid=112379).
+[3/5] Launching Autonomous Pipeline nodes...
+      -> Configured Planner algorithm: IAPF
+      -> ArUco Detector started (pid=112542).
+      -> EKF Adapter started (pid=112543).
+      -> Covariance Gate started (pid=112544).
+      -> APF Planner started (pid=112545).
+      -> SMC Guidance started (pid=112546).
+      -> Touchdown Detector started (pid=112547).
+      -> IBVS Controller started (pid=112548).
+      -> Mission FSM started (pid=112549).
+      -> Offboard Commander started (pid=112550).
+[INFO] RViz2 disabled via --no-rviz flag.
+[5/5] Starting Main ROS 2 Node...
+======================================================================
+  AUTONOMOUS MODE ACTIVE
+  Drone sẽ tự động: IDLE → SEARCH → FOLLOW → APPROACH → LAND
+  Publish Bool(data=true) to /operator/land_command để bắt đầu hạ cánh
+======================================================================
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/offboard_commander.py", line 647, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/core/offboard_commander.py", line 657, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/core/offboard_commander.py", line 653, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/apf_planner.py", line 859, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/apf_planner.py", line 868, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/apf_planner.py", line 864, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/depth_to_image_node.py", line 75, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/perception/depth_to_image_node.py", line 72, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/touchdown_detector.py", line 367, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/touchdown_detector.py", line 376, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/touchdown_detector.py", line 372, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/covariance_gate.py", line 447, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/ibvs_controller.py", line 659, in main
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/covariance_gate.py", line 456, in <module>
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    main()
+  File "/home/duy/VDT_project/simulation/control/covariance_gate.py", line 452, in main
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/ibvs_controller.py", line 668, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/ibvs_controller.py", line 664, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/smc_guidance.py", line 608, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/control/smc_guidance.py", line 617, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/control/smc_guidance.py", line 613, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/launch/launch_simulation.py", line 812, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 685, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/launch/launch_simulation.py", line 832, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/launch/launch_simulation.py", line 817, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 386, in main
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py", line 465, in main
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    rclpy.spin(node)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 809, in _spin_once_impl
+    executor.spin_once()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 812, in spin_once
+    raise handler.exception()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/task.py", line 309, in _execute_coroutine_step
+    self._spin_once_impl(timeout_sec)
+    result = coro.send(None)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 801, in _spin_once_impl
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 488, in handler
+    await call_coroutine(entity, arg)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 407, in _execute_subscription
+    handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 784, in wait_for_ready_callbacks
+    await await_or_execute(sub.callback, msg)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 110, in await_or_execute
+    return callback(*args)
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 370, in image_cb
+    return next(self._cb_iter)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 657, in _wait_for_ready_callbacks
+    self.annotated_pub.publish(out)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/publisher.py", line 70, in publish
+    wait_set = _rclpy.WaitSet(
+rclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py", line 474, in <module>
+    self.__publisher.publish(msg)
+rclpy._rclpy_pybind11.RCLError: Failed to publish: publisher's context is invalid, at ./src/rcl/publisher.c:389
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 395, in <module>
+    main()
+  File "/home/duy/VDT_project/simulation/perception/aruco_sim_node.py", line 391, in main
+    main()
+  File "/home/duy/VDT_project/simulation/perception/ekf_ros_adapter.py", line 470, in main
+    rclpy.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+    rclpy.shutdown()
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 130, in shutdown
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    _shutdown(context=context)
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/utilities.py", line 58, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241
+    return context.shutdown()
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/context.py", line 102, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:241

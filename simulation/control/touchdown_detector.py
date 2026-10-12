@@ -45,8 +45,8 @@ if REPO_ROOT not in sys.path:
 @dataclass
 class TouchdownParams:
     """Parameters for drift-invariant touchdown detection."""
-    # Mount height of camera / Pixhawk on the airframe (~25-30cm) + safe margin
-    optical_height_threshold_m: float = 0.40
+    # Mount height of camera / Pixhawk on the airframe (~10-12cm on ground skids) + safe margin
+    optical_height_threshold_m: float = 0.18
     # Minimum downward descent command (negative in ENU) required to consider landing
     descent_cmd_threshold_mps: float = -0.10
     # Maximum actual vertical speed allowed when stopped on ground
@@ -57,8 +57,8 @@ class TouchdownParams:
     jerk_impact_threshold: float = 3.50
     # Required confirmation duration on ground before latching touchdown (seconds)
     confirmation_duration_s: float = 0.35
-    # Fallback absolute altitude window (very relaxed to handle up to 0.6m barometer drift)
-    altitude_ceiling_m: float = 0.80
+    # Strict altitude ceiling ensuring drone is physically near ground level before latching
+    altitude_ceiling_m: float = 0.22
 
 
 @dataclass
@@ -157,13 +157,18 @@ class TouchdownDetector:
             and abs(dz_dt) <= self.p.stoppage_dz_dt_max_mps
         )
         is_at_ground_level = current_alt_z <= 0.18 and is_vertically_stopped
-        kinematic_stopped = (is_commanding_descent and is_vertically_stopped) or is_at_ground_level
+        # Kinematic stoppage ONLY valid if drone is truly close to ground (current_alt_z <= 0.20m)
+        # Prevents airborne false-positives when vehicle brakes during final descent!
+        kinematic_stopped = (
+            (is_commanding_descent and is_vertically_stopped and current_alt_z <= 0.20)
+            or is_at_ground_level
+        )
 
         # 4. Optical Height check (Marker-Relative)
         # Directly measures distance from camera mount to the pad surface
         optical_near = False
         if optical_z is not None:
-            optical_near = optical_z <= self.p.optical_height_threshold_m
+            optical_near = (optical_z <= self.p.optical_height_threshold_m) and (current_alt_z <= 0.20)
         else:
             # If camera view is occluded or not available, rely on relaxed altitude ceiling
             optical_near = current_alt_z <= self.p.altitude_ceiling_m

@@ -62,7 +62,7 @@ aruco_sim_node:
     marker_id: 42                         # Mã ID của ArUco marker lớn (dùng cho bám bắt tầm xa/trên cao)
     marker_size_m: 0.52                   # Kích thước cạnh của ArUco marker lớn (m)
     small_marker_id: 43                   # Mã ID của ArUco marker nhỏ ở tâm (dùng cho pha hạ cánh cự ly sát đất)
-    small_marker_size_m: 0.10             # Kích thước cạnh của ArUco marker nhỏ (m)
+    small_marker_size_m: 0.05             # Kích thước cạnh của ArUco marker nhỏ (m) chuẩn theo board A0 52-5cm
     min_detection_distance_m: 0.05        # Cự ly nhận diện tối thiểu (m)
     max_detection_distance_m: 15.0        # Cự ly nhận diện tối đa (m)
 
@@ -103,9 +103,9 @@ smc_guidance_node:
     rswitch_default: 5.00                 # Bán kính mặt trượt chuyển đổi mặc định khi chưa có thông số từ Covariance Gate (m)
     final_descent_rxy_m: 0.60             # Bán kính sai số ngang tối đa cho phép để chuyển sang pha hạ cánh thẳng đứng (m)
     final_descent_alt_m: 0.40             # Độ cao bắt đầu pha hạ cánh thẳng đứng cuối cùng (m)
-    final_uncertainty_max_2sigma_m: 0.35  # Độ bất định hiệp phương sai 2-sigma tối đa cho phép để tiến hành hạ thẳng đứng (m)
-    max_state_age_s: 0.30                 # Thời gian tối đa giữ trạng thái mục tiêu từ EKF trước khi coi là mất tín hiệu (s)
-    max_covariance_age_s: 0.30            # Thời gian tối đa giữ dữ liệu cổng hiệp phương sai trước khi timeout (s)
+    final_uncertainty_max_2sigma_m: 0.55  # Độ bất định hiệp phương sai 2-sigma tối đa cho phép để tiến hành hạ thẳng đứng (m)
+    max_state_age_s: 0.60                 # Thời gian tối đa giữ trạng thái mục tiêu từ EKF trước khi coi là mất tín hiệu (s)
+    max_covariance_age_s: 0.60            # Thời gian tối đa giữ dữ liệu cổng hiệp phương sai trước khi timeout (s)
     control_rate_hz: 20.0                 # Tần số chu kỳ tính toán luật điều khiển trượt SMC (Hz)
 
 # ----------------------------------------------------------------------------
@@ -147,15 +147,15 @@ mission_fsm:
     follow_distance: 3.5                  # Cự ly ngang mong muốn khi bám đuổi mục tiêu trong pha FOLLOW (m)
     search_timeout: 3.0                   # Thời gian mất dấu mục tiêu trước khi FSM chuyển từ FOLLOW quay về SEARCH (s)
     approach_timeout: 3.0                 # Thời gian mất dấu trong pha APPROACH trước khi hủy hạ cánh quay về SEARCH (s)
-    smc_command_timeout: 0.20             # Thời gian timeout của lệnh vận tốc từ bộ điều khiển SMC (s)
-    apf_command_timeout: 0.25             # Thời gian timeout của lệnh vận tốc từ bộ quy hoạch APF (s)
-    covariance_status_timeout: 0.30       # Thời gian timeout của bản tin trạng thái từ Covariance Gate (s)
+    smc_command_timeout: 0.60             # Thời gian timeout của lệnh vận tốc từ bộ điều khiển SMC (s)
+    apf_command_timeout: 0.60             # Thời gian timeout của lệnh vận tốc từ bộ quy hoạch APF (s)
+    covariance_status_timeout: 0.60       # Thời gian timeout của bản tin trạng thái từ Covariance Gate (s)
     covariance_revert_timeout: 4.0        # Thời gian chờ tối đa khi điều kiện cổng hiệp phương sai không đạt trước khi hủy hạ cánh về FOLLOW (s)
-    max_uncertainty_enter_glide_2sigma_m: 0.45  # Ngưỡng độ bất định 2-sigma tối đa để FSM cho phép bắt đầu trượt glide (m)
-    max_uncertainty_continue_glide_2sigma_m: 0.50 # Ngưỡng độ bất định 2-sigma tối đa để FSM duy trì giai đoạn trượt glide (m)
+    max_uncertainty_enter_glide_2sigma_m: 0.50  # Ngưỡng độ bất định 2-sigma tối đa để FSM cho phép bắt đầu trượt glide (m)
+    max_uncertainty_continue_glide_2sigma_m: 0.55 # Ngưỡng độ bất định 2-sigma tối đa để FSM duy trì giai đoạn trượt glide (m)
     final_descent_rxy_m: 0.60             # Bán kính sai số ngang tối đa để chuyển sang hạ cánh thẳng đứng LAND (m)
     final_descent_alt_m: 0.40             # Độ cao trần bắt đầu chuyển sang hạ cánh thẳng đứng LAND (m)
-    final_uncertainty_max_2sigma_m: 0.35  # Ngưỡng sai số 2-sigma tối đa cho phép tiến hành hạ cánh thẳng đứng (m)
+    final_uncertainty_max_2sigma_m: 0.55  # Ngưỡng sai số 2-sigma tối đa cho phép tiến hành hạ cánh thẳng đứng (m)
     takeoff_altitude: 3.0                 # Độ cao cất cánh ban đầu mong muốn (m)
     # Cơ chế điều hòa vận tốc theo độ thẳng hàng góc yaw (Yaw alignment scaling)
     yaw_align_enable: true                # Bật/tắt tính năng giảm tốc độ bay tịnh tiến khi góc yaw chưa thẳng hàng với mục tiêu
@@ -174,7 +174,7 @@ mission_fsm:
     reacquire_bbox_timeout: 0.80          # Thời gian tối đa chấp nhận bounding box cũ sau khi kích hoạt bắt lại mục tiêu (s)
     follow_bbox_timeout: 0.30             # Thời gian timeout của bounding box trong pha FOLLOW (s)
     follow_detection_hold_timeout: 0.25   # Thời gian duy trì trạng thái phát hiện khi mất dấu tức thời trong FOLLOW (s)
-    landing_tracking_timeout: 0.30        # Thời gian timeout của tín hiệu bám mục tiêu trong pha hạ cánh (s)
+    landing_tracking_timeout: 0.60        # Thời gian timeout của tín hiệu bám mục tiêu trong pha hạ cánh (s)
     reacquire_max_yaw_rate_deg: 20.0      # Vận tốc quay yaw tối đa cho phép khi xác nhận bắt lại mục tiêu (độ/s) - tránh chốt bám khi còn quay giật
     follow_entry_hold_time: 0.10          # Thời gian giữ ổn định khi vừa bước vào pha FOLLOW trước khi kích hoạt di chuyển (s)
     search_entry_hold_time: 0.30          # Thời gian giữ ổn định khi vừa bước vào pha SEARCH trước khi xoay quét (s)
@@ -194,7 +194,7 @@ offboard_commander:
     enable_alt_hold: true                 # Bật thuật toán tự động giữ độ cao khép kín (Closed-loop Altitude Hold)
     target_altitude: 3.0                  # Độ cao mục tiêu duy trì khi giữ độ cao (m)
     alt_hold_kp: 1.0                      # Hệ số tỉ lệ P cho bộ điều khiển giữ độ cao
-    mission_command_timeout: 0.25         # Thời gian an toàn tối đa nếu mất lệnh từ Mission FSM thì drone tự động hãm vận tốc về 0 (s)
+    mission_command_timeout: 0.60         # Thời gian an toàn tối đa nếu mất lệnh từ Mission FSM thì drone tự động hãm vận tốc về 0 (s)
 
 # ----------------------------------------------------------------------------
 # 9. BỘ PHÁT HIỆN TIẾP ĐẤT AN TOÀN (TOUCHDOWN DETECTOR)
@@ -202,11 +202,11 @@ offboard_commander:
 touchdown_detector:
   ros__parameters:
     use_sim_time: true                    # Sử dụng thời gian mô phỏng
-    optical_height_threshold_m: 0.40      # Ngưỡng độ cao đo từ camera tới marker để bắt đầu kiểm tra chạm đất (m)
+    optical_height_threshold_m: 0.18      # Ngưỡng độ cao đo từ camera tới marker để bắt đầu kiểm tra chạm đất (m)
     descent_cmd_threshold_mps: -0.10      # Ngưỡng vận tốc hạ yêu cầu (vz < -0.10 m/s) xác nhận drone đang trong hành trình hạ cánh
     stoppage_vz_max_mps: 0.08             # Ngưỡng vận tốc thẳng đứng vz tối đa khi drone chạm đất và dừng lại (m/s)
     stoppage_dz_dt_max_mps: 0.05          # Ngưỡng biến thiên độ cao dz/dt tối đa xác nhận drone đã nằm yên trên bãi đáp (m/s)
     jerk_impact_threshold: 3.50           # Ngưỡng phát hiện lực phản chấn/giật gia tốc khi chân drone va chạm bề mặt bãi đáp (m/s^3)
     confirmation_duration_s: 0.35         # Thời gian duy trì các điều kiện dừng liên tục trước khi chốt phát tín hiệu TOUCHDOWN (s)
-    altitude_ceiling_m: 0.80              # Trần độ cao tối đa (m) - trên độ cao này bộ phát hiện chạm đất tuyệt đối không kích hoạt
+    altitude_ceiling_m: 0.22              # Trần độ cao tối đa (m) - trên độ cao này bộ phát hiện chạm đất tuyệt đối không kích hoạt
     rate_hz: 20.0                         # Tần số chu kỳ đánh giá trạng thái tiếp đất (Hz)

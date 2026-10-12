@@ -118,7 +118,7 @@ embedded_handover/
   * **Hạn chế nghiêm trọng**: Khi drone hạ thấp xuống dưới $0.6\text{m}$, marker to bị phóng đại tràn ra ngoài rìa khung ảnh camera (FOV), gây mất dấu hoàn toàn ngay khoảnh khắc chuẩn bị chạm đất khiến drone bị mất phương hướng.
 * **Phiên bản hiện tại (`precision-landing`)**:
   * Sử dụng **Dual-Scale ArUco Board** khổ A0 (Hai marker đa tỉ lệ bố trí trên cùng tấm bạt, không đè lồng lên nhau để bảo toàn mã bit ArUco): Marker lớn ID 42 (52cm) đặt lệch trái dùng cho tầm xa ($0.8\text{m} \to 5.0\text{m}$) và Marker nhỏ ID 43 (10cm) đặt **chính giữa tâm bãi đáp** dùng cho tiếp đất cự ly sát đất ($0.05\text{m} \to 1.2\text{m}$).
-  * Sử dụng thuật toán `cv::aruco::estimatePoseBoard()` thay vì `estimatePoseSingleMarkers()`.
+    * Sử dụng thuật toán `cv::aruco::estimatePoseBoard()` thay vì `estimatePoseSingleMarkers()`.
   * **Lưu ý khi viết C++**: Cả 2 marker đều được định nghĩa tọa độ 3D góc thực tế quy về **tâm hình học của bãi đáp $(0,0,0)$ (trùng tâm marker nhỏ ID 43)**. Khi camera chuyển từ nhìn marker to sang marker nhỏ, tọa độ 3D trả về **liên tục tuyệt đối, không có bước nhảy (zero discontinuity)**.
 
 ### 2. Tách biệt Guidance Velocity và Target Motion Feedforward (`TargetMotionGate`)

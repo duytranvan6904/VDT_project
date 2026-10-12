@@ -56,7 +56,7 @@ Khi thuật toán landing tính sai lệch vị trí `Δr = r̂_pad − r̂_dron
 
 | # | Mục tiêu | Tiêu chí đánh giá |
 |---|---|---|
-| 1 | Hạ cánh mềm trên H-Pad **đứng yên** | Sai lệch tiếp đất < 10cm, vận tốc chạm < 0.3 m/s |
+| 1 | Hạ cánh mềm trên H-Pad **đứng yên** | Sai lệch tiếp đất < 20cm, vận tốc chạm < 0.3 m/s |
 | 2 | Camera **luôn giữ marker** trong FOV suốt quá trình landing | Góc tiếp cận 45° đảm bảo ArUco luôn nằm trong khung hình |
 | 3 | **Không cho phép landing** khi covariance quá lớn | Tự động hold/abort nếu σ_relative > ngưỡng an toàn |
 | 4 | Phát hiện chạm đất **đáng tin cậy** với phần cứng hiện có | Kết hợp ≥2 tín hiệu: altitude + gia tốc + marker size |

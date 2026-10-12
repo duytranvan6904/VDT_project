@@ -1,0 +1,126 @@
+{
+  "total_trials": 10,
+  "metrics": {
+    "mean_yaw_error_deg": {
+      "mean": 0.57,
+      "std": 0.29,
+      "min": 0.0,
+      "max": 0.95,
+      "p95": 0.91
+    },
+    "settling_time_s": {
+      "mean": 0.56,
+      "std": 0.05,
+      "min": 0.53,
+      "max": 0.66,
+      "p95": 0.65
+    },
+    "pixel_error_px": {
+      "mean": 19.59,
+      "std": 8.22,
+      "max": 28.6
+    }
+  },
+  "trials": [
+    {
+      "trial_id": 1,
+      "name": "Trial 01: B\u00e3i t\u0129nh, l\u1ec7ch nh\u1eb9 (+15\u00b0)",
+      "initial_offset_deg": 15.0,
+      "target_speed_mps": 0.0,
+      "mean_yaw_error_deg": 0.36,
+      "max_yaw_error_deg": 15.0,
+      "mean_pixel_error_px": 15.0,
+      "settling_time_s": 0.53
+    },
+    {
+      "trial_id": 2,
+      "name": "Trial 02: B\u00e3i t\u0129nh, l\u1ec7ch nh\u1eb9 (-15\u00b0)",
+      "initial_offset_deg": -15.0,
+      "target_speed_mps": 0.0,
+      "mean_yaw_error_deg": 0.36,
+      "max_yaw_error_deg": 15.0,
+      "mean_pixel_error_px": 15.0,
+      "settling_time_s": 0.53
+    },
+    {
+      "trial_id": 3,
+      "name": "Trial 03: B\u00e3i t\u0129nh, l\u1ec7ch l\u1edbn (+30\u00b0)",
+      "initial_offset_deg": 30.0,
+      "target_speed_mps": 0.0,
+      "mean_yaw_error_deg": 0.86,
+      "max_yaw_error_deg": 30.0,
+      "mean_pixel_error_px": 28.1,
+      "settling_time_s": 0.63
+    },
+    {
+      "trial_id": 4,
+      "name": "Trial 04: B\u00e3i t\u0129nh, l\u1ec7ch l\u1edbn (-30\u00b0)",
+      "initial_offset_deg": -30.0,
+      "target_speed_mps": 0.0,
+      "mean_yaw_error_deg": 0.86,
+      "max_yaw_error_deg": 30.0,
+      "mean_pixel_error_px": 28.1,
+      "settling_time_s": 0.63
+    },
+    {
+      "trial_id": 5,
+      "name": "Trial 05: B\u00e3i di \u0111\u1ed9ng t\u1ecbnh ti\u1ebfn (0.3m/s, 0\u00b0)",
+      "initial_offset_deg": 0.0,
+      "target_speed_mps": 0.3,
+      "mean_yaw_error_deg": 0.0,
+      "max_yaw_error_deg": 0.0,
+      "mean_pixel_error_px": 0.4,
+      "settling_time_s": 0.53
+    },
+    {
+      "trial_id": 6,
+      "name": "Trial 06: B\u00e3i di \u0111\u1ed9ng (+20\u00b0, 0.5m/s)",
+      "initial_offset_deg": 20.0,
+      "target_speed_mps": 0.51,
+      "mean_yaw_error_deg": 0.76,
+      "max_yaw_error_deg": 19.96,
+      "mean_pixel_error_px": 16.7,
+      "settling_time_s": 0.53
+    },
+    {
+      "trial_id": 7,
+      "name": "Trial 07: B\u00e3i di \u0111\u1ed9ng c\u1eaft ngang (-20\u00b0, 0.4m/s)",
+      "initial_offset_deg": -20.0,
+      "target_speed_mps": 0.41,
+      "mean_yaw_error_deg": 0.69,
+      "max_yaw_error_deg": 19.78,
+      "mean_pixel_error_px": 17.6,
+      "settling_time_s": 0.53
+    },
+    {
+      "trial_id": 8,
+      "name": "Trial 08: B\u00e3i di \u0111\u1ed9ng s\u00f3ng sin (0.5m/s, l\u1ec7ch 25\u00b0)",
+      "initial_offset_deg": 25.0,
+      "target_speed_mps": 0.54,
+      "mean_yaw_error_deg": 0.55,
+      "max_yaw_error_deg": 24.75,
+      "mean_pixel_error_px": 24.1,
+      "settling_time_s": 0.53
+    },
+    {
+      "trial_id": 9,
+      "name": "Trial 09: B\u00e3i di \u0111\u1ed9ng t\u1ed1c \u0111\u1ed9 cao (0.8m/s, +35\u00b0)",
+      "initial_offset_deg": 35.0,
+      "target_speed_mps": 0.8,
+      "mean_yaw_error_deg": 0.95,
+      "max_yaw_error_deg": 34.78,
+      "mean_pixel_error_px": 28.6,
+      "settling_time_s": 0.66
+    },
+    {
+      "trial_id": 10,
+      "name": "Trial 10: Nhi\u1ec5u th\u1ecb gi\u00e1c cao (\u03c3=3px, 0.5m/s)",
+      "initial_offset_deg": -25.0,
+      "target_speed_mps": 0.54,
+      "mean_yaw_error_deg": 0.28,
+      "max_yaw_error_deg": 24.75,
+      "mean_pixel_error_px": 22.3,
+      "settling_time_s": 0.53
+    }
+  ]
+}

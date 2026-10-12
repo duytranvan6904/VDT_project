@@ -1,0 +1,12 @@
+{
+  "records_logged": 1059,
+  "flight_duration_sim_s": 34.35,
+  "target_lock_time_s": 0.348,
+  "final_landing_error_rxy_cm": 12.29,
+  "base_link_landing_error_rxy_cm": 13.79,
+  "touchdown_vz_m_s": 0.0,
+  "mean_follow_yaw_error_deg": 9.3,
+  "min_obstacle_clearance_m": 5.013,
+  "mission_success": false,
+  "final_phase": "LAND"
+}

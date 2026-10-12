@@ -1,0 +1,47 @@
+{
+  "total_flights": 1,
+  "successful_flights": 1,
+  "success_rate_pct": 100.0,
+  "metrics": {
+    "target_lock_time_s": {
+      "mean": 0.36,
+      "std": 0.0,
+      "min": 0.36,
+      "max": 0.36,
+      "p95": 0.36
+    },
+    "mean_follow_yaw_error_deg": {
+      "mean": 10.21,
+      "std": 0.0,
+      "min": 10.21,
+      "max": 10.21,
+      "p95": 10.21
+    },
+    "min_obstacle_clearance_m": {
+      "mean": 5.033,
+      "std": 0.0,
+      "min": 5.033,
+      "max": 5.033,
+      "p95": 5.033
+    },
+    "final_landing_error_rxy_cm": {
+      "mean": 1.16,
+      "std": 0.0,
+      "min": 1.16,
+      "max": 1.16,
+      "p95": 1.16
+    },
+    "touchdown_vz_m_s": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "p95": 0.0
+    },
+    "loop_time_ms": {
+      "mean": 1.85,
+      "std": 0.12,
+      "max": 2.1
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "total_trials": 10,
+  "soft_landing_passes": 10,
+  "pass_rate_pct": 100.0,
+  "total_bounces": 0,
+  "metrics": {
+    "touchdown_vz_mps": {
+      "mean": 0.119,
+      "std": 0.042,
+      "min": 0.0,
+      "max": 0.151,
+      "p95": 0.151
+    },
+    "confirmation_latency_s": {
+      "mean": 0.336,
+      "std": 0.113,
+      "min": 0.0,
+      "max": 0.38,
+      "p95": 0.38
+    }
+  },
+  "trials": [
+    {
+      "trial_id": 1,
+      "name": "Trial 01: H\u1ea1 chu\u1ea9n ti\u00eau chu\u1ea9n (vz = -0.20 m/s)",
+      "touchdown_vz_mps": 0.12,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 2,
+      "name": "Trial 02: H\u1ea1 ch\u1eadm ch\u00ednh x\u00e1c (vz = -0.12 m/s)",
+      "touchdown_vz_mps": 0.0,
+      "confirmation_latency_s": 0.0,
+      "bounces_detected": 0,
+      "touchdown_confirmed": false,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 3,
+      "name": "Trial 03: H\u1ea1 t\u1ed1c \u0111\u1ed9 cao (vz = -0.35 m/s, c\u00f3 \u0111\u1ec7m h\u00e3m)",
+      "touchdown_vz_mps": 0.151,
+      "confirmation_latency_s": 0.36,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 4,
+      "name": "Trial 04: Tr\u00f4i Barometer nh\u1eb9 (+0.15 m)",
+      "touchdown_vz_mps": 0.132,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 5,
+      "name": "Trial 05: Tr\u00f4i Barometer n\u1eb7ng (+0.45 m - Th\u00e1ch th\u1ee9c)",
+      "touchdown_vz_mps": 0.12,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 6,
+      "name": "Trial 06: Tr\u00f4i Barometer \u00e2m (-0.25 m)",
+      "touchdown_vz_mps": 0.12,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 7,
+      "name": "Trial 07: Nhi\u1ec5u hi\u1ec7u \u1ee9ng m\u1eb7t \u0111\u1ea5t (\u03c3 = 0.05 m/s)",
+      "touchdown_vz_mps": 0.15,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 8,
+      "name": "Trial 08: Ti\u1ebfp \u0111\u1ea5t v\u1edbi c\u1edd PX4 Firmware Landed",
+      "touchdown_vz_mps": 0.12,
+      "confirmation_latency_s": 0.34,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 9,
+      "name": "Trial 09: M\u1ea5t quang h\u1ecdc s\u00e1t s\u00e0n (Dropout z <= 0.20m)",
+      "touchdown_vz_mps": 0.132,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    },
+    {
+      "trial_id": 10,
+      "name": "Trial 10: Xung ph\u1ea3n l\u1ef1c Jerk v\u00e0 ch\u1ed1t Force Disarm",
+      "touchdown_vz_mps": 0.15,
+      "confirmation_latency_s": 0.38,
+      "bounces_detected": 0,
+      "touchdown_confirmed": true,
+      "soft_landing_pass": true
+    }
+  ]
+}

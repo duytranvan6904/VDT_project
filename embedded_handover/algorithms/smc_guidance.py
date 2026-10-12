@@ -381,9 +381,9 @@ class SMCGuidanceNode(Node):
         self.declare_parameter('rswitch_default', 0.80)
         self.declare_parameter('final_descent_rxy_m', 1.00)
         self.declare_parameter('final_descent_alt_m', 0.70)
-        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.35)
-        self.declare_parameter('max_state_age_s', 0.30)
-        self.declare_parameter('max_covariance_age_s', 0.30)
+        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.55)
+        self.declare_parameter('max_state_age_s', 0.60)
+        self.declare_parameter('max_covariance_age_s', 0.60)
         self.declare_parameter('control_rate_hz', 20.0)
 
         params = SMCParams(

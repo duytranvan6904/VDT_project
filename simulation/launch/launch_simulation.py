@@ -782,14 +782,19 @@ def main():
     else:
         print("[INFO] Manual mode (no --autonomous). Use QGC for drone control.")
 
-    # 4. Mở RViz2
-    step = "4/5" if autonomous else "3/4"
-    print(f"[{step}] Launching RViz2...")
-    cfg_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apf_simulation.rviz')
-    if os.path.exists(cfg_file):
-        rviz_proc = subprocess.Popen(['rviz2', '-d', cfg_file])
+    # 4. Mở RViz2 (Bỏ qua nếu có cờ --no-rviz)
+    no_rviz = '--no-rviz' in sys.argv
+    rviz_proc = None
+    if not no_rviz:
+        step = "4/5" if autonomous else "3/4"
+        print(f"[{step}] Launching RViz2...")
+        cfg_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apf_simulation.rviz')
+        if os.path.exists(cfg_file):
+            rviz_proc = subprocess.Popen(['rviz2', '-d', cfg_file])
+        else:
+            rviz_proc = subprocess.Popen(['rviz2'])
     else:
-        rviz_proc = subprocess.Popen(['rviz2'])
+        print("[INFO] RViz2 disabled via --no-rviz flag.")
 
     # 5. Spin ROS 2 Node
     step = "5/5" if autonomous else "4/4"
@@ -816,10 +821,11 @@ def main():
             odom_bridge_proc.terminate()
             gimbal_bridge_proc.terminate()
             depth_proc.terminate()
-            rviz_proc.terminate()
+            if rviz_proc is not None:
+                rviz_proc.terminate()
             for label, proc in auto_procs:
                 proc.terminate()
-        except:
+        except Exception:
             pass
 
 if __name__ == '__main__':

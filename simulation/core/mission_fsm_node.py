@@ -87,8 +87,8 @@ class MissionFSMNode(Node):
         self.declare_parameter('apf_command_timeout', 0.25)
         self.declare_parameter('covariance_status_timeout', 0.30)
         self.declare_parameter('covariance_revert_timeout', 3.0)
-        self.declare_parameter('max_uncertainty_enter_glide_2sigma_m', 0.20)
-        self.declare_parameter('max_uncertainty_continue_glide_2sigma_m', 0.30)
+        self.declare_parameter('max_uncertainty_enter_glide_2sigma_m', 0.50)
+        self.declare_parameter('max_uncertainty_continue_glide_2sigma_m', 0.55)
         self.declare_parameter('final_descent_rxy_m', 0.6)
         self.declare_parameter('final_descent_alt_m', 0.40)
         self.declare_parameter('final_uncertainty_max_2sigma_m', 0.35)
@@ -106,9 +106,9 @@ class MissionFSMNode(Node):
         self.declare_parameter('reacquire_hold_timeout', 4.00)
         self.declare_parameter('reacquire_lost_timeout', 2.00)
         self.declare_parameter('reacquire_bbox_timeout', 0.80)
-        self.declare_parameter('follow_bbox_timeout', 0.30)
+        self.declare_parameter('follow_bbox_timeout', 0.40)
         self.declare_parameter('follow_detection_hold_timeout', 0.25)
-        self.declare_parameter('landing_tracking_timeout', 0.30)
+        self.declare_parameter('landing_tracking_timeout', 0.60)
         self.declare_parameter('reacquire_max_yaw_rate_deg', 20.0)
         self.declare_parameter('follow_entry_hold_time', 0.10)
         self.declare_parameter('search_entry_hold_time', 0.30)
@@ -252,6 +252,7 @@ class MissionFSMNode(Node):
         self.smc_sub_phase = 'HOLD'
         self.rswitch_adaptive = 3.0
         self.uncertainty_radius = float('inf')
+        self.continue_uncertainty_max = 0.45
         self.last_safe_to_land_time = 0.0
         self.last_uncertainty_time = 0.0
         self.landing_glide_active = False
@@ -791,6 +792,7 @@ class MissionFSMNode(Node):
 
     def _handle_land(self):
         """Remain in gated final descent until touchdown is confirmed, or wave-off."""
+        now = time.monotonic()
         # Never complete from altitude alone while airborne; but if vehicle has
         # confirmed touchdown or has rested stationary on the ground (alt <= 0.12m)
         # for >= 0.5s, complete mission safely!
@@ -1094,7 +1096,11 @@ class MissionFSMNode(Node):
                 if apf_fresh:
                     vel.linear.x = float(self.apf_velocity[0])
                     vel.linear.y = float(self.apf_velocity[1])
-                vel.linear.z = 0.0
+                # If horizontally aligned over pad, descend gently to allow covariance to shrink and SMC glide to engage
+                if h_err <= 0.45 and self.has_odom and self.drone_pos[2] > 0.60:
+                    vel.linear.z = -0.18
+                else:
+                    vel.linear.z = 0.0
                 yaw.data = self._landing_yaw_setpoint(True)
 
         elif self.phase == MissionPhase.LAND:
@@ -1120,13 +1126,23 @@ class MissionFSMNode(Node):
                 vel.angular.z = float(self.smc_yaw_rate)
             elif is_terminal:
                 # Terminal touchdown safeguard directly over pad: maintain steady
-                # gentle vertical descent so kinematic touchdown can confirm
-                vel.linear.x = 0.0
-                vel.linear.y = 0.0
+                # gentle vertical descent while continuing gentle horizontal centering
+                kp = 0.8
+                dx = self.target_pos[0] - self.drone_pos[0]
+                dy = self.target_pos[1] - self.drone_pos[1]
+                vel.linear.x = float(np.clip(kp * dx, -0.20, 0.20))
+                vel.linear.y = float(np.clip(kp * dy, -0.20, 0.20))
                 vel.linear.z = -0.15
                 vel.angular.z = 0.0
-            # Otherwise Twist stays zero: hover until vision, covariance,
-            # and a fresh final SMC command are valid again.
+            else:
+                # Active fallback in LAND: commit to descent and center over pad
+                kp = 0.6
+                dx = (self.target_pos[0] - self.drone_pos[0]) if (self.has_target and self.has_odom) else 0.0
+                dy = (self.target_pos[1] - self.drone_pos[1]) if (self.has_target and self.has_odom) else 0.0
+                vel.linear.x = float(np.clip(kp * dx, -0.25, 0.25))
+                vel.linear.y = float(np.clip(kp * dy, -0.25, 0.25))
+                vel.linear.z = -0.20
+                vel.angular.z = 0.0
             yaw.data = self._landing_yaw_setpoint(
                 self._landing_tracking_is_valid(now)
             )

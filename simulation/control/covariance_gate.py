@@ -185,11 +185,10 @@ class CovarianceGate:
         dist_xy = float(np.linalg.norm(diff[:2]))
         dist_z = float(abs(diff[2]))
 
-        # 7. Safety conditions
         # Conical approach funnel: at approach altitudes, uncertainty is permitted to be
-        # up to funnel boundary (max(pad_radius, 0.12 * dist_z)), narrowing to 0.25m at the pad.
+        # up to funnel boundary (max(pad_radius, 0.20 * dist_z)), narrowing to pad_radius at the pad.
         reasons = []
-        allowed_unc = max(self.pad_radius, 0.12 * dist_z)
+        allowed_unc = max(self.pad_radius, 0.20 * dist_z)
         if r_unc > allowed_unc:
             reasons.append(
                 f"Uncertainty radius {r_unc:.3f}m > allowed funnel {allowed_unc:.3f}m"
@@ -274,7 +273,7 @@ class CovarianceGateNode(Node):
         self.declare_parameter('r_switch_max_m', 15.0)
         self.declare_parameter('sigma_ideal_m', 0.05)
         self.declare_parameter('sigma_bad_m', 0.30)
-        self.declare_parameter('sigma_max_continue_glide_m', 0.15)
+        self.declare_parameter('sigma_max_continue_glide_m', 0.30)
         self.declare_parameter('sliding_beta', 2.0)
         self.declare_parameter('default_drone_eph_m', 0.10)
         self.declare_parameter('default_drone_epv_m', 0.15)

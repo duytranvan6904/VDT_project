@@ -274,6 +274,12 @@ class OffboardCommander(Node):
 
     def touchdown_cb(self, msg: Bool):
         if msg.data and self.offboard_engaged and self.phase in ('LAND', 'APPROACH'):
+            # Only disarm if drone is truly at ground contact level (alt <= 0.18m)
+            if self.has_odom and self.current_alt > 0.18:
+                self.get_logger().warning(
+                    f'Ignoring premature touchdown signal while airborne (alt={self.current_alt:.2f}m > 0.18m).'
+                )
+                return
             self.get_logger().info('🏆 Touchdown signal received! Disengaging offboard and sending DISARM.')
             self.offboard_engaged = False
             self.current_yaw_ned = None

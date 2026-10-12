@@ -1,0 +1,14 @@
+{
+  "records_logged": 3239,
+  "flight_duration_sim_s": 104.18,
+  "target_lock_time_s": 0.252,
+  "final_landing_error_rxy_cm": 65.59,
+  "base_link_landing_error_rxy_cm": 65.59,
+  "cam_landing_error_rxy_cm": 53.38,
+  "touchdown_vz_m_s": 0.024,
+  "mean_follow_yaw_error_deg": 30.81,
+  "min_obstacle_clearance_m": 4.848,
+  "mission_success": false,
+  "strict_kpi_pass": false,
+  "final_phase": "SEARCH"
+}
