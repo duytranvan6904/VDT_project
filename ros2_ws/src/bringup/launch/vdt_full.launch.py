@@ -22,6 +22,6 @@ def generate_launch_description():
                 {'publish_odom_tf': 'false', 'publish_camera_tf': 'false'}),
         include('ibvs', 'ibvs.launch.py'),
         include('apf_planner', 'apf_planner.launch.py',
-                {'planner_type': 'iapf'}),
+                {'planner_type': 'iapf', 'depth_map': 'true'}),
         include('landing_guidance', 'landing.launch.py'),
     ])

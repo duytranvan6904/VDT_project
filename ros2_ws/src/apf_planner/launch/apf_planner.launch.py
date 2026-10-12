@@ -15,6 +15,7 @@ def generate_launch_description():
         DeclareLaunchArgument('generator', default_value='false'),
         DeclareLaunchArgument('planner_type', default_value='iapf'),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument('depth_map', default_value='false'),
         
         Node(
             package='apf_planner', 
@@ -47,4 +48,15 @@ def generate_launch_description():
                 {"use_sim_time": LaunchConfiguration("use_sim_time")},
                 config_file
             ]),
+        
+        Node(
+            package='apf_planner',
+            executable='depth_obstacle_map',
+            name='depth_obstacle_map',
+            output='screen',
+            parameters=[
+                {"use_sim_time": LaunchConfiguration("use_sim_time")},
+                config_file
+            ],
+            condition=IfCondition(LaunchConfiguration('depth_map'))),
     ])

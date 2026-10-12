@@ -25,6 +25,7 @@ setup(
             'planner_node = apf_planner.planner_node:main',
             'pointcloud_generator = apf_planner.pointcloud_generator:main',
             'planner_merge_node = apf_planner.planner_merge_node:main',
+            'depth_obstacle_map = apf_planner.depth_obstacle_map:main',
         ],
     },
 )

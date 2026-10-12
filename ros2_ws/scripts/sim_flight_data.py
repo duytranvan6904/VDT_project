@@ -13,6 +13,8 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from std_msgs.msg import Bool, Float64, String, UInt8
 from vdt_msgs.msg import AltEstimate, InputSnapshot, PlannerOutput, VisionMarker
+from sensor_msgs.msg import PointCloud2
+from obstacle_world import build_world
 
 SUBS = {
     '/mission/phase': (String, 'phase'),
@@ -61,6 +63,13 @@ class Sim(Node):
         self.rc_cls = None
         self.p_rc = None
         self.rc_tried = False
+        if a.gen_obstacles:
+            cyl, self.obs, self.cloud_msg = build_world(
+                a.seed, a.num_obs, a.map_size, a.obs_height, a.clear_radius,
+                a.start, a.extra, a.cloud_res)
+            self.p_cloud = self.create_publisher(PointCloud2, a.cloud_topic, 10)
+            self.create_timer(1.0 / a.cloud_rate, self.pub_cloud)
+            print(f'Vat can: {len(cyl)} tru, seed={a.seed}', flush=True)
 
         for topic, (typ, key) in SUBS.items():
             self.create_subscription(
@@ -87,6 +96,10 @@ class Sim(Node):
             elif v != self.prev[key]:
                 print(f'[t={self.t():6.1f}] {key}: {self.prev[key]} -> {v}', flush=True)
             self.prev[key] = v
+    
+    def pub_cloud(self):
+        self.cloud_msg.header.stamp = self.get_clock().now().to_msg()
+        self.p_cloud.publish(self.cloud_msg)
 
     def g(self, key, attr=None, default='-'):
         m = self.last.get(key)
@@ -291,6 +304,16 @@ def main():
     ap.add_argument('--mk-z', type=float, default=0.0)
     ap.add_argument('--mk-off', type=float, default=0.3225)
     ap.add_argument('--pad-vel', type=lambda s: pair(s), default=None)
+    ap.add_argument('--gen-obstacles', action='store_true')
+    ap.add_argument('--seed', type=int, default=0)
+    ap.add_argument('--num-obs', type=int, default=35)
+    ap.add_argument('--map-size', type=float, default=25.0)
+    ap.add_argument('--obs-height', type=float, default=4.0)
+    ap.add_argument('--clear-radius', type=float, default=2.0)
+    ap.add_argument('--cloud-res', type=float, default=0.15)
+    ap.add_argument('--cloud-rate', type=float, default=2.0)
+    ap.add_argument('--cloud-topic', default='/map_generator/global_cloud')
+    ap.add_argument('--extra', type=pair, action='append', help='cx,cy,r,h')
     a = ap.parse_args()
 
     rclpy.init()

@@ -21,6 +21,7 @@ def generate_launch_description():
         name='rc_node',
         condition=IfCondition(start_hardware),
         parameters=[params_file, {'debug_enabled': debug}],
+        remappings=[('/rc/fsm_input', '/rc/fsm_input_rc')],
         output='screen'
     )
 

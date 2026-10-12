@@ -147,7 +147,7 @@
   ros__parameters:
     planner_type: "iapf"
     world_sdf: "/home/vdt_2026/VDT_project/worlds/sim_obstacles.sdf"
-    obstacle_source: "sdf"
+    obstacle_source: "pointcloud"
     d0: 2.0
     v_max: 1.2
     k_att: 10.0
@@ -232,3 +232,14 @@
     seen_descending_hold_s: 0.30
     descent_rate_topic: "cmd/vertical_descent_rate"
     eval_rate_hz: 20.0
+
+/depth_obstacle_map:
+  ros__parameters:
+    depth_topic: "/depth_camera"
+    info_topic: "/camera/infra1/camera_info"
+    stride: 8
+    range_min: 0.3
+    range_max: 5.0
+    ttl_sec: 5.0
+    process_hz: 5.0
+    publish_hz: 5.0
