@@ -21,7 +21,7 @@ from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Bool, String, UInt8
 from vdt_msgs.msg import RcFsmInput
 
-from obstacle_world import make_cylinders
+from obstacles_world import make_cylinders
 
 NAV_MANUAL = getattr(VehicleStatus, 'NAVIGATION_STATE_MANUAL', 0)
 NAV_RTL = getattr(VehicleStatus, 'NAVIGATION_STATE_AUTO_RTL', 5)
@@ -404,7 +404,7 @@ class Sim(Node):
             self.vel[2] = max(self.vel[2], 0.0)
             if v_cmd[2] <= 0.0:
                 self.vel[:2] = 0.0
-        self.landed = self.pos[2] <= 0.03
+        self.landed = bool(self.pos[2] <= 0.03)
         if self.armed:
             if yaw_tgt is not None:
                 d = wrap(yaw_tgt - self.yaw_ned)
@@ -461,6 +461,7 @@ class Sim(Node):
         m = VehicleLocalPosition()
         fill(m, self.skipped, timestamp=ts, timestamp_sample=ts, xy_valid=True, z_valid=True,
              v_xy_valid=True, v_z_valid=True, dead_reckoning=False,
+             xy_global=True, z_global=True, ref_alt=0.0,
              x=float(self.pos[1]), y=float(self.pos[0]), z=float(-self.pos[2]),
              vx=float(self.vel[1]), vy=float(self.vel[0]), vz=float(-self.vel[2]),
              heading=float(self.yaw_ned), eph=0.2, epv=0.3)
@@ -695,97 +696,97 @@ class Sim(Node):
             print(f'{"PASS" if passed else "FAIL"} {name} {val}')
         print('KET LUAN:', 'PASS' if ok else 'FAIL')
 
-    def main():
-        ap = argparse.ArgumentParser()
-        ap.add_argument('--scenario', default='nominal', choices=sorted(SCENARIOS))
-        ap.add_argument('--seed', type=int, default=0)
-        ap.add_argument('--duration', type=float, default=300.0)
-        ap.add_argument('--start', type=pair, default=[5.0, 0.0])
-        ap.add_argument('--start-yaw', type=float, default=180.0)
-        ap.add_argument('--pad', type=pair, default=[0.0, 0.0])
-        ap.add_argument('--pad-vel', type=pair, default=None)
-        ap.add_argument('--takeoff-alt', type=float, default=3.0)
-        ap.add_argument('--blind', default='')
-        ap.add_argument('--extra', type=pair, action='append')
-        ap.add_argument('--map-size', type=float, default=25.0)
-        ap.add_argument('--obs-height', type=float, default=4.0)
-        ap.add_argument('--clear-radius', type=float, default=3.5)
-        ap.add_argument('--marker-id', type=int, default=42)
-        ap.add_argument('--marker-size', type=float, default=0.15)
-        ap.add_argument('--width', type=int, default=640)
-        ap.add_argument('--height', type=int, default=480)
-        ap.add_argument('--hfov', type=float, default=87.0)
-        ap.add_argument('--cam-hz', type=float, default=15.0)
-        ap.add_argument('--cam-latency', type=float, default=0.04)
-        ap.add_argument('--depth-stride', type=int, default=8)
-        ap.add_argument('--depth-enc', default='16UC1', choices=['16UC1', '32FC1'])
-        ap.add_argument('--range-min', type=float, default=0.3)
-        ap.add_argument('--range-max', type=float, default=8.0)
-        ap.add_argument('--depth-noise', type=float, default=0.005)
-        ap.add_argument('--ir-noise', type=float, default=2.0)
-        ap.add_argument('--pivot', type=pair, default=[0.0, 0.0, 0.0])
-        ap.add_argument('--cam-offset', type=pair, default=[0.0, 0.0, 0.0])
-        ap.add_argument('--servo-function', type=float, default=33.0)
-        ap.add_argument('--servo-scale', type=float, default=90.0)
-        ap.add_argument('--servo-rate', type=float, default=200.0)
-        ap.add_argument('--pos-noise', type=float, default=0.02)
-        ap.add_argument('--vel-noise', type=float, default=0.02)
-        ap.add_argument('--yaw-noise', type=float, default=0.005)
-        ap.add_argument('--delay', type=float, default=0.02)
-        ap.add_argument('--tau', type=float, default=0.25)
-        ap.add_argument('--amax', type=float, default=3.0)
-        ap.add_argument('--climb-rate', type=float, default=1.5)
-        ap.add_argument('--land-rate', type=float, default=0.7)
-        ap.add_argument('--yaw-rate-max', type=float, default=1.5)
-        ap.add_argument('--offboard-loss', type=float, default=1.0)
-        ap.add_argument('--battery', type=float, default=0.9)
-        ap.add_argument('--no-preflight', dest='preflight_ok', action='store_false')
-        ap.add_argument('--land-switch-after', type=float, default=3.0)
-        ap.add_argument('--no-rc', action='store_true')
-        ap.add_argument('--drone-radius', type=float, default=0.25)
-        ap.add_argument('--clr-min', type=float, default=0.5)
-        ap.add_argument('--land-dxy', type=float, default=0.35)
-        ap.add_argument('--land-vz', type=float, default=0.6)
-        ap.add_argument('--end-hold', type=float, default=3.0)
-        ap.add_argument('--odom-topic', default='/fmu/out/vehicle_odometry')
-        ap.add_argument('--local-topic', default='/fmu/out/vehicle_local_position')
-        ap.add_argument('--status-topic', default='/fmu/out/vehicle_status_v1')
-        ap.add_argument('--battery-topic', default='/fmu/out/battery_status')
-        ap.add_argument('--land-topic', default='/fmu/out/vehicle_land_detected')
-        ap.add_argument('--gps-topic', default='/fmu/out/vehicle_gps_position')
-        ap.add_argument('--ir-topic', default='/camera/infra1/image_rect_raw')
-        ap.add_argument('--depth-topic', default='/depth_camera')
-        ap.add_argument('--info-topic', default='/camera/infra1/camera_info')
-        a = ap.parse_args()
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--scenario', default='nominal', choices=sorted(SCENARIOS))
+    ap.add_argument('--seed', type=int, default=0)
+    ap.add_argument('--duration', type=float, default=300.0)
+    ap.add_argument('--start', type=pair, default=[5.0, 0.0])
+    ap.add_argument('--start-yaw', type=float, default=180.0)
+    ap.add_argument('--pad', type=pair, default=[0.0, 0.0])
+    ap.add_argument('--pad-vel', type=pair, default=None)
+    ap.add_argument('--takeoff-alt', type=float, default=3.0)
+    ap.add_argument('--blind', default='')
+    ap.add_argument('--extra', type=pair, action='append')
+    ap.add_argument('--map-size', type=float, default=25.0)
+    ap.add_argument('--obs-height', type=float, default=4.0)
+    ap.add_argument('--clear-radius', type=float, default=3.5)
+    ap.add_argument('--marker-id', type=int, default=42)
+    ap.add_argument('--marker-size', type=float, default=0.15)
+    ap.add_argument('--width', type=int, default=640)
+    ap.add_argument('--height', type=int, default=480)
+    ap.add_argument('--hfov', type=float, default=87.0)
+    ap.add_argument('--cam-hz', type=float, default=15.0)
+    ap.add_argument('--cam-latency', type=float, default=0.04)
+    ap.add_argument('--depth-stride', type=int, default=8)
+    ap.add_argument('--depth-enc', default='16UC1', choices=['16UC1', '32FC1'])
+    ap.add_argument('--range-min', type=float, default=0.3)
+    ap.add_argument('--range-max', type=float, default=8.0)
+    ap.add_argument('--depth-noise', type=float, default=0.005)
+    ap.add_argument('--ir-noise', type=float, default=2.0)
+    ap.add_argument('--pivot', type=pair, default=[0.0, 0.0, 0.0])
+    ap.add_argument('--cam-offset', type=pair, default=[0.0, 0.0, 0.0])
+    ap.add_argument('--servo-function', type=float, default=33.0)
+    ap.add_argument('--servo-scale', type=float, default=90.0)
+    ap.add_argument('--servo-rate', type=float, default=200.0)
+    ap.add_argument('--pos-noise', type=float, default=0.02)
+    ap.add_argument('--vel-noise', type=float, default=0.02)
+    ap.add_argument('--yaw-noise', type=float, default=0.005)
+    ap.add_argument('--delay', type=float, default=0.02)
+    ap.add_argument('--tau', type=float, default=0.25)
+    ap.add_argument('--amax', type=float, default=3.0)
+    ap.add_argument('--climb-rate', type=float, default=1.5)
+    ap.add_argument('--land-rate', type=float, default=0.7)
+    ap.add_argument('--yaw-rate-max', type=float, default=1.5)
+    ap.add_argument('--offboard-loss', type=float, default=1.0)
+    ap.add_argument('--battery', type=float, default=0.9)
+    ap.add_argument('--no-preflight', dest='preflight_ok', action='store_false')
+    ap.add_argument('--land-switch-after', type=float, default=3.0)
+    ap.add_argument('--no-rc', action='store_true')
+    ap.add_argument('--drone-radius', type=float, default=0.25)
+    ap.add_argument('--clr-min', type=float, default=0.5)
+    ap.add_argument('--land-dxy', type=float, default=0.35)
+    ap.add_argument('--land-vz', type=float, default=0.6)
+    ap.add_argument('--end-hold', type=float, default=3.0)
+    ap.add_argument('--odom-topic', default='/fmu/out/vehicle_odometry')
+    ap.add_argument('--local-topic', default='/fmu/out/vehicle_local_position')
+    ap.add_argument('--status-topic', default='/fmu/out/vehicle_status_v1')
+    ap.add_argument('--battery-topic', default='/fmu/out/battery_status')
+    ap.add_argument('--land-topic', default='/fmu/out/vehicle_land_detected')
+    ap.add_argument('--gps-topic', default='/fmu/out/vehicle_gps_position')
+    ap.add_argument('--ir-topic', default='/camera/infra1/image_rect_raw')
+    ap.add_argument('--depth-topic', default='/depth_camera')
+    ap.add_argument('--info-topic', default='/camera/infra1/camera_info')
+    a = ap.parse_args()
 
-        rclpy.init()
-        probe = rclpy.create_node('sim_hw_probe')
-        for _ in range(20):
-            rclpy.spin_once(probe, timeout_sec=0.05)
-        busy = [t for t in (a.status_topic, a.odom_topic) if probe.count_publishers(t) > 0]
-        probe.destroy_node()
-        if busy:
-            print('PX4 that dang publish', busy, ', tu choi chay mo phong.')
-            rclpy.shutdown()
-            sys.exit(1)
-
-        sc = SCENARIOS[a.scenario]
-        node = Sim(a, build_obstacles(a, sc), sc)
-        ex = MultiThreadedExecutor(num_threads=4)
-        ex.add_node(node)
-        th = threading.Thread(target=ex.spin, daemon=True)
-        node.t0 = time.monotonic()
-        th.start()
-        print(f'Mo phong hardware: kich ban={a.scenario} seed={a.seed} start={a.start} pad={a.pad}', flush=True)
-        try:
-            while rclpy.ok() and node.t() < a.duration and not node.done:
-                time.sleep(0.1)
-        except KeyboardInterrupt:
-            pass
-        ex.shutdown()
-        node.summary()
-        node.destroy_node()
+    rclpy.init()
+    probe = rclpy.create_node('sim_hw_probe')
+    for _ in range(20):
+        rclpy.spin_once(probe, timeout_sec=0.05)
+    busy = [t for t in (a.status_topic, a.odom_topic) if probe.count_publishers(t) > 0]
+    probe.destroy_node()
+    if busy:
+        print('PX4 that dang publish', busy, ', tu choi chay mo phong.')
         rclpy.shutdown()
+        sys.exit(1)
 
-    if __name__ == '__main__':
-        main()
+    sc = SCENARIOS[a.scenario]
+    node = Sim(a, build_obstacles(a, sc), sc)
+    ex = MultiThreadedExecutor(num_threads=4)
+    ex.add_node(node)
+    th = threading.Thread(target=ex.spin, daemon=True)
+    node.t0 = time.monotonic()
+    th.start()
+    print(f'Mo phong hardware: kich ban={a.scenario} seed={a.seed} start={a.start} pad={a.pad}', flush=True)
+    try:
+        while rclpy.ok() and node.t() < a.duration and not node.done:
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        pass
+    ex.shutdown()
+    node.summary()
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

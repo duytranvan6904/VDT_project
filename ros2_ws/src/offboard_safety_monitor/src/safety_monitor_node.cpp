@@ -87,8 +87,9 @@ void SafetyMonitorNode::update()
     local_position_.xy_valid, local_position_.z_valid, ekf_fresh);
   const FailsafeLevel battery_level = check_battery_failsafe(
     battery_status_.remaining, battery_fresh, thresholds_);
-  const FailsafeLevel escalate_level = offboard_watchdog_escalate(
-    offboard_status_.heartbeat_age_sec, thresholds_);
+  const FailsafeLevel escalate_level = offboard_status_.offboard_active ?
+    offboard_watchdog_escalate(offboard_status_.heartbeat_age_sec, thresholds_) :
+    FailsafeLevel::NONE;
 
   const FailsafeLevel level = evaluate_failsafe_level(
     rc_override, ekf_healthy, battery_level, escalate_level);
