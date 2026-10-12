@@ -145,6 +145,12 @@ void FsmNode::update()
 
   const State prev_state = ctx_.state;
   if (next_state && *next_state != ctx_.state) {
+    RCLCPP_INFO(get_logger(),
+      "transition %d->%d lost_t=%.2f stable=%d snap_to=%d plan_to=%d force=%d",
+      static_cast<int>(ctx_.state), static_cast<int>(*next_state),
+      ctx_.counters.marker_lost_time, ctx_.counters.marker_stable_count,
+      static_cast<int>(snapshot_timeout), static_cast<int>(latest_snapshot_.planner_timeout),
+      static_cast<int>(force_land_requested_));
     ctx_.state = *next_state;
     counters_reset(ctx_.counters);
     ctx_.last_transition_time = now_sec;
