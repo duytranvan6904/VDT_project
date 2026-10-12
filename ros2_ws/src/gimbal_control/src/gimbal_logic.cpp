@@ -72,7 +72,7 @@ float gimbal_target_angle(GimbalPhase phase, const GimbalTelemetry & t, float la
 {
   switch (phase) {
     case GimbalPhase::SEARCH:
-      return target_angle_search();
+      return std::min(0.0f, target_angle_follow(t));
     case GimbalPhase::FOLLOW:
       return target_angle_follow(t);
     case GimbalPhase::APPROACH:

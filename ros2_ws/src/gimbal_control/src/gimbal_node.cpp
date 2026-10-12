@@ -23,6 +23,9 @@ GimbalNode::GimbalNode()
     std::bind(&GimbalNode::on_state_request, this, std::placeholders::_1));
   ekf_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "hpad/state_filtered", 10, std::bind(&GimbalNode::on_ekf, this, std::placeholders::_1));
+  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+    "odom", rclcpp::SensorDataQoS(),
+    std::bind(&GimbalNode::on_odom, this, std::placeholders::_1));
   alt_sub_ = create_subscription<vdt_msgs::msg::AltEstimate>(
     "alt_estimator/state", 10, std::bind(&GimbalNode::on_alt, this, std::placeholders::_1));
   timeout_sub_ = create_subscription<vdt_msgs::msg::TimeoutFlags>(
@@ -43,6 +46,13 @@ void GimbalNode::on_state_request(const std_msgs::msg::UInt8::SharedPtr msg)
 void GimbalNode::on_ekf(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   ekf_state_ = *msg;
+  has_ekf_ = true;
+}
+
+void GimbalNode::on_odom(const nav_msgs::msg::Odometry::SharedPtr msg)
+{
+  odom_state_ = *msg;
+  has_odom_ = true;
 }
 
 void GimbalNode::on_alt(const vdt_msgs::msg::AltEstimate::SharedPtr msg)
@@ -58,11 +68,12 @@ void GimbalNode::on_timeout_flags(const vdt_msgs::msg::TimeoutFlags::SharedPtr m
 GimbalTelemetry GimbalNode::build_telemetry() const
 {
   GimbalTelemetry t;
-  t.delta_h = static_cast<float>(ekf_state_.pose.pose.position.z) - alt_state_.altitude;
-  t.d_horiz = std::hypot(
-    ekf_state_.pose.pose.position.x, ekf_state_.pose.pose.position.y);
+  const auto & pad = ekf_state_.pose.pose.position;
+  const auto & uav = odom_state_.pose.pose.position;
+  t.delta_h = static_cast<float>(uav.z - pad.z);
+  t.d_horiz = static_cast<float>(std::hypot(pad.x - uav.x, pad.y - uav.y));
   t.altitude = alt_state_.altitude;
-  t.valid = true;
+  t.valid = has_ekf_ && has_odom_;
   return t;
 }
 
@@ -90,9 +101,17 @@ void GimbalNode::update()
     static_cast<float>(now_sec - last_update_time_) : 0.0f;
   last_update_time_ = now_sec;
 
-  const GimbalTelemetry t = telemetry_validate(build_telemetry(), timeout_flags_);
+  const GimbalTelemetry raw = build_telemetry();
+  GimbalTelemetry t = telemetry_validate(raw, timeout_flags_);
   if (!t.valid) {
-    return;
+    const bool last_known =
+      raw.valid && std::isfinite(raw.delta_h) && std::isfinite(raw.d_horiz);
+    if (phase_ == GimbalPhase::SEARCH && last_known) {
+      t.valid = true;
+    } else {
+      publish_angle(current_angle_);
+      return;
+    }
   }
 
   if (phase_ != last_phase_) {

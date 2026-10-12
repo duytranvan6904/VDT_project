@@ -291,7 +291,9 @@ void OffboardNode::publish_status()
 {
   msg::OffboardStatus status_msg;
   status_msg.offboard_active = ctx_.offboard_active;
-  status_msg.heartbeat_age_sec = static_cast<float>(this->now().seconds() - ctx_.last_heartbeat_time);
+  const double hb = ctx_.last_heartbeat_time;
+  status_msg.heartbeat_age_sec =
+    hb > 0.0 ? static_cast<float>(this->now().seconds() - hb) : 0.0f;
   status_pub_->publish(status_msg);
 }
 

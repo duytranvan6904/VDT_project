@@ -240,6 +240,15 @@ class IBVSController(Node):
         yaw_msg.data = float(self.yaw_cmd)
         self.yaw_pub.publish(yaw_msg)
 
+    def _search_yaw(self, dt: float) -> float:
+        if self.target_pos is None or not self.have_odom or self.drone_pos[2] < 0.3:
+            return self.drone_yaw
+        dx = self.target_pos[0] - self.drone_pos[0]
+        dy = self.target_pos[1] - self.drone_pos[1]
+        if math.hypot(dx, dy) < 0.3:
+            return self.drone_yaw
+        return slew_angle(self.yaw_cmd, math.atan2(dy, dx), self.yaw_rate_limit * dt)
+
     def fallback_timer_cb(self):
         now = time.monotonic()
         dt = now - self.last_update_time
@@ -247,8 +256,8 @@ class IBVSController(Node):
 
         if self.phase == 'SEARCH':
             self.pitch_trim = 0.0
-            self.yaw_cmd = self.drone_yaw
             self.last_update_time = now
+            self.yaw_cmd = self._search_yaw(dt)
             self._publish_commands()
 
         elif self.phase == 'IDLE':
