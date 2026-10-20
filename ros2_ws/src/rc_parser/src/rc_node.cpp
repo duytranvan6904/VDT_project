@@ -100,7 +100,8 @@ void RcNode::on_manual_control(const px4_msgs::msg::ManualControlSetpoint::Share
     ch.ch[i] = 1500;
   }
   const bool source_ok = in->valid &&
-    in->data_source == px4_msgs::msg::ManualControlSetpoint::SOURCE_RC;
+  (in->data_source == px4_msgs::msg::ManualControlSetpoint::SOURCE_RC ||
+   in->data_source == px4_msgs::msg::ManualControlSetpoint::SOURCE_MAVLINK);
   ch.failsafe = !source_ok || signal_lost_;
   ch.valid = !ch.failsafe;
   latest_channels_ = ch;
