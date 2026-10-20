@@ -96,7 +96,7 @@ void SafetyMonitorNode::update()
 
   ctx_.active_failsafe = level;
   ctx_.force_land_requested = update_force_land_request(
-    ctx_.force_land_requested, force_land_latched_, level,
+    ctx_.force_land_requested, force_land_latched_, battery_level,
     battery_status_.remaining, battery_fresh, thresholds_);
 
   execute_action(level);

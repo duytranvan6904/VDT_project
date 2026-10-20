@@ -34,8 +34,8 @@ bool update_force_land_request(
   bool current, bool latched, FailsafeLevel level,
   float remaining_frac, bool battery_fresh, const SafetyThresholds & th)
 {
-  if (level == FailsafeLevel::BATTERY_WARNING) {
-    return true;
+    if (level == FailsafeLevel::BATTERY_WARNING || level == FailsafeLevel::BATTERY_CRITICAL) {
+      return true;
   }
   if (latched || level != FailsafeLevel::NONE || !battery_fresh ||
     !std::isfinite(remaining_frac) || remaining_frac < 0.0f || remaining_frac > 1.0f)
