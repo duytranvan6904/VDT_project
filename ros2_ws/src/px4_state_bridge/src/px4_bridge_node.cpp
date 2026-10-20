@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -215,8 +216,12 @@ private:
 
 int main(int argc, char ** argv)
 {
+  std::cout << "[VERBOSE] Starting PX4 State Bridge Node..." << std::endl;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<px4_state_bridge::Px4StateBridge>());
+  auto node = std::make_shared<px4_state_bridge::Px4StateBridge>();
+  std::cout << "[VERBOSE] PX4 State Bridge Node initialized successfully." << std::endl;
+  rclcpp::spin(node);
+  std::cout << "[VERBOSE] Shutting down PX4 State Bridge Node..." << std::endl;
   rclcpp::shutdown();
   return 0;
 }

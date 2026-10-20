@@ -33,6 +33,7 @@ class FlightNode(Node):
         self.status = None
         self.local = None
         self.killed = False
+        self.h0 = NAN
         self.state = IDLE
         self.t_state = time.monotonic()
         self.t_send = 0.0
@@ -110,7 +111,7 @@ class FlightNode(Node):
     def ready(self):
         if self.status.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:
             return True
-        return self.height() >= 0.9 * self.alt
+        return self.height() - self.h0 >= 0.9 * self.alt
 
     def gps_ok(self):
         l = self.local
@@ -153,7 +154,8 @@ class FlightNode(Node):
         if self.state == ARMING:
             if self.armed():
                 self.send(VehicleCommand.VEHICLE_CMD_NAV_TAKEOFF,
-                          [-1, 0, 0, NAN, NAN, NAN, self.local.ref_alt + self.alt])
+                    [-1, 0, 0, NAN, NAN, NAN, NAN])
+                self.h0 = self.height()
                 self.set_state(CLIMBING)
             elif dt > self.arm_timeout:
                 self.set_state(IDLE)

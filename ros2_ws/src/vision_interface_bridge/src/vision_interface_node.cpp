@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <rclcpp/rclcpp.hpp>
@@ -118,8 +119,12 @@ private:
 
 int main(int argc, char ** argv)
 {
+  std::cout << "[VERBOSE] Starting Vision Interface Bridge Node..." << std::endl;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<vision_interface_bridge::VisionInterfaceBridge>());
+  auto node = std::make_shared<vision_interface_bridge::VisionInterfaceBridge>();
+  std::cout << "[VERBOSE] Vision Interface Bridge Node initialized successfully." << std::endl;
+  rclcpp::spin(node);
+  std::cout << "[VERBOSE] Shutting down Vision Interface Bridge Node..." << std::endl;
   rclcpp::shutdown();
   return 0;
 }

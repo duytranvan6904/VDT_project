@@ -118,13 +118,16 @@ class ServoNode(Node):
 
 
 def main():
+    print("[VERBOSE] Starting Servo Control Node...", flush=True)
     rclpy.init()
     node = ServoNode()
+    print("[VERBOSE] Servo Control Node initialized successfully.", flush=True)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
+        print("[VERBOSE] Shutting down Servo Control Node...", flush=True)
         node.release()
         node.destroy_node()
         rclpy.shutdown()

@@ -85,13 +85,16 @@ class XrceBridgeNode(Node):
 
 
 def main():
+    print("[VERBOSE] Starting XRCE Bridge Manager Node...", flush=True)
     rclpy.init()
     node = XrceBridgeNode()
+    print("[VERBOSE] XRCE Bridge Manager Node initialized successfully.", flush=True)
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
+        print("[VERBOSE] Shutting down XRCE Bridge Manager Node...", flush=True)
         node.destroy_node()
         rclpy.shutdown()
 

@@ -317,6 +317,12 @@ void OffboardNode::update()
     return;
   }
 
+  if (ctx_.offboard_active && is_vehicle_status_fresh() &&
+  vehicle_status_.nav_state != NAV_STATE_OFFBOARD)
+  {
+    reset_engage_sequence();
+  }
+
   if (!ctx_.offboard_active) {
     if (!is_airborne()) {
       reset_engage_sequence();
