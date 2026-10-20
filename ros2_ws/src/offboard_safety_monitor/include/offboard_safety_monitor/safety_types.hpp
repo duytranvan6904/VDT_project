@@ -18,7 +18,7 @@ enum class FailsafeLevel : uint8_t
 struct SafetyThresholds
 {
   float battery_warning_frac = 0.3f;
-  float battery_critical_frac = 0.15f;
+  float battery_critical_frac = 0.25f;
   double offboard_hold_timeout = 1.0;
   double offboard_rtl_timeout = 5.0;
 };

@@ -57,7 +57,7 @@
 /safety_monitor_node:
   ros__parameters:
     battery_warning_frac: 0.3
-    battery_critical_frac: 0.15
+    battery_critical_frac: 0.25
     offboard_hold_timeout: 1.0
     offboard_rtl_timeout: 5.0
     data_freshness_timeout_sec: 1.0

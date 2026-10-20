@@ -18,7 +18,7 @@ SafetyMonitorNode::SafetyMonitorNode()
 : Node("safety_monitor_node")
 {
   thresholds_.battery_warning_frac = declare_parameter<float>("battery_warning_frac", 0.3f);
-  thresholds_.battery_critical_frac = declare_parameter<float>("battery_critical_frac", 0.15f);
+  thresholds_.battery_critical_frac = declare_parameter<float>("battery_critical_frac", 0.25f);
   thresholds_.offboard_hold_timeout = declare_parameter<double>("offboard_hold_timeout", 1.0);
   thresholds_.offboard_rtl_timeout = declare_parameter<double>("offboard_rtl_timeout", 5.0);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
