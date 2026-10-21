@@ -25,7 +25,7 @@ class APFPointCloudGenerator(Node):
         self.publish_static_tf()
 
         self.timer = self.create_timer(1.0, self.publish_map)
-        self.points = self.generate_random_forest(num_obs=35, map_size=25.0, height=4.0)
+        self.points = self.generate_random_forest(num_obs=70, map_size=50.0, height=4.0)
         self.get_logger().info(f"Generated obstacle map with {len(self.points)} points for ROS 2.")
 
     def publish_static_tf(self):
@@ -39,7 +39,7 @@ class APFPointCloudGenerator(Node):
         t.transform.rotation.w = 1.0
         self.tf_static_broadcaster.sendTransform(t)
 
-    def generate_random_forest(self, num_obs=35, map_size=25.0, height=4.0, resolution=0.15):
+    def generate_random_forest(self, num_obs=70, map_size=50.0, height=4.0, resolution=0.15):
         points = []
         half_size = map_size / 2.0
 

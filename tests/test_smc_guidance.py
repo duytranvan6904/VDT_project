@@ -211,6 +211,62 @@ class TestSMCGuidance(unittest.TestCase):
         # Vertical descent must be active
         self.assertLess(res.velocity_cmd[2], 0.0)
 
+    def test_final_descent_tracks_fast_target_speed_beyond_centering_limit(self):
+        """Target speed 0.50 m/s > v_final_xy_max (0.35 m/s) must NOT be clamped away."""
+        drone_pos = np.array([0.0, 0.0, 0.5])
+        target_pos = np.array([0.0, 0.0, 0.0])
+        target_vel = np.array([0.50, 0.0, 0.0])
+
+        res = self.guidance.step(
+            drone_pos=drone_pos,
+            drone_vel=np.zeros(3),
+            target_pos=target_pos,
+            target_vel=target_vel,
+            dt=0.05,
+        )
+        self.assertEqual(res.sub_phase, "FINAL_DESCENT")
+        # vx must be at least target velocity 0.50 m/s
+        self.assertAlmostEqual(res.velocity_cmd[0], 0.50, places=2)
+
+    def test_glide_buffer_zone_holds_height_until_horizontally_centered(self):
+        """When drone descends to final_descent_alt_m but r_xy > final_radius, hold altitude."""
+        # final_descent_alt_m is 1.50 in default params, final_descent_rxy_m is 1.00
+        # Set rswitch = 5.0m so drone is inside rswitch, but r_xy = 1.2m > final_descent_rxy_m (1.0m)
+        target_pos = np.array([0.0, 0.0, 0.0])
+        drone_pos = np.array([1.2, 0.0, 1.40])  # r_z = 1.40 <= 1.50, r_xy = 1.20 > 1.00
+        target_vel = np.array([0.5, 0.0, 0.0])
+
+        res = self.guidance.step(
+            drone_pos=drone_pos,
+            drone_vel=np.array([0.5, 0.0, 0.0]),
+            target_pos=target_pos,
+            target_vel=target_vel,
+            dt=0.05,
+            rswitch_override=5.0,
+        )
+        self.assertEqual(res.sub_phase, "GLIDE_SLOPE")
+        # Must hold buffer altitude (vz_cmd == 0.0) rather than descending into ground!
+        self.assertEqual(res.velocity_cmd[2], 0.0)
+        # Must still pursue horizontally towards target at x=0 (dx = -1.2 -> vx < 0)
+        self.assertLess(res.velocity_cmd[0], 0.0)
+
+    def test_smooth_taper_between_cushion_and_touchdown(self):
+        """Vertical velocity smoothly tapers between cushion_high and touchdown_low."""
+        target_pos = np.array([0.0, 0.0, 0.0])
+        # In final descent: drone at r_z = 0.375m (midway between 0.25 and 0.50)
+        drone_pos = np.array([0.05, 0.0, 0.375])
+        res = self.guidance.step(
+            drone_pos=drone_pos,
+            drone_vel=np.zeros(3),
+            target_pos=target_pos,
+            dt=0.05,
+        )
+        self.assertEqual(res.sub_phase, "FINAL_DESCENT")
+        # Intermediate vz_cmd should be between -v_descend_fast and -v_descend_touch
+        self.assertLess(res.velocity_cmd[2], -self.params.v_descend_touch)
+        self.assertGreater(res.velocity_cmd[2], -self.params.v_descend_fast)
+
 
 if __name__ == '__main__':
     unittest.main()
+

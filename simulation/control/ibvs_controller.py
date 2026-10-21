@@ -104,9 +104,14 @@ class IBVSController(Node):
         self.declare_parameter('target_prediction_horizon', 0.25)  # seconds
         self.declare_parameter('landing_pitch_rate_limit', 0.50)  # rad/s
         self.declare_parameter('bbox_timeout', 0.30)         # seconds without a fresh image measurement
+        self.declare_parameter('nadir_yaw_cutoff_deg', -60.0) # cutoff pitch angle to prevent nadir spin
 
         self.K_pitch = self.get_parameter('K_pitch').value
         self.K_yaw = self.get_parameter('K_yaw').value
+        self.nadir_yaw_cutoff_rad = math.radians(
+            float(self.get_parameter('nadir_yaw_cutoff_deg').value)
+        )
+
         self.fx = self.get_parameter('focal_x').value
         self.fy = self.get_parameter('focal_y').value
         self.u0 = self.get_parameter('u0').value
@@ -345,8 +350,14 @@ class IBVSController(Node):
                 dx = self.target_pos[0] - self.drone_pos[0]
                 dy = self.target_pos[1] - self.drone_pos[1]
                 horizontal_range = math.hypot(dx, dy)
+                # Clamp horizontal_range to avoid nadir singularity:
+                # When drone is nearly directly above pad (range ≈ 0), atan2(dz,0)
+                # produces -90° suddenly and oscillates wildly with EKF noise.
+                # Smooth transition: pitch is clamped to -85° at nadir anyway,
+                # so artificially keeping range >= 0.25m avoids violent jumps.
+                horizontal_range_clamped = max(0.25, horizontal_range)
                 target_pitch = landing_pitch_from_geometry(
-                    self.drone_pos[2], self.target_pos[2], horizontal_range,
+                    self.drone_pos[2], self.target_pos[2], horizontal_range_clamped,
                 )
                 if u is not None and v is not None:
                     ev = v - self.v0
@@ -358,7 +369,16 @@ class IBVSController(Node):
                     )
                 pitch_min, pitch_max = self.pitch_limits['LAND']
                 target_pitch = max(pitch_min, min(pitch_max, target_pitch))
-                max_pitch_delta = self.landing_pitch_rate_limit * dt
+                # Adaptive pitch rate limit: slow down significantly when nearly
+                # nadir (horizontal_range < 0.5m) to suppress EKF-noise-driven jitter.
+                if horizontal_range < 0.50:
+                    effective_pitch_rate_limit = min(
+                        self.landing_pitch_rate_limit,
+                        max(0.20, self.landing_pitch_rate_limit * (horizontal_range / 0.50))
+                    )
+                else:
+                    effective_pitch_rate_limit = self.landing_pitch_rate_limit
+                max_pitch_delta = effective_pitch_rate_limit * dt
                 self.gimbal_pitch = max(
                     self.gimbal_pitch_filtered - max_pitch_delta,
                     min(self.gimbal_pitch_filtered + max_pitch_delta, target_pitch),
@@ -463,16 +483,25 @@ class IBVSController(Node):
                 + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
             )
 
+            # When camera pitch is steep downwards (nadir, pitch < cutoff),
+            # horizontal pixel displacement represents ground translation, NOT yaw error.
+            # Suppress pixel_u to prevent nadir spinning (gimbal singularity).
+            use_pixel_for_yaw = (
+                has_pixel
+                and self.gimbal_pitch_filtered >= self.nadir_yaw_cutoff_rad
+                and self.phase not in ('LAND',)
+            )
             if has_pixel:
                 eu = u - self.u0
                 self.last_eu_sign = 1.0 if eu >= 0 else -1.0
             self.yaw_cmd = update_tracking_yaw_command(
                 yaw_command=self.yaw_cmd,
                 drone_yaw=self.drone_yaw,
-                pixel_u=u if has_pixel else None,
+                pixel_u=u if use_pixel_for_yaw else None,
                 image_center_u=self.u0,
                 focal_x=self.fx,
                 pixel_gain=self.K_yaw,
+
                 target_delta_xy=(dx, dy) if target_is_usable else None,
                 target_velocity_xy=(self.target_vel[0], self.target_vel[1]),
                 tracking_mode=self.tracking_mode,

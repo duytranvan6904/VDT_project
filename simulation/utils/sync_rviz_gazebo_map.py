@@ -82,7 +82,7 @@ class MapSynchronizerNode(Node):
 
         self.publisher_.publish(msg)
 
-def generate_random_obstacle_data(num_obs=15, map_size=20.0, max_height=4.0):
+def generate_random_obstacle_data(num_obs=30, map_size=40.0, max_height=4.0):
     obstacles = []
     half_size = map_size / 2.0
     for _ in range(num_obs):
@@ -163,7 +163,7 @@ def write_gazebo_sdf(obstacles, output_file):
         <engine>ogre2</engine><scene>scene</scene>
         <ambient_light>0.4 0.4 0.4</ambient_light><background_color>0.7 0.7 0.7</background_color>
         <camera_pose>10 -14 10 0 0.55 0.55</camera_pose>
-        <camera_clip><near>0.1</near><far>250</far></camera_clip>
+        <camera_clip><near>0.1</near><far>500</far></camera_clip>
       </plugin>
       <plugin filename="GzSceneManager" name="Scene Manager" />
       <plugin filename="InteractiveViewControl" name="Interactive view control" />
@@ -197,7 +197,7 @@ def write_gazebo_sdf(obstacles, output_file):
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>200 200</size>
+              <size>400 400</size>
             </plane>
           </geometry>
         </collision>
@@ -205,7 +205,7 @@ def write_gazebo_sdf(obstacles, output_file):
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>200 200</size>
+              <size>400 400</size>
             </plane>
           </geometry>
           <material>
@@ -236,7 +236,7 @@ def write_gazebo_sdf(obstacles, output_file):
         f.write(sdf_content)
 
 def main():
-    obstacles = generate_random_obstacle_data(num_obs=15, map_size=20.0, max_height=4.0)
+    obstacles = generate_random_obstacle_data(num_obs=30, map_size=40.0, max_height=4.0)
 
     # 1. Update Gazebo SDF Files
     gz_local = "/home/duy/VDT_project/simulation/worlds/obstacle_avoidance.sdf"

@@ -8,7 +8,7 @@ import math
 import random
 import os
 
-def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="obstacle_avoidance.sdf"):
+def generate_sdf_world(num_obs=30, map_size=40.0, max_height=4.0, output_file="obstacle_avoidance.sdf"):
     half_size = map_size / 2.0
 
     obstacles_sdf = ""
@@ -136,7 +136,7 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
         <ambient_light>0.4 0.4 0.4</ambient_light>
         <background_color>0.7 0.7 0.7</background_color>
         <camera_pose>10 -14 10 0 0.55 0.55</camera_pose>
-        <camera_clip><near>0.1</near><far>250</far></camera_clip>
+        <camera_clip><near>0.1</near><far>500</far></camera_clip>
       </plugin>
       <plugin filename="GzSceneManager" name="Scene Manager" />
       <plugin filename="InteractiveViewControl" name="Interactive view control" />
@@ -173,7 +173,7 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>200 200</size>
+              <size>400 400</size>
             </plane>
           </geometry>
         </collision>
@@ -181,7 +181,7 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>200 200</size>
+              <size>400 400</size>
             </plane>
           </geometry>
           <material>
@@ -219,9 +219,9 @@ def generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file="o
 
 if __name__ == '__main__':
     target = "/home/duy/VDT_project/simulation/worlds/obstacle_avoidance.sdf"
-    generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file=target)
+    generate_sdf_world(num_obs=30, map_size=40.0, max_height=4.0, output_file=target)
 
     # Also update PX4-Autopilot gz worlds directory
     px4_gz_target = "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/worlds/obstacle_avoidance.sdf"
     if os.path.exists(os.path.dirname(px4_gz_target)):
-        generate_sdf_world(num_obs=15, map_size=20.0, max_height=4.0, output_file=px4_gz_target)
+        generate_sdf_world(num_obs=30, map_size=40.0, max_height=4.0, output_file=px4_gz_target)

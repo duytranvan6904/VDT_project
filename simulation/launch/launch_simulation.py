@@ -30,8 +30,8 @@ from std_msgs.msg import Float64, Header
 from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
 
 # ── Tham số Map ─────────────────────────────────────────────────────────────
-NUM_OBS = 15
-MAP_SIZE = 20.0
+NUM_OBS = 30
+MAP_SIZE = 40.0
 MAX_HEIGHT = 3.5
 MODEL_NAME = "x500_depth_0"
 HPAD_MODEL_NAME = "hpad_aruco"
@@ -43,7 +43,10 @@ HPAD_MESH = "/home/duy/VDT_project/PX4-Autopilot/Tools/simulation/gz/models/aruc
 def generate_obstacles():
     half = MAP_SIZE / 2.0
     obs = []
-    for _ in range(NUM_OBS):
+    attempts = 0
+    max_attempts = NUM_OBS * 20
+    while len(obs) < NUM_OBS and attempts < max_attempts:
+        attempts += 1
         cx, cy = random.uniform(-half, half), random.uniform(-half, half)
         # Giữ vùng cất cánh (bán kính 4.5m) và vùng H-pad (bán kính 3m) hoàn toàn thông thoáng
         if math.sqrt(cx**2 + cy**2) < 4.5 or math.hypot(cx - HPAD_X, cy - HPAD_Y) < 3.0:
@@ -104,7 +107,7 @@ def write_sdf(obstacles, path):
         <ambient_light>0.4 0.4 0.4</ambient_light>
         <background_color>0.7 0.7 0.7</background_color>
         <camera_pose>10 -14 10 0 0.55 0.55</camera_pose>
-        <camera_clip><near>0.1</near><far>250</far></camera_clip>
+        <camera_clip><near>0.1</near><far>500</far></camera_clip>
       </plugin>
       <plugin filename="GzSceneManager" name="Scene Manager" />
       <plugin filename="InteractiveViewControl" name="Interactive view control" />
@@ -125,9 +128,9 @@ def write_sdf(obstacles, path):
       <direction>-0.5 0.1 -0.9</direction></light>
     <model name="ground_plane"><static>true</static><link name="link">
       <collision name="c"><geometry><plane><normal>0 0 1</normal>
-        <size>200 200</size></plane></geometry></collision>
+        <size>400 400</size></plane></geometry></collision>
       <visual name="v"><geometry><plane><normal>0 0 1</normal>
-        <size>200 200</size></plane></geometry>
+        <size>400 400</size></plane></geometry>
         <material><ambient>0.7 0.7 0.7 1</ambient>
           <diffuse>0.7 0.7 0.7 1</diffuse></material></visual>
     </link></model>

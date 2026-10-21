@@ -46,19 +46,22 @@ if REPO_ROOT not in sys.path:
 class TouchdownParams:
     """Parameters for drift-invariant touchdown detection."""
     # Mount height of camera / Pixhawk on the airframe (~10-12cm on ground skids) + safe margin
-    optical_height_threshold_m: float = 0.18
+    optical_height_threshold_m: float = 0.35
     # Minimum downward descent command (negative in ENU) required to consider landing
     descent_cmd_threshold_mps: float = -0.10
     # Maximum actual vertical speed allowed when stopped on ground
-    stoppage_vz_max_mps: float = 0.08
+    stoppage_vz_max_mps: float = 0.12
     # Maximum altitude rate of change (|dz/dt|) allowed on ground
-    stoppage_dz_dt_max_mps: float = 0.05
+    stoppage_dz_dt_max_mps: float = 0.08
     # Jerk spike threshold indicating impact reaction force (m/s³)
     jerk_impact_threshold: float = 3.50
     # Required confirmation duration on ground before latching touchdown (seconds)
-    confirmation_duration_s: float = 0.35
+    confirmation_duration_s: float = 0.15
+    # Fast confirmation duration when physical impact jerk or firmware landed is confirmed (seconds)
+    fast_confirmation_duration_s: float = 0.08
     # Strict altitude ceiling ensuring drone is physically near ground level before latching
-    altitude_ceiling_m: float = 0.22
+    altitude_ceiling_m: float = 0.35
+
 
 
 @dataclass
@@ -156,11 +159,11 @@ class TouchdownDetector:
             abs(actual_vz) <= self.p.stoppage_vz_max_mps
             and abs(dz_dt) <= self.p.stoppage_dz_dt_max_mps
         )
-        is_at_ground_level = current_alt_z <= 0.18 and is_vertically_stopped
-        # Kinematic stoppage ONLY valid if drone is truly close to ground (current_alt_z <= 0.20m)
+        is_at_ground_level = current_alt_z <= self.p.altitude_ceiling_m and is_vertically_stopped
+        # Kinematic stoppage ONLY valid if drone is truly close to ground (current_alt_z <= altitude_ceiling_m)
         # Prevents airborne false-positives when vehicle brakes during final descent!
         kinematic_stopped = (
-            (is_commanding_descent and is_vertically_stopped and current_alt_z <= 0.20)
+            (is_commanding_descent and is_vertically_stopped and current_alt_z <= self.p.altitude_ceiling_m)
             or is_at_ground_level
         )
 
@@ -168,7 +171,7 @@ class TouchdownDetector:
         # Directly measures distance from camera mount to the pad surface
         optical_near = False
         if optical_z is not None:
-            optical_near = (optical_z <= self.p.optical_height_threshold_m) and (current_alt_z <= 0.20)
+            optical_near = (optical_z <= self.p.optical_height_threshold_m) and (current_alt_z <= self.p.altitude_ceiling_m)
         else:
             # If camera view is occluded or not available, rely on relaxed altitude ceiling
             optical_near = current_alt_z <= self.p.altitude_ceiling_m
@@ -197,11 +200,17 @@ class TouchdownDetector:
                 self.confirm_start_time = now
             confirm_duration = now - self.confirm_start_time
 
-            if confirm_duration >= self.p.confirmation_duration_s:
+            required_confirm = (
+                self.p.fast_confirmation_duration_s
+                if (impact_detected or px4_landed)
+                else self.p.confirmation_duration_s
+            )
+            if confirm_duration >= required_confirm:
                 self.is_latched = True
-                reason = f"TOUCHDOWN_CONFIRMED ({confirm_duration:.2f}s)"
+                reason = f"TOUCHDOWN_CONFIRMED ({confirm_duration:.2f}s, req={required_confirm:.2f}s)"
         else:
             self.confirm_start_time = None
+
 
         return TouchdownResult(
             touchdown_confirmed=self.is_latched,
@@ -222,12 +231,14 @@ class TouchdownDetectorNode(Node):
     def __init__(self):
         super().__init__('touchdown_detector_node')
 
-        self.declare_parameter('optical_height_threshold_m', 0.40)
+        self.declare_parameter('optical_height_threshold_m', 0.35)
         self.declare_parameter('descent_cmd_threshold_mps', -0.10)
-        self.declare_parameter('stoppage_vz_max_mps', 0.08)
-        self.declare_parameter('stoppage_dz_dt_max_mps', 0.05)
+        self.declare_parameter('stoppage_vz_max_mps', 0.12)
+        self.declare_parameter('stoppage_dz_dt_max_mps', 0.08)
         self.declare_parameter('jerk_impact_threshold', 3.50)
-        self.declare_parameter('confirmation_duration_s', 0.35)
+        self.declare_parameter('confirmation_duration_s', 0.15)
+        self.declare_parameter('fast_confirmation_duration_s', 0.08)
+        self.declare_parameter('altitude_ceiling_m', 0.35)
         self.declare_parameter('eval_rate_hz', 20.0)
 
         params = TouchdownParams(
@@ -237,7 +248,10 @@ class TouchdownDetectorNode(Node):
             stoppage_dz_dt_max_mps=float(self.get_parameter('stoppage_dz_dt_max_mps').value),
             jerk_impact_threshold=float(self.get_parameter('jerk_impact_threshold').value),
             confirmation_duration_s=float(self.get_parameter('confirmation_duration_s').value),
+            fast_confirmation_duration_s=float(self.get_parameter('fast_confirmation_duration_s').value),
+            altitude_ceiling_m=float(self.get_parameter('altitude_ceiling_m').value),
         )
+
 
         self.detector = TouchdownDetector(params)
         rate_hz = float(self.get_parameter('eval_rate_hz').value)

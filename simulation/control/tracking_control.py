@@ -44,7 +44,14 @@ def target_velocity_feedforward(target_velocity_xy, min_speed: float = 0.20) -> 
 
 
 class TargetMotionGate:
-    """Require persistent EKF motion before FOLLOW uses velocity feed-forward."""
+    """Require persistent EKF motion before FOLLOW uses velocity feed-forward.
+
+    On exit, the gate linearly ramps the feedforward velocity from the current
+    value to zero over ``exit_confirm_frames`` frames (velocity tapering).
+    This prevents the drone from overshooting when the target suddenly stops,
+    because the feedforward contribution smoothly decreases to zero instead of
+    cutting off after a hard delay.
+    """
 
     def __init__(
         self,
@@ -60,11 +67,14 @@ class TargetMotionGate:
         self.active = False
         self._enter_count = 0
         self._exit_count = 0
+        # Tapering: scale ramps 1.0 → 0.0 during exit confirmation window
+        self._taper_scale: float = 1.0
 
     def reset(self) -> None:
         self.active = False
         self._enter_count = 0
         self._exit_count = 0
+        self._taper_scale = 1.0
 
     def update(self, velocity_xy) -> np.ndarray:
         velocity = np.asarray(velocity_xy, dtype=float)
@@ -77,12 +87,20 @@ class TargetMotionGate:
             self._enter_count = 0
             if speed <= self.exit_speed:
                 self._exit_count += 1
+                # Linear taper: ramp feedforward scale from 1.0 to 0.0
+                # over the exit confirmation window before fully resetting.
+                self._taper_scale = max(
+                    0.0,
+                    1.0 - self._exit_count / max(1, self.exit_confirm_frames),
+                )
                 if self._exit_count >= self.exit_confirm_frames:
                     self.reset()
             else:
                 self._exit_count = 0
+                self._taper_scale = 1.0
         else:
             self._exit_count = 0
+            self._taper_scale = 1.0
             if speed >= self.enter_speed:
                 self._enter_count += 1
                 if self._enter_count >= self.enter_confirm_frames:
@@ -91,7 +109,9 @@ class TargetMotionGate:
             else:
                 self._enter_count = 0
 
-        return velocity.copy() if self.active else np.zeros(2, dtype=float)
+        if self.active:
+            return velocity.copy() * self._taper_scale
+        return np.zeros(2, dtype=float)
 
 
 def reacquire_candidate_is_valid(
@@ -294,8 +314,27 @@ def choose_landing_yaw(
     drone_yaw: float,
     held_yaw: float,
     hold_initialized: bool,
+    target_velocity_xy: tuple[float, float] | np.ndarray | None = None,
+    align_with_target_motion: bool = False,
+    min_target_speed: float = 0.25,
 ) -> tuple[float, float, bool]:
-    """Latch one heading for approach and hold it through landing."""
+    """Latch one heading for approach and hold it through landing.
+
+    When ``align_with_target_motion`` is True and target speed exceeds ``min_target_speed``,
+    the vehicle aligns its yaw with the target's course angle atan2(vy, vx).
+    Otherwise, the heading is latched on the first call (using ibvs_yaw if tracking is valid,
+    or drone_yaw) and held steady throughout landing to prevent nadir spinning.
+    """
+    if align_with_target_motion and target_velocity_xy is not None:
+        try:
+            vx, vy = float(target_velocity_xy[0]), float(target_velocity_xy[1])
+            speed = math.hypot(vx, vy)
+            if speed >= max(0.0, float(min_target_speed)):
+                course = _wrap_angle(math.atan2(vy, vx))
+                return course, course, True
+        except (IndexError, TypeError, ValueError):
+            pass
+
     if hold_initialized:
         yaw = _wrap_angle(float(held_yaw))
         return yaw, yaw, True
@@ -304,3 +343,4 @@ def choose_landing_yaw(
         return yaw, yaw, True
     yaw = _wrap_angle(float(drone_yaw))
     return yaw, yaw, True
+

@@ -347,8 +347,69 @@ class TestLandingAimAndYawHold(unittest.TestCase):
 
         self.assertAlmostEqual(yaw, 0.4)
         self.assertAlmostEqual(held_yaw, 0.4)
-        self.assertTrue(initialized)
+    def test_landing_yaw_aligns_with_moving_target_course_when_enabled(self):
+        # Target moving eastward along +X at 0.5 m/s: course = 0.0 rad
+        yaw, held, init = choose_landing_yaw(
+            tracking_valid=True,
+            ibvs_yaw=0.8,
+            drone_yaw=0.5,
+            held_yaw=0.0,
+            hold_initialized=False,
+            target_velocity_xy=(0.5, 0.0),
+            align_with_target_motion=True,
+            min_target_speed=0.25,
+        )
+        self.assertAlmostEqual(yaw, 0.0)
+        self.assertAlmostEqual(held, 0.0)
+        self.assertTrue(init)
+
+        # Target turning northward along +Y at 0.6 m/s: course = pi/2 rad
+        yaw, held, init = choose_landing_yaw(
+            tracking_valid=True,
+            ibvs_yaw=0.8,
+            drone_yaw=0.5,
+            held_yaw=held,
+            hold_initialized=init,
+            target_velocity_xy=(0.0, 0.6),
+            align_with_target_motion=True,
+            min_target_speed=0.25,
+        )
+        self.assertAlmostEqual(yaw, math.pi / 2.0)
+        self.assertAlmostEqual(held, math.pi / 2.0)
+        self.assertTrue(init)
+
+    def test_landing_yaw_latches_when_target_is_slow_or_stopped_even_if_alignment_enabled(self):
+        # Target stationary (< 0.25 m/s): should latch ibvs_yaw instead of course
+        yaw, held, init = choose_landing_yaw(
+            tracking_valid=True,
+            ibvs_yaw=0.45,
+            drone_yaw=0.20,
+            held_yaw=0.0,
+            hold_initialized=False,
+            target_velocity_xy=(0.05, 0.05),
+            align_with_target_motion=True,
+            min_target_speed=0.25,
+        )
+        self.assertAlmostEqual(yaw, 0.45)
+        self.assertAlmostEqual(held, 0.45)
+        self.assertTrue(init)
+
+        # Next frame with zero velocity: held heading must be preserved
+        yaw, held, init = choose_landing_yaw(
+            tracking_valid=True,
+            ibvs_yaw=-1.2,
+            drone_yaw=0.10,
+            held_yaw=held,
+            hold_initialized=init,
+            target_velocity_xy=(0.0, 0.0),
+            align_with_target_motion=True,
+            min_target_speed=0.25,
+        )
+        self.assertAlmostEqual(yaw, 0.45)
+        self.assertAlmostEqual(held, 0.45)
+        self.assertTrue(init)
 
 
 if __name__ == '__main__':
     unittest.main()
+

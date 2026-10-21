@@ -294,8 +294,27 @@ def choose_landing_yaw(
     drone_yaw: float,
     held_yaw: float,
     hold_initialized: bool,
+    target_velocity_xy: tuple[float, float] | np.ndarray | None = None,
+    align_with_target_motion: bool = False,
+    min_target_speed: float = 0.25,
 ) -> tuple[float, float, bool]:
-    """Latch one heading for approach and hold it through landing."""
+    """Latch one heading for approach and hold it through landing.
+
+    When ``align_with_target_motion`` is True and target speed exceeds ``min_target_speed``,
+    the vehicle aligns its yaw with the target's course angle atan2(vy, vx).
+    Otherwise, the heading is latched on the first call (using ibvs_yaw if tracking is valid,
+    or drone_yaw) and held steady throughout landing to prevent nadir spinning.
+    """
+    if align_with_target_motion and target_velocity_xy is not None:
+        try:
+            vx, vy = float(target_velocity_xy[0]), float(target_velocity_xy[1])
+            speed = math.hypot(vx, vy)
+            if speed >= max(0.0, float(min_target_speed)):
+                course = _wrap_angle(math.atan2(vy, vx))
+                return course, course, True
+        except (IndexError, TypeError, ValueError):
+            pass
+
     if hold_initialized:
         yaw = _wrap_angle(float(held_yaw))
         return yaw, yaw, True
@@ -304,3 +323,4 @@ def choose_landing_yaw(
         return yaw, yaw, True
     yaw = _wrap_angle(float(drone_yaw))
     return yaw, yaw, True
+

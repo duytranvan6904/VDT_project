@@ -104,9 +104,13 @@ class IBVSController(Node):
         self.declare_parameter('target_prediction_horizon', 0.25)  # seconds
         self.declare_parameter('landing_pitch_rate_limit', 0.50)  # rad/s
         self.declare_parameter('bbox_timeout', 0.30)         # seconds without a fresh image measurement
+        self.declare_parameter('nadir_yaw_cutoff_deg', -60.0) # cutoff pitch angle to prevent nadir spin
 
         self.K_pitch = self.get_parameter('K_pitch').value
         self.K_yaw = self.get_parameter('K_yaw').value
+        self.nadir_yaw_cutoff_rad = math.radians(
+            float(self.get_parameter('nadir_yaw_cutoff_deg').value)
+        )
         self.fx = self.get_parameter('focal_x').value
         self.fy = self.get_parameter('focal_y').value
         self.u0 = self.get_parameter('u0').value
@@ -463,13 +467,21 @@ class IBVSController(Node):
                 + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
             )
 
+            # When camera pitch is steep downwards (nadir, pitch < cutoff),
+            # horizontal pixel displacement represents ground translation, NOT yaw error.
+            # Suppress pixel_u to prevent nadir spinning (gimbal singularity).
+            use_pixel_for_yaw = (
+                has_pixel
+                and self.gimbal_pitch_filtered >= self.nadir_yaw_cutoff_rad
+                and self.phase not in ('LAND',)
+            )
             if has_pixel:
                 eu = u - self.u0
                 self.last_eu_sign = 1.0 if eu >= 0 else -1.0
             self.yaw_cmd = update_tracking_yaw_command(
                 yaw_command=self.yaw_cmd,
                 drone_yaw=self.drone_yaw,
-                pixel_u=u if has_pixel else None,
+                pixel_u=u if use_pixel_for_yaw else None,
                 image_center_u=self.u0,
                 focal_x=self.fx,
                 pixel_gain=self.K_yaw,

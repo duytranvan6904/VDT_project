@@ -22,10 +22,10 @@ apf_planner:
     goal_threshold: 0.30                  # Bán kính ngưỡng coi như đã đạt đến mục tiêu (m)
     follow_distance: 3.5                  # Khoảng cách bám đuổi mục tiêu mong muốn theo phương ngang (m)
     hold_follow_altitude: true            # Bật/tắt duy trì độ cao cố định trong pha FOLLOW
-    target_lead_time: 0.35                # Thời gian dự đoán đón đầu mục tiêu (s) dựa theo vận tốc mục tiêu
-    max_target_lead: 1.0                  # Khoảng cách đón đầu tối đa cho phép theo vector vận tốc mục tiêu (m)
-    target_velocity_alpha: 0.35           # Hệ số lọc thông thấp EMA [0.0 - 1.0] làm mịn vector vận tốc mục tiêu
-    target_velocity_deadband: 0.18        # Vùng chết vận tốc mục tiêu (m/s) - dưới ngưỡng này coi như mục tiêu đứng yên
+    target_lead_time: 0.30                # Thời gian dự đoán đón đầu mục tiêu (s) - 0.25s: đủ bám tốt, không gây oscillation
+    max_target_lead: 0.5                  # Khoảng cách đón đầu tối đa (m) - giảm về 0.5m tránh oscillation
+    target_velocity_alpha: 0.18           # Hệ số lọc EMA làm mịn velocity mục tiêu - filter mạnh hơn
+    target_velocity_deadband: 0.15        # Vùng chết vận tốc mục tiêu (m/s)
     # Tham số riêng cho thuật toán IAPF (Improved Artificial Potential Field)
     iapf_f_enter: 0.10                    # Ngưỡng lực cản kích hoạt rẽ nhánh tiếp tuyến né vật cản (mặt phẳng tiếp tuyến 3D)
     iapf_f_exit: 0.30                     # Ngưỡng lực cản để thoát khỏi chế độ rẽ nhánh tiếp tuyến và bay thẳng về đích
