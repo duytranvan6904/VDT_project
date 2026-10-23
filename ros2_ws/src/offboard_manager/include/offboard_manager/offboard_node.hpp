@@ -40,6 +40,7 @@ private:
   bool is_local_position_fresh() const;
   bool is_px4_ready() const;
   bool is_airborne() const;
+  bool is_ready_to_engage() const;
   bool is_planner_stale() const;
   void publish_vehicle_command(
     uint16_t command, float param1, float param2 = 0.0f, float param3 = 0.0f);
@@ -92,6 +93,7 @@ private:
   float yaw_search_rate_;
   float land_descent_rate_;
   bool debug_enabled_;
+  bool require_loiter_before_engage_;
 };
 
 }  // namespace offboard_manager

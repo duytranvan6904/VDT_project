@@ -15,6 +15,7 @@ constexpr float PX4_CUSTOM_MAIN_MODE_AUTO = 4.0f;
 constexpr float PX4_CUSTOM_SUB_MODE_AUTO_LOITER = 3.0f;
 constexpr float PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6.0f;
 constexpr uint8_t NAV_STATE_OFFBOARD = 14;
+constexpr uint8_t NAV_STATE_LOITER = 5;
 constexpr float NAN_F = std::numeric_limits<float>::quiet_NaN();
 }  // namespace
 
@@ -43,6 +44,7 @@ OffboardNode::OffboardNode()
   yaw_search_rate_ = declare_parameter<float>("yaw_search_rate", 0.3f);
   land_descent_rate_ = declare_parameter<float>("land_descent_rate", 0.4f);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
+  require_loiter_before_engage_ = declare_parameter<bool>("require_loiter_before_engage", true);
 
   rclcpp::QoS qos(1);
   qos.best_effort();
@@ -169,6 +171,16 @@ bool OffboardNode::is_airborne() const
   return is_vehicle_status_fresh() && is_local_position_fresh() &&
     vehicle_status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED &&
     local_position_.z_valid && (-local_position_.z) >= min_engage_altitude_m_;
+}
+
+bool OffboardNode::is_ready_to_engage() const
+{
+  if (!require_loiter_before_engage_) {
+    return is_airborne();
+  }
+  return is_airborne() &&
+         is_vehicle_status_fresh() &&
+         vehicle_status_.nav_state == NAV_STATE_LOITER;
 }
 
 void OffboardNode::send_heartbeat()
@@ -324,7 +336,7 @@ void OffboardNode::update()
   }
 
   if (!ctx_.offboard_active) {
-    if (!is_airborne()) {
+    if (!is_ready_to_engage()) {
       reset_engage_sequence();
     } else {
       engage_request();
