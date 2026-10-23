@@ -1,0 +1,23 @@
+[0.000000] (-) TimerEvent: {}
+[0.000280] (-) JobUnselected: {'identifier': 'apf_planner'}
+[0.000342] (-) JobUnselected: {'identifier': 'aruco_detector'}
+[0.000370] (-) JobUnselected: {'identifier': 'ekf_adapter'}
+[0.000393] (-) JobUnselected: {'identifier': 'fsm_state_machine'}
+[0.000414] (-) JobUnselected: {'identifier': 'gimbal_control'}
+[0.000432] (-) JobUnselected: {'identifier': 'ibvs'}
+[0.000448] (-) JobUnselected: {'identifier': 'input_state_cache'}
+[0.000463] (-) JobUnselected: {'identifier': 'kill_switch'}
+[0.000479] (-) JobUnselected: {'identifier': 'landing_guidance'}
+[0.000495] (-) JobUnselected: {'identifier': 'offboard_manager'}
+[0.000511] (-) JobUnselected: {'identifier': 'offboard_safety_monitor'}
+[0.000527] (-) JobUnselected: {'identifier': 'px4_state_bridge'}
+[0.000542] (-) JobUnselected: {'identifier': 'rc_parser'}
+[0.000558] (-) JobUnselected: {'identifier': 'servo_control'}
+[0.000574] (-) JobUnselected: {'identifier': 'takeoff'}
+[0.000589] (-) JobUnselected: {'identifier': 'vdt_msgs'}
+[0.000605] (-) JobUnselected: {'identifier': 'vision_interface_bridge'}
+[0.000621] (-) JobUnselected: {'identifier': 'xrce_bridge_manager'}
+[0.000640] (bringup) JobQueued: {'identifier': 'bringup', 'dependencies': OrderedDict({'landing_guidance': '/home/vdt_2026/VDT_project/install/landing_guidance', 'servo_control': '/home/vdt_2026/VDT_project/install/servo_control', 'vdt_msgs': '/home/vdt_2026/VDT_project/install/vdt_msgs', 'xrce_bridge_manager': '/home/vdt_2026/VDT_project/install/xrce_bridge_manager', 'fsm_state_machine': '/home/vdt_2026/VDT_project/install/fsm_state_machine', 'input_state_cache': '/home/vdt_2026/VDT_project/install/input_state_cache', 'offboard_manager': '/home/vdt_2026/VDT_project/install/offboard_manager', 'rc_parser': '/home/vdt_2026/VDT_project/install/rc_parser', 'gimbal_control': '/home/vdt_2026/VDT_project/install/gimbal_control', 'kill_switch': '/home/vdt_2026/VDT_project/install/kill_switch', 'offboard_safety_monitor': '/home/vdt_2026/VDT_project/install/offboard_safety_monitor'})}
+[0.001139] (bringup) JobStarted: {'identifier': 'bringup'}
+[0.044816] (bringup) JobEnded: {'identifier': 'bringup', 'rc': 1}
+[0.055328] (-) EventReactorShutdown: {}

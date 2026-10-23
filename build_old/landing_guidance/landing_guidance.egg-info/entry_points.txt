@@ -1,0 +1,4 @@
+[console_scripts]
+covariance_gate_node = landing_guidance.covariance_gate_node:main
+smc_guidance_node = landing_guidance.smc_guidance_node:main
+touchdown_detector_node = landing_guidance.touchdown_detector_node:main

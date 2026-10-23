@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: landing-guidance
+Version: 0.1.0
+Summary: Precision landing: covariance gate, SMC guidance, touchdown detector
+Maintainer: vdt
+Maintainer-email: sashisupo@gmail.com
+License: Proprietary

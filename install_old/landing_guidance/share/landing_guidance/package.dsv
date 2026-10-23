@@ -1,0 +1,9 @@
+source;share/landing_guidance/hook/pythonpath.ps1
+source;share/landing_guidance/hook/pythonpath.dsv
+source;share/landing_guidance/hook/pythonpath.sh
+source;share/landing_guidance/hook/ament_prefix_path.ps1
+source;share/landing_guidance/hook/ament_prefix_path.dsv
+source;share/landing_guidance/hook/ament_prefix_path.sh
+source;../../build/landing_guidance/share/landing_guidance/hook/pythonpath_develop.ps1
+source;../../build/landing_guidance/share/landing_guidance/hook/pythonpath_develop.dsv
+source;../../build/landing_guidance/share/landing_guidance/hook/pythonpath_develop.sh

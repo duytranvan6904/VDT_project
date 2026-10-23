@@ -1,0 +1,28 @@
+[2.214s] Invoking command in '/home/vdt_2026/VDT_project/build/landing_guidance': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/vdt_2026/VDT_project/build/landing_guidance/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/landing_guidance/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/vdt_2026/VDT_project/build/landing_guidance/build --no-deps symlink_data
+[2.619s] running develop
+[2.839s] running egg_info
+[2.839s] creating landing_guidance.egg-info
+[2.861s] writing landing_guidance.egg-info/PKG-INFO
+[2.862s] writing dependency_links to landing_guidance.egg-info/dependency_links.txt
+[2.862s] writing entry points to landing_guidance.egg-info/entry_points.txt
+[2.862s] writing requirements to landing_guidance.egg-info/requires.txt
+[2.862s] writing top-level names to landing_guidance.egg-info/top_level.txt
+[2.862s] writing manifest file 'landing_guidance.egg-info/SOURCES.txt'
+[2.907s] reading manifest file 'landing_guidance.egg-info/SOURCES.txt'
+[2.908s] writing manifest file 'landing_guidance.egg-info/SOURCES.txt'
+[2.932s] running build_ext
+[2.935s] Creating /home/vdt_2026/VDT_project/install/landing_guidance/lib/python3.12/site-packages/landing-guidance.egg-link (link to .)
+[2.936s] Installing covariance_gate_node script to /home/vdt_2026/VDT_project/install/landing_guidance/lib/landing_guidance
+[2.937s] Installing smc_guidance_node script to /home/vdt_2026/VDT_project/install/landing_guidance/lib/landing_guidance
+[2.937s] Installing touchdown_detector_node script to /home/vdt_2026/VDT_project/install/landing_guidance/lib/landing_guidance
+[2.937s] 
+[2.937s] Installed /home/vdt_2026/VDT_project/build/landing_guidance
+[2.937s] running symlink_data
+[2.937s] creating /home/vdt_2026/VDT_project/install/landing_guidance/share/ament_index
+[2.937s] creating /home/vdt_2026/VDT_project/install/landing_guidance/share/ament_index/resource_index
+[2.938s] creating /home/vdt_2026/VDT_project/install/landing_guidance/share/ament_index/resource_index/packages
+[2.938s] symbolically linking /home/vdt_2026/VDT_project/build/landing_guidance/resource/landing_guidance -> /home/vdt_2026/VDT_project/install/landing_guidance/share/ament_index/resource_index/packages
+[2.938s] symbolically linking /home/vdt_2026/VDT_project/build/landing_guidance/package.xml -> /home/vdt_2026/VDT_project/install/landing_guidance/share/landing_guidance
+[2.938s] creating /home/vdt_2026/VDT_project/install/landing_guidance/share/landing_guidance/launch
+[2.938s] symbolically linking /home/vdt_2026/VDT_project/build/landing_guidance/launch/landing.launch.py -> /home/vdt_2026/VDT_project/install/landing_guidance/share/landing_guidance/launch
+[3.040s] Invoked command in '/home/vdt_2026/VDT_project/build/landing_guidance' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/vdt_2026/VDT_project/build/landing_guidance/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/vdt_2026/VDT_project/install/landing_guidance/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/vdt_2026/VDT_project/build/landing_guidance/build --no-deps symlink_data
