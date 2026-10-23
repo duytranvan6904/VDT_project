@@ -73,6 +73,31 @@ class TestTouchdownDetector(unittest.TestCase):
             t += 0.05
             self.assertFalse(res.touchdown_confirmed)
 
+    def test_default_detector_rejects_stationary_pause_above_contact_height(self):
+        """A brief stop at the 0.30m descent transition is not ground contact."""
+        detector = TouchdownDetector()
+        for i in range(12):
+            res = detector.step(
+                actual_vz=0.0,
+                commanded_vz=-0.15,
+                current_alt_z=0.30,
+                optical_z=0.28,
+                current_time=i * 0.05,
+            )
+        self.assertFalse(res.touchdown_confirmed)
+
+    def test_default_detector_confirms_only_after_stable_ground_contact(self):
+        detector = TouchdownDetector()
+        for i in range(10):
+            res = detector.step(
+                actual_vz=0.0,
+                commanded_vz=-0.15,
+                current_alt_z=0.05,
+                optical_z=0.05,
+                current_time=i * 0.05,
+            )
+        self.assertTrue(res.touchdown_confirmed)
+
     def test_latching_behavior(self):
         """Once confirmed, touchdown must remain latched."""
         # Force confirmed

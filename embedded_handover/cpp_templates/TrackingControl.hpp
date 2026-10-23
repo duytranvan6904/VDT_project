@@ -14,10 +14,10 @@ namespace vdt::landing {
 class TargetMotionGate {
 public:
     explicit TargetMotionGate(
-        double enter_speed = 0.35,
+        double enter_speed = 0.38,
         double exit_speed = 0.18,
-        int enter_confirm_frames = 3,
-        int exit_confirm_frames = 4
+        int enter_confirm_frames = 15,
+        int exit_confirm_frames = 8
     )
         : enter_speed_(enter_speed),
           exit_speed_(exit_speed),
@@ -69,10 +69,10 @@ public:
     [[nodiscard]] bool is_active() const { return active_; }
 
 private:
-    double enter_speed_{0.35};
+    double enter_speed_{0.38};
     double exit_speed_{0.18};
-    int enter_confirm_frames_{3};
-    int exit_confirm_frames_{4};
+    int enter_confirm_frames_{15};
+    int exit_confirm_frames_{8};
     bool active_{false};
     int enter_count_{0};
     int exit_count_{0};

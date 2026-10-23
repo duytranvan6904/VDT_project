@@ -57,9 +57,9 @@ class SMCParams:
     theta_des_rad: float = math.pi / 4.0  # 45 deg glide slope (theta_des = 45°)
     zeta_des_rad: float = 0.0   # Desired relative azimuth
     v_max: float = 2.20         # Max velocity magnitude in approach (m/s)
-    v_final_xy_max: float = 0.70  # Max horizontal centering velocity in terminal phase (m/s)
-    v_descend_fast: float = 0.65  # Descent velocity when altitude > 0.5m (m/s)
-    v_descend_touch: float = 0.28 # Touchdown descent velocity when altitude <= 0.3m (m/s)
+    v_final_xy_max: float = 1.30  # Max horizontal centering velocity in terminal phase (m/s)
+    v_descend_fast: float = 0.55  # Descent velocity when altitude > 0.5m (m/s)
+    v_descend_touch: float = 0.22 # Touchdown descent velocity when altitude <= 0.3m (m/s)
     rswitch_default: float = 0.80 # Default switching radius (m)
     final_descent_rxy_m: float = 0.85
     final_descent_alt_m: float = 0.60
@@ -161,8 +161,11 @@ class SMCGuidance:
             if target_vel is not None
             else np.zeros(2)
         )
+        # Fade out position correction as drone touches down to keep vehicle attitude level!
+        # At r_z <= 0.18m, aggressive horizontal corrections pitch the nose down/up.
+        corr_fade = float(np.clip((r_z - 0.10) / max(0.01, 0.20 - 0.10), 0.0, 1.0))
         xy_cmd = self._position_velocity(
-            dx, dy, target_vel_xy, self.p.final_centering_kp,
+            dx, dy, target_vel_xy, self.p.final_centering_kp * corr_fade,
             self.p.v_final_xy_max,
         )
         vx_cmd, vy_cmd = float(xy_cmd[0]), float(xy_cmd[1])
@@ -349,8 +352,8 @@ class SMCGuidance:
         vx_cmd, vy_cmd = float(xy_cmd[0]), float(xy_cmd[1])
         horizontal_speed = math.hypot(vx_cmd, vy_cmd)
         if r_xy <= rswitch and r_z > self.p.final_descent_alt_m:
-            slope_speed = max(0.20, horizontal_speed * math.tan(abs(self.p.theta_des_rad)))
-            alt_speed = max(self.p.v_descend_touch, 0.20 * r_z)
+            slope_speed = max(0.35, horizontal_speed * math.tan(abs(self.p.theta_des_rad)))
+            alt_speed = max(self.p.v_descend_touch, 0.40 * r_z)
             descent_speed = min(
                 self.p.v_descend_fast,
                 max(slope_speed, alt_speed),
@@ -402,9 +405,9 @@ class SMCGuidanceNode(Node):
         super().__init__('smc_guidance_node')
 
         self.declare_parameter('v_max', 2.20)
-        self.declare_parameter('v_final_xy_max', 0.70)
-        self.declare_parameter('v_descend_fast', 0.65)
-        self.declare_parameter('v_descend_touch', 0.28)
+        self.declare_parameter('v_final_xy_max', 1.30)
+        self.declare_parameter('v_descend_fast', 0.55)
+        self.declare_parameter('v_descend_touch', 0.22)
         self.declare_parameter('rswitch_default', 5.00)
         self.declare_parameter('final_descent_rxy_m', 0.85)
         self.declare_parameter('final_descent_alt_m', 0.60)
@@ -554,7 +557,7 @@ class SMCGuidanceNode(Node):
         if (
             not state_fresh
             or not covariance_fresh
-            or self.tracking_mode not in ('TRACKING', 'PREDICTING')
+            or self.tracking_mode not in ('TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED')
             or not self.safe_to_land
         ):
             # Never let a predicted or stale target state drive a landing

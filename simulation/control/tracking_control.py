@@ -33,6 +33,87 @@ def compose_follow_velocity(
     return velocity
 
 
+def follow_motion_yaw(
+    velocity_xy,
+    fallback_yaw: float,
+    min_speed: float = 0.10,
+) -> float:
+    """Face along the commanded FOLLOW motion, falling back to visual yaw at rest."""
+    velocity = np.asarray(velocity_xy, dtype=float)
+    if velocity.shape != (2,):
+        raise ValueError('velocity_xy must be a 2-vector')
+    if not np.all(np.isfinite(velocity)):
+        return float(fallback_yaw)
+    if float(np.linalg.norm(velocity)) < max(0.0, float(min_speed)):
+        return float(fallback_yaw)
+    return math.atan2(float(velocity[1]), float(velocity[0]))
+
+
+def select_follow_yaw_reference(
+    ibvs_yaw: float,
+    target_velocity_ff_xy,
+    *,
+    min_target_speed: float = 0.30,
+) -> float:
+    """Use pad course only after the motion gate supplies clear velocity.
+
+    APF guidance points toward the stand-off goal and can reverse or rotate as
+    the vehicle corrects position around a stationary pad. It is therefore
+    unsuitable as a body-heading reference. For a stationary or uncertain pad,
+    retain the visual/world-bearing IBVS yaw command instead.
+    """
+    velocity = np.asarray(target_velocity_ff_xy, dtype=float)
+    if velocity.shape != (2,) or not np.all(np.isfinite(velocity)):
+        return float(ibvs_yaw)
+    if float(np.linalg.norm(velocity)) < max(0.0, float(min_target_speed)):
+        return float(ibvs_yaw)
+    return math.atan2(float(velocity[1]), float(velocity[0]))
+
+
+def slew_yaw_reference(
+    current_yaw: float,
+    target_yaw: float,
+    max_rate: float,
+    dt: float,
+) -> float:
+    """Bound course-reference changes so noisy velocity estimates cannot jerk yaw."""
+    current = float(current_yaw)
+    target = float(target_yaw)
+    if not math.isfinite(current) or not math.isfinite(target):
+        return current
+    max_step = max(0.0, float(max_rate)) * max(0.0, float(dt))
+    error = (target - current + math.pi) % (2.0 * math.pi) - math.pi
+    return (current + float(np.clip(error, -max_step, max_step)) + math.pi) % (
+        2.0 * math.pi
+    ) - math.pi
+
+
+def forward_heading_guard(
+    velocity_xy,
+    body_yaw: float,
+    max_course_error: float = math.radians(85.0),
+) -> np.ndarray:
+    """Suppress XY translation until the body is pointed into the travel sector.
+
+    Velocity commands are world-frame. If the commanded course is behind the
+    vehicle, holding position while yaw slews is safer than translating in
+    reverse with the camera still facing the target.
+    """
+    velocity = np.asarray(velocity_xy, dtype=float)
+    if velocity.shape != (2,):
+        raise ValueError('velocity_xy must be a 2-vector')
+    if not np.all(np.isfinite(velocity)):
+        return np.zeros(2, dtype=float)
+    if float(np.linalg.norm(velocity)) < 1e-6:
+        return velocity.copy()
+    course_yaw = math.atan2(float(velocity[1]), float(velocity[0]))
+    error = (course_yaw - float(body_yaw) + math.pi) % (2.0 * math.pi) - math.pi
+    limit = min(math.pi / 2.0, max(0.0, float(max_course_error)))
+    if abs(error) > limit:
+        return np.zeros(2, dtype=float)
+    return velocity.copy()
+
+
 def target_velocity_feedforward(target_velocity_xy, min_speed: float = 0.20) -> np.ndarray:
     """Keep target-motion compensation active even when APF is at its goal."""
     velocity = np.asarray(target_velocity_xy, dtype=float)
@@ -55,10 +136,10 @@ class TargetMotionGate:
 
     def __init__(
         self,
-        enter_speed: float = 0.35,
+        enter_speed: float = 0.38,
         exit_speed: float = 0.18,
-        enter_confirm_frames: int = 3,
-        exit_confirm_frames: int = 4,
+        enter_confirm_frames: int = 15,
+        exit_confirm_frames: int = 8,
     ):
         self.enter_speed = max(0.0, float(enter_speed))
         self.exit_speed = max(0.0, float(exit_speed))
@@ -112,6 +193,139 @@ class TargetMotionGate:
         if self.active:
             return velocity.copy() * self._taper_scale
         return np.zeros(2, dtype=float)
+
+
+class FollowYawReferenceSelector:
+    """Choose a stable FOLLOW yaw source and hold it through short dropouts.
+
+    EKF velocity can contain short large spikes when a stationary pad's PnP
+    position jumps. Motion must survive a low-pass filter and a timed,
+    direction-consistent confirmation before it can take yaw away from IBVS.
+    """
+
+    def __init__(
+        self,
+        enter_speed: float = 0.35,
+        exit_speed: float = 0.18,
+        enter_confirm_duration_s: float = 0.75,
+        exit_confirm_duration_s: float = 0.50,
+        velocity_filter_time_constant_s: float = 0.25,
+        course_consistency_deg: float = 40.0,
+    ):
+        self.enter_speed = max(0.0, float(enter_speed))
+        self.exit_speed = max(0.0, float(exit_speed))
+        self.enter_confirm_duration = max(0.0, float(enter_confirm_duration_s))
+        self.exit_confirm_duration = max(0.0, float(exit_confirm_duration_s))
+        self.velocity_filter_time_constant = max(
+            1e-3, float(velocity_filter_time_constant_s),
+        )
+        self.course_consistency = math.radians(max(0.0, float(course_consistency_deg)))
+        self.moving = False
+        self.target_course_yaw = 0.0
+        self.filtered_velocity = np.zeros(2, dtype=float)
+        self.last_sample_time: float | None = None
+        self.candidate_course_yaw: float | None = None
+        self.entry_elapsed = 0.0
+        self.exit_elapsed = 0.0
+
+    @property
+    def following_target_course(self) -> bool:
+        return self.moving
+
+    def reset(self, initial_yaw: float) -> None:
+        self.moving = False
+        self.target_course_yaw = float(initial_yaw)
+        self.filtered_velocity[:] = 0.0
+        self.last_sample_time = None
+        self.candidate_course_yaw = None
+        self.entry_elapsed = 0.0
+        self.exit_elapsed = 0.0
+
+    def update(
+        self,
+        *,
+        ibvs_yaw: float,
+        target_velocity_xy,
+        current_yaw: float,
+        previous_reference_yaw: float,
+        tracking_valid: bool,
+        tracking_mode: str,
+        target_state_fresh: bool,
+        target_sample_time: float,
+    ) -> tuple[float, str]:
+        velocity = np.asarray(target_velocity_xy, dtype=float)
+        velocity_valid = velocity.shape == (2,) and np.all(np.isfinite(velocity))
+        may_update_motion = bool(
+            tracking_valid
+            and tracking_mode == 'TRACKING'
+            and target_state_fresh
+            and velocity_valid
+            and math.isfinite(float(target_sample_time))
+        )
+        sample_time = float(target_sample_time)
+        is_new_sample = (
+            self.last_sample_time is None
+            or sample_time > self.last_sample_time + 1e-4
+        )
+        if may_update_motion and is_new_sample:
+            if self.last_sample_time is None:
+                dt = 0.0
+            else:
+                dt = min(0.20, max(0.0, sample_time - self.last_sample_time))
+            self.last_sample_time = sample_time
+            alpha = 1.0 - math.exp(-dt / self.velocity_filter_time_constant)
+            self.filtered_velocity += alpha * (velocity - self.filtered_velocity)
+            speed = float(np.linalg.norm(self.filtered_velocity))
+
+            if self.moving:
+                if speed <= self.exit_speed:
+                    self.exit_elapsed += dt
+                    if self.exit_elapsed >= self.exit_confirm_duration:
+                        self.moving = False
+                        self.candidate_course_yaw = None
+                        self.entry_elapsed = 0.0
+                        self.exit_elapsed = 0.0
+                else:
+                    self.exit_elapsed = 0.0
+                    self.target_course_yaw = math.atan2(
+                        float(self.filtered_velocity[1]),
+                        float(self.filtered_velocity[0]),
+                    )
+            elif speed >= self.enter_speed:
+                candidate_yaw = math.atan2(
+                    float(self.filtered_velocity[1]),
+                    float(self.filtered_velocity[0]),
+                )
+                if (
+                    self.candidate_course_yaw is None
+                    or abs(_wrap_angle(candidate_yaw - self.candidate_course_yaw))
+                    > self.course_consistency
+                ):
+                    self.candidate_course_yaw = candidate_yaw
+                    self.entry_elapsed = 0.0
+                else:
+                    self.candidate_course_yaw = _wrap_angle(
+                        self.candidate_course_yaw
+                        + 0.25 * _wrap_angle(candidate_yaw - self.candidate_course_yaw)
+                    )
+                    self.entry_elapsed += dt
+                if self.entry_elapsed >= self.enter_confirm_duration:
+                    self.moving = True
+                    self.exit_elapsed = 0.0
+                    self.target_course_yaw = self.candidate_course_yaw
+            else:
+                self.candidate_course_yaw = None
+                self.entry_elapsed = 0.0
+
+        if not tracking_valid:
+            return float(current_yaw), 'HOLD_LOSS'
+        if not target_state_fresh or tracking_mode != 'TRACKING':
+            if self.moving:
+                return self.target_course_yaw, 'HOLD_PREDICTION'
+            return float(previous_reference_yaw), 'HOLD_PREDICTION'
+        if self.moving:
+            return self.target_course_yaw, 'TARGET_COURSE'
+        return float(ibvs_yaw), 'IBVS'
 
 
 def reacquire_candidate_is_valid(
@@ -233,6 +447,7 @@ def update_tracking_yaw_command(
     feedforward_max_rate: float = 0.15,
     prediction_horizon: float = 0.25,
     deadband_px: float = 12.0,
+    min_bearing_distance: float = 1.0,
 ) -> float:
     """Update the yaw setpoint from a live pixel or a fresh EKF bearing.
 
@@ -241,6 +456,8 @@ def update_tracking_yaw_command(
     EKF target bearing keeps the vehicle steering toward the same target.
     Target motion is added as angular-rate feedforward, so stationary-target
     estimator noise cannot leave a persistent yaw bias.
+    When the vehicle is close to the target (horizontal range < min_bearing_distance),
+    line-of-sight azimuth has an ill-conditioned singularity and must not steer yaw.
     """
     dt = max(0.0, float(dt))
     usable_modes = ('TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED')
@@ -265,7 +482,7 @@ def update_tracking_yaw_command(
         vx, vy = target_velocity_xy
         predicted_x = float(dx) + float(vx) * max(0.0, float(prediction_horizon))
         predicted_y = float(dy) + float(vy) * max(0.0, float(prediction_horizon))
-        if math.hypot(predicted_x, predicted_y) > 0.3:
+        if math.hypot(predicted_x, predicted_y) >= float(min_bearing_distance):
             target_yaw = math.atan2(predicted_y, predicted_x)
 
     if target_yaw is None:
@@ -305,6 +522,44 @@ def landing_pitch_from_geometry(
     dz = max(0.01, float(drone_altitude) - float(target_altitude))
     horiz = max(0.0, float(horizontal_range))
     return -math.atan2(dz, horiz)
+
+
+def landing_pitch_target(
+    *,
+    drone_altitude: float,
+    target_surface_altitude: float,
+    horizontal_range: float,
+    target_state_fresh: bool,
+    pixel_v: float | None = None,
+    image_center_v: float = 240.0,
+    focal_y: float = 466.0,
+    pixel_gain: float = 0.92,
+    pixel_trim_gain: float = 0.30,
+) -> float | None:
+    """Return a stable landing-camera aim, or ``None`` to hold its last aim.
+
+    The pad is a known ground-plane target, so its measured EKF z is not used
+    to steer camera pitch. Tracking dropouts hold the current camera direction;
+    the caller must reacquire the target before changing the camera aim again.
+    """
+    if target_state_fresh:
+        target = landing_pitch_from_geometry(
+            drone_altitude, target_surface_altitude, horizontal_range,
+        )
+        if pixel_v is not None and math.isfinite(float(pixel_v)):
+            fy = max(1.0, float(focal_y))
+            error = float(pixel_v) - float(image_center_v)
+            deadband = 6.0
+            if abs(error) > deadband:
+                effective_error = error - math.copysign(deadband, error)
+                target -= (
+                    float(pixel_gain)
+                    * (effective_error / fy)
+                    * float(pixel_trim_gain)
+                )
+        return float(np.clip(target, math.radians(-90.0), math.radians(-10.0)))
+
+    return None
 
 
 def choose_landing_yaw(

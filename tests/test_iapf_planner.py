@@ -217,6 +217,21 @@ class TestIAPFPlanner(unittest.TestCase):
         self.assertTrue(iapf_success, "I-APF must break symmetry and reach the goal")
         self.assertGreater(iapf_final[0], 5.5, "I-APF reached the goal region near x=6.0")
 
+    def test_collinear_obstacle_trap_escape(self):
+        """Verify that a single collinear obstacle directly blocking goal triggers tangent escape."""
+        planner = IAPFCore(IAPFParams(
+            k_att=10.0, k_rep=2500.0, d0=3.0, v_max=2.2, k_tan=2.0,
+        ))
+        pos = np.array([1.0, 0.0, 3.0])
+        goal = np.array([6.0, 0.0, 3.0])
+        obs = [(2.5, 0.0, 3.0)]  # Obstacle directly collinear on the line of flight
+
+        res = planner.compute(pos, goal, obs)
+        self.assertTrue(res.tangent_active, "Collinear obstacle between drone and goal must activate tangent escape")
+        self.assertGreater(float(np.linalg.norm(res.f_tan)), 0.5)
+        lateral_speed = math.hypot(res.velocity[1], res.velocity[2])
+        self.assertGreater(lateral_speed, 0.2, "Velocity must divert laterally around the obstacle")
+
 
 class TestAPFPlannerIntegration(unittest.TestCase):
     """Test ROS 2 node parameters and switching mechanism."""

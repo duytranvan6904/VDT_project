@@ -5,7 +5,11 @@ import unittest
 
 import numpy as np
 
-from vision.target_state_ekf import TargetStateEKF
+from vision.target_state_ekf import (
+    TargetStateEKF,
+    bounded_prediction_timestamp,
+    reacquisition_distance_budget,
+)
 
 
 class TestTargetStateEKF(unittest.TestCase):
@@ -82,6 +86,59 @@ class TestTargetStateEKF(unittest.TestCase):
             self.ekf.predict(-1.0)
         with self.assertRaises(ValueError):
             self.ekf.update((0.0, 0.0, 1.0), np.zeros((3, 3)))
+
+    def test_reacquisition_budget_grows_with_dropout_but_has_a_hard_limit(self):
+        self.assertAlmostEqual(
+            reacquisition_distance_budget(
+                max_target_speed=0.5,
+                time_since_last_measurement=2.0,
+            ),
+            1.5,
+        )
+        self.assertAlmostEqual(
+            reacquisition_distance_budget(
+                max_target_speed=2.5,
+                time_since_last_measurement=20.0,
+            ),
+            8.0,
+        )
+
+    def test_dead_reckoning_horizon_caps_stale_position_extrapolation(self):
+        self.assertAlmostEqual(
+            bounded_prediction_timestamp(10.0, 10.4, 1.0), 10.4,
+        )
+        self.assertAlmostEqual(
+            bounded_prediction_timestamp(10.0, 80.0, 1.0), 11.0,
+        )
+
+    def test_reacquisition_budget_covers_target_motion_during_long_dropout(self):
+        self.assertAlmostEqual(
+            reacquisition_distance_budget(
+                max_target_speed=2.5,
+                time_since_last_measurement=1.5,
+                margin_m=0.50,
+                hard_limit_m=8.0,
+            ),
+            4.25,
+        )
+
+    def test_reacquisition_after_long_dropout_and_large_displacement(self):
+        ekf = TargetStateEKF(process_accel_variance=(0.25, 0.25, 0.5), gate_threshold=16.27, v_max=2.5)
+        ekf.initialize([0.0, 0.0, 0.02], 10.0)
+        # 10s dropout, target displaces 5.8m to (5.0, 3.0, 0.02)
+        target_reacquired_pos = np.array([5.0, 3.0, 0.02])
+        budget = reacquisition_distance_budget(
+            max_target_speed=2.5,
+            time_since_last_measurement=10.0,
+            margin_m=0.50,
+            hard_limit_m=15.0,
+        )
+        self.assertAlmostEqual(budget, 15.0)
+        # Candidate agreement allows immediate re-initialization
+        ekf.initialize(target_reacquired_pos, 20.0, velocity=(0.0, 0.0, 0.0))
+        snap = ekf.snapshot()
+        np.testing.assert_allclose(snap.state[:3], target_reacquired_pos)
+        np.testing.assert_allclose(snap.state[3:], [0.0, 0.0, 0.0])
 
 
 if __name__ == "__main__":

@@ -2,6 +2,8 @@
 """Tests for safety mechanisms, manual override handling, and Mission FSM land commands."""
 
 import unittest
+import math
+import time
 from unittest.mock import MagicMock
 import numpy as np
 
@@ -53,6 +55,102 @@ class TestMissionFSMAndSafety(unittest.TestCase):
 
         self.assertEqual(self.fsm.phase, MissionPhase.APPROACH)
         self.assertFalse(self.fsm.landing_hold_initialized)
+
+    def test_moving_target_course_yaw_is_continuous_from_follow_into_approach(self):
+        """A moving pad course remains the yaw reference across the phase switch."""
+        self.fsm.has_odom = True
+        self.fsm.has_target = True
+        self.fsm.drone_yaw = math.radians(88.0)
+        self.fsm.target_vel = np.array([0.0, 0.5, 0.0])
+        self.fsm.ibvs_yaw = math.radians(20.0)
+
+        self.fsm._begin_approach()
+
+        self.assertEqual(self.fsm.phase, MissionPhase.APPROACH)
+        self.assertTrue(self.fsm.landing_course_heading_active)
+        self.assertAlmostEqual(self.fsm.landing_hold_yaw, math.pi / 2.0)
+
+        # IBVS can report a different camera bearing, but that must not turn
+        # the aircraft back toward the visual line-of-sight at phase handoff.
+        self.fsm.ibvs_yaw = math.radians(20.0)
+        yaw = self.fsm._landing_yaw_setpoint(tracking_valid=True)
+        self.assertAlmostEqual(yaw, math.pi / 2.0)
+
+        # A newly filtered pad course is followed, while a brief tracking loss
+        # holds that last accepted course instead of falling back to IBVS.
+        self.fsm.target_vel = np.array([0.5, 0.0, 0.0])
+        self.fsm.course_yaw_update_time = time.monotonic() - 0.1
+        yaw = self.fsm._landing_yaw_setpoint(tracking_valid=True)
+        self.assertAlmostEqual(yaw, math.pi / 2.0 - 0.06, places=3)
+        self.fsm.ibvs_yaw = math.radians(-45.0)
+        yaw = self.fsm._landing_yaw_setpoint(tracking_valid=False)
+        self.assertAlmostEqual(yaw, math.pi / 2.0 - 0.06, places=3)
+
+    def test_search_retries_reacquisition_after_ekf_confirmation_timeout(self):
+        """A persistent raw hit with a rejected EKF pose must not latch SEARCH."""
+        now = time.monotonic()
+        self.fsm.phase = MissionPhase.SEARCH
+        self.fsm.detected = True
+        self.fsm.tracking_mode = 'PREDICTING'
+        self.fsm.reacquire_active = True
+        self.fsm.reacquire_started = now - self.fsm.reacquire_hold_timeout - 0.1
+        self.fsm.reacquire_last_detection = now
+
+        self.fsm._handle_search()
+
+        self.assertFalse(self.fsm.reacquire_active)
+        self.assertGreater(self.fsm.reacquire_retry_after, now)
+        self.assertEqual(self.fsm.phase, MissionPhase.SEARCH)
+
+    def test_pending_land_enters_approach_after_stable_search_reacquisition(self):
+        """A queued operator LAND is honored once SEARCH reacquires a valid lock."""
+        now = time.monotonic()
+        self.fsm.phase = MissionPhase.SEARCH
+        self.fsm.land_requested = True
+        self.fsm.detected = True
+        self.fsm.tracking_mode = 'TRACKING'
+        self.fsm.has_odom = True
+        self.fsm.has_target = True
+        self.fsm.has_bbox = True
+        self.fsm.last_odom_time = now
+        self.fsm.last_target_time = now
+        self.fsm.last_bbox_time = now
+        self.fsm.reacquire_active = True
+        self.fsm.reacquire_started = now - 0.6
+        self.fsm.reacquire_stable_since = now - self.fsm.reacquire_confirm_time - 0.1
+        self.fsm.reacquire_last_detection = now
+
+        self.fsm._handle_search()
+
+        self.assertEqual(self.fsm.phase, MissionPhase.APPROACH)
+        self.assertFalse(self.fsm.reacquire_active)
+        self.assertTrue(self.fsm.land_requested)
+
+    def test_land_fallback_preserves_motion_feedforward_when_covariance_gate_closes(self):
+        """A moving pad remains under the drone during temporary SMC gate loss."""
+        now = time.monotonic()
+        self.fsm.phase = MissionPhase.LAND
+        self.fsm.has_odom = True
+        self.fsm.has_target = True
+        self.fsm.has_bbox = True
+        self.fsm.drone_pos = np.array([0.0, 0.0, 0.4])
+        self.fsm.target_pos = np.array([0.0, 0.0, 0.02])
+        self.fsm.target_vel = np.array([0.0, 0.5, 0.0])
+        self.fsm.tracking_mode = 'TRACKING'
+        self.fsm.last_odom_time = now
+        self.fsm.last_target_time = now
+        self.fsm.last_bbox_time = now
+        self.fsm.safe_to_land = False  # Force the bounded fallback path.
+        self.fsm.uncertainty_radius = 1.2
+        self.fsm.smc_sub_phase = 'HOLD'
+        self.fsm.vel_pub = MagicMock()
+        self.fsm.yaw_pub = MagicMock()
+
+        self.fsm._publish_setpoints()
+
+        command = self.fsm.vel_pub.publish.call_args.args[0]
+        self.assertAlmostEqual(command.linear.y, 0.5)
+        self.assertLess(command.linear.z, 0.0)
 
     def test_manual_override_forces_fsm_to_idle(self):
         """When manual override is received from pilot, FSM immediately reverts to IDLE."""
@@ -112,6 +210,25 @@ class TestMissionFSMAndSafety(unittest.TestCase):
         # Gimbal pitch must move according to sweep
         self.assertNotEqual(ibvs.gimbal_pitch, initial_pitch)
         ibvs.destroy_node()
+
+    def test_approach_waveoff_clears_land_requested_when_not_auto_reland(self):
+        """When auto_reland_after_abort is False, wave-off clears land_requested and reverts to FOLLOW."""
+        now = time.monotonic()
+        self.fsm.phase = MissionPhase.APPROACH
+        self.fsm.land_requested = True
+        self.fsm.auto_reland_after_abort = False
+        self.fsm.has_odom = True
+        self.fsm.has_target = False
+        self.fsm.drone_pos = np.array([0.0, 0.0, 2.0])
+        self.fsm.drone_yaw = 0.50
+        self.fsm.last_detection_time = now - 5.0  # Expired
+        self.fsm.approach_timeout = 2.0
+
+        self.fsm._handle_approach()
+
+        self.assertEqual(self.fsm.phase, MissionPhase.FOLLOW)
+        self.assertFalse(self.fsm.land_requested)
+        self.assertAlmostEqual(self.fsm.course_yaw_setpoint, 0.50)
 
 
 if __name__ == '__main__':

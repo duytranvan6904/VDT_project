@@ -8,13 +8,16 @@ import numpy as np
 import yaml
 
 from simulation.control.tracking_control import (
+    FollowYawReferenceSelector,
     TargetMotionGate,
     add_bearing_lead,
     choose_landing_yaw,
     compose_follow_velocity,
     landing_pitch_from_geometry,
+    landing_pitch_target,
     reacquire_candidate_is_valid,
     reacquire_should_resume_search,
+    select_follow_yaw_reference,
     target_bearing_rate,
     target_velocity_feedforward,
     update_search_pitch_command,
@@ -24,6 +27,132 @@ from simulation.control.apf_planner import APFCore, APFParams
 
 
 class TestFollowVelocityComposition(unittest.TestCase):
+    def test_stationary_yaw_source_uses_ibvs_despite_apf_corrections(self):
+        selector = FollowYawReferenceSelector()
+        selector.reset(0.0)
+
+        yaw, source = selector.update(
+            ibvs_yaw=0.2,
+            target_velocity_xy=[0.0, 0.0],
+            current_yaw=0.0,
+            previous_reference_yaw=0.0,
+            tracking_valid=True,
+            tracking_mode='TRACKING',
+            target_state_fresh=True,
+            target_sample_time=1.0,
+        )
+
+        self.assertEqual(source, 'IBVS')
+        self.assertAlmostEqual(yaw, 0.2)
+
+    def test_moving_course_source_is_held_across_prediction_dropout(self):
+        selector = FollowYawReferenceSelector(enter_confirm_duration_s=2.0)
+        selector.reset(0.0)
+        sample_time = 1.0
+        for i in range(60):
+            sample_time += 0.05
+            yaw, source = selector.update(
+                ibvs_yaw=math.radians(-25.0),
+                target_velocity_xy=[0.5, 0.0],
+                current_yaw=0.0,
+                previous_reference_yaw=0.0,
+                tracking_valid=True,
+                tracking_mode='TRACKING',
+                target_state_fresh=True,
+                target_sample_time=sample_time,
+            )
+            if i < 30:
+                self.assertEqual(source, 'IBVS')
+        self.assertEqual(source, 'TARGET_COURSE')
+        self.assertAlmostEqual(yaw, 0.0)
+
+        yaw, source = selector.update(
+            ibvs_yaw=math.radians(-25.0),
+            target_velocity_xy=[0.0, 0.0],
+            current_yaw=math.radians(4.0),
+            previous_reference_yaw=math.radians(2.0),
+            tracking_valid=True,
+            tracking_mode='PREDICTING',
+            target_state_fresh=False,
+            target_sample_time=sample_time + 0.05,
+        )
+        self.assertEqual(source, 'HOLD_PREDICTION')
+        self.assertAlmostEqual(yaw, 0.0)
+
+        # A brief low-speed estimate while tracking resumes must not select
+        # the conflicting visual bearing during a moving target's course turn.
+        for _ in range(5):
+            sample_time += 0.05
+            yaw, source = selector.update(
+                ibvs_yaw=math.radians(-25.0),
+                target_velocity_xy=[0.0, 0.0],
+                current_yaw=math.radians(4.0),
+                previous_reference_yaw=math.radians(2.0),
+                tracking_valid=True,
+                tracking_mode='TRACKING',
+                target_state_fresh=True,
+                target_sample_time=sample_time,
+            )
+        self.assertEqual(source, 'TARGET_COURSE')
+        self.assertAlmostEqual(yaw, 0.0)
+
+        for _ in range(20):
+            sample_time += 0.05
+            yaw, source = selector.update(
+                ibvs_yaw=math.radians(-25.0),
+                target_velocity_xy=[0.0, 0.5],
+                current_yaw=0.0,
+                previous_reference_yaw=0.0,
+                tracking_valid=True,
+                tracking_mode='TRACKING',
+                target_state_fresh=True,
+                target_sample_time=sample_time,
+            )
+        self.assertEqual(source, 'TARGET_COURSE')
+        self.assertAlmostEqual(yaw, math.pi / 2.0, delta=math.radians(8.0))
+
+    def test_short_consistent_velocity_spikes_do_not_trigger_moving_course(self):
+        selector = FollowYawReferenceSelector(enter_confirm_duration_s=2.0)
+        selector.reset(0.0)
+        sample_time = 1.0
+        # A long but transient PnP velocity burst must not become a course.
+        for velocity, count in (([0.9, 0.0], 30), ([0.0, 0.0], 20)):
+            for _ in range(count):
+                sample_time += 0.05
+                yaw, source = selector.update(
+                    ibvs_yaw=0.12,
+                    target_velocity_xy=velocity,
+                    current_yaw=0.0,
+                    previous_reference_yaw=0.0,
+                    tracking_valid=True,
+                    tracking_mode='TRACKING',
+                    target_state_fresh=True,
+                    target_sample_time=sample_time,
+                )
+                self.assertEqual(source, 'IBVS')
+                self.assertAlmostEqual(yaw, 0.12)
+
+    def test_stationary_follow_keeps_ibvs_yaw_instead_of_apf_correction(self):
+        yaw = select_follow_yaw_reference(
+            math.radians(35.0), [0.0, 0.0], min_target_speed=0.30,
+        )
+
+        self.assertAlmostEqual(yaw, math.radians(35.0))
+
+    def test_confirmed_motion_uses_target_course_not_guidance_vector(self):
+        yaw = select_follow_yaw_reference(
+            math.radians(-20.0), [0.0, 0.5], min_target_speed=0.30,
+        )
+
+        self.assertAlmostEqual(yaw, math.pi / 2.0)
+
+    def test_uncertain_motion_does_not_switch_heading_source(self):
+        yaw = select_follow_yaw_reference(
+            0.4, [0.20, 0.0], min_target_speed=0.30,
+        )
+
+        self.assertAlmostEqual(yaw, 0.4)
+
     def test_yaw_alignment_does_not_scale_away_target_velocity(self):
         velocity = compose_follow_velocity(
             guidance_xy=[1.0, 0.0],
@@ -260,6 +389,18 @@ class TestTrackingYawCommand(unittest.TestCase):
 
         self.assertAlmostEqual(command, expected, places=6)
 
+    def test_bearing_near_nadir_suppressed_below_min_distance(self):
+        # Target is at (0.3, 0.2) -> hypot ~0.36m, which is < 1.0m min_bearing_distance
+        # Yaw command should remain steady at initial yaw without chasing atan2(0.2, 0.3)
+        command = self._update(
+            tracking_mode='TRACKING',
+            target_delta_xy=(0.3, 0.2),
+            target_velocity_xy=(0.0, 0.0),
+            yaw_command=0.25,
+            drone_yaw=0.25,
+        )
+        self.assertAlmostEqual(command, 0.25, places=6)
+
 
 class TestTrackingConfigInvariants(unittest.TestCase):
     @classmethod
@@ -294,6 +435,8 @@ class TestTrackingConfigInvariants(unittest.TestCase):
         self.assertLessEqual(
             fsm['landing_tracking_timeout'], fsm['follow_bbox_timeout'],
         )
+        self.assertGreaterEqual(fsm['follow_yaw_motion_enter_confirm_s'], 0.5)
+        self.assertGreaterEqual(fsm['follow_yaw_motion_exit_confirm_s'], 0.5)
 
 
 class TestLandingAimAndYawHold(unittest.TestCase):
@@ -306,6 +449,33 @@ class TestLandingAimAndYawHold(unittest.TestCase):
     def test_landing_camera_points_nadir_when_directly_over_pad(self):
         pitch = landing_pitch_from_geometry(0.2, 0.0, 0.0)
         self.assertAlmostEqual(pitch, -math.pi / 2.0)
+
+    def test_landing_camera_holds_its_last_aim_during_tracking_dropout(self):
+        pitch = landing_pitch_target(
+            drone_altitude=0.8,
+            target_surface_altitude=0.02,
+            horizontal_range=0.1,
+            target_state_fresh=False,
+        )
+
+        self.assertIsNone(pitch)
+
+    def test_landing_camera_does_not_flip_to_nadir_when_target_is_lost_near_ground(self):
+        tracking_pitch = landing_pitch_target(
+            drone_altitude=1.0,
+            target_surface_altitude=0.02,
+            horizontal_range=1.0,
+            target_state_fresh=True,
+        )
+        lost_pitch = landing_pitch_target(
+            drone_altitude=0.1,
+            target_surface_altitude=0.02,
+            horizontal_range=0.1,
+            target_state_fresh=False,
+        )
+
+        self.assertAlmostEqual(tracking_pitch, -math.atan2(0.98, 1.0))
+        self.assertIsNone(lost_pitch)
 
     def test_landing_yaw_latches_last_ibvs_heading_when_marker_is_lost(self):
         _, held_yaw, initialized = choose_landing_yaw(

@@ -56,9 +56,9 @@ class TouchdownParams:
     # Jerk spike threshold indicating impact reaction force (m/s³)
     jerk_impact_threshold: float = 3.50
     # Required confirmation duration on ground before latching touchdown (seconds)
-    confirmation_duration_s: float = 0.35
+    confirmation_duration_s: float = 0.18
     # Strict altitude ceiling ensuring drone is physically near ground level before latching
-    altitude_ceiling_m: float = 0.22
+    altitude_ceiling_m: float = 0.14
 
 
 @dataclass
@@ -227,7 +227,7 @@ class TouchdownDetectorNode(Node):
         self.declare_parameter('stoppage_vz_max_mps', 0.08)
         self.declare_parameter('stoppage_dz_dt_max_mps', 0.05)
         self.declare_parameter('jerk_impact_threshold', 3.50)
-        self.declare_parameter('confirmation_duration_s', 0.35)
+        self.declare_parameter('confirmation_duration_s', 0.18)
         self.declare_parameter('eval_rate_hz', 20.0)
 
         params = TouchdownParams(

@@ -21,7 +21,12 @@ ROS 2 interface:
 from __future__ import annotations
 
 import math
+import os
+import sys
 import time
+from typing import Optional
+
+import numpy as np
 
 import rclpy
 from rclpy.node import Node
@@ -30,6 +35,15 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPo
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, Float64, String
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+from simulation.control.apf_planner import (
+    limit_velocity_for_cylinder_clearance,
+    load_cylinder_obstacles_from_sdf,
+)
+from simulation.utils.coordinate_frames import rotate_body_vector_to_world
 
 # ---------------------------------------------------------------------------
 # Try importing px4_msgs — fallback to pymavlink from PX4-Autopilot tree
@@ -95,6 +109,19 @@ def _slew_angle(current: float, target: float, max_step: float) -> float:
     return _wrap_angle(current + math.copysign(max_step, diff))
 
 
+def _slew_vector_2d(current, target, max_delta: float):
+    """Limit planar velocity change by vector magnitude, not per-axis bounds."""
+    cx, cy = float(current[0]), float(current[1])
+    dx = float(target[0]) - cx
+    dy = float(target[1]) - cy
+    distance = math.hypot(dx, dy)
+    limit = max(0.0, float(max_delta))
+    if distance > limit and distance > 1e-9:
+        scale = limit / distance
+        return cx + dx * scale, cy + dy * scale
+    return float(target[0]), float(target[1])
+
+
 def _enu_yaw_to_ned(yaw_world):
     """Convert yaw from Gazebo world to PX4 Local NED.
 
@@ -129,6 +156,12 @@ class OffboardCommander(Node):
         self.declare_parameter('target_altitude', 3.0)
         self.declare_parameter('alt_hold_kp', 1.0)
         self.declare_parameter('mission_command_timeout', 0.25)
+        self.declare_parameter('touchdown_max_altitude_m', 0.14)
+        self.declare_parameter('world_sdf', '')
+        self.declare_parameter('vehicle_radius_m', 0.30)
+        self.declare_parameter('obstacle_clearance_margin_m', 0.70)
+        self.declare_parameter('obstacle_braking_accel_mps2', 0.60)
+        self.declare_parameter('obstacle_reaction_time_s', 0.40)
         self.auto_arm = self.get_parameter('auto_arm').value
         self.auto_offboard = self.get_parameter('auto_offboard').value
         self.min_offboard_alt = float(self.get_parameter('min_offboard_alt').value)
@@ -140,12 +173,30 @@ class OffboardCommander(Node):
         self.mission_command_timeout = max(
             0.05, float(self.get_parameter('mission_command_timeout').value)
         )
+        self.touchdown_max_altitude = max(
+            0.0, float(self.get_parameter('touchdown_max_altitude_m').value)
+        )
+        self.vehicle_radius = max(0.0, float(self.get_parameter('vehicle_radius_m').value))
+        self.obstacle_clearance_margin = max(
+            0.0, float(self.get_parameter('obstacle_clearance_margin_m').value)
+        )
+        self.obstacle_braking_accel = max(
+            0.1, float(self.get_parameter('obstacle_braking_accel_mps2').value)
+        )
+        self.obstacle_reaction_time = max(
+            0.0, float(self.get_parameter('obstacle_reaction_time_s').value)
+        )
+        world_sdf = str(self.get_parameter('world_sdf').value)
+        self.cylinders = load_cylinder_obstacles_from_sdf(world_sdf) if world_sdf else []
+        self.last_safety_log = 0.0
 
         # ── State ────────────────────────────────────────────────────────
         self.velocity_enu = [0.0, 0.0, 0.0]
         self.yaw_enu = 0.0
         self.phase = 'IDLE'
         self.current_alt = 0.0
+        self.current_drone_pos = np.zeros(3, dtype=float)
+        self.current_world_velocity = np.zeros(3, dtype=float)
         self.current_drone_yaw = 0.0
         self.current_yaw_ned = None
         self.has_odom = False
@@ -155,6 +206,8 @@ class OffboardCommander(Node):
         self.armed = False
         self.offboard_active = False
         self.offboard_engaged = False
+        self.disarming_active = False
+        self.disarm_start_time = 0.0
         self.current_cmd_ned = [0.0, 0.0, 0.0]
         self.last_setpoint_time = 0.0
         self.arm_sent = False
@@ -254,8 +307,17 @@ class OffboardCommander(Node):
     # ── Callbacks ────────────────────────────────────────────────────────
 
     def odom_cb(self, msg: Odometry):
+        p = msg.pose.pose.position
+        self.current_drone_pos = np.array([p.x, p.y, p.z], dtype=float)
+        q = msg.pose.pose.orientation
+        v = msg.twist.twist.linear
+        self.current_world_velocity = rotate_body_vector_to_world(
+            (q.x, q.y, q.z, q.w), (v.x, v.y, v.z),
+        )
         self.current_alt = float(msg.pose.pose.position.z)
         self.current_drone_yaw = _quaternion_to_yaw(msg.pose.pose.orientation)
+        if not self.has_odom and not self.has_fsm_yaw:
+            self.yaw_enu = self.current_drone_yaw
         self.has_odom = True
 
     def velocity_cb(self, msg: Twist):
@@ -274,16 +336,18 @@ class OffboardCommander(Node):
 
     def touchdown_cb(self, msg: Bool):
         if msg.data and self.offboard_engaged and self.phase in ('LAND', 'APPROACH'):
-            # Only disarm if drone is truly at ground/pad contact level (alt <= 0.35m)
-            if self.has_odom and self.current_alt > 0.35:
+            # A stale/false touchdown pulse must not stop offboard descent while
+            # the vehicle is still visibly above its contact height.
+            if self.has_odom and self.current_alt > self.touchdown_max_altitude:
                 self.get_logger().warning(
-                    f'Ignoring premature touchdown signal while airborne (alt={self.current_alt:.2f}m > 0.35m).'
+                    'Ignoring premature touchdown signal while airborne '
+                    f'(alt={self.current_alt:.2f}m > {self.touchdown_max_altitude:.2f}m).'
                 )
                 return
-            self.get_logger().info('🏆 Touchdown signal received! Disengaging offboard and sending DISARM.')
-            self.offboard_engaged = False
-            self.current_yaw_ned = None
+            self.get_logger().info('🏆 Touchdown signal received! Sending FORCE DISARM and holding pad contact.')
             self._send_disarm_command()
+            self.disarming_active = True
+            self.disarm_start_time = time.monotonic()
 
     def phase_cb(self, msg: String):
         prev_phase = self.phase
@@ -296,6 +360,7 @@ class OffboardCommander(Node):
                 self._send_disarm_command()
             self.offboard_engaged = False
             self.offboard_confirmed = False
+            self.disarming_active = False
             self.manual_override = False
             self.current_yaw_ned = None
 
@@ -306,9 +371,21 @@ class OffboardCommander(Node):
                 self.offboard_confirmed = False
                 self.offboard_request_time = time.monotonic()
                 if self.enable_alt_hold:
-                    self.target_altitude = max(self.target_altitude, self.current_alt)
+                    # Chốt độ cao hiện tại làm mốc ban đầu để triệt tiêu hiện tượng giật nảy độ cao lúc vào OFFBOARD
+                    self.target_altitude = self.current_alt if self.has_odom else max(self.target_altitude, self.current_alt)
                 if self.has_odom:
+                    self.yaw_enu = self.current_drone_yaw
                     self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
+                    # Chuyển giao vận tốc mượt mà (Bumpless transfer): gán vận tốc thực tế hiện tại làm điểm bắt đầu slewer
+                    if self.current_world_velocity is not None:
+                        vn0, ve0, vd0 = _enu_to_ned_velocity(
+                            self.current_world_velocity[0],
+                            self.current_world_velocity[1],
+                            self.current_world_velocity[2],
+                        )
+                        self.current_cmd_ned = [vn0, ve0, vd0]
+                    else:
+                        self.current_cmd_ned = [0.0, 0.0, 0.0]
                 self._send_offboard_mode()
 
     def reset_override_cb(self, msg: Bool):
@@ -344,6 +421,8 @@ class OffboardCommander(Node):
                         break
                     if m.get_srcSystem() == 1:
                         self.px4_current_main_mode = (m.custom_mode >> 16) & 0xFF
+                        if hasattr(mavutil.mavlink, 'MAV_MODE_FLAG_SAFETY_ARMED'):
+                            self.armed = bool(m.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED)
             except Exception:
                 pass
 
@@ -401,9 +480,19 @@ class OffboardCommander(Node):
                 self.offboard_confirmed = False
                 self.offboard_request_time = now
                 if self.enable_alt_hold:
-                    self.target_altitude = max(self.target_altitude, self.current_alt)
+                    self.target_altitude = self.current_alt if self.has_odom else max(self.target_altitude, self.current_alt)
                 if self.has_odom:
+                    self.yaw_enu = self.current_drone_yaw
                     self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
+                    if self.current_world_velocity is not None:
+                        vn0, ve0, vd0 = _enu_to_ned_velocity(
+                            self.current_world_velocity[0],
+                            self.current_world_velocity[1],
+                            self.current_world_velocity[2],
+                        )
+                        self.current_cmd_ned = [vn0, ve0, vd0]
+                    else:
+                        self.current_cmd_ned = [0.0, 0.0, 0.0]
                 self.get_logger().info(
                     f'✅ Drone đạt độ cao an toàn ({self.current_alt:.2f}m >= {self.min_offboard_alt:.1f}m)! '
                     f'Kích hoạt chốt OFFBOARD mode (Hold altitude: {self.target_altitude:.1f}m).'
@@ -431,19 +520,34 @@ class OffboardCommander(Node):
         now = time.monotonic()
 
         # Ground Stoppage Failsafe on Landing Pad:
-        # If vehicle is resting on the landing pad (alt <= 0.12m) during LAND/APPROACH for >= 0.8s,
+        # If vehicle is resting on the landing pad (alt <= touchdown_max_altitude) during LAND/APPROACH for >= 0.35s,
         # disarm motors immediately!
-        if self.phase in ('LAND', 'APPROACH') and self.has_odom and self.current_alt <= 0.12:
+        if self.phase in ('LAND', 'APPROACH') and self.has_odom and self.current_alt <= self.touchdown_max_altitude:
             if self.ground_contact_since is None:
                 self.ground_contact_since = now
-            elif now - self.ground_contact_since >= 0.8:
-                self.get_logger().info('🏆 Ground contact on landing pad confirmed! Disengaging offboard and sending DISARM.')
-                self.offboard_engaged = False
-                self.current_yaw_ned = None
-                self._send_disarm_command()
-                return
+            elif now - self.ground_contact_since >= 0.35:
+                if not self.disarming_active:
+                    self.get_logger().info('🏆 Ground contact on landing pad confirmed! Sending DISARM.')
+                    self._send_disarm_command()
+                    self.disarming_active = True
+                    self.disarm_start_time = now
         else:
             self.ground_contact_since = None
+
+        # During disarm transition window, stream matched horizontal velocity and light downward pressure
+        # to ensure landing skids stay completely flat against the deck without toppling forward or lifting up.
+        if self.disarming_active:
+            if now - self.disarm_start_time >= 0.35 or not self.armed:
+                self.get_logger().info('Disarm confirmed / completed. Disengaging offboard.')
+                self.offboard_engaged = False
+                self.disarming_active = False
+                self.current_yaw_ned = None
+                return
+            cmd_vx = self.velocity_enu[0]
+            cmd_vy = self.velocity_enu[1]
+            cmd_vz = -0.12
+            if self.has_odom:
+                self.yaw_enu = self.current_drone_yaw
 
         dt = 0.05
         if self.last_setpoint_time > 0.0:
@@ -476,6 +580,31 @@ class OffboardCommander(Node):
                     eff_err = alt_error - math.copysign(deadband_alt, alt_error)
                     cmd_vz = float(max(-0.8, min(0.8, self.alt_hold_kp * eff_err)))
 
+        # Final collision-prevention layer. APF applies this to its own output,
+        # while this check also covers SMC glide/final-descent and any other
+        # source publishing the mission velocity setpoint.
+        if self.has_odom and self.cylinders:
+            requested = np.array([cmd_vx, cmd_vy, cmd_vz], dtype=float)
+            screened = limit_velocity_for_cylinder_clearance(
+                self.current_drone_pos,
+                requested,
+                self.cylinders,
+                vehicle_radius=self.vehicle_radius,
+                clearance_margin=self.obstacle_clearance_margin,
+                braking_accel=self.obstacle_braking_accel,
+                reaction_time=self.obstacle_reaction_time,
+                current_velocity=self.current_world_velocity,
+            )
+            if float(np.linalg.norm(screened - requested)) > 1e-3:
+                if now - self.last_safety_log >= 1.0:
+                    self.get_logger().warning(
+                        'Final obstacle shield changed mission setpoint '
+                        f'({requested[0]:.2f},{requested[1]:.2f},{requested[2]:.2f}) → '
+                        f'({screened[0]:.2f},{screened[1]:.2f},{screened[2]:.2f})m/s.'
+                    )
+                    self.last_safety_log = now
+                cmd_vx, cmd_vy, cmd_vz = map(float, screened)
+
         raw_vn, raw_ve, raw_vd = _enu_to_ned_velocity(cmd_vx, cmd_vy, cmd_vz)
         target_yaw_ned = _enu_yaw_to_ned(self.yaw_enu)
 
@@ -486,7 +615,8 @@ class OffboardCommander(Node):
         self.current_yaw_ned = _slew_angle(self.current_yaw_ned, target_yaw_ned, max_dyaw)
         yaw_ned = self.current_yaw_ned
 
-        # Slew-rate limiter (acceleration clamping)
+        # Slew-rate limiter with a total horizontal acceleration cap. Per-axis
+        # clipping allows sqrt(2) times the configured acceleration on diagonals.
         max_dv_xy = self.max_accel * dt
         max_dv_z = 0.8 * dt  # Gentler vertical acceleration limit (0.8 m/s^2) to prevent altitude wobbling
         def slew(curr: float, target: float, limit: float) -> float:
@@ -495,8 +625,9 @@ class OffboardCommander(Node):
                 return curr + math.copysign(limit, diff)
             return target
 
-        vn = slew(self.current_cmd_ned[0], raw_vn, max_dv_xy)
-        ve = slew(self.current_cmd_ned[1], raw_ve, max_dv_xy)
+        vn, ve = _slew_vector_2d(
+            self.current_cmd_ned[:2], (raw_vn, raw_ve), max_dv_xy,
+        )
         vd = slew(self.current_cmd_ned[2], raw_vd, max_dv_z)
         self.current_cmd_ned = [vn, ve, vd]
 
@@ -621,8 +752,8 @@ class OffboardCommander(Node):
             self.get_logger().info('FORCE DISARM command sent to PX4 (DDS).')
         elif self.mav_conn is not None:
             try:
-                # Send burst of 3 force-disarm packets to ensure delivery over UDP
-                for _ in range(3):
+                # Send burst of 5 force-disarm packets to ensure delivery over UDP
+                for _ in range(5):
                     self.mav_conn.mav.command_long_send(
                         1, 1,
                         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
@@ -650,7 +781,8 @@ def main():
         node._send_disarm_command()
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

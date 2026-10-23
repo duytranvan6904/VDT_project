@@ -48,10 +48,10 @@ class TargetMotionGate:
 
     def __init__(
         self,
-        enter_speed: float = 0.35,
+        enter_speed: float = 0.38,
         exit_speed: float = 0.18,
-        enter_confirm_frames: int = 3,
-        exit_confirm_frames: int = 4,
+        enter_confirm_frames: int = 15,
+        exit_confirm_frames: int = 8,
     ):
         self.enter_speed = max(0.0, float(enter_speed))
         self.exit_speed = max(0.0, float(exit_speed))
@@ -213,6 +213,7 @@ def update_tracking_yaw_command(
     feedforward_max_rate: float = 0.15,
     prediction_horizon: float = 0.25,
     deadband_px: float = 12.0,
+    min_bearing_distance: float = 1.0,
 ) -> float:
     """Update the yaw setpoint from a live pixel or a fresh EKF bearing.
 
@@ -221,6 +222,8 @@ def update_tracking_yaw_command(
     EKF target bearing keeps the vehicle steering toward the same target.
     Target motion is added as angular-rate feedforward, so stationary-target
     estimator noise cannot leave a persistent yaw bias.
+    When the vehicle is close to the target (horizontal range < min_bearing_distance),
+    line-of-sight azimuth has an ill-conditioned singularity and must not steer yaw.
     """
     dt = max(0.0, float(dt))
     usable_modes = ('TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED')
@@ -245,7 +248,7 @@ def update_tracking_yaw_command(
         vx, vy = target_velocity_xy
         predicted_x = float(dx) + float(vx) * max(0.0, float(prediction_horizon))
         predicted_y = float(dy) + float(vy) * max(0.0, float(prediction_horizon))
-        if math.hypot(predicted_x, predicted_y) > 0.3:
+        if math.hypot(predicted_x, predicted_y) >= float(min_bearing_distance):
             target_yaw = math.atan2(predicted_y, predicted_x)
 
     if target_yaw is None:

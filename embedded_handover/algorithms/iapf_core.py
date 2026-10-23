@@ -110,6 +110,7 @@ class IAPFCore:
         *,
         k_rep_override: Optional[float] = None,
         target_pos: Optional[np.ndarray] = None,
+        is_dynamic_follow: bool = False,
     ) -> IAPFResult:
         """Compute 3D velocity command and heading from current pose, goal, and obstacles.
 
@@ -121,6 +122,8 @@ class IAPFCore:
         k_rep_override : optional override for k_rep (e.g. in APPROACH phase)
         target_pos : optional physical target position for camera heading lock.
                      If None, yaw_cmd aligns with the velocity vector.
+        is_dynamic_follow : if True, preserves full obstacle repulsion and follow speed
+                            rather than suppressing repulsion near the standoff goal.
 
         Returns
         -------
@@ -171,11 +174,15 @@ class IAPFCore:
         n_obs = len(obstacles)
 
         # Compute goal-distance sigmoid weighting once
-        # exp_goal = exp(-d_goal)
-        # weight_rep = 1.0 / (1.0 + exp_goal) - 0.5
-        exp_goal = math.exp(-min(d_goal, 50.0))
-        weight_rep = 1.0 / (1.0 + exp_goal) - 0.5
-        sigmoid_deriv = exp_goal / ((1.0 + exp_goal) ** 2)
+        if is_dynamic_follow:
+            # During dynamic target following, the goal is a moving standoff point.
+            # Preserve full obstacle repulsion so evasion is never suppressed near standoff.
+            weight_rep = 0.50
+            sigmoid_deriv = 0.0
+        else:
+            exp_goal = math.exp(-min(d_goal, 50.0))
+            weight_rep = 1.0 / (1.0 + exp_goal) - 0.5
+            sigmoid_deriv = exp_goal / ((1.0 + exp_goal) ** 2)
 
         for i, obs in enumerate(obstacles):
             obs_pos = np.asarray(obs, dtype=float)
@@ -210,15 +217,48 @@ class IAPFCore:
         # -------------------------------------------------------------
         # 5. Local Minimum Detection with Hysteresis (Schmitt Trigger)
         # -------------------------------------------------------------
+        f_att_norm = float(np.linalg.norm(f_att))
+        is_collinear_trap = False
+        if obstacle_near and nearest_idx >= 0 and f_att_norm > small_num:
+            obs_near = np.asarray(obstacles[nearest_idx], dtype=float)
+            vec_to_obs = obs_near - p
+            dist_to_obs = float(np.linalg.norm(vec_to_obs))
+            if dist_to_obs > small_num:
+                dir_to_obs = vec_to_obs / dist_to_obs
+                cos_obs_goal = float(np.dot(dir_goal, dir_to_obs))
+                # Obstacle lies between drone and goal, and repulsion opposes attraction
+                if cos_obs_goal > 0.65 and float(np.dot(f_att, f_rep)) < 0.0:
+                    forward_progress = float(np.dot(f_total, dir_goal))
+                    if forward_progress <= 0.40 * f_att_norm:
+                        is_collinear_trap = True
+
         if not self.tangent_active:
-            if (f_total_norm < p_cfg.f_enter) and (d_goal > p_cfg.goal_min_dist) and obstacle_near:
+            if (
+                ((f_total_norm < p_cfg.f_enter) or is_collinear_trap)
+                and (d_goal > p_cfg.goal_min_dist)
+                and obstacle_near
+            ):
                 self.tangent_active = True
                 # Reset previous tangent if obstacle switched
                 if nearest_idx != self.previous_obs_idx:
                     self.tangent_prev = np.zeros(3)
                 self.previous_obs_idx = nearest_idx
         else:
-            if (f_total_norm > p_cfg.f_exit) or (not obstacle_near) or (d_goal <= p_cfg.goal_min_dist):
+            obs_cleared = False
+            if nearest_idx >= 0:
+                obs_near = np.asarray(obstacles[nearest_idx], dtype=float)
+                vec_to_obs = obs_near - p
+                dist_to_obs = float(np.linalg.norm(vec_to_obs))
+                if dist_to_obs > small_num:
+                    dir_to_obs = vec_to_obs / dist_to_obs
+                    if float(np.dot(dir_goal, dir_to_obs)) < 0.20:
+                        obs_cleared = True
+
+            if (
+                ((f_total_norm > p_cfg.f_exit and not is_collinear_trap) or obs_cleared)
+                or (not obstacle_near)
+                or (d_goal <= p_cfg.goal_min_dist)
+            ):
                 self.tangent_active = False
 
         # -------------------------------------------------------------
@@ -227,45 +267,39 @@ class IAPFCore:
         f_tan = np.zeros(3)
         if self.tangent_active and nearest_idx >= 0:
             obs_near = np.asarray(obstacles[nearest_idx], dtype=float)
-            normal_vec = p - obs_near
-            normal_norm = float(np.linalg.norm(normal_vec))
 
-            if normal_norm > small_num:
-                n = normal_vec / normal_norm
+            # Compute horizontal cylinder normal (obstacles are vertical cylinders)
+            normal_vec_xy = np.array([p[0] - obs_near[0], p[1] - obs_near[1]])
+            normal_norm_xy = float(np.linalg.norm(normal_vec_xy))
+
+            if normal_norm_xy > small_num:
+                nx = normal_vec_xy[0] / normal_norm_xy
+                ny = normal_vec_xy[1] / normal_norm_xy
             else:
-                n = -dir_goal
+                dir_goal_xy_norm = float(np.linalg.norm(dir_goal[:2]))
+                if dir_goal_xy_norm > small_num:
+                    nx = -dir_goal[0] / dir_goal_xy_norm
+                    ny = -dir_goal[1] / dir_goal_xy_norm
+                else:
+                    nx, ny = 1.0, 0.0
 
-            # Construct tangent plane orthonormal basis (e1, e2)
-            abs_n = np.abs(n)
-            idx_ref = int(np.argmin(abs_n))
-            ref = np.zeros(3)
-            ref[idx_ref] = 1.0
-
-            e1 = np.cross(n, ref)
-            e1_norm = float(np.linalg.norm(e1))
-            e1 = e1 / max(e1_norm, small_num)
-
-            e2 = np.cross(n, e1)
-            e2_norm = float(np.linalg.norm(e2))
-            e2 = e2 / max(e2_norm, small_num)
+            # The two continuous orthogonal horizontal tangents (CCW and CW)
+            t_ccw = np.array([-ny, nx, 0.0])
+            t_cw = np.array([ny, -nx, 0.0])
+            candidates = [t_ccw, t_cw]
 
             # Forward-looking candidate evaluation
             look_ahead = max(p_cfg.look_ahead_ratio * d0, p_cfg.min_look_ahead)
-            tangent_prev_norm = float(np.linalg.norm(self.tangent_prev))
+            tangent_prev_norm = float(np.linalg.norm(self.tangent_prev[:2]))
 
             best_score = -1e9
-            best_tangent = np.zeros(3)
+            best_tangent = t_ccw
 
-            for k in range(p_cfg.n_tangent):
-                theta = 2.0 * math.pi * k / p_cfg.n_tangent
-                t_cand = math.cos(theta) * e1 + math.sin(theta) * e2
-                t_cand_norm = float(np.linalg.norm(t_cand))
-                t_cand = t_cand / max(t_cand_norm, small_num)
-
+            for t_cand in candidates:
                 # Score 1: Goal direction alignment
                 goal_score = float(np.dot(t_cand, dir_goal))
 
-                # Score 2: Continuity with previous tangent direction
+                # Score 2: Continuity with previous tangent direction (hysteresis)
                 prev_score = 0.0
                 if tangent_prev_norm > 1e-4:
                     prev_score = float(np.dot(t_cand, self.tangent_prev / tangent_prev_norm))
@@ -277,7 +311,7 @@ class IAPFCore:
                     p_test = p + pred_ratio * look_ahead * t_cand
 
                     for j in range(n_obs):
-                        cand_dist = float(np.linalg.norm(p_test - np.asarray(obstacles[j], dtype=float)))
+                        cand_dist = float(np.linalg.norm(p_test[:2] - np.asarray(obstacles[j], dtype=float)[:2]))
                         if cand_dist < min_pred_dist:
                             min_pred_dist = cand_dist
 
@@ -294,7 +328,9 @@ class IAPFCore:
                     best_tangent = t_cand
 
             self.tangent_prev = best_tangent.copy()
-            f_tan = p_cfg.k_tan * best_tangent
+            f_rep_norm = float(np.linalg.norm(f_rep))
+            tan_mag = p_cfg.k_tan * max(0.5, min(f_att_norm, max(1.0, f_rep_norm)))
+            f_tan = tan_mag * best_tangent
             f_cmd_raw = f_total + f_tan
         else:
             f_cmd_raw = f_total.copy()
@@ -339,11 +375,27 @@ class IAPFCore:
         # -------------------------------------------------------------
         # 9. Speed Scheduling
         # -------------------------------------------------------------
-        goal_speed_factor = float(np.clip(
-            d_goal / max(d0, small_num),
-            p_cfg.min_goal_factor,
-            1.0,
-        ))
+        if is_dynamic_follow:
+            # During dynamic target following, the goal is a moving standoff point
+            # and target velocity feedforward provides forward travel speed.
+            # Smoothly ramp guidance velocity to 0 to prevent bang-bang relay limit cycles.
+            d_slow = max(1.5, p_cfg.goal_tol + 0.2)
+            if d_goal <= p_cfg.goal_tol:
+                goal_speed_factor = 0.0
+            elif d_goal < d_slow:
+                goal_speed_factor = float(
+                    (d_goal - p_cfg.goal_tol) / (d_slow - p_cfg.goal_tol)
+                )
+            else:
+                goal_speed_factor = 1.0
+        else:
+            # Static waypoint navigation: standard MATLAB IAPF formulation with min_goal_factor floor
+            # ensuring vehicle decisively crosses goal_tol without stalling outside goal threshold.
+            goal_speed_factor = float(np.clip(
+                d_goal / max(d0, small_num),
+                p_cfg.min_goal_factor,
+                1.0,
+            ))
 
         obs_speed_factor = 1.0
         if obstacle_near:
@@ -353,7 +405,15 @@ class IAPFCore:
                 1.0,
             ))
 
-        v_cmd_mag = v_max * goal_speed_factor * obs_speed_factor
+        # Obstacle avoidance activity: if repulsive or tangent forces are active,
+        # preserve necessary speed so obstacle evasion is never starved near the goal
+        f_rep_tan_norm = float(np.linalg.norm(f_rep + f_tan))
+        evasion_factor = (
+            min(1.0, f_rep_tan_norm / max(f_att_norm, small_num))
+            if obstacle_near else 0.0
+        )
+        effective_drive = max(goal_speed_factor, evasion_factor)
+        v_cmd_mag = v_max * effective_drive * obs_speed_factor
 
         # Ensure minimum escape velocity when in local minimum
         if self.tangent_active:

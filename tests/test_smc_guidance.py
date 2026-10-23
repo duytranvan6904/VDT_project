@@ -267,6 +267,43 @@ class TestSMCGuidance(unittest.TestCase):
         self.assertGreater(res.velocity_cmd[2], -self.params.v_descend_fast)
 
 
+    def test_terminal_attitude_leveling_fades_position_correction_near_touchdown(self):
+        """At r_z <= 0.10m, position correction fades out completely so vehicle touches down level."""
+        target_pos = np.array([0.0, 0.0, 0.0])
+        target_vel = np.array([1.0, 0.0, 0.0])
+        # Drone 15cm ahead, 8cm altitude above deck
+        drone_pos = np.array([0.15, 0.0, 0.08])
+        res = self.guidance.step(
+            drone_pos=drone_pos,
+            drone_vel=target_vel,
+            target_pos=target_pos,
+            target_vel=target_vel,
+            dt=0.05,
+        )
+        self.assertEqual(res.sub_phase, "FINAL_DESCENT")
+        # Position correction must be faded out to 0 at 8cm altitude; command purely equals target_vel
+        self.assertAlmostEqual(res.velocity_cmd[0], 1.0, places=2)
+        self.assertAlmostEqual(res.velocity_cmd[1], 0.0, places=2)
+
+    def test_static_pad_crisp_vertical_descent(self):
+        """When descending over a stationary pad, vertical descent rate is fast and crisp."""
+        guidance = SMCGuidance()  # default v_descend_fast = 0.55
+        target_pos = np.array([0.0, 0.0, 0.0])
+        target_vel = np.zeros(3)
+        drone_pos = np.array([0.10, 0.10, 2.0])
+        res = guidance.step(
+            drone_pos=drone_pos,
+            drone_vel=np.zeros(3),
+            target_pos=target_pos,
+            target_vel=target_vel,
+            dt=0.05,
+            rswitch_override=5.0,
+        )
+        self.assertEqual(res.sub_phase, "GLIDE_SLOPE")
+        # Vertical descent must not stall: vz <= -0.50 m/s
+        self.assertLessEqual(res.velocity_cmd[2], -0.50)
+
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -56,8 +56,8 @@ def clean_simulation_processes():
     print("🧹 [CleanUp] Dọn dẹp triệt để các tiến trình mô phỏng và giải phóng bộ nhớ...")
     # 1. Kill ROS 2 Python nodes (do not kill batch_simulation_runner itself!)
     subprocess.run("pkill -9 -f '(launch_simulation|aruco_sim_node|ekf_ros_adapter|covariance_gate|apf_planner|smc_guidance|touchdown_detector|ibvs_controller|mission_fsm_node|offboard_commander|auto_mission_commander|flight_telemetry_logger|depth_to_image_node)' 2>/dev/null || true", shell=True)
-    # 2. Kill Gazebo and PX4
-    subprocess.run("killall -9 gz-sim gz px4 ruby parameter_bridge ros_gz_bridge 2>/dev/null || true", shell=True)
+    # 2. Kill Gazebo, PX4, and RViz
+    subprocess.run("killall -9 gz-sim gz px4 ruby parameter_bridge ros_gz_bridge rviz2 2>/dev/null || true", shell=True)
     subprocess.run("ros2 daemon stop >/dev/null 2>&1 || true", shell=True)
 
     # Remove stale locks
@@ -82,6 +82,18 @@ def kill_proc_tree(proc: subprocess.Popen | None):
                 os.killpg(pgid, signal.SIGKILL)
             except Exception:
                 pass
+
+
+def stop_ros_node_gracefully(proc: subprocess.Popen | None, timeout_s: float = 5.0):
+    """Let an rclpy node close its subscriptions and flush telemetry on SIGINT."""
+    if proc is not None and proc.poll() is None:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGINT)
+            proc.wait(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            kill_proc_tree(proc)
+        except ProcessLookupError:
+            pass
 
 
 def wait_for_mavlink(timeout_s: float = 30.0) -> bool:
@@ -120,11 +132,32 @@ def get_ros_env() -> dict:
     return env
 
 
-def run_single_flight(run_idx: int, run_dir: Path, headless: bool = False, planner: str = "iapf", move_target: bool = False, target_speed: float = 0.5) -> bool:
+def run_single_flight(
+    run_idx: int,
+    run_dir: Path,
+    headless: bool = False,
+    planner: str = "iapf",
+    move_target: bool = False,
+    target_speed: float = 0.5,
+    target_turn_after_s: float = 0.0,
+    follow_duration: float = 8.0,
+    follow_only: bool = False,
+    trajectory: str = "default",
+    with_rviz: bool = False,
+) -> bool:
     res = get_system_resources()
     print("\n" + "=" * 70)
     print(f"🚀 BẮT ĐẦU CHUYẾN BAY THỬ NGHIỆM #{run_idx:02d} -> {run_dir.name}")
-    print(f"   Kịch bản: {'BÃI ĐÁP DI ĐỘNG (' + str(target_speed) + ' m/s)' if move_target else 'BÃI ĐÁP CỐ ĐỊNH'} | Planner: {planner.upper()} | Headless: {headless}")
+    scenario_label = 'BÃI ĐÁP CỐ ĐỊNH'
+    if move_target:
+        scenario_label = f'BÃI ĐÁP DI ĐỘNG ({target_speed} m/s)'
+        if trajectory == 'slalom':
+            scenario_label += ' | QUỸ ĐẠO LƯỢN VẬT CẢN PHỨC TẠP (SLALOM)'
+        elif target_turn_after_s > 0.0:
+            scenario_label += f' | RẼ +X→+Y SAU {target_turn_after_s:.1f}s'
+    if follow_only:
+        scenario_label += ' [CHẾ ĐỘ FOLLOW-ONLY / KHÔNG HẠ CÁNH]'
+    print(f"   Kịch bản: {scenario_label} | Planner: {planner.upper()} | Headless: {headless}")
     print(f"   💾 Tài nguyên hệ thống: RAM trống {res['ram_avail_mb']} MB | Disk trống {res['disk_free_mb']} MB")
     print("=" * 70)
 
@@ -143,6 +176,14 @@ def run_single_flight(run_idx: int, run_dir: Path, headless: bool = False, plann
     env['PYTHONPATH'] = f"{REPO_ROOT}:{env.get('PYTHONPATH', '')}"
     if headless:
         env['HEADLESS'] = '1'
+    else:
+        env.pop('HEADLESS', None)
+        if 'DISPLAY' not in env:
+            env['DISPLAY'] = os.environ.get('DISPLAY', ':0')
+        if 'XAUTHORITY' not in env and 'XAUTHORITY' in os.environ:
+            env['XAUTHORITY'] = os.environ['XAUTHORITY']
+        if 'WAYLAND_DISPLAY' not in env and 'WAYLAND_DISPLAY' in os.environ:
+            env['WAYLAND_DISPLAY'] = os.environ['WAYLAND_DISPLAY']
 
     # Step 3: Start PX4 SITL + Gazebo
     print("▶ [1/5] Khởi động PX4 SITL & Gazebo Harmonic...")
@@ -165,7 +206,9 @@ def run_single_flight(run_idx: int, run_dir: Path, headless: bool = False, plann
     # Step 4: Start ROS 2 autonomous pipeline
     print("▶ [2/5] Khởi động ROS 2 Bridges & Autonomous Pipeline...")
     sim_log_file = open(run_dir / "sim_pipeline.log", "w")
-    sim_cmd = [sys.executable, str(SIM_LAUNCH), "--autonomous", "--no-rviz", f"--planner={planner}"]
+    sim_cmd = [sys.executable, str(SIM_LAUNCH), "--autonomous", f"--planner={planner}"]
+    if headless or not with_rviz:
+        sim_cmd.append("--no-rviz")
     sim_proc = subprocess.Popen(
         sim_cmd, env=env,
         stdout=sim_log_file, stderr=subprocess.STDOUT,
@@ -179,7 +222,8 @@ def run_single_flight(run_idx: int, run_dir: Path, headless: bool = False, plann
         sys.executable, str(LOGGER_SCRIPT),
         "--csv", str(csv_file),
         "--json", str(summary_file),
-        "--world-sdf", str(WORLD_SDF)
+        "--world-sdf", str(WORLD_SDF),
+        "--ros-args", "-p", "use_sim_time:=true"
     ]
     log_proc = subprocess.Popen(log_cmd, env=env, preexec_fn=os.setsid)
     time.sleep(1.0)
@@ -189,16 +233,25 @@ def run_single_flight(run_idx: int, run_dir: Path, headless: bool = False, plann
     cmd_args = [
         sys.executable, str(COMMANDER_SCRIPT),
         "--takeoff-alt", "3.0",
-        "--follow-duration", "8.0",
+        "--follow-duration", str(follow_duration),
         "--max-time", "160.0"
     ]
+    if follow_only:
+        cmd_args.append("--follow-only")
+    if trajectory != "default":
+        cmd_args.extend(["--trajectory", trajectory])
     if move_target:
-        cmd_args.extend(["--move-target", "--target-speed", str(target_speed)])
+        cmd_args.extend([
+            "--move-target", "--target-speed", str(target_speed),
+            "--keep-moving-through-landing",
+        ])
+        if target_turn_after_s > 0.0 and trajectory == "default":
+            cmd_args.extend(["--target-turn-after-s", str(target_turn_after_s)])
 
     commander_proc = subprocess.Popen(cmd_args, env=env, preexec_fn=os.setsid)
 
     # Wait for flight completion
-    print("   Đang thực thi chu trình bay tự động (Takeoff -> Follow -> Glide Slope -> Land)...")
+    print("   Đang thực thi chu trình bay tự động...")
     commander_proc.wait()
     print("   ✅ Chu trình bay đã hoàn tất.")
 
@@ -206,7 +259,7 @@ def run_single_flight(run_idx: int, run_dir: Path, headless: bool = False, plann
     print("▶ [5/5] Thu thập dữ liệu và dọn dẹp tài nguyên triệt để...")
     time.sleep(1.5)
     kill_proc_tree(commander_proc)
-    kill_proc_tree(log_proc)
+    stop_ros_node_gracefully(log_proc)
     kill_proc_tree(sim_proc)
     kill_proc_tree(px4_proc)
     try:
@@ -236,7 +289,27 @@ def main():
     parser.add_argument('--gui', dest='headless', action='store_false', help="Mở GUI Gazebo khi bay")
     parser.add_argument('--output-dir', default="simulation_results/full_system_10runs_evaluation", help="Thư mục xuất dữ liệu")
     parser.add_argument('--planner', default="iapf", choices=["iapf", "apf"], help="Thuật toán quy hoạch APF/IAPF")
-    parser.add_argument('--scenario', default="mixed", choices=["static", "moving", "mixed"], help="Kịch bản di chuyển bãi đáp")
+    parser.add_argument('--scenario', default="mixed", choices=["static", "moving", "turning", "slalom", "mixed"], help="Kịch bản di chuyển bãi đáp")
+    parser.add_argument(
+        '--target-turn-after-s', type=float, default=0.0,
+        help='Rẽ bãi từ +X sang +Y sau N giây FOLLOW (0 để tắt; scenario=turning mặc định 3s).',
+    )
+    parser.add_argument(
+        '--target-speed', type=float, default=None,
+        help='Vận tốc di chuyển của bãi đáp (m/s).',
+    )
+    parser.add_argument(
+        '--follow-duration', type=float, default=8.0,
+        help='Thời gian ở pha FOLLOW trước khi gửi LAND (hoặc kết thúc nếu --follow-only).',
+    )
+    parser.add_argument(
+        '--follow-only', action='store_true',
+        help='Chạy chế độ duy trì FOLLOW thuần túy, không kích hoạt hạ cánh.',
+    )
+    parser.add_argument(
+        '--with-rviz', action='store_true', default=False,
+        help='Khởi động thêm RViz2 cùng với Gazebo GUI (mặc định tắt để giảm tải GPU).',
+    )
     args = parser.parse_args()
 
     batch_dir = Path(args.output_dir)
@@ -253,7 +326,7 @@ def main():
         {"name": "Bãi tĩnh lặp lại #1", "move": False, "speed": 0.0},
         {"name": "Bãi di động vừa (0.4 m/s)", "move": True, "speed": 0.4},
         {"name": "Bãi tĩnh lặp lại #2", "move": False, "speed": 0.0},
-        {"name": "Bãi di động tiêu chuẩn (0.5 m/s, quỹ đạo uốn)", "move": True, "speed": 0.5},
+        {"name": "Bãi di động rẽ 90 độ (0.5 m/s)", "move": True, "speed": 0.5, "turn_after": 3.0},
         {"name": "Bãi tĩnh lặp lại #3", "move": False, "speed": 0.0},
         {"name": "Bãi di động tốc độ cao (0.6 m/s)", "move": True, "speed": 0.6},
         {"name": "Bãi tĩnh lặp lại #4", "move": False, "speed": 0.0},
@@ -263,20 +336,36 @@ def main():
     successful = 0
     for i in range(1, args.runs + 1):
         run_dir = batch_dir / f"run_{i:02d}"
+        trajectory = "default"
         if i <= len(scenario_matrix):
             sc = scenario_matrix[i - 1]
             move = sc['move']
             speed = sc['speed']
+            turn_after = sc.get('turn_after', 0.0)
         else:
             move = (i % 2 == 0)
             speed = 0.5
+            turn_after = 0.0
 
-        if args.scenario == "moving":
+        if args.scenario == "slalom":
             move = True
-            speed = 0.4
+            speed = args.target_speed if args.target_speed is not None else 0.5
+            trajectory = "slalom"
+            turn_after = 0.0
+        elif args.scenario == "moving":
+            move = True
+            speed = args.target_speed if args.target_speed is not None else 0.5
+            turn_after = args.target_turn_after_s
+        elif args.scenario == "turning":
+            move = True
+            speed = args.target_speed if args.target_speed is not None else 0.5
+            turn_after = args.target_turn_after_s or 3.0
         elif args.scenario == "static":
             move = False
             speed = 0.0
+            turn_after = 0.0
+        elif args.target_turn_after_s > 0.0:
+            turn_after = args.target_turn_after_s
 
         ok = run_single_flight(
             run_idx=i,
@@ -284,7 +373,12 @@ def main():
             headless=args.headless,
             planner=args.planner,
             move_target=move,
-            target_speed=speed
+            target_speed=speed,
+            target_turn_after_s=turn_after,
+            follow_duration=args.follow_duration,
+            follow_only=args.follow_only,
+            trajectory=trajectory,
+            with_rviz=args.with_rviz,
         )
         if ok:
             successful += 1

@@ -54,22 +54,27 @@ def load_flight_data(batch_dir: Path) -> List[Dict[str, Any]]:
                 summary = json.load(f)
             summary['run_id'] = rdir.name
             summary['csv_path'] = str(csv_file) if csv_file.exists() else None
-            # Compute camera optical landing error from CSV
+            # Compute camera and base landing error at touchdown timestamp from CSV
             if csv_file.exists():
                 try:
                     data = np.genfromtxt(str(csv_file), delimiter=',', names=True, dtype=None, encoding='utf-8')
                     if len(data) > 0:
-                        last_row = data[-1]
-                        yaw_rad = math.radians(float(last_row['drone_yaw']))
-                        cam_x = float(last_row['drone_x']) + 0.20 * math.cos(yaw_rad) - 0.03 * math.sin(yaw_rad)
-                        cam_y = float(last_row['drone_y']) + 0.20 * math.sin(yaw_rad) + 0.03 * math.cos(yaw_rad)
-                        cam_rxy = math.hypot(cam_x - float(last_row['target_x']), cam_y - float(last_row['target_y'])) * 100.0
-                        base_rxy = math.hypot(float(last_row['drone_x']) - float(last_row['target_x']), float(last_row['drone_y']) - float(last_row['target_y'])) * 100.0
-                        # Quadrotor physical chassis landing error (base_link) is the primary physical landing metric
+                        td_time = summary.get('touchdown_sim_time_s')
+                        if td_time is not None and 'sim_time' in data.dtype.names:
+                            idx = np.searchsorted(data['sim_time'], td_time)
+                            row_idx = min(idx, len(data) - 1)
+                            target_row = data[row_idx]
+                        else:
+                            target_row = data[-1]
+                        yaw_rad = math.radians(float(target_row['drone_yaw']))
+                        cam_x = float(target_row['drone_x']) + 0.20 * math.cos(yaw_rad) - 0.03 * math.sin(yaw_rad)
+                        cam_y = float(target_row['drone_y']) + 0.20 * math.sin(yaw_rad) + 0.03 * math.cos(yaw_rad)
+                        cam_rxy = math.hypot(cam_x - float(target_row['target_x']), cam_y - float(target_row['target_y'])) * 100.0
+                        base_rxy = math.hypot(float(target_row['drone_x']) - float(target_row['target_x']), float(target_row['drone_y']) - float(target_row['target_y'])) * 100.0
                         summary['final_landing_error_rxy_cm'] = round(base_rxy, 2)
                         summary['base_link_landing_error_rxy_cm'] = round(base_rxy, 2)
                         summary['cam_landing_error_rxy_cm'] = round(cam_rxy, 2)
-                        summary['mission_success'] = bool(base_rxy <= 20.0 or cam_rxy <= 20.0)
+                        summary['mission_success'] = bool((base_rxy <= 20.0 or cam_rxy <= 20.0) and summary.get('touchdown_detected', True))
                         summary['strict_kpi_pass'] = bool(base_rxy <= 10.0 or cam_rxy <= 10.0)
                 except Exception:
                     pass
@@ -104,9 +109,15 @@ def plot_landing_scatter(runs: List[Dict[str, Any]], output_path: Path):
             try:
                 data = np.genfromtxt(csv_path, delimiter=',', names=True, dtype=None, encoding='utf-8')
                 if len(data) > 0:
-                    last_row = data[-1]
-                    base_dx = (float(last_row['drone_x']) - float(last_row['target_x'])) * 100.0
-                    base_dy = (float(last_row['drone_y']) - float(last_row['target_y'])) * 100.0
+                    td_time = run.get('touchdown_sim_time_s')
+                    if td_time is not None and 'sim_time' in data.dtype.names:
+                        idx = np.searchsorted(data['sim_time'], td_time)
+                        row_idx = min(idx, len(data) - 1)
+                        target_row = data[row_idx]
+                    else:
+                        target_row = data[-1]
+                    base_dx = (float(target_row['drone_x']) - float(target_row['target_x'])) * 100.0
+                    base_dy = (float(target_row['drone_y']) - float(target_row['target_y'])) * 100.0
                     xs.append(base_dx)
                     ys.append(base_dy)
                     dist = math.hypot(base_dx, base_dy)

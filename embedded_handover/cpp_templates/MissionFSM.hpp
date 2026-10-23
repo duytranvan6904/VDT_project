@@ -13,12 +13,14 @@
 namespace vdt::landing {
 
 struct MissionFSMConfig {
-    double follow_distance{3.5};        // Standoff tracking distance (m)
+    double follow_distance{2.2};        // Standoff tracking distance (m)
     double alignment_threshold{0.3};    // Horizontal threshold to align (m)
     double takeoff_altitude{3.0};       // Target takeoff altitude (m)
-    double search_timeout_s{1.2};       // Lost target timeout in FOLLOW -> SEARCH
-    double approach_timeout_s{3.0};     // Lost target timeout in APPROACH -> FOLLOW
-    double reacquire_confirm_time_s{0.25};
+    double search_timeout_s{5.0};       // Lost target timeout in FOLLOW -> SEARCH
+    double approach_timeout_s{7.0};     // Lost target timeout in APPROACH -> FOLLOW
+    double reacquire_confirm_time_s{0.20};
+    double final_descent_alt_m{0.60};   // Transition altitude to LAND (m)
+    double final_descent_rxy_m{0.85};   // Transition horizontal radius to LAND (m)
 };
 
 class MissionFSM {
@@ -95,11 +97,11 @@ public:
                 if (!operator_land_cmd) {
                     phase_ = MissionPhase::FOLLOW;
                     timer_s_ = 0.0;
-                } else if (drone_alt <= 0.40 && h_err <= 0.40 && uncertainty_2sigma <= 0.35) {
+                } else if (drone_alt <= cfg_.final_descent_alt_m && h_err <= cfg_.final_descent_rxy_m && uncertainty_2sigma <= 0.90) {
                     // Transition to final vertical landing
                     phase_ = MissionPhase::LAND;
                     timer_s_ = 0.0;
-                } else if (h_err > 0.80 || uncertainty_2sigma > 0.55) {
+                } else if (h_err > 1.25 || uncertainty_2sigma > 0.95) {
                     // Wave-off abort to APPROACH
                     phase_ = MissionPhase::APPROACH;
                     timer_s_ = 0.0;
@@ -107,7 +109,7 @@ public:
                 break;
 
             case MissionPhase::LAND:
-                if (touchdown_latched || (drone_alt <= 0.12 && timer_s_ > 0.8)) {
+                if (touchdown_latched || (drone_alt <= 0.14 && timer_s_ > 0.35)) {
                     phase_ = MissionPhase::TOUCHDOWN;
                     timer_s_ = 0.0;
                 }

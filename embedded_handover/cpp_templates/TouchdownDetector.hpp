@@ -15,11 +15,11 @@ namespace vdt::landing {
 class TouchdownDetector {
 public:
     struct Config {
-        double altitude_ceiling_m{0.25};        // Maximum actual altitude to consider touching down (m)
+        double altitude_ceiling_m{0.14};        // Maximum actual altitude to consider touching down (m)
         double stoppage_vz_max_mps{0.08};       // Actual vertical velocity threshold (m/s)
         double stoppage_dz_dt_max_mps{0.05};    // Max rate of altitude change (m/s)
         double descent_cmd_threshold_mps{-0.10};// Must be commanding downward motion (m/s)
-        double confirmation_duration_s{0.35};   // Continuous duration required to latch (s)
+        double confirmation_duration_s{0.18};   // Continuous duration required to latch (s)
     };
 
     TouchdownDetector() : TouchdownDetector(Config{}) {}

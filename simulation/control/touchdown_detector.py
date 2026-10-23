@@ -5,8 +5,8 @@ Drift-invariant multi-tier touchdown detection:
   Tier 1: Kinematic Stoppage (descent commanded while vertical velocity and altitude rate flatten)
   Tier 2: Optical Proximity (camera-to-pad distance <= mount height + margin, ~0.38m)
   Tier 3: Inertial Ground Impact Spike (jerk spike on touchdown)
-  Tier 4: PX4 firmware land detector redundancy (/fmu/out/vehicle_land_detected)
-  Tier 5: Temporal persistence debouncing (condition confirmed for >= 0.35s)
+  Tier 4: Optional autopilot landed flag accepted by the detector core
+  Tier 5: Temporal persistence debouncing (condition confirmed for >= 0.25s)
 
 Outputs:
   /landing/touchdown         std_msgs/Bool (latched True upon confirmed ground contact)
@@ -40,6 +40,7 @@ except ImportError:
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
+from simulation.utils.coordinate_frames import rotate_body_vector_to_world
 
 
 @dataclass
@@ -56,11 +57,12 @@ class TouchdownParams:
     # Jerk spike threshold indicating impact reaction force (m/s³)
     jerk_impact_threshold: float = 3.50
     # Required confirmation duration on ground before latching touchdown (seconds)
-    confirmation_duration_s: float = 0.15
+    confirmation_duration_s: float = 0.18
     # Fast confirmation duration when physical impact jerk or firmware landed is confirmed (seconds)
-    fast_confirmation_duration_s: float = 0.08
-    # Strict altitude ceiling ensuring drone is physically near ground level before latching
-    altitude_ceiling_m: float = 0.35
+    fast_confirmation_duration_s: float = 0.10
+    # /odom is the vehicle base pose in this simulation; require it to be close
+    # to the ground, not merely inside the camera-to-pad clearance envelope.
+    altitude_ceiling_m: float = 0.14
 
 
 
@@ -178,7 +180,7 @@ class TouchdownDetector:
 
         # 5. Combined Ground Contact Condition
         # A. Kinematic stoppage + optical near, OR
-        # B. Firmware PX4 landed flag, OR
+        # B. A firmware landed flag supplied by an integration, OR
         # C. Impact jerk + kinematic stopped
         ground_contact = False
         reason = "DESCENT_IN_PROGRESS"
@@ -236,9 +238,9 @@ class TouchdownDetectorNode(Node):
         self.declare_parameter('stoppage_vz_max_mps', 0.12)
         self.declare_parameter('stoppage_dz_dt_max_mps', 0.08)
         self.declare_parameter('jerk_impact_threshold', 3.50)
-        self.declare_parameter('confirmation_duration_s', 0.15)
-        self.declare_parameter('fast_confirmation_duration_s', 0.08)
-        self.declare_parameter('altitude_ceiling_m', 0.35)
+        self.declare_parameter('confirmation_duration_s', 0.18)
+        self.declare_parameter('fast_confirmation_duration_s', 0.10)
+        self.declare_parameter('altitude_ceiling_m', 0.14)
         self.declare_parameter('eval_rate_hz', 20.0)
 
         params = TouchdownParams(
@@ -319,7 +321,11 @@ class TouchdownDetectorNode(Node):
             self.touchdown_pub.publish(Bool(data=False))
             return
 
-        actual_vz = float(self.drone_odom.twist.twist.linear.z)
+        body_v = self.drone_odom.twist.twist.linear
+        q = self.drone_odom.pose.pose.orientation
+        actual_vz = float(rotate_body_vector_to_world(
+            (q.x, q.y, q.z, q.w), (body_v.x, body_v.y, body_v.z),
+        )[2])
         current_alt_z = float(self.drone_odom.pose.pose.position.z)
 
         # In APPROACH phase, only evaluate touchdown when close to ground (<= altitude ceiling)
@@ -383,7 +389,8 @@ def main():
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

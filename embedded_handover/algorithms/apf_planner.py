@@ -20,6 +20,7 @@ from __future__ import annotations
 import math
 import os
 import sys
+import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
@@ -38,6 +39,11 @@ try:
     )
 except ImportError:
     from tracking_control import TargetMotionGate, target_velocity_feedforward
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+from simulation.utils.coordinate_frames import rotate_body_vector_to_world
 
 # ---------------------------------------------------------------------------
 # Core APF algorithm (no ROS dependency)
@@ -72,6 +78,8 @@ def make_follow_goal(
     target_pos: np.ndarray,
     follow_distance: float,
     *,
+    target_velocity_xy: Optional[np.ndarray] = None,
+    min_course_speed: float = 0.35,
     hold_altitude: bool = True,
     cruise_altitude: float = 3.0,
     is_3d_distance: bool = True,
@@ -106,7 +114,20 @@ def make_follow_goal(
         standoff_xy = float(max(0.0, follow_distance))
 
     if standoff_xy > 0.0:
-        if distance_xy > 1e-6:
+        course = (
+            np.asarray(target_velocity_xy, dtype=float)
+            if target_velocity_xy is not None
+            else np.zeros(2, dtype=float)
+        )
+        if course.shape != (2,):
+            raise ValueError('target_velocity_xy must be a 2-vector')
+        course_speed = float(np.linalg.norm(course))
+        if course_speed >= max(0.0, float(min_course_speed)):
+            # Keep the drone behind the pad's course through turns. Radial
+            # standoff can put the goal ahead of a turning pad, which makes
+            # APF ask the vehicle to fly backward while IBVS keeps yaw on it.
+            direction_to_target = course / course_speed
+        elif distance_xy > 1e-6:
             direction_to_target = delta_xy / distance_xy
         else:
             direction_to_target = np.array([1.0, 0.0])
@@ -133,6 +154,7 @@ class APFCore:
         *,
         k_rep_override: Optional[float] = None,
         target_pos: Optional[np.ndarray] = None,
+        is_dynamic_follow: bool = False,
     ) -> APFResult:
         """Compute velocity command given drone position, goal, and obstacles.
 
@@ -143,6 +165,7 @@ class APFCore:
         obstacles : list of (x, y, z) obstacle surface positions ENU
         k_rep_override : if set, overrides self.params.k_rep (for APPROACH)
         target_pos : optional physical target position for camera heading lock
+        is_dynamic_follow : if True, uses full influence distance d0 during target tracking
 
         Returns
         -------
@@ -164,7 +187,7 @@ class APFCore:
 
         # --- Horizontal Repulsive force (sum over all obstacles) ---
         f_rep = np.zeros(3)
-        effective_d0 = min(p.d0, max(0.4, d_goal_mag))
+        effective_d0 = p.d0 if is_dynamic_follow else min(p.d0, max(0.4, d_goal_mag))
 
         for obs in obstacles:
             obs_pos = np.asarray(obs, dtype=float)
@@ -302,6 +325,96 @@ def cylinder_nearest_point(
     return np.array([nx, ny, nz])
 
 
+def limit_velocity_for_cylinder_clearance(
+    position: np.ndarray,
+    velocity: np.ndarray,
+    cylinders: List[Tuple[float, float, float, float, float]],
+    *,
+    vehicle_radius: float = 0.25,
+    clearance_margin: float = 0.20,
+    braking_accel: float = 0.8,
+    reaction_time: float = 0.20,
+    current_velocity: Optional[np.ndarray] = None,
+    vertical_half_extent: float = 0.18,
+    vertical_margin: float = 0.12,
+) -> np.ndarray:
+    """Limit inward horizontal speed using cylinder geometry and stopping distance.
+
+    Each cylinder is ``(cx, cy, radius, height, center_z)``. The constraint is
+    independent of APF repulsion, so a weak/goal-suppressed repulsive force or
+    target-velocity feedforward cannot command an unsafe approach speed.
+    """
+    pos = np.asarray(position, dtype=float)
+    cmd = np.asarray(velocity, dtype=float).copy()
+    current = (
+        np.zeros(3, dtype=float)
+        if current_velocity is None
+        else np.asarray(current_velocity, dtype=float)
+    )
+    if pos.shape != (3,) or cmd.shape != (3,):
+        raise ValueError('position and velocity must be 3-element vectors')
+    if current.shape != (3,):
+        raise ValueError('current_velocity must be a 3-element vector')
+
+    accel = max(1e-3, float(braking_accel))
+    latency = max(0.0, float(reaction_time))
+    vertical_horizon = latency + min(1.0, float(np.linalg.norm(cmd[:2])) / accel)
+
+    # Revisit constraints because satisfying one cylinder can affect another.
+    for _ in range(3):
+        changed = False
+        for cx, cy, radius, height, center_z in cylinders:
+            z_bottom = center_z - 0.5 * height - vertical_margin
+            z_top = center_z + 0.5 * height + vertical_margin
+            z_end = pos[2] + cmd[2] * vertical_horizon
+            vehicle_bottom = min(pos[2], z_end) - vertical_half_extent
+            vehicle_top = max(pos[2], z_end) + vertical_half_extent
+            if vehicle_top < z_bottom or vehicle_bottom > z_top:
+                continue
+
+            offset = pos[:2] - np.array([cx, cy], dtype=float)
+            center_distance = float(np.linalg.norm(offset))
+            if center_distance > 1e-6:
+                outward = offset / center_distance
+            else:
+                outward = np.array([1.0, 0.0])
+
+            clearance = center_distance - max(0.0, radius) - max(0.0, vehicle_radius) - max(0.0, clearance_margin)
+            if clearance <= 0.0:
+                max_inward_speed = 0.0
+            else:
+                max_inward_speed = accel * (
+                    math.sqrt(latency * latency + 2.0 * clearance / accel)
+                    - latency
+                )
+
+            command_radial_speed = float(np.dot(cmd[:2], outward))
+            current_inward_speed = max(
+                0.0, -float(np.dot(current[:2], outward))
+            )
+            if current_inward_speed > max_inward_speed:
+                # The vehicle has inward momentum exceeding the safe steady-state speed.
+                # When clearance is small, apply smooth, proportional outward braking.
+                # When clearance is large, smoothly clamp the command rather than
+                # injecting an explosive reverse step that destabilizes attitude and FOV.
+                excess = current_inward_speed - max_inward_speed
+                braking_weight = max(0.0, min(1.0, 1.0 - clearance / 1.5))
+                outward_braking_cmd = braking_weight * min(1.0, 1.2 * excess)
+                if command_radial_speed < outward_braking_cmd:
+                    cmd[:2] += (
+                        outward_braking_cmd - command_radial_speed
+                    ) * outward
+                    changed = True
+            else:
+                inward_speed = -command_radial_speed
+                if inward_speed > max_inward_speed:
+                    cmd[:2] += (inward_speed - max_inward_speed) * outward
+                    changed = True
+        if not changed:
+            break
+    return cmd
+
+
 # ---------------------------------------------------------------------------
 # ROS 2 Node wrapper
 # ---------------------------------------------------------------------------
@@ -347,6 +460,10 @@ def _create_ros_node():
             self.declare_parameter('max_target_lead', 0.75)
             self.declare_parameter('target_velocity_alpha', 0.25)
             self.declare_parameter('target_velocity_deadband', 0.08)
+            self.declare_parameter('vehicle_radius_m', 0.25)
+            self.declare_parameter('obstacle_clearance_margin_m', 0.20)
+            self.declare_parameter('obstacle_braking_accel_mps2', 0.80)
+            self.declare_parameter('obstacle_reaction_time_s', 0.20)
 
             # IAPF specific parameters
             self.declare_parameter('iapf_f_enter', 0.10)
@@ -412,9 +529,23 @@ def _create_ros_node():
             self.target_velocity_deadband = float(
                 self.get_parameter('target_velocity_deadband').value
             )
+            self.vehicle_radius = max(
+                0.0, float(self.get_parameter('vehicle_radius_m').value)
+            )
+            self.obstacle_clearance_margin = max(
+                0.0, float(self.get_parameter('obstacle_clearance_margin_m').value)
+            )
+            self.obstacle_braking_accel = max(
+                0.1, float(self.get_parameter('obstacle_braking_accel_mps2').value)
+            )
+            self.obstacle_reaction_time = max(
+                0.0, float(self.get_parameter('obstacle_reaction_time_s').value)
+            )
+            self.last_clearance_log = 0.0
 
             # ── State ────────────────────────────────────────────────────
             self.drone_pos = np.zeros(3)
+            self.drone_vel = np.zeros(3)
             self.goal_pos = None               # from EKF target state
             self.target_vel = np.zeros(3)
             self.target_motion_gate = TargetMotionGate()
@@ -470,7 +601,14 @@ def _create_ros_node():
             # ── Timer (compute APF at 30 Hz fallback) ────────────────────
             self.create_timer(1.0 / 30.0, self.compute_and_publish)
 
-            self.get_logger().info('APF Planner node ready.')
+            self.get_logger().info(
+                'APF Planner node ready: '
+                f'planner={self.planner_type}, v_max={self.apf.params.v_max:.2f}m/s, '
+                f'vehicle_radius={self.vehicle_radius:.2f}m, '
+                f'clearance_margin={self.obstacle_clearance_margin:.2f}m, '
+                f'braking_accel={self.obstacle_braking_accel:.2f}m/s^2, '
+                f'reaction_time={self.obstacle_reaction_time:.2f}s.'
+            )
 
         # ── Callbacks ────────────────────────────────────────────────────
 
@@ -493,6 +631,11 @@ def _create_ros_node():
         def odom_cb(self, msg: Odometry):
             p = msg.pose.pose.position
             self.drone_pos = np.array([p.x, p.y, p.z])
+            v = msg.twist.twist.linear
+            q = msg.pose.pose.orientation
+            self.drone_vel = rotate_body_vector_to_world(
+                (q.x, q.y, q.z, q.w), (v.x, v.y, v.z),
+            )
             self.has_odom = True
 
         def target_cb(self, msg: Odometry):
@@ -522,15 +665,17 @@ def _create_ros_node():
             )
 
         def phase_cb(self, msg: String):
-            if msg.data != self.phase and hasattr(self.apf, 'reset'):
-                self.apf.reset()
+            if msg.data != self.phase:
+                if hasattr(self.apf, 'reset'):
+                    self.apf.reset()
+                self.target_motion_gate.reset()
+                self.target_motion_velocity[:] = 0.0
             self.phase = msg.data
 
         def tracking_mode_cb(self, msg: String):
             self.tracking_mode = msg.data
-            if msg.data != 'TRACKING':
-                # A prediction through image loss is not fresh evidence that
-                # a moving target is still moving. Reconfirm after reacquire.
+            if msg.data not in ('TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED'):
+                # Reset motion gate only when tracking is truly lost or expired
                 self.target_motion_gate.reset()
                 self.target_motion_velocity[:] = 0.0
                 self.target_vel[:2] = 0.0
@@ -561,8 +706,10 @@ def _create_ros_node():
                         self.drone_pos,
                         predicted_target,
                         self.follow_distance,
+                        target_velocity_xy=self.target_motion_velocity,
                         hold_altitude=self.hold_follow_altitude,
                         cruise_altitude=self.target_altitude,
+                        is_3d_distance=False,
                     )
 
             # Check if APF can compute active flight commands
@@ -570,7 +717,7 @@ def _create_ros_node():
                 self.has_odom
                 and self.goal_pos is not None
                 and self.phase in ('FOLLOW', 'APPROACH')
-                and self.tracking_mode in ('TRACKING', 'PREDICTING')
+                and self.tracking_mode in ('TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED')
             )
 
             if not can_compute_apf:
@@ -587,7 +734,8 @@ def _create_ros_node():
                 )
                 obstacle_points.append(tuple(nearest))
 
-            # Use reduced repulsive gain in APPROACH phase
+            # Keep the same obstacle-repulsion policy through APPROACH; landing
+            # gates control descent, while obstacle clearance remains active.
             k_rep_override = None
             if self.phase == 'APPROACH':
                 k_rep_override = self.k_rep_approach
@@ -596,6 +744,7 @@ def _create_ros_node():
                 self.drone_pos, target_goal, obstacle_points,
                 k_rep_override=k_rep_override,
                 target_pos=self.goal_pos,
+                is_dynamic_follow=(self.phase in ('FOLLOW', 'APPROACH')),
             )
 
             # Publish velocity command
@@ -610,9 +759,8 @@ def _create_ros_node():
 
             # Publish APF guidance separately from target-motion feedforward.
             # Feedforward remains active at the standoff goal while the target
-            # moves; otherwise the drone stops, falls behind, then repeatedly
-            # accelerates back toward the target.
-            if self.phase == 'FOLLOW':
+            # moves in both FOLLOW and APPROACH phases.
+            if self.phase in ('FOLLOW', 'APPROACH'):
                 ff_xy = target_velocity_feedforward(
                     self.target_motion_velocity, min_speed=0.20,
                 )
@@ -620,13 +768,38 @@ def _create_ros_node():
                 target_ff.linear.y = float(ff_xy[1])
                 cmd_vx += target_ff.linear.x
                 cmd_vy += target_ff.linear.y
-                if float(np.linalg.norm(ff_xy)) > 0.0:
-                    v_max = float(self.apf.params.v_max)
-                    total_h_speed = math.hypot(cmd_vx, cmd_vy)
-                    if total_h_speed > v_max:
-                        scale = v_max / total_h_speed
-                        cmd_vx *= scale
-                        cmd_vy *= scale
+            # Enforce the configured speed cap for both APF and I-APF outputs,
+            # including APPROACH where no target feedforward is added.
+            v_max = max(0.05, float(self.apf.params.v_max))
+            total_h_speed = math.hypot(cmd_vx, cmd_vy)
+            if total_h_speed > v_max:
+                scale = v_max / total_h_speed
+                cmd_vx *= scale
+                cmd_vy *= scale
+
+            unscreened = np.array([cmd_vx, cmd_vy, cmd_vz], dtype=float)
+            screened = limit_velocity_for_cylinder_clearance(
+                self.drone_pos,
+                unscreened,
+                self.cylinders,
+                vehicle_radius=self.vehicle_radius,
+                clearance_margin=self.obstacle_clearance_margin,
+                braking_accel=self.obstacle_braking_accel,
+                reaction_time=self.obstacle_reaction_time,
+                current_velocity=self.drone_vel,
+            )
+            cmd_vx, cmd_vy, cmd_vz = map(float, screened)
+            if np.linalg.norm(screened[:2] - unscreened[:2]) > 1e-3:
+                now = time.monotonic()
+                if now - self.last_clearance_log >= 2.0:
+                    self.get_logger().warning(
+                        'Obstacle clearance limiter reduced inward speed '
+                        f'from {np.linalg.norm(unscreened[:2]):.2f} to '
+                        f'{np.linalg.norm(screened[:2]):.2f} m/s; '
+                        f'pos=({self.drone_pos[0]:.2f},{self.drone_pos[1]:.2f}), '
+                        f'vel=({self.drone_vel[0]:.2f},{self.drone_vel[1]:.2f})m/s.'
+                    )
+                    self.last_clearance_log = now
 
             cmd = Twist()
             cmd.linear.x = cmd_vx
@@ -861,7 +1034,8 @@ def main():
         print('\n[APF] Shutting down...')
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

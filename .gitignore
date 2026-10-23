@@ -13,11 +13,17 @@ recordings/*.bag
 venv/
 env/
 
-# IDE files
+# IDE & agent files
 .vscode/
 .idea/
+.cursor/
+.agents/
 
 # Build artifacts & external repositories
 build/
 PX4-Autopilot/
 
+# Flight logs & simulation data
+*.ulg
+simulation_results/
+recordings/

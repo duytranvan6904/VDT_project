@@ -23,13 +23,13 @@ public:
         double k3{0.0442};          // Reaching law gain 3
         double power_n_over_m{0.6}; // Power reaching index: 3/5 = 0.6
         double theta_des_rad{M_PI / 4.0}; // 45 deg glide slope
-        double v_max_approach{1.50};      // m/s
-        double v_final_xy_max{0.35};      // m/s
-        double v_descend_fast{0.35};      // m/s in GLIDE_SLOPE
-        double v_descend_touch{0.15};     // m/s soft touchdown in FINAL_DESCENT
+        double v_max_approach{1.80};      // m/s
+        double v_final_xy_max{1.30};      // m/s
+        double v_descend_fast{0.55};      // m/s in GLIDE_SLOPE
+        double v_descend_touch{0.22};     // m/s soft touchdown in FINAL_DESCENT
         double final_centering_kp{0.70};  // P gain for XY centering
-        double final_descent_alt_m{0.40}; // Transition alt to FINAL_DESCENT (m)
-        double final_descent_rxy_m{0.40}; // Max horizontal distance to enter FINAL_DESCENT (m)
+        double final_descent_alt_m{0.60}; // Transition alt to FINAL_DESCENT (m)
+        double final_descent_rxy_m{0.85}; // Max horizontal distance to enter FINAL_DESCENT (m)
     };
 
     SMCGuidance() : SMCGuidance(Config{}) {}
@@ -67,11 +67,12 @@ public:
         }
 
         if (res.sub_phase == SMCSubPhase::FINAL_DESCENT) {
-            // Closed-loop precision XY centering directly over pad center
-            double cmd_vx = std::clamp(cfg_.final_centering_kp * dx, -cfg_.v_final_xy_max, cfg_.v_final_xy_max) + v_target.x;
-            double cmd_vy = std::clamp(cfg_.final_centering_kp * dy, -cfg_.v_final_xy_max, cfg_.v_final_xy_max) + v_target.y;
-            // Gentle steady downward velocity to touch pad
-            double cmd_vz = -cfg_.v_descend_touch;
+            // Closed-loop precision XY centering with attitude leveling near touchdown (fade out trim kp*dx)
+            double corr_fade = std::clamp((alt - 0.10) / 0.10, 0.0, 1.0);
+            double cmd_vx = std::clamp(cfg_.final_centering_kp * corr_fade * dx, -cfg_.v_final_xy_max, cfg_.v_final_xy_max) + v_target.x;
+            double cmd_vy = std::clamp(cfg_.final_centering_kp * corr_fade * dy, -cfg_.v_final_xy_max, cfg_.v_final_xy_max) + v_target.y;
+            // Responsive descent tapering to soft touchdown near deck
+            double cmd_vz = (alt > 0.40) ? -cfg_.v_descend_fast : -cfg_.v_descend_touch;
 
             res.velocity_cmd = {cmd_vx, cmd_vy, cmd_vz};
             res.yaw_rate_cmd = 0.0;
