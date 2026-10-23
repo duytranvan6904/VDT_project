@@ -39,7 +39,8 @@
     max_yaw: 3.14
     watchdog_timeout_sec: 0.5
     debug_enabled: false
-    min_engage_altitude_m: 2.0
+    min_engage_altitude_m: 1.5
+    require_loiter_before_engage: false
 
 /kill_switch_node:
   ros__parameters:

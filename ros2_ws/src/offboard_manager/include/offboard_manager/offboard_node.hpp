@@ -94,6 +94,8 @@ private:
   float land_descent_rate_;
   bool debug_enabled_;
   bool require_loiter_before_engage_;
+  bool is_airborne_latched_ = false;
+  double last_valid_alt_m_ = 0.0;
 };
 
 }  // namespace offboard_manager

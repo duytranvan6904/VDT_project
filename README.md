@@ -683,6 +683,15 @@ Lõi được reset khi đổi phase. `k_rep` cần hiệu chỉnh lại khi chu
 
 Xem [APF_Guide.md](ros2_ws/src/apf_planner/APF_Guide.md).
 
+### `landing_guidance` (Python)
+
+Module điều khiển và dẫn đường pha hạ cánh chính xác cuối cùng lên H-Pad di động, gồm 3 node chính:
+- `covariance_gate_node`: Đánh giá độ không định covariance vị trí H-Pad từ EKF, xác định bán kính chuyển pha tiếp cận và kích hoạt glide.
+- `smc_guidance_node`: Bộ điều khiển Sliding Mode Control dẫn đường hạ cánh mượt mà, kẹp vận tốc ngang và tốc độ hạ độ cao theo độ bất định.
+- `touchdown_detector_node`: Giám sát phát hiện tiếp đất dựa trên vận tốc thẳng đứng $, độ cao quang học/laser và thay đổi gia tốc (jerk).
+
+Xem [Landing_Guide.md](ros2_ws/src/landing_guidance/Landing_Guide.md).
+
 ### `offboard_safety_monitor` (C++, 5 Hz)
 
 Đánh giá an toàn độc lập: RC override, EKF, pin, tuổi heartbeat Offboard.
@@ -882,7 +891,7 @@ Toàn bộ tham số runtime (embedded, vision, planner) được khai báo tron
 | `input_cache_node` | `ekf_timeout_sec=0.5`, `odom_timeout_sec=0.5`, `vision_timeout_sec=0.5`, `alt_timeout_sec=0.5`, `planner_timeout_sec=1.0`, `world_frame=world`, `debug_enabled=false` |
 | `fsm_node` | `land_entry_height=0.5`, `align_threshold=0.3`, `land_entry_cycles=5`, `enter_follow_cycles=10`, `yaw_settle_rate=0.1`, `follow_lost_timeout=2.5`, `approach_lost_timeout=1.5`, `approach_descent_rate=0.3`, `land_descent_rate=0.4`, `land_requires_rearm=true`, `ignore_planner_timeout=false`, `debug_enabled=false` |
 | `gimbal_node` | `kp=1.0`, `ki=0.0`, `kd=0.1`, `out_min_deg=-90`, `out_max_deg=90`, `max_slew_rate_deg_s=60`, `land_entry_height=0.5`, `debug_enabled=false` |
-| `offboard_node` | `required_engage_cycles=10`, `mode_confirm_timeout_cycles=20`, `health_confirm_timeout_cycles=100`, `data_freshness_timeout_sec=1.0`, `max_horizontal_velocity=2.0`, `max_vertical_velocity=1.0`, `watchdog_timeout_sec=0.5`, `planner_timeout_sec=1.0`, `min_engage_altitude_m=2.0`, `yaw_search_rate=0.3`, `land_descent_rate=0.4`, `debug_enabled=false` |
+| `offboard_node` | `required_engage_cycles=10`, `mode_confirm_timeout_cycles=20`, `health_confirm_timeout_cycles=100`, `data_freshness_timeout_sec=1.0`, `max_horizontal_velocity=2.0`, `max_vertical_velocity=1.0`, `watchdog_timeout_sec=0.5`, `planner_timeout_sec=1.0`, `min_engage_altitude_m=1.5, require_loiter_before_engage=false`, `yaw_search_rate=0.3`, `land_descent_rate=0.4`, `debug_enabled=false` |
 | `px4_state_bridge` | `odometry_topic=/fmu/out/vehicle_odometry`, `land_detected_topic=/fmu/out/vehicle_land_detected`, `gimbal_angle_topic=/gimbal/target_angle_deg`, `world_frame=world`, `base_frame=base_link`, `gimbal_frame=gimbal_link`, `camera_frame=camera_optical_frame`, `gimbal_pivot_xyz=[0,0,0]`, `camera_in_gimbal_xyz=[0,0,0]`, `use_ground_contact=false`, `odom_timeout_sec=0.5` |
 | `vision_interface_bridge` | `detected_topic=/hpad/detected`, `bbox_topic=/hpad/bbox`, `camera_info_topic=/camera_info`, `marker_topic=vision/marker`, `phase_topic=/mission/phase`, `image_width=640`, `image_height=480`, `fsm_state_timeout_sec=1.0` |
 | `safety_monitor_node` | `battery_warning_frac=0.3`, `battery_critical_frac=0.15`, `offboard_hold_timeout=1.0`, `offboard_rtl_timeout=5.0`, `data_freshness_timeout_sec=1.0`, `force_land_latched=true`, `debug_enabled=false` |
@@ -1097,6 +1106,12 @@ Mỗi nhóm còn yêu cầu dữ liệu tươi (không quá 2 s). GPS cần ante
 Cất cánh (chạy tay ở terminal khác sau khi hệ thống đã lên, không đưa vào launch):
 
 ```bash
+# Cất cánh nhanh bằng script có sẵn:
+./ros2_ws/src/takeoff/takeoff.sh
+# Hoặc gửi lệnh qua cmd.sh:
+./ros2_ws/scripts/cmd.sh takeoff
+
+# Hoặc dùng ros2 run truyền thống:
 ros2 run takeoff takeoff --alt 3.0
 ```
 

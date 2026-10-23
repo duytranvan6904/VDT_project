@@ -122,6 +122,13 @@ void OffboardNode::on_vehicle_status(const px4_msgs::msg::VehicleStatus::SharedP
 
 void OffboardNode::on_local_position(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg)
 {
+  float current_alt = msg->z_valid ? -msg->z : 0.0f;
+  if (is_airborne_latched_ && current_alt < 0.0f) {
+    // Filter out sudden irrational negative altitude jumps when drone is already known airborne
+    msg->z = -last_valid_alt_m_;
+  } else if (current_alt > 0.0f) {
+    last_valid_alt_m_ = current_alt;
+  }
   local_position_ = *msg;
   has_local_position_ = true;
   last_local_position_time_ = this->now().seconds();
@@ -168,9 +175,19 @@ bool OffboardNode::is_planner_stale() const
 
 bool OffboardNode::is_airborne() const
 {
-  return is_vehicle_status_fresh() && is_local_position_fresh() &&
-    vehicle_status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED &&
-    local_position_.z_valid && (-local_position_.z) >= min_engage_altitude_m_;
+  if (!is_vehicle_status_fresh() || !is_local_position_fresh()) {
+    return false;
+  }
+  const bool is_armed = (vehicle_status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED);
+  if (!is_armed) {
+    const_cast<OffboardNode*>(this)->is_airborne_latched_ = false;
+    return false;
+  }
+  const float alt_agl = local_position_.z_valid ? -local_position_.z : 0.0f;
+  if (alt_agl >= min_engage_altitude_m_) {
+    const_cast<OffboardNode*>(this)->is_airborne_latched_ = true;
+  }
+  return is_airborne_latched_;
 }
 
 bool OffboardNode::is_ready_to_engage() const
@@ -341,10 +358,12 @@ void OffboardNode::update()
     } else {
       engage_request();
     }
-  } else if (watchdog_check()) {
+  } else {
+    // Continuous Heartbeat Proof: Keep streaming setpoint & offboard control mode
     send_heartbeat();
     publish_setpoint(build_setpoint(
       fsm_state_, planner_output_, yaw_search_rate_, land_descent_rate_, is_planner_stale()));
+    watchdog_check();
   }
 
   publish_status();
