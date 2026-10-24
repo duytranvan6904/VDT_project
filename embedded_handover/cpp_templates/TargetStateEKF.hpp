@@ -72,16 +72,24 @@ public:
         clamp_velocity();
 
         // Discrete White Noise Acceleration Model (CWNA)
-        // Q = G * Q_cont * G^T
-        // For each axis: [dt^3/3, dt^2/2; dt^2/2, dt] * q_accel
         double dt2 = dt * dt;
         double dt3 = dt2 * dt;
-        double q_xy = cfg_.process_accel_variance_xy;
-        double q_z = cfg_.process_accel_variance_z;
 
-        // F * P * F^T + Q
-        // P[0][0] += 2*dt*P[0][3] + dt^2*P[3][3] + (dt^3/3)*q_xy, etc.
-        // In full matrix implementation, use Eigen::Matrix<double, 6, 6>
+        for (int i = 0; i < 3; ++i) {
+            double q = (i < 2) ? cfg_.process_accel_variance_xy : cfg_.process_accel_variance_z;
+            double p_pp = get_cov(i, i);
+            double p_pv = get_cov(i, i + 3);
+            double p_vv = get_cov(i + 3, i + 3);
+
+            double p_pp_next = p_pp + 2.0 * dt * p_pv + dt2 * p_vv + (dt3 / 3.0) * q;
+            double p_pv_next = p_pv + dt * p_vv + (dt2 / 2.0) * q;
+            double p_vv_next = p_vv + dt * q;
+
+            set_cov(i, i, p_pp_next);
+            set_cov(i, i + 3, p_pv_next);
+            set_cov(i + 3, i, p_pv_next);
+            set_cov(i + 3, i + 3, p_vv_next);
+        }
     }
 
     /**
@@ -101,9 +109,11 @@ public:
         }
 
         // Residual y = z - H * x
-        double res_x = z_meas.x - state_[0];
-        double res_y = z_meas.y - state_[1];
-        double res_z = z_meas.z - state_[2];
+        double res[3] = {
+            z_meas.x - state_[0],
+            z_meas.y - state_[1],
+            z_meas.z - state_[2]
+        };
 
         // Innovation covariance S = H * P * H^T + R
         double s_xx = get_cov(0, 0) + cfg_.measurement_variance_xy;
@@ -111,15 +121,44 @@ public:
         double s_zz = get_cov(2, 2) + cfg_.measurement_variance_z;
 
         // Mahalanobis distance d^2 = y^T * S^-1 * y
-        double mahalanobis = (res_x * res_x) / s_xx + (res_y * res_y) / s_yy + (res_z * res_z) / s_zz;
+        double mahalanobis = (res[0] * res[0]) / s_xx + (res[1] * res[1]) / s_yy + (res[2] * res[2]) / s_zz;
         if (mahalanobis > cfg_.gate_threshold) {
             // Outlier rejected!
             return false;
         }
 
-        // Kalman Gain K = P * H^T * S^-1
-        // x = x + K * y
-        // P = (I - K * H) * P
+        // Kalman gain and state update per axis
+        double r_var[3] = {
+            cfg_.measurement_variance_xy,
+            cfg_.measurement_variance_xy,
+            cfg_.measurement_variance_z
+        };
+
+        for (int i = 0; i < 3; ++i) {
+            double p_pp = get_cov(i, i);
+            double p_pv = get_cov(i, i + 3);
+            double p_vv = get_cov(i + 3, i + 3);
+            double s = p_pp + r_var[i];
+
+            double k_p = p_pp / s;
+            double k_v = p_pv / s;
+
+            state_[i] += k_p * res[i];
+
+            double delta_v = k_v * res[i];
+            if (i < 2) {
+                delta_v = std::clamp(delta_v, -cfg_.max_dv_per_step, cfg_.max_dv_per_step);
+            }
+            state_[i + 3] += delta_v;
+
+            // P = (I - K*H) * P
+            set_cov(i, i, (1.0 - k_p) * p_pp);
+            set_cov(i, i + 3, (1.0 - k_p) * p_pv);
+            set_cov(i + 3, i, (1.0 - k_p) * p_pv);
+            set_cov(i + 3, i + 3, std::max(1e-4, p_vv - k_v * p_pv));
+        }
+
+        clamp_velocity();
         tracking_mode_ = TrackingMode::TRACKING;
         return true;
     }

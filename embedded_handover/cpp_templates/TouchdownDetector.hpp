@@ -76,7 +76,8 @@ public:
         bool vz_stopped = (std::abs(actual_vz) <= cfg_.stoppage_vz_max_mps);
         bool dz_stopped = (std::abs(dz_dt) <= cfg_.stoppage_dz_dt_max_mps);
 
-        bool kinematic_stopped = cmd_down && near_ground && vz_stopped && dz_stopped;
+        bool hard_deck = (actual_z <= 0.05 && cmd_down);
+        bool kinematic_stopped = (cmd_down && near_ground && vz_stopped && dz_stopped) || hard_deck || (fast_confirm_trigger && near_ground);
         res.kinematic_stopped = kinematic_stopped;
 
         if (kinematic_stopped) {

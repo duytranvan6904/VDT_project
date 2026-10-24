@@ -97,15 +97,17 @@ public:
             return res;
         }
 
-        // Conical safety gate check: theta_cone = atan2(r_xy, dz) <= 30 deg
-        if (dz > 0.1) {
-            double cone_angle_rad = std::atan2(res.relative_dist_xy, dz);
-            double cone_angle_deg = cone_angle_rad * 180.0 / M_PI;
-            if (cone_angle_deg > cfg_.conical_gate_angle_deg) {
-                res.safe_to_land = false;
-                res.reject_reason = "Drone outside 30 deg conical safety funnel";
-                return res;
-            }
+        double allowed_unc = std::max(cfg_.pad_radius_m, 0.20 * dz);
+        if (res.r_uncertainty_2sigma > allowed_unc) {
+            res.safe_to_land = false;
+            res.reject_reason = "Uncertainty radius exceeds adaptive funnel boundary";
+            return res;
+        }
+
+        if (res.relative_dist_xy > 8.0) {
+            res.safe_to_land = false;
+            res.reject_reason = "Horizontal distance exceeds max approach limit (8m)";
+            return res;
         }
 
         res.safe_to_land = true;

@@ -191,9 +191,12 @@ class TouchdownDetector:
         elif kinematic_stopped and optical_near:
             ground_contact = True
             reason = f"KINEMATIC_STOPPED (vz={actual_vz:.2f}, opt_z={optical_z})"
-        elif impact_detected and is_vertically_stopped and optical_near:
+        elif impact_detected and (current_alt_z <= self.p.altitude_ceiling_m):
             ground_contact = True
             reason = "IMPACT_JERK_STOPPED"
+        elif current_alt_z <= 0.05 and is_commanding_descent:
+            ground_contact = True
+            reason = f"HARD_DECK_CONTACT (z={current_alt_z:.3f}m)"
 
         # 6. Temporal persistence confirmation
         confirm_duration = 0.0
