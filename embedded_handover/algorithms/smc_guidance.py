@@ -56,13 +56,13 @@ class SMCParams:
     m: float = 5.0              # Odd denominator power (power = 3/5 = 0.6)
     theta_des_rad: float = math.pi / 4.0  # 45 deg glide slope (theta_des = 45°)
     zeta_des_rad: float = 0.0   # Desired relative azimuth
-    v_max: float = 2.20         # Max velocity magnitude in approach (m/s)
+    v_max: float = 1.80         # Max velocity magnitude in approach (m/s)
     v_final_xy_max: float = 1.30  # Max horizontal centering velocity in terminal phase (m/s)
     v_descend_fast: float = 0.55  # Descent velocity when altitude > 0.5m (m/s)
     v_descend_touch: float = 0.22 # Touchdown descent velocity when altitude <= 0.3m (m/s)
     rswitch_default: float = 0.80 # Default switching radius (m)
-    final_descent_rxy_m: float = 0.85
-    final_descent_alt_m: float = 0.60
+    final_descent_rxy_m: float = 1.00
+    final_descent_alt_m: float = 1.50
     final_centering_kp: float = 0.60  # Damped proportional centering gain
     glide_centering_kp: float = 0.50  # Reduced glide pursuit gain to prevent velocity chattering
     target_velocity_ff_gain: float = 0.80  # 80% feedforward — enough to track, not enough to oscillate
@@ -404,18 +404,18 @@ class SMCGuidanceNode(Node):
     def __init__(self):
         super().__init__('smc_guidance_node')
 
-        self.declare_parameter('v_max', 2.20)
+        self.declare_parameter('v_max', 1.80)
         self.declare_parameter('v_final_xy_max', 1.30)
         self.declare_parameter('v_descend_fast', 0.55)
         self.declare_parameter('v_descend_touch', 0.22)
         self.declare_parameter('rswitch_default', 5.00)
         self.declare_parameter('final_descent_rxy_m', 0.85)
         self.declare_parameter('final_descent_alt_m', 0.60)
-        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.95)
-        self.declare_parameter('final_gate_timeout_s', 0.40)
-        self.declare_parameter('target_velocity_ff_gain', 1.00)
-        self.declare_parameter('final_centering_kp', 0.90)
-        self.declare_parameter('glide_centering_kp', 0.90)
+        self.declare_parameter('final_uncertainty_max_2sigma_m', 0.90)
+        self.declare_parameter('final_gate_timeout_s', 0.50)
+        self.declare_parameter('target_velocity_ff_gain', 0.90)
+        self.declare_parameter('final_centering_kp', 0.70)
+        self.declare_parameter('glide_centering_kp', 0.70)
         self.declare_parameter('max_state_age_s', 0.60)
         self.declare_parameter('max_covariance_age_s', 0.60)
         self.declare_parameter('control_rate_hz', 20.0)
@@ -661,7 +661,8 @@ def main():
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

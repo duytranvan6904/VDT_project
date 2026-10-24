@@ -28,6 +28,7 @@ public:
         double default_pitch_rad{-0.45};     // -25 deg
         double nadir_pitch_rad{-1.48};       // -85 deg looking straight down
         double nadir_trigger_alt_m{0.80};    // Switch to nadir below this height
+        double nadir_yaw_cutoff_rad{-1.05};  // -60 deg: below this pitch, suppress pixel-yaw to avoid spinning
         double pitch_rate_limit{1.80};       // rad/s
         double yaw_rate_limit{0.80};         // rad/s
         double ema_alpha{0.65};
@@ -52,7 +53,8 @@ public:
         bool detected,
         double pixel_u,
         double pixel_v,
-        double dt
+        double dt,
+        double drone_pitch = 0.0
     ) {
         Output out{};
 
@@ -77,12 +79,19 @@ public:
         out.pixel_error_u = eu;
         out.pixel_error_v = ev;
 
-        // Visual servoing control law
-        double yaw_rate = -cfg_.K_yaw * (eu / cfg_.focal_x);
-        out.yaw_rate_cmd = std::clamp(yaw_rate, -cfg_.yaw_rate_limit, cfg_.yaw_rate_limit);
+        // Visual servoing control law:
+        // When camera is looking steep down (pitch < nadir_yaw_cutoff), horizontal pixel displacement
+        // represents ground translation, NOT heading error. Suppress yaw rate to prevent spinning!
+        if (filtered_pitch_ < cfg_.nadir_yaw_cutoff_rad || phase == MissionPhase::LAND) {
+            out.yaw_rate_cmd = 0.0;
+        } else {
+            double yaw_rate = -cfg_.K_yaw * (eu / cfg_.focal_x);
+            out.yaw_rate_cmd = std::clamp(yaw_rate, -cfg_.yaw_rate_limit, cfg_.yaw_rate_limit);
+        }
 
         double pitch_delta = cfg_.K_pitch * (ev / cfg_.focal_y);
-        double target_pitch = gimbal_pitch_cmd_ + pitch_delta * dt;
+        // Include drone airframe pitch compensation (counter-rotate when accelerating/braking)
+        double target_pitch = gimbal_pitch_cmd_ + pitch_delta * dt + drone_pitch;
         target_pitch = std::clamp(target_pitch, -1.48, 0.0);
 
         filtered_pitch_ = cfg_.ema_alpha * target_pitch + (1.0 - cfg_.ema_alpha) * filtered_pitch_;

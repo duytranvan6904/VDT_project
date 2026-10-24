@@ -408,7 +408,8 @@ def limit_velocity_for_cylinder_clearance(
             else:
                 inward_speed = -command_radial_speed
                 if inward_speed > max_inward_speed:
-                    cmd[:2] += (inward_speed - max_inward_speed) * outward
+                    inward_excess = inward_speed - max_inward_speed
+                    cmd[:2] += inward_excess * outward
                     changed = True
         if not changed:
             break

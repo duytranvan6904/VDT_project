@@ -42,12 +42,14 @@ except ImportError:
 try:
     from simulation.control.tracking_control import (
         landing_pitch_from_geometry,
+        landing_pitch_target,
         update_tracking_yaw_command,
         update_search_pitch_command,
     )
 except ImportError:
     from tracking_control import (
         landing_pitch_from_geometry,
+        landing_pitch_target,
         update_tracking_yaw_command,
         update_search_pitch_command,
     )
@@ -102,7 +104,8 @@ class IBVSController(Node):
         self.declare_parameter('yaw_feedforward_max_rate', 0.15)   # rad/s
         self.declare_parameter('target_state_timeout', 0.50)       # seconds
         self.declare_parameter('target_prediction_horizon', 0.25)  # seconds
-        self.declare_parameter('landing_pitch_rate_limit', 0.50)  # rad/s
+        self.declare_parameter('landing_pitch_rate_limit', 0.35)  # rad/s
+        self.declare_parameter('landing_surface_z_m', 0.02)
         self.declare_parameter('bbox_timeout', 0.30)         # seconds without a fresh image measurement
         self.declare_parameter('nadir_yaw_cutoff_deg', -60.0) # cutoff pitch angle to prevent nadir spin
 
@@ -111,6 +114,7 @@ class IBVSController(Node):
         self.nadir_yaw_cutoff_rad = math.radians(
             float(self.get_parameter('nadir_yaw_cutoff_deg').value)
         )
+
         self.fx = self.get_parameter('focal_x').value
         self.fy = self.get_parameter('focal_y').value
         self.u0 = self.get_parameter('u0').value
@@ -145,6 +149,9 @@ class IBVSController(Node):
         )
         self.landing_pitch_rate_limit = max(
             0.05, float(self.get_parameter('landing_pitch_rate_limit').value)
+        )
+        self.landing_surface_z = float(
+            self.get_parameter('landing_surface_z_m').value
         )
         self.bbox_timeout = max(
             0.05, float(self.get_parameter('bbox_timeout').value)
@@ -199,6 +206,7 @@ class IBVSController(Node):
             history=HistoryPolicy.KEEP_LAST, depth=5,
         )
         self.drone_pos = [0.0, 0.0, 0.0]
+        self.drone_pitch = 0.0
         self.target_pos = None
 
         self.create_subscription(
@@ -289,26 +297,28 @@ class IBVSController(Node):
             # here can use a stale callback value and create a yaw jump.
             self.search_entry_hold_active = True
             self.search_entry_started = 0.0
-        if previous_phase == 'SEARCH' and self.phase == 'FOLLOW' and self.have_odom:
-            # Do not carry the accumulated SEARCH sweep command into FOLLOW.
-            # The FSM has already confirmed a stable reacquisition; start the
-            # visual servo loop from the actual vehicle yaw and let the next
-            # bbox update generate the correction.
+        if previous_phase in ('SEARCH', 'LAND', 'APPROACH') and self.phase == 'FOLLOW' and self.have_odom:
+            # Do not carry the accumulated SEARCH sweep command or APPROACH/LAND hold into FOLLOW.
+            # Start the visual servo loop from the actual vehicle yaw.
             self.yaw_cmd = self.drone_yaw
             self.search_hold_active = False
             self.search_hold_last_seen = 0.0
             self.search_entry_hold_active = False
             self.search_entry_started = 0.0
+            self.landing_yaw_hold_initialized = False
             self.last_update_time = time.monotonic()
             self.get_logger().info(
-                f'[IBVS] SEARCH->FOLLOW: reset yaw_cmd to '
+                f'[IBVS] {previous_phase}->FOLLOW: reset yaw_cmd to '
                 f'{math.degrees(self.drone_yaw):.1f}°'
             )
 
     def odom_cb(self, msg: Odometry):
         p = msg.pose.pose.position
         self.drone_pos = [p.x, p.y, p.z]
-        self.drone_yaw = _quaternion_to_yaw(msg.pose.pose.orientation)
+        q = msg.pose.pose.orientation
+        sinp = 2.0 * (q.w * q.y - q.z * q.x)
+        self.drone_pitch = math.asin(max(-1.0, min(1.0, sinp)))
+        self.drone_yaw = _quaternion_to_yaw(q)
         if not self.have_odom:
             self.yaw_cmd = self.drone_yaw
             self.have_odom = True
@@ -335,34 +345,55 @@ class IBVSController(Node):
         )
 
         if self.phase == 'LAND':
-            has_live_marker = (
+            now = time.monotonic()
+            target_state_age = (
+                now - self.last_target_time
+                if self.last_target_time > 0.0
+                else float('inf')
+            )
+            target_state_fresh = bool(
+                self.target_pos is not None
+                and self.tracking_mode in (
+                    'TRACKING', 'PREDICTING', 'PREDICTING_DEGRADED'
+                )
+                and 0.0 <= target_state_age <= self.target_state_timeout
+            )
+            has_live_marker = bool(
                 u is not None
                 and v is not None
                 and self.detected
                 and self.tracking_mode == 'TRACKING'
-                and self.target_pos is not None
-                and self.last_target_time > 0.0
-                and time.monotonic() - self.last_target_time <= self.target_state_timeout
+                and target_state_fresh
             )
-            if has_live_marker:
-                self.visual_measurement_active = True
+            self.visual_measurement_active = has_live_marker
+
+            horizontal_range = float('inf')
+            if self.target_pos is not None:
                 dx = self.target_pos[0] - self.drone_pos[0]
                 dy = self.target_pos[1] - self.drone_pos[1]
                 horizontal_range = math.hypot(dx, dy)
-                target_pitch = landing_pitch_from_geometry(
-                    self.drone_pos[2], self.target_pos[2], horizontal_range,
-                )
-                if u is not None and v is not None:
-                    ev = v - self.v0
-                    ev_eff = 0.0 if abs(ev) < 6.0 else ev - math.copysign(6.0, ev)
-                    target_pitch -= (
-                        self.K_pitch
-                        * (ev_eff / self.fy)
-                        * self.pitch_pixel_trim_gain
+
+            target_pitch = landing_pitch_target(
+                drone_altitude=self.drone_pos[2],
+                target_surface_altitude=self.landing_surface_z,
+                horizontal_range=horizontal_range,
+                target_state_fresh=target_state_fresh,
+                pixel_v=v if has_live_marker else None,
+                image_center_v=self.v0,
+                focal_y=self.fy,
+                pixel_gain=self.K_pitch,
+                pixel_trim_gain=self.pitch_pixel_trim_gain,
+            )
+            if target_pitch is not None:
+                target_pitch += self.drone_pitch
+                if horizontal_range < 0.50:
+                    effective_pitch_rate_limit = min(
+                        self.landing_pitch_rate_limit,
+                        max(0.12, self.landing_pitch_rate_limit * (horizontal_range / 0.50))
                     )
-                pitch_min, pitch_max = self.pitch_limits['LAND']
-                target_pitch = max(pitch_min, min(pitch_max, target_pitch))
-                max_pitch_delta = self.landing_pitch_rate_limit * dt
+                else:
+                    effective_pitch_rate_limit = self.landing_pitch_rate_limit
+                max_pitch_delta = effective_pitch_rate_limit * dt
                 self.gimbal_pitch = max(
                     self.gimbal_pitch_filtered - max_pitch_delta,
                     min(self.gimbal_pitch_filtered + max_pitch_delta, target_pitch),
@@ -371,22 +402,7 @@ class IBVSController(Node):
                     self.ema_alpha * self.gimbal_pitch
                     + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
                 )
-            else:
-                if self.drone_pos[2] <= 1.2:
-                    # Near ground without visual lock: guide camera straight down (nadir) to catch target underneath
-                    target_pitch = math.radians(-85.0)
-                    max_pitch_delta = self.landing_pitch_rate_limit * dt
-                    self.gimbal_pitch = max(
-                        self.gimbal_pitch_filtered - max_pitch_delta,
-                        min(self.gimbal_pitch_filtered + max_pitch_delta, target_pitch),
-                    )
-                    self.gimbal_pitch_filtered = (
-                        self.ema_alpha * self.gimbal_pitch
-                        + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
-                    )
-                else:
-                    self.gimbal_pitch = self.gimbal_pitch_filtered
-                self.visual_measurement_active = False
+
             if self.landing_yaw_hold_initialized:
                 self.yaw_cmd = self.landing_yaw_hold
             else:
@@ -415,11 +431,14 @@ class IBVSController(Node):
                 dz = max(0.1, self.drone_pos[2] - self.target_pos[2])
                 dist_h = math.hypot(dx, dy)
 
-            # ── PITCH: 3D geometry feedforward + soft pixel trim ──
+            # ── PITCH: 3D geometry feedforward + body pitch compensation + soft pixel trim ──
             if target_is_usable:
-                target_pitch = landing_pitch_from_geometry(
-                    self.drone_pos[2], self.target_pos[2], dist_h
+                los_pitch = landing_pitch_from_geometry(
+                    self.drone_pos[2], self.landing_surface_z, dist_h
                 )
+                # Compensate for drone body pitch: when drone tilts forward/backward during
+                # acceleration or braking, counter-rotate camera joint to keep optical axis locked on target.
+                target_pitch = los_pitch + self.drone_pitch
                 # Khi có pixel, thêm trim nhỏ để bù sai số EKF
                 if has_pixel:
                     ev = v - self.v0
@@ -467,12 +486,23 @@ class IBVSController(Node):
                 + (1.0 - self.ema_alpha) * self.gimbal_pitch_filtered
             )
 
-            # When camera pitch is steep downwards (nadir, pitch < cutoff),
-            # horizontal pixel displacement represents ground translation, NOT yaw error.
-            # Suppress pixel_u to prevent nadir spinning (gimbal singularity).
+            # Prefer the world-frame EKF bearing when it is fresh. Image-space
+            # horizontal error also contains roll/pitch projection, so use it
+            # only as a fallback when no usable world target state is available.
+            # At nadir or steep downward pitch, horizontal pixel error and EKF bearing (dx, dy)
+            # both represent ground translation rather than yaw error and must not turn the aircraft.
+            gimbal_above_nadir_cutoff = bool(
+                self.gimbal_pitch_filtered >= self.nadir_yaw_cutoff_rad
+            )
             use_pixel_for_yaw = (
                 has_pixel
-                and self.gimbal_pitch_filtered >= self.nadir_yaw_cutoff_rad
+                and gimbal_above_nadir_cutoff
+                and self.phase not in ('LAND',)
+                and not target_is_usable
+            )
+            use_target_bearing_for_yaw = (
+                target_is_usable
+                and gimbal_above_nadir_cutoff
                 and self.phase not in ('LAND',)
             )
             if has_pixel:
@@ -485,7 +515,8 @@ class IBVSController(Node):
                 image_center_u=self.u0,
                 focal_x=self.fx,
                 pixel_gain=self.K_yaw,
-                target_delta_xy=(dx, dy) if target_is_usable else None,
+
+                target_delta_xy=(dx, dy) if use_target_bearing_for_yaw else None,
                 target_velocity_xy=(self.target_vel[0], self.target_vel[1]),
                 tracking_mode=self.tracking_mode,
                 target_state_age=target_state_age,
@@ -673,7 +704,8 @@ def main():
         print('\n[IBVS] Shutting down...')
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

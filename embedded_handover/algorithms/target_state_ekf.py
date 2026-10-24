@@ -16,6 +16,46 @@ import numpy as np
 Array = np.ndarray
 
 
+def reacquisition_distance_budget(
+    *,
+    max_target_speed: float,
+    time_since_last_measurement: float,
+    margin_m: float = 0.50,
+    hard_limit_m: float = 8.0,
+) -> float:
+    """Bound how far an untracked target may plausibly move before reacquisition.
+
+    The speed budget grows with the measurement gap but has a finite ceiling so
+    two mutually consistent PnP outliers cannot reset the filter arbitrarily far
+    from its predicted trajectory.
+    """
+    speed = float(max_target_speed)
+    elapsed = float(time_since_last_measurement)
+    margin = float(margin_m)
+    hard_limit = float(hard_limit_m)
+    if speed < 0.0 or elapsed < 0.0 or margin < 0.0 or hard_limit <= 0.0:
+        raise ValueError("reacquisition budget inputs must be non-negative")
+    return min(hard_limit, speed * elapsed + margin)
+
+
+def bounded_prediction_timestamp(
+    anchor_time: float,
+    requested_time: float,
+    max_horizon_s: float,
+) -> float:
+    """Cap constant-velocity dead reckoning from the last accepted measurement."""
+    anchor = float(anchor_time)
+    requested = float(requested_time)
+    horizon = float(max_horizon_s)
+    if not np.isfinite(anchor) or not np.isfinite(requested):
+        raise ValueError("prediction timestamps must be finite")
+    if not np.isfinite(horizon) or horizon < 0.0:
+        raise ValueError("max_horizon_s must be finite and non-negative")
+    if requested < anchor:
+        raise ValueError("requested_time must not precede anchor_time")
+    return min(requested, anchor + horizon)
+
+
 @dataclass(frozen=True)
 class EstimatorSnapshot:
     """Immutable state published by :class:`TargetStateEKF`."""
@@ -91,7 +131,7 @@ class TargetStateEKF:
         timestamp: float,
         velocity: Sequence[float] = (0.0, 0.0, 0.0),
         position_variance: Sequence[float] = (0.25, 0.25, 0.25),
-        velocity_variance: Sequence[float] = (25.0, 25.0, 9.0),
+        velocity_variance: Sequence[float] = (1.0, 1.0, 0.5),
     ) -> None:
         """Initialize from a trusted position measurement with unknown velocity."""
         pos = self._vector3(position, "position")
@@ -210,7 +250,14 @@ class TargetStateEKF:
             return False, nis
 
         kalman_gain = np.linalg.solve(innovation_covariance, h @ self._covariance).T
+        prev_vel = self._state[3:5].copy()
         self._state = self._state + kalman_gain @ innovation
+        # Bound per-step velocity innovation to prevent single-frame glitches from shocking velocity
+        delta_v = self._state[3:5] - prev_vel
+        norm_dv = float(np.hypot(delta_v[0], delta_v[1]))
+        max_dv_per_step = 0.40
+        if norm_dv > max_dv_per_step:
+            self._state[3:5] = prev_vel + delta_v * (max_dv_per_step / norm_dv)
         self._clamp_velocity()
         identity = np.eye(self.STATE_DIM)
         residual_map = identity - kalman_gain @ h

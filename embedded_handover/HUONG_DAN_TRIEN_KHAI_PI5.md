@@ -197,7 +197,8 @@ precision_landing:
   optical_height_threshold_m: 0.35      # Cự ly quang học camera - sàn (m)
   touchdown_max_altitude_m: 0.14        # Trần độ cao chạm sàn thực tế của x500 (m)
   confirmation_duration_s: 0.18         # Thời gian xác nhận chạm đất dứt khoát (s)
-  stoppage_vz_max_mps: 0.08             # Ngưỡng vận tốc đứng coi như đã dừng (m/s)
+  stoppage_vz_max_mps: 0.12             # Ngưỡng vận tốc đứng coi như đã dừng (m/s)
+  fast_confirmation_duration_s: 0.10    # Thời gian xác nhận nhanh khi có va chạm hoặc PX4 landed (s)
   jerk_impact_threshold: 3.50           # Ngưỡng giật gia tốc va chạm sàn (m/s^3)
 
   # 5. An toàn & Can thiệp tay

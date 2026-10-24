@@ -136,6 +136,7 @@ class MissionFSMNode(Node):
         # (estimated against simulation timestamps) is integrated in matching
         # units even when Gazebo runs slower than wall time.
         self.declare_parameter('land_coast_timeout', 5.00)
+        self.declare_parameter('follow_coast_timeout', 3.00)
         self.declare_parameter('land_fallback_target_velocity_min_speed', 0.25)
         self.declare_parameter('land_fallback_xy_speed_limit', 1.35)
         self.declare_parameter('land_waveoff_near_ground_alt', 0.20)
@@ -260,6 +261,9 @@ class MissionFSMNode(Node):
         self.land_coast_timeout = max(
             0.0, float(self.get_parameter('land_coast_timeout').value)
         )
+        self.follow_coast_timeout = max(
+            0.0, float(self.get_parameter('follow_coast_timeout').value)
+        )
         self.land_fallback_min_target_speed = max(
             0.0,
             float(self.get_parameter('land_fallback_target_velocity_min_speed').value),
@@ -313,6 +317,10 @@ class MissionFSMNode(Node):
         self.reacquire_retry_after = 0.0
         self.follow_entry_hold_until = 0.0
         self.follow_forward_blocked = False
+        self.follow_coast_active = False
+        self.follow_last_confirmed_target_time = 0.0
+        self.follow_last_confirmed_target_pos: Optional[np.ndarray] = None
+        self.follow_last_confirmed_target_vel: Optional[np.ndarray] = None
         self.search_entry_hold_yaw = 0.0
         self.search_entry_hold_until = 0.0
 
@@ -784,6 +792,7 @@ class MissionFSMNode(Node):
         """Latch the operator's landing request after stable target lock."""
         previous_phase = self.phase
         self.phase = MissionPhase.APPROACH
+        self.follow_coast_active = False
         self.landing_glide_active = False
         self.landing_gate_lost_since = 0.0
         self.landing_visual_loss_active = False
@@ -854,6 +863,8 @@ class MissionFSMNode(Node):
                 self.phase = MissionPhase.SEARCH
                 self.reacquire_active = False
                 self.reacquire_retry_after = 0.0
+                self.follow_coast_active = False
+                self.follow_last_confirmed_target_time = 0.0
                 self.get_logger().warning(
                     f'Target lost for {age:.1f}s, returning to SEARCH.'
                 )
@@ -1051,7 +1062,7 @@ class MissionFSMNode(Node):
         # wave-off to avoid aborting during the disarm confirmation buffer window.
         # This is safe because: (a) we are already nearly landed, (b) the coast
         # dead-reckoning continues to guide the drone to the last known position.
-        near_ground = self.has_odom and self.drone_pos[2] <= self.land_waveoff_near_ground_alt
+        near_ground = self.has_odom and self.drone_pos[2] <= max(0.35, self.land_waveoff_near_ground_alt)
         coast_valid = self.land_coast_active  # brief tracking loss, still coasting
 
         if near_ground:
@@ -1085,7 +1096,7 @@ class MissionFSMNode(Node):
                     f'(coast timeout={self.land_coast_timeout:.2f}s).'
                 )
             _ = coast_age  # log/debug value; the active gate uses ROS time above
-        elif h_err > 0.95 and not near_ground:
+        elif h_err > 1.25 and not near_ground:
             if not self.auto_reland_after_abort:
                 self.land_requested = False
                 self.phase = MissionPhase.FOLLOW
@@ -1099,7 +1110,7 @@ class MissionFSMNode(Node):
             self.landing_glide_active = False
             self.landing_gate_lost_since = 0.0
             self.get_logger().warning(
-                f'[LANDING] Target moved away (Herr={h_err:.2f}m > 0.95m) during LAND; waving off (auto_reland={self.auto_reland_after_abort}).'
+                f'[LANDING] Target moved away (Herr={h_err:.2f}m > 1.25m) during LAND; waving off (auto_reland={self.auto_reland_after_abort}).'
             )
         else:
             self.landing_gate_lost_since = 0.0
@@ -1258,14 +1269,11 @@ class MissionFSMNode(Node):
                     1.0 - self.yaw_align_min_speed
                 )
 
-            motion_xy = (
-                self.apf_guidance_velocity[:2]
-                + self.apf_target_velocity_ff
-            )
-            motion_yaw = follow_motion_yaw(
-                motion_xy, self.ibvs_yaw, min_speed=0.10,
-            )
-            yaw_error = abs(_wrap_angle(motion_yaw - self.drone_yaw))
+            # Camera-to-target yaw alignment: ensure drone heading points toward
+            # the target (IBVS yaw) to maintain camera lock. Do not check motion_xy
+            # heading because multirotors can translate laterally (crab) to evade
+            # obstacles while keeping the camera firmly locked on the target.
+            yaw_error = abs(_wrap_angle(self.ibvs_yaw - self.drone_yaw))
             if yaw_error <= self.yaw_align_exit:
                 yaw_scale = 1.0
             elif yaw_error >= self.yaw_align_enter:
@@ -1295,7 +1303,7 @@ class MissionFSMNode(Node):
                 f'[YAW_ALIGN] {"LIMIT XY" if alignment_limited else "FULL XY"} '
                 f'| scale={self.xy_speed_scale:.2f} '
                 f'| tracking={self.tracking_mode} | detected={self.detected} '
-                f'| course_err={math.degrees(_wrap_angle(motion_yaw - self.drone_yaw)):.1f}° '
+                f'| yaw_err={math.degrees(_wrap_angle(self.ibvs_yaw - self.drone_yaw)):.1f}° '
                 f'| pixel_err=({self.bbox_u - self.yaw_align_u0:.0f},'
                 f'{self.bbox_v - self.yaw_align_v0:.0f})'
             )
@@ -1334,6 +1342,23 @@ class MissionFSMNode(Node):
                 self.last_apf_time > 0.0
                 and now - self.last_apf_time <= self.apf_command_timeout
             )
+            tracking_valid = self._tracking_input_is_valid(now)
+            if tracking_valid and self.has_target:
+                self.follow_last_confirmed_target_time = now
+                self.follow_last_confirmed_target_pos = self.target_pos.copy()
+                self.follow_last_confirmed_target_vel = (
+                    self.target_vel.copy() if self.target_vel is not None else np.zeros(3)
+                )
+                self.follow_coast_active = False
+            elif (
+                not tracking_valid
+                and self.follow_last_confirmed_target_time > 0.0
+                and now - self.follow_last_confirmed_target_time <= self.follow_coast_timeout
+            ):
+                self.follow_coast_active = True
+            else:
+                self.follow_coast_active = False
+
             if not entry_hold and apf_fresh:
                 follow_xy = compose_follow_velocity(
                     self.apf_guidance_velocity[:2],
@@ -1344,9 +1369,12 @@ class MissionFSMNode(Node):
             else:
                 follow_xy = np.zeros(2, dtype=float)
 
-            tracking_valid = self._tracking_input_is_valid(now)
-            if not tracking_valid:
+            if not tracking_valid and not self.follow_coast_active:
                 follow_xy[:] = 0.0
+            elif not tracking_valid and self.follow_coast_active:
+                coast_dt = now - self.follow_last_confirmed_target_time
+                decay = max(0.50, 1.0 - 0.50 * (coast_dt / self.follow_coast_timeout))
+                follow_xy *= decay
 
             target_state_fresh = (
                 self.has_target
@@ -1357,6 +1385,7 @@ class MissionFSMNode(Node):
             # around a static pad they may point back and forth. The selector
             # confirms motion from EKF velocity and holds its source through
             # brief prediction frames to avoid a course/IBVS yaw reversal.
+            effective_tracking = tracking_valid or self.follow_coast_active
             follow_yaw, yaw_source = self.follow_yaw_selector.update(
                 ibvs_yaw=self.ibvs_yaw,
                 target_velocity_xy=self.target_vel[:2],
@@ -1365,9 +1394,9 @@ class MissionFSMNode(Node):
                     self.course_yaw_setpoint
                     if self.course_yaw_initialized else self.drone_yaw
                 ),
-                tracking_valid=tracking_valid,
+                tracking_valid=effective_tracking,
                 tracking_mode=self.tracking_mode,
-                target_state_fresh=target_state_fresh,
+                target_state_fresh=target_state_fresh or self.follow_coast_active,
                 target_sample_time=self.last_target_time,
             )
 
@@ -1380,13 +1409,16 @@ class MissionFSMNode(Node):
                 )
             self.follow_yaw_source_pub.publish(String(data=yaw_source))
             follow_yaw = self._update_course_yaw_reference(follow_yaw, now)
-            # Camera FOV lock: ensure course yaw never rotates the camera away from marker
-            # RealSense D435i horizontal half-FOV is ~34.5 deg; keep within 24 deg
-            if tracking_valid and yaw_source == 'TARGET_COURSE':
-                max_fov_margin = math.radians(24.0)
+            # Camera FOV lock: ensure commanded yaw never rotates the camera away from marker.
+            # RealSense D435i horizontal half-FOV is ~34.5 deg; enforce a strict 12.0 deg clamp
+            # to guarantee the marker remains firmly centered in the camera image at all times,
+            # leaving a massive >22 deg safety buffer against roll/pitch banking maneuvers.
+            if effective_tracking:
+                max_fov_margin = math.radians(12.0)
                 dev = _wrap_angle(follow_yaw - self.ibvs_yaw)
                 if abs(dev) > max_fov_margin:
                     follow_yaw = _wrap_angle(self.ibvs_yaw + math.copysign(max_fov_margin, dev))
+                self.course_yaw_setpoint = follow_yaw
 
             # Forward flight sector guard with lateral evasion preservation
             course_speed = float(np.linalg.norm(follow_xy))
@@ -1450,8 +1482,44 @@ class MissionFSMNode(Node):
                 vel.linear.z = -0.15
                 yaw.data = self._landing_yaw_setpoint(False)
             elif not tracking_valid:
-                # Freeze all translation on detector loss; keep the vehicle
-                # pointed at its current heading while waiting for reacquire.
+                # If target was confirmed moving, maintain pursuit and climb to reopen camera FOV
+                # rather than freezing in midair at low altitude where camera FOV is constricted.
+                has_moving_target = (
+                    self.has_odom and (
+                        self.land_coast_active
+                        or (self.last_confirmed_target_vel is not None and np.linalg.norm(self.last_confirmed_target_vel[:2]) >= 0.20)
+                    )
+                )
+                if has_moving_target:
+                    coast_dt = max(
+                        0.0,
+                        self._simulation_time_now() - self.last_confirmed_target_time,
+                    ) if self.last_confirmed_target_time > 0.0 else 0.0
+                    eff_target_pos = (
+                        self.last_confirmed_target_pos
+                        + self.last_confirmed_target_vel * coast_dt
+                    )
+                    dx = eff_target_pos[0] - self.drone_pos[0]
+                    dy = eff_target_pos[1] - self.drone_pos[1]
+                    corr = np.clip(0.85 * np.array([dx, dy]), -0.60, 0.60)
+                    fwd_vel = target_velocity_feedforward(
+                        self.last_confirmed_target_vel[:2],
+                        min_speed=self.land_fallback_min_target_speed,
+                    )
+                    approach_xy = compose_follow_velocity(
+                        corr, fwd_vel, 1.0, self.follow_speed_limit,
+                    )
+                    vel.linear.x = float(approach_xy[0])
+                    vel.linear.y = float(approach_xy[1])
+                    if self.drone_pos[2] < 2.2 and math.hypot(dx, dy) > 1.0:
+                        vel.linear.z = 0.35  # Climb to reopen camera FOV
+                    else:
+                        vel.linear.z = 0.0
+                else:
+                    # Hover in place for static targets waiting for reacquire
+                    vel.linear.x = 0.0
+                    vel.linear.y = 0.0
+                    vel.linear.z = 0.0
                 yaw.data = self._landing_yaw_setpoint(False)
             elif self.landing_glide_active:
                 # Once SMC owns the descent, only accept its live glide command.
@@ -1481,6 +1549,9 @@ class MissionFSMNode(Node):
                 # If horizontally aligned over pad, descend responsively to allow covariance to shrink and SMC glide to engage
                 if h_err <= 0.45 and self.has_odom and self.drone_pos[2] > 0.60:
                     vel.linear.z = -0.50 if self.drone_pos[2] > 1.20 else -0.35
+                elif h_err > 1.2 and self.has_odom and self.drone_pos[2] < 2.2:
+                    # Target moved away; climb to reopen camera FOV and facilitate reacquisition
+                    vel.linear.z = 0.35
                 else:
                     vel.linear.z = 0.0
                 yaw.data = self._landing_yaw_setpoint(True)

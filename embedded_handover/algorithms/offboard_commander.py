@@ -316,6 +316,8 @@ class OffboardCommander(Node):
         )
         self.current_alt = float(msg.pose.pose.position.z)
         self.current_drone_yaw = _quaternion_to_yaw(msg.pose.pose.orientation)
+        if not self.has_odom and not self.has_fsm_yaw:
+            self.yaw_enu = self.current_drone_yaw
         self.has_odom = True
 
     def velocity_cb(self, msg: Twist):
@@ -369,9 +371,21 @@ class OffboardCommander(Node):
                 self.offboard_confirmed = False
                 self.offboard_request_time = time.monotonic()
                 if self.enable_alt_hold:
-                    self.target_altitude = max(self.target_altitude, self.current_alt)
+                    # Chốt độ cao hiện tại làm mốc ban đầu để triệt tiêu hiện tượng giật nảy độ cao lúc vào OFFBOARD
+                    self.target_altitude = self.current_alt if self.has_odom else max(self.target_altitude, self.current_alt)
                 if self.has_odom:
+                    self.yaw_enu = self.current_drone_yaw
                     self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
+                    # Chuyển giao vận tốc mượt mà (Bumpless transfer): gán vận tốc thực tế hiện tại làm điểm bắt đầu slewer
+                    if self.current_world_velocity is not None:
+                        vn0, ve0, vd0 = _enu_to_ned_velocity(
+                            self.current_world_velocity[0],
+                            self.current_world_velocity[1],
+                            self.current_world_velocity[2],
+                        )
+                        self.current_cmd_ned = [vn0, ve0, vd0]
+                    else:
+                        self.current_cmd_ned = [0.0, 0.0, 0.0]
                 self._send_offboard_mode()
 
     def reset_override_cb(self, msg: Bool):
@@ -407,6 +421,8 @@ class OffboardCommander(Node):
                         break
                     if m.get_srcSystem() == 1:
                         self.px4_current_main_mode = (m.custom_mode >> 16) & 0xFF
+                        if hasattr(mavutil.mavlink, 'MAV_MODE_FLAG_SAFETY_ARMED'):
+                            self.armed = bool(m.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED)
             except Exception:
                 pass
 
@@ -464,9 +480,19 @@ class OffboardCommander(Node):
                 self.offboard_confirmed = False
                 self.offboard_request_time = now
                 if self.enable_alt_hold:
-                    self.target_altitude = max(self.target_altitude, self.current_alt)
+                    self.target_altitude = self.current_alt if self.has_odom else max(self.target_altitude, self.current_alt)
                 if self.has_odom:
+                    self.yaw_enu = self.current_drone_yaw
                     self.current_yaw_ned = _enu_yaw_to_ned(self.current_drone_yaw)
+                    if self.current_world_velocity is not None:
+                        vn0, ve0, vd0 = _enu_to_ned_velocity(
+                            self.current_world_velocity[0],
+                            self.current_world_velocity[1],
+                            self.current_world_velocity[2],
+                        )
+                        self.current_cmd_ned = [vn0, ve0, vd0]
+                    else:
+                        self.current_cmd_ned = [0.0, 0.0, 0.0]
                 self.get_logger().info(
                     f'✅ Drone đạt độ cao an toàn ({self.current_alt:.2f}m >= {self.min_offboard_alt:.1f}m)! '
                     f'Kích hoạt chốt OFFBOARD mode (Hold altitude: {self.target_altitude:.1f}m).'
@@ -726,8 +752,8 @@ class OffboardCommander(Node):
             self.get_logger().info('FORCE DISARM command sent to PX4 (DDS).')
         elif self.mav_conn is not None:
             try:
-                # Send burst of 3 force-disarm packets to ensure delivery over UDP
-                for _ in range(3):
+                # Send burst of 5 force-disarm packets to ensure delivery over UDP
+                for _ in range(5):
                     self.mav_conn.mav.command_long_send(
                         1, 1,
                         mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,

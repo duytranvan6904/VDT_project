@@ -16,10 +16,11 @@ class TouchdownDetector {
 public:
     struct Config {
         double altitude_ceiling_m{0.14};        // Maximum actual altitude to consider touching down (m)
-        double stoppage_vz_max_mps{0.08};       // Actual vertical velocity threshold (m/s)
-        double stoppage_dz_dt_max_mps{0.05};    // Max rate of altitude change (m/s)
+        double stoppage_vz_max_mps{0.12};       // Actual vertical velocity threshold (m/s)
+        double stoppage_dz_dt_max_mps{0.08};    // Max rate of altitude change (m/s)
         double descent_cmd_threshold_mps{-0.10};// Must be commanding downward motion (m/s)
         double confirmation_duration_s{0.18};   // Continuous duration required to latch (s)
+        double fast_confirmation_duration_s{0.10}; // Fast confirmation when impact or firmware landed flag confirmed (s)
     };
 
     TouchdownDetector() : TouchdownDetector(Config{}) {}
@@ -38,12 +39,14 @@ public:
      * @param actual_vz Drone vertical velocity in ENU (m/s)
      * @param commanded_vz Commanded vertical velocity in ENU (m/s)
      * @param dt Time delta since last update (s)
+     * @param fast_confirm_trigger Optional fast confirmation trigger (impact jerk or PX4 landed flag)
      */
     TouchdownResult update(
         double actual_z,
         double actual_vz,
         double commanded_vz,
-        double dt
+        double dt,
+        bool fast_confirm_trigger = false
     ) {
         TouchdownResult res{};
         res.actual_vz = actual_vz;
@@ -79,7 +82,8 @@ public:
         if (kinematic_stopped) {
             confirm_timer_s_ += dt;
             res.confirm_duration_s = confirm_timer_s_;
-            if (confirm_timer_s_ >= cfg_.confirmation_duration_s) {
+            double required_confirm = fast_confirm_trigger ? cfg_.fast_confirmation_duration_s : cfg_.confirmation_duration_s;
+            if (confirm_timer_s_ >= required_confirm) {
                 latched_touchdown_ = true;
                 res.touchdown_confirmed = true;
                 res.diagnostic_reason = "Touchdown confirmed via kinematic stoppage & debounce";

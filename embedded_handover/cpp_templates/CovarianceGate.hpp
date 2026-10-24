@@ -16,18 +16,18 @@ namespace vdt::landing {
 class CovarianceGate {
 public:
     struct Config {
-        double pad_radius_m{0.25};                // Physical pad radius (m)
+        double pad_radius_m{0.75};                // Physical pad radius / funnel (m)
         double confidence_sigma{2.0};             // 2-sigma boundary
         double max_uncertainty_enter_glide{0.45}; // Enter GLIDE_SLOPE limit (m)
-        double max_uncertainty_continue_glide{0.50};
-        double max_uncertainty_final_descent{0.35}; // Enter FINAL_DESCENT limit (m)
+        double max_uncertainty_continue_glide{0.45};
+        double max_uncertainty_final_descent{0.90}; // Enter FINAL_DESCENT limit (m)
         double conical_gate_angle_deg{30.0};      // Half-angle of safety cone (deg)
         double rswitch_min{4.5};                  // Min adaptive R_switch (m)
         double rswitch_max{10.0};                 // Max adaptive R_switch (m)
         double rswitch_base_m{5.0};
         double rswitch_alpha{2.0};
-        double sliding_beta{1.5};
-        double max_measurement_age_s{0.50};
+        double sliding_beta{2.0};
+        double max_measurement_age_s{0.60};
     };
 
     CovarianceGate() : CovarianceGate(Config{}) {}

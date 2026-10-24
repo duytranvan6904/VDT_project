@@ -21,6 +21,7 @@ struct MissionFSMConfig {
     double reacquire_confirm_time_s{0.20};
     double final_descent_alt_m{0.60};   // Transition altitude to LAND (m)
     double final_descent_rxy_m{0.85};   // Transition horizontal radius to LAND (m)
+    bool auto_reland_after_abort{false};// Safety policy: require new operator command after waveoff/abort
 };
 
 class MissionFSM {
@@ -32,7 +33,12 @@ public:
     void reset() {
         phase_ = MissionPhase::IDLE;
         timer_s_ = 0.0;
+        land_latched_ = false;
     }
+
+    void request_landing() { land_latched_ = true; }
+    void cancel_landing() { land_latched_ = false; }
+    [[nodiscard]] bool is_landing_latched() const { return land_latched_; }
 
     /**
      * @brief Step the state machine based on current observations.
@@ -49,6 +55,9 @@ public:
         double dt
     ) {
         timer_s_ += dt;
+        if (operator_land_cmd) {
+            land_latched_ = true;
+        }
 
         switch (phase_) {
             case MissionPhase::IDLE:
@@ -71,14 +80,14 @@ public:
                 if (tracking_mode == TrackingMode::EXPIRED && timer_s_ > cfg_.search_timeout_s) {
                     phase_ = MissionPhase::SEARCH;
                     timer_s_ = 0.0;
-                } else if (operator_land_cmd) {
+                } else if (land_latched_) {
                     phase_ = MissionPhase::APPROACH;
                     timer_s_ = 0.0;
                 }
                 break;
 
             case MissionPhase::APPROACH:
-                if (!operator_land_cmd) {
+                if (!land_latched_) {
                     // Operator abort
                     phase_ = MissionPhase::FOLLOW;
                     timer_s_ = 0.0;
@@ -90,11 +99,14 @@ public:
                     // Timeout lost marker -> abort to FOLLOW
                     phase_ = MissionPhase::FOLLOW;
                     timer_s_ = 0.0;
+                    if (!cfg_.auto_reland_after_abort) {
+                        land_latched_ = false;
+                    }
                 }
                 break;
 
             case MissionPhase::GLIDE_SLOPE:
-                if (!operator_land_cmd) {
+                if (!land_latched_) {
                     phase_ = MissionPhase::FOLLOW;
                     timer_s_ = 0.0;
                 } else if (drone_alt <= cfg_.final_descent_alt_m && h_err <= cfg_.final_descent_rxy_m && uncertainty_2sigma <= 0.90) {
@@ -105,6 +117,10 @@ public:
                     // Wave-off abort to APPROACH
                     phase_ = MissionPhase::APPROACH;
                     timer_s_ = 0.0;
+                    if (!cfg_.auto_reland_after_abort) {
+                        land_latched_ = false;
+                        phase_ = MissionPhase::FOLLOW; // Return all the way to FOLLOW to hold safely at altitude
+                    }
                 }
                 break;
 
@@ -130,6 +146,7 @@ private:
     MissionFSMConfig cfg_;
     MissionPhase phase_{MissionPhase::IDLE};
     double timer_s_{0.0};
+    bool land_latched_{false};
 };
 
 } // namespace vdt::landing

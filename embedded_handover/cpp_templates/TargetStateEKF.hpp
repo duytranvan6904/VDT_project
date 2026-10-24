@@ -23,6 +23,7 @@ public:
         double gate_threshold{16.27};          // Mahalanobis chi-squared 3DOF (p=0.001)
         double v_max_xy{2.5};                  // Max horizontal speed clamp (m/s)
         double v_max_z{1.5};                   // Max vertical speed clamp (m/s)
+        double max_dv_per_step{0.40};          // Limit velocity innovation jump per measurement (m/s)
         double stale_timeout_s{1.2};           // Switch from TRACKING -> EXPIRED
     };
 
@@ -38,9 +39,9 @@ public:
         covariance_[0] = 1.0;  // var(x)
         covariance_[7] = 1.0;  // var(y)
         covariance_[14] = 1.0; // var(z)
-        covariance_[21] = 4.0; // var(vx)
-        covariance_[28] = 4.0; // var(vy)
-        covariance_[35] = 2.0; // var(vz)
+        covariance_[21] = 1.0; // var(vx)
+        covariance_[28] = 1.0; // var(vy)
+        covariance_[35] = 0.5; // var(vz)
         initialized_ = false;
         last_timestamp_s_ = 0.0;
         tracking_mode_ = TrackingMode::IDLE;
