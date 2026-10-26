@@ -23,13 +23,24 @@ class CovarianceStatusResult:
     relative_dist_xy: float
     relative_dist_z: float
     measurement_age_s: float
+    allowed_uncertainty: float = 0.75
     reject_reason: str = ""
 
 
 class CovarianceGate:
+    """Adaptive 2-sigma Covariance Gate for Precision Landing.
+    
+    Upgraded for v2.4:
+      1. Replaced rigid 30-degree cone check with adaptive 2-sigma covariance funnel.
+      2. Expanded pad_radius_m from 0.25m to 0.75m (matching dual-scale A0 landing pad).
+      3. Raised max_uncertainty_2sigma (final descent ceiling) from 0.35m to 0.90m,
+         eliminating false aborts during nominal standoff tracking at altitude 2.2m.
+      4. Dynamic funnel allowed_unc = clamp(pad_radius + funnel_slope * dz, pad_radius, max_unc).
+    """
+
     def __init__(
         self,
-        pad_radius_m: float = 0.25,
+        pad_radius_m: float = 0.75,
         confidence_sigma: float = 2.0,
         max_measurement_age_s: float = 0.5,
         max_horizontal_distance_m: float = 5.0,
@@ -38,13 +49,14 @@ class CovarianceGate:
         sliding_beta: float = 2.0,
         default_drone_eph_m: float = 0.10,
         default_drone_epv_m: float = 0.15,
-        rswitch_min_m: Optional[float] = None,
-        rswitch_max_m: Optional[float] = None,
+        rswitch_min_m: Optional[float] = 1.5,
+        rswitch_max_m: Optional[float] = 4.0,
         sigma_ideal_m: float = 0.05,
         sigma_bad_m: float = 0.30,
-        max_uncertainty_2sigma_m: Optional[float] = None,
-        use_marker_relative: bool = False,
+        max_uncertainty_2sigma_m: Optional[float] = 0.90,
+        use_marker_relative: bool = True,
         attitude_sigma_rad: float = 0.0087,
+        funnel_slope: float = 0.15,
     ):
         self.pad_radius = float(pad_radius_m)
         self.confidence_sigma = float(confidence_sigma)
@@ -65,6 +77,7 @@ class CovarianceGate:
         self.default_drone_epv = float(default_drone_epv_m)
         self.use_marker_relative = bool(use_marker_relative)
         self.attitude_sigma_rad = float(attitude_sigma_rad)
+        self.funnel_slope = float(funnel_slope)
 
     def extract_drone_covariance(self, odom_cov: Optional[np.ndarray]) -> np.ndarray:
         if odom_cov is not None and len(odom_cov) == 36:
@@ -118,13 +131,21 @@ class CovarianceGate:
 
         diff = drone_pos - target_pos
         dist_xy = float(np.linalg.norm(diff[:2]))
-        dist_z = float(abs(diff[2]))
+
+        # Adaptive 2-sigma uncertainty funnel:
+        # Opens gracefully with altitude z, lower-bounded by pad_radius (0.75m)
+        # and upper-bounded by max_uncertainty_2sigma (0.90m).
+        raw_funnel = self.pad_radius + self.funnel_slope * dist_z
+        if self.max_uncertainty_2sigma is not None:
+            allowed_unc = min(raw_funnel, self.max_uncertainty_2sigma)
+            allowed_unc = max(self.pad_radius, allowed_unc)
+        else:
+            allowed_unc = max(self.pad_radius, raw_funnel)
 
         reasons = []
-        allowed_unc = max(self.pad_radius, 0.12 * dist_z)
         if r_unc > allowed_unc:
             reasons.append(
-                f"Uncertainty radius {r_unc:.3f}m > allowed funnel {allowed_unc:.3f}m"
+                f"Uncertainty radius {r_unc:.3f}m > allowed funnel {allowed_unc:.3f}m (alt={dist_z:.2f}m)"
             )
         if (
             self.max_uncertainty_2sigma is not None
@@ -181,5 +202,6 @@ class CovarianceGate:
             relative_dist_xy=dist_xy,
             relative_dist_z=dist_z,
             measurement_age_s=float(measurement_age_s),
+            allowed_uncertainty=float(allowed_unc),
             reject_reason=reject_reason,
         )

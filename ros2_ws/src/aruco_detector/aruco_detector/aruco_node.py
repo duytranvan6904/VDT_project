@@ -1,4 +1,6 @@
+import os
 import time
+import yaml
 
 import rclpy
 from geometry_msgs.msg import PointStamped, PoseStamped
@@ -7,9 +9,10 @@ from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Bool
 from vision_msgs.msg import BoundingBox2D
+from ament_index_python.packages import get_package_share_directory
 
 from .annotation import draw_detections
-from .aruco_logic import ArUcoDetector
+from .aruco_logic import DualScaleBoardDetector
 from .camera_model import camera_info_to_intrinsics, fallback_camera_matrix, zero_distortion
 from .detection_filter import filter_detections
 from .image_conversion import ros_image_to_array
@@ -52,10 +55,7 @@ class ArucoNode(Node):
         )
 
     def declare_node_parameters(self) -> None:
-        self.declare_parameter("marker_id", 42)
-        self.declare_parameter("marker_size_m", 0.15)
-        self.declare_parameter("marker_offset_x_m", 0.0)
-        self.declare_parameter("marker_offset_y_m", 0.0)
+        self.declare_parameter("board_config_path", "")
         self.declare_parameter("dictionary", "DICT_6X6_50")
         self.declare_parameter("min_detection_distance_m", 0.0)
         self.declare_parameter("min_z_m", 0.0)
@@ -72,18 +72,38 @@ class ArucoNode(Node):
     def create_fallback_matrix(self, width: int, height: int):
         return fallback_camera_matrix(width, height, float(self.read_parameter("fallback_horizontal_fov_rad")))
 
-    def create_detector(self) -> ArUcoDetector:
+    def load_board_config(self):
+        cfg_path = str(self.read_parameter("board_config_path"))
+        if not cfg_path:
+            # Try finding dual_scale_board_config.yaml in package share or resource
+            try:
+                pkg_share = get_package_share_directory("aruco_detector")
+                candidate = os.path.join(pkg_share, "resource", "dual_scale_board_config.yaml")
+                if os.path.exists(candidate):
+                    cfg_path = candidate
+            except Exception:
+                pass
+        if not cfg_path or not os.path.exists(cfg_path):
+            local_candidate = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resource", "dual_scale_board_config.yaml")
+            if os.path.exists(local_candidate):
+                cfg_path = local_candidate
+
+        if cfg_path and os.path.exists(cfg_path):
+            try:
+                with open(cfg_path, "r") as f:
+                    return yaml.safe_load(f)
+            except Exception as e:
+                self.get_logger().warning(f"Failed to read board config {cfg_path}: {e}")
+        return None
+
+    def create_detector(self) -> DualScaleBoardDetector:
         width, height = self.image_size
-        return ArUcoDetector(
+        board_cfg = self.load_board_config()
+        return DualScaleBoardDetector(
             dictionary_name=str(self.read_parameter("dictionary")),
-            marker_size_m=float(self.read_parameter("marker_size_m")),
             camera_matrix=self.create_fallback_matrix(width, height),
             dist_coeffs=zero_distortion(),
-            target_marker_id=int(self.read_parameter("marker_id")),
-            marker_offset_m=(
-                float(self.read_parameter("marker_offset_x_m")),
-                float(self.read_parameter("marker_offset_y_m")),
-            ),
+            board_config=board_cfg,
         )
 
     def create_publishers(self) -> None:
@@ -139,7 +159,7 @@ class ArucoNode(Node):
             detections,
             self.detector.camera_matrix,
             self.detector.dist_coeffs,
-            self.detector.marker_size_m,
+            0.52,
         )
         self.annotated_publisher.publish(build_bgr_image_message(annotated, header))
 

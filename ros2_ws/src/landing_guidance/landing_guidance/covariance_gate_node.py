@@ -17,17 +17,19 @@ class CovarianceGateNode(Node):
     def __init__(self):
         super().__init__('covariance_gate_node')
 
-        self.declare_parameter('pad_radius_m', 0.25)
+        self.declare_parameter('pad_radius_m', 0.75)
         self.declare_parameter('confidence_sigma', 2.0)
         self.declare_parameter('max_measurement_age_s', 0.5)
         self.declare_parameter('max_horizontal_distance_m', 5.0)
         self.declare_parameter('rswitch_base_m', 1.5)
         self.declare_parameter('rswitch_alpha', 1.0)
-        self.declare_parameter('r_switch_min_m', 3.0)
-        self.declare_parameter('r_switch_max_m', 15.0)
+        self.declare_parameter('r_switch_min_m', 1.5)
+        self.declare_parameter('r_switch_max_m', 4.0)
         self.declare_parameter('sigma_ideal_m', 0.05)
         self.declare_parameter('sigma_bad_m', 0.30)
-        self.declare_parameter('sigma_max_continue_glide_m', 0.15)
+        self.declare_parameter('sigma_max_continue_glide_m', 0.45)
+        self.declare_parameter('max_uncertainty_final_descent_m', 0.90)
+        self.declare_parameter('funnel_slope', 0.15)
         self.declare_parameter('sliding_beta', 2.0)
         self.declare_parameter('default_drone_eph_m', 0.10)
         self.declare_parameter('default_drone_epv_m', 0.15)
@@ -39,6 +41,12 @@ class CovarianceGateNode(Node):
             return self.get_parameter(name).value
 
         confidence_sigma = float(p('confidence_sigma'))
+        max_unc_val = p('max_uncertainty_final_descent_m')
+        if max_unc_val is not None and float(max_unc_val) > 0.0:
+            max_uncertainty_2sigma = float(max_unc_val)
+        else:
+            max_uncertainty_2sigma = confidence_sigma * float(p('sigma_max_continue_glide_m'))
+
         self.gate = CovarianceGate(
             pad_radius_m=float(p('pad_radius_m')),
             confidence_sigma=confidence_sigma,
@@ -50,12 +58,13 @@ class CovarianceGateNode(Node):
             rswitch_max_m=float(p('r_switch_max_m')),
             sigma_ideal_m=float(p('sigma_ideal_m')),
             sigma_bad_m=float(p('sigma_bad_m')),
-            max_uncertainty_2sigma_m=confidence_sigma * float(p('sigma_max_continue_glide_m')),
+            max_uncertainty_2sigma_m=max_uncertainty_2sigma,
             sliding_beta=float(p('sliding_beta')),
             default_drone_eph_m=float(p('default_drone_eph_m')),
             default_drone_epv_m=float(p('default_drone_epv_m')),
             use_marker_relative=bool(p('use_marker_relative')),
             attitude_sigma_rad=float(p('attitude_sigma_rad')),
+            funnel_slope=float(p('funnel_slope')),
         )
 
         sensor_qos = QoSProfile(
@@ -125,6 +134,7 @@ class CovarianceGateNode(Node):
         diag.values = [
             KeyValue(key='safe_to_land', value=str(res.safe_to_land)),
             KeyValue(key='r_uncertainty_2sigma_m', value=f'{res.r_uncertainty_2sigma:.4f}'),
+            KeyValue(key='allowed_funnel_m', value=f'{res.allowed_uncertainty:.4f}'),
             KeyValue(key='sigma_rel_xy_m', value=f'{res.sigma_rel_xy:.4f}'),
             KeyValue(key='sigma_rel_z_m', value=f'{res.sigma_rel_z:.4f}'),
             KeyValue(key='rswitch_adaptive_m', value=f'{res.rswitch_adaptive:.3f}'),
@@ -139,7 +149,9 @@ class CovarianceGateNode(Node):
             tag = '[SAFE_TO_LAND]' if res.safe_to_land else '[GATE_HOLD]'
             self.get_logger().info(
                 f'{tag} r_unc={res.r_uncertainty_2sigma:.3f}m '
-                f'DistXY={res.relative_dist_xy:.2f}m {res.reject_reason}'
+                f'(funnel={res.allowed_uncertainty:.3f}m) '
+                f'DistXY={res.relative_dist_xy:.2f}m DistZ={res.relative_dist_z:.2f}m: '
+                f'{res.reject_reason}'
             )
             self.last_log_time = now
 

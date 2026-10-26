@@ -58,13 +58,15 @@ struct FsmContext
 struct FsmParams
 {
   int enter_follow_cycles{10};
-  float follow_lost_timeout{2.5f};
-  float approach_lost_timeout{1.5f};
+  float follow_lost_timeout{5.0f};       // upgraded v2.4: 5.0s (was 2.5s)
+  float approach_lost_timeout{7.0f};     // upgraded v2.4: 7.0s (was 1.5s)
   float align_threshold{0.3f};
-  float land_entry_height{0.5f};
+  float land_entry_height{0.60f};        // upgraded v2.4: 0.60m (was 0.50m)
+  float land_entry_rxy{0.85f};           // upgraded v2.4: 0.85m horizontal funnel
   int land_entry_cycles{5};
   float yaw_settle_rate{0.1f};
   bool land_requires_rearm{true};
+  bool auto_reland_after_abort{false};   // upgraded v2.4: prevent automatic reland without fresh command
   bool ignore_planner_timeout{false};
 };
 

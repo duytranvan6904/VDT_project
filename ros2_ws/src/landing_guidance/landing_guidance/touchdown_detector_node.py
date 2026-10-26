@@ -19,17 +19,20 @@ class TouchdownDetectorNode(Node):
     def __init__(self):
         super().__init__('touchdown_detector_node')
 
-        self.declare_parameter('optical_height_threshold_m', 0.30)
+        self.declare_parameter('optical_height_threshold_m', 0.35)
         self.declare_parameter('camera_offset_m', 0.80)
         self.declare_parameter('descent_cmd_threshold_mps', -0.10)
-        self.declare_parameter('stoppage_vz_max_mps', 0.08)
-        self.declare_parameter('stoppage_dz_dt_max_mps', 0.05)
+        self.declare_parameter('stoppage_vz_max_mps', 0.12)
+        self.declare_parameter('stoppage_dz_dt_max_mps', 0.08)
+        self.declare_parameter('stoppage_vxy_max_mps', 0.20)
         self.declare_parameter('jerk_impact_threshold', 3.50)
-        self.declare_parameter('confirmation_duration_s', 0.35)
-        self.declare_parameter('altitude_ceiling_m', 0.30)
-        self.declare_parameter('min_descent_time_s', 1.0)
+        self.declare_parameter('confirmation_duration_s', 0.18)
+        self.declare_parameter('fast_confirmation_duration_s', 0.10)
+        self.declare_parameter('altitude_ceiling_m', 0.14)
+        self.declare_parameter('hard_deck_alt_m', 0.05)
+        self.declare_parameter('min_descent_time_s', 0.50)
         self.declare_parameter('seen_descending_vz_mps', -0.10)
-        self.declare_parameter('seen_descending_hold_s', 0.30)
+        self.declare_parameter('seen_descending_hold_s', 0.20)
         self.declare_parameter('eval_rate_hz', 20.0)
 
         def p(name):
@@ -41,9 +44,12 @@ class TouchdownDetectorNode(Node):
             descent_cmd_threshold_mps=float(p('descent_cmd_threshold_mps')),
             stoppage_vz_max_mps=float(p('stoppage_vz_max_mps')),
             stoppage_dz_dt_max_mps=float(p('stoppage_dz_dt_max_mps')),
+            stoppage_vxy_max_mps=float(p('stoppage_vxy_max_mps')),
             jerk_impact_threshold=float(p('jerk_impact_threshold')),
             confirmation_duration_s=float(p('confirmation_duration_s')),
+            fast_confirmation_duration_s=float(p('fast_confirmation_duration_s')),
             altitude_ceiling_m=float(p('altitude_ceiling_m')),
+            hard_deck_alt_m=float(p('hard_deck_alt_m')),
             min_descent_time_s=float(p('min_descent_time_s')),
             seen_descending_vz_mps=float(p('seen_descending_vz_mps')),
             seen_descending_hold_s=float(p('seen_descending_hold_s')),
@@ -101,7 +107,7 @@ class TouchdownDetectorNode(Node):
 
     def _phase_cb(self, msg):
         self.phase = msg.data
-        if self.phase != 'LAND':
+        if self.phase not in ('LAND', 'APPROACH'):
             self.detector.reset()
 
     def _publish_false(self):
@@ -110,14 +116,19 @@ class TouchdownDetectorNode(Node):
 
     def _eval(self):
         now = time.monotonic()
-        if self.odom is None or now - self.t_odom > 0.15:
+        if self.odom is None or now - self.t_odom > 0.20:
             self._publish_false()
             return
-        if self.phase != 'LAND':
+        if self.phase not in ('LAND', 'APPROACH'):
             self._publish_false()
             return
 
         alt = float(self.odom.pose.pose.position.z)
+
+        # In APPROACH phase, only evaluate when already close to floor
+        if self.phase == 'APPROACH' and alt > self.detector.p.altitude_ceiling_m:
+            self._publish_false()
+            return
 
         opt = self.optical_z if now - self.t_optical < 0.5 else None
         res = self.detector.step(
@@ -139,6 +150,7 @@ class TouchdownDetectorNode(Node):
         diag.message = res.diagnostic_reason
         diag.hardware_id = 'TOUCHDOWN_DETECTOR'
         diag.values = [
+            KeyValue(key='touchdown_confirmed', value=str(res.touchdown_confirmed)),
             KeyValue(key='kinematic_stopped', value=str(res.kinematic_stopped)),
             KeyValue(key='optical_near', value=str(res.optical_near)),
             KeyValue(key='seen_descending', value=str(res.seen_descending)),
@@ -152,7 +164,7 @@ class TouchdownDetectorNode(Node):
         self.diag_pub.publish(diag)
 
         if res.touchdown_confirmed and now - self.t_log > 1.0:
-            self.get_logger().info(f'[TOUCHDOWN CONFIRMED] {res.diagnostic_reason}')
+            self.get_logger().info(f'🏆 [TOUCHDOWN CONFIRMED] {res.diagnostic_reason}')
             self.t_log = now
 
 

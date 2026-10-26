@@ -3,6 +3,12 @@
 The core model is a linear constant-velocity Kalman filter in one world frame.
 It deliberately has no ROS, camera or TF dependency so it can be validated with
 synthetic trajectories before being connected to ArUco/PnP measurements.
+
+Upgraded for v2.4:
+  1. Discrete-time CWNA process covariance propagation (P = FPF^T + Q).
+  2. Mahalanobis distance gating (Chi-square test) rejecting visual measurement outliers.
+  3. Per-step velocity jump clamping (max_dv_per_step = 0.40 m/s) to eliminate
+     glitches caused by transient ArUco identification noise.
 """
 
 from __future__ import annotations
@@ -44,6 +50,7 @@ class TargetStateEKF:
         gate_threshold: float = 16.27,
         v_max: float = 2.5,
         vz_max: float = 1.5,
+        max_dv_per_step: float = 0.40,
     ) -> None:
         q_accel = np.asarray(process_accel_variance, dtype=float)
         if q_accel.shape != (3,) or np.any(q_accel <= 0.0):
@@ -54,11 +61,14 @@ class TargetStateEKF:
             raise ValueError("v_max must be positive")
         if vz_max <= 0.0:
             raise ValueError("vz_max must be positive")
+        if max_dv_per_step <= 0.0:
+            raise ValueError("max_dv_per_step must be positive")
 
         self._q_accel = q_accel
         self.gate_threshold = float(gate_threshold)
         self.v_max = float(v_max)
         self.vz_max = float(vz_max)
+        self.max_dv_per_step = float(max_dv_per_step)
         self._state = np.zeros(self.STATE_DIM, dtype=float)
         self._covariance = np.eye(self.STATE_DIM, dtype=float)
         self._timestamp: Optional[float] = None
@@ -199,7 +209,18 @@ class TargetStateEKF:
             return False, nis
 
         kalman_gain = np.linalg.solve(innovation_covariance, h @ self._covariance).T
-        self._state = self._state + kalman_gain @ innovation
+        delta_state = kalman_gain @ innovation
+
+        # Clamp instant velocity jump per step to prevent glitches/jitters from vision noise
+        dv_xy = float(np.hypot(delta_state[3], delta_state[4]))
+        if dv_xy > self.max_dv_per_step:
+            scale = self.max_dv_per_step / dv_xy
+            delta_state[3] *= scale
+            delta_state[4] *= scale
+        if abs(delta_state[5]) > self.max_dv_per_step:
+            delta_state[5] = float(np.clip(delta_state[5], -self.max_dv_per_step, self.max_dv_per_step))
+
+        self._state = self._state + delta_state
         self._clamp_velocity()
         identity = np.eye(self.STATE_DIM)
         residual_map = identity - kalman_gain @ h

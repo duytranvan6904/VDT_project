@@ -28,6 +28,9 @@ private:
   void on_vehicle_status(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
   void on_local_position(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg);
   void on_timeout_flags(const vdt_msgs::msg::TimeoutFlags::SharedPtr msg);
+  void on_touchdown(const std_msgs::msg::Bool::SharedPtr msg);
+  void on_disarm_request(const std_msgs::msg::Bool::SharedPtr msg);
+  void send_force_disarm();
 
   void update();
   void reset_engage_sequence();
@@ -59,6 +62,8 @@ private:
   rclcpp::Publisher<msg::OffboardStatus>::SharedPtr status_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<vdt_msgs::msg::TimeoutFlags>::SharedPtr timeout_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr touchdown_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr disarm_request_sub_;
   bool planner_timeout_ = true;
 
   OffboardContext ctx_;
@@ -96,6 +101,10 @@ private:
   bool require_loiter_before_engage_;
   bool is_airborne_latched_ = false;
   double last_valid_alt_m_ = 0.0;
+  bool disarming_active_ = false;
+  double disarm_start_time_ = 0.0;
+  double disarm_hold_duration_sec_ = 0.35;
+  float disarm_press_down_vz_ = 0.12f;
 };
 
 }  // namespace offboard_manager

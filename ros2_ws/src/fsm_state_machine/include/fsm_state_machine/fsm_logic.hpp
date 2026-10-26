@@ -14,7 +14,7 @@ void counters_update_marker_stable(Counters & counters, bool entry_ok);
 void counters_update_marker_lost(Counters & counters, bool marker_detected, float dt);
 void counters_update_land_ok(Counters & counters, State current, bool land_ok);
 void counters_update_land_inhibit(
-  Counters & counters, State prev, State next, const RcInput & rc);
+  Counters & counters, State prev, State next, const RcInput & rc, bool auto_reland_after_abort = false);
 void counters_reset(Counters & counters);
 
 std::optional<State> check_search_transition(const Counters & counters, const FsmParams & p);

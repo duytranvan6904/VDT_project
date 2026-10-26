@@ -45,6 +45,8 @@ OffboardNode::OffboardNode()
   land_descent_rate_ = declare_parameter<float>("land_descent_rate", 0.4f);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
   require_loiter_before_engage_ = declare_parameter<bool>("require_loiter_before_engage", true);
+  disarm_hold_duration_sec_ = declare_parameter<double>("disarm_hold_duration_s", 0.35);
+  disarm_press_down_vz_ = declare_parameter<float>("disarm_press_down_vz_mps", 0.12f);
 
   rclcpp::QoS qos(1);
   qos.best_effort();
@@ -70,6 +72,10 @@ OffboardNode::OffboardNode()
   timeout_sub_ = create_subscription<vdt_msgs::msg::TimeoutFlags>(
   "input_cache/timeout_flags", 10,
   std::bind(&OffboardNode::on_timeout_flags, this, std::placeholders::_1));
+  touchdown_sub_ = create_subscription<std_msgs::msg::Bool>(
+    "/landing/touchdown", 10, std::bind(&OffboardNode::on_touchdown, this, std::placeholders::_1));
+  disarm_request_sub_ = create_subscription<std_msgs::msg::Bool>(
+    "cmd/disarm_request", 10, std::bind(&OffboardNode::on_disarm_request, this, std::placeholders::_1));
   control_mode_pub_ = create_publisher<px4_msgs::msg::OffboardControlMode>(
     "/fmu/in/offboard_control_mode", qos);
   trajectory_pub_ = create_publisher<px4_msgs::msg::TrajectorySetpoint>(
@@ -139,8 +145,37 @@ void OffboardNode::on_timeout_flags(const vdt_msgs::msg::TimeoutFlags::SharedPtr
   planner_timeout_ = msg->planner_timeout;
 }
 
+void OffboardNode::on_touchdown(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  if (msg->data && ctx_.offboard_active && !disarming_active_) {
+    RCLCPP_INFO(get_logger(), "🏆 Touchdown received! Initiating Force Disarm burst & pad press-down hold.");
+    disarming_active_ = true;
+    disarm_start_time_ = this->now().seconds();
+    send_force_disarm();
+  }
+}
+
+void OffboardNode::on_disarm_request(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  if (msg->data && ctx_.offboard_active && !disarming_active_) {
+    RCLCPP_INFO(get_logger(), "FSM complete disarm requested. Initiating Force Disarm burst.");
+    disarming_active_ = true;
+    disarm_start_time_ = this->now().seconds();
+    send_force_disarm();
+  }
+}
+
+void OffboardNode::send_force_disarm()
+{
+  // Send burst of 5 force disarm commands to guarantee execution across XRCE
+  for (int i = 0; i < 5; ++i) {
+    publish_vehicle_command(VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0f, 21196.0f);
+  }
+}
+
 void OffboardNode::reset_engage_sequence()
 {
+  disarming_active_ = false;
   ctx_.offboard_active = false;
   ctx_.engage_counter = 0;
   engage_phase_ = EngagePhase::WAIT_SETPOINT_STREAM;
@@ -361,8 +396,22 @@ void OffboardNode::update()
   } else {
     // Continuous Heartbeat Proof: Keep streaming setpoint & offboard control mode
     send_heartbeat();
-    publish_setpoint(build_setpoint(
-      fsm_state_, planner_output_, yaw_search_rate_, land_descent_rate_, is_planner_stale()));
+    if (disarming_active_) {
+      const double elapsed_disarm = this->now().seconds() - disarm_start_time_;
+      const bool is_disarmed = (vehicle_status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED);
+      if (elapsed_disarm >= disarm_hold_duration_sec_ || is_disarmed) {
+        RCLCPP_INFO(get_logger(), "Disarm completed (elapsed=%.2fs, armed=%d). Releasing offboard.", elapsed_disarm, vehicle_status_.arming_state);
+        reset_engage_sequence();
+      } else {
+        // Maintain target horizontal velocity while applying gentle downward pressure (vz = -0.12 m/s ENU -> +0.12 NED)
+        Setpoint press_sp = build_setpoint_land(planner_output_, disarm_press_down_vz_, is_planner_stale());
+        publish_setpoint(press_sp);
+        send_force_disarm();
+      }
+    } else {
+      publish_setpoint(build_setpoint(
+        fsm_state_, planner_output_, yaw_search_rate_, land_descent_rate_, is_planner_stale()));
+    }
     watchdog_check();
   }
 

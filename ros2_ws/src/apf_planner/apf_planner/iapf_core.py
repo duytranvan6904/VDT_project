@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Improved Artificial Potential Field (IAPF) 3D Planner Core.
+"""Improved Artificial Potential Field (IAPF) 3D Planner Core — v2.4.
 
 Direct Python port from MATLAB ``avoidance/IAPF_Planner_3D_MultiObs.m``.
 
@@ -12,6 +12,7 @@ Features:
   5. Forward-looking tangent candidate scoring (goal direction, obstacle clearance, continuity)
   6. Directional weighting for oscillation suppression (Eq. 10-11)
   7. Speed scheduling: deceleration near goal and obstacles, with guaranteed escape speed
+  8. [v2.4] Collinear Trap Detection + Perpendicular Tangent Escape (f_tan CCW/CW)
 """
 
 from __future__ import annotations
@@ -69,6 +70,12 @@ class IAPFParams:
     vz_max: float = 0.5            # Max vertical velocity (m/s)
     clamp_vz: bool = True          # Clamp vz to vz_max
 
+    # [v2.4] Collinear trap detection & perpendicular escape
+    collinear_cos_thresh: float = -0.97   # cos(θ) < thresh → drone/obs/goal collinear (≈166°)
+    collinear_force_thresh: float = 5.0   # |f_rep1_nearest| minimum to consider collinear trap (N)
+    k_collinear: float = 1.5              # Gain for perpendicular escape force when collinear
+    collinear_exit_cos_thresh: float = -0.85  # Exit collinear mode when alignment improves
+
 
 @dataclass
 class IAPFResult:
@@ -81,6 +88,7 @@ class IAPFResult:
     at_goal: bool                  # True if goal tolerance satisfied
     tangent_active: bool = False   # True if local-minimum escape is currently active
     f_tan: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    collinear_trap: bool = False   # [v2.4] True if collinear trap was detected this cycle
 
 
 class IAPFCore:
@@ -88,6 +96,13 @@ class IAPFCore:
 
     Replicates MATLAB ``IAPF_Planner_3D_MultiObs.m`` logic precisely, with internal state
     tracking across consecutive time steps.
+
+    v2.4 additions:
+    - ``is_collinear_trap``: detects when drone + nearest obstacle + goal are collinear,
+      causing attractive and repulsive forces to nearly cancel along the same axis.
+    - Perpendicular tangent escape: applies a lateral force (CCW or CW in the horizontal
+      plane) that "side-steps" the drone out of the collinear stall. Direction is chosen
+      to minimise detour distance to the goal.
     """
 
     def __init__(self, params: Optional[IAPFParams] = None) -> None:
@@ -101,6 +116,88 @@ class IAPFCore:
         self.previous_obs_idx: int = -1
         self.prev_move_dir: np.ndarray = np.zeros(3, dtype=float)
         self.prev_dir_valid: bool = False
+        # [v2.4] collinear trap state
+        self.collinear_active: bool = False
+        self.collinear_sign: float = 1.0   # +1 CCW, -1 CW
+
+    # ------------------------------------------------------------------
+    # Helper: is_collinear_trap
+    # ------------------------------------------------------------------
+    def _is_collinear_trap(
+        self,
+        dir_goal: np.ndarray,
+        f_rep1_nearest: np.ndarray,
+        d_goal: float,
+    ) -> bool:
+        """Return True when drone/obstacle/goal are effectively collinear.
+
+        Collinearity is detected when:
+          1. The dominant repulsive push (f_rep1_nearest) opposes the goal direction
+             with cos(θ) < collinear_cos_thresh  (≈ antiparallel, angle ≥ 166°).
+          2. The repulsive force is strong enough to matter
+             (|f_rep1_nearest| ≥ collinear_force_thresh).
+          3. The drone is not already at the goal (d_goal > goal_min_dist).
+        """
+        p = self.params
+        f_rep1_norm = float(np.linalg.norm(f_rep1_nearest))
+        if f_rep1_norm < p.collinear_force_thresh:
+            return False
+        if d_goal <= p.goal_min_dist:
+            return False
+        cos_theta = float(np.dot(dir_goal, f_rep1_nearest / f_rep1_norm))
+        return cos_theta < p.collinear_cos_thresh
+
+    # ------------------------------------------------------------------
+    # Helper: choose CCW / CW perpendicular escape direction
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _perpendicular_escape(
+        dir_to_goal: np.ndarray,
+        current_sign: float,
+        pos: np.ndarray,
+        goal: np.ndarray,
+    ) -> Tuple[np.ndarray, float]:
+        """Compute the perpendicular unit vector in the horizontal plane that
+        best side-steps the drone toward the goal.
+
+        Returns
+        -------
+        t_perp : (3,) unit tangent vector
+        sign   : +1.0 (CCW) or -1.0 (CW) – to persist for next cycle
+        """
+        small = 1e-6
+
+        # Work in 2D horizontal plane; z component of tangent stays 0
+        # to avoid unwanted altitude change during escape.
+        dx = dir_to_goal[0]
+        dy = dir_to_goal[1]
+        h = math.hypot(dx, dy)
+        if h < small:
+            # Goal is directly above/below — arbitrary horizontal escape
+            t_ccw = np.array([1.0, 0.0, 0.0])
+        else:
+            # CCW perpendicular in horizontal plane: rotate dir_goal by +90°
+            t_ccw = np.array([-dy / h, dx / h, 0.0])
+
+        t_cw = -t_ccw
+
+        # Choose direction that brings drone closer to goal in the next step.
+        # Evaluate dot product of candidate with (goal - pos) projected horizontal.
+        g_proj = np.array([goal[0] - pos[0], goal[1] - pos[1], 0.0])
+        g_norm = float(np.linalg.norm(g_proj))
+        if g_norm < small:
+            # Can't disambiguate — keep previous sign
+            t_chosen = t_ccw if current_sign > 0 else t_cw
+            return t_chosen, current_sign
+
+        g_proj_unit = g_proj / g_norm
+        score_ccw = float(np.dot(t_ccw, g_proj_unit))
+        score_cw = float(np.dot(t_cw, g_proj_unit))
+
+        if score_ccw >= score_cw:
+            return t_ccw, 1.0
+        else:
+            return t_cw, -1.0
 
     def compute(
         self,
@@ -153,6 +250,7 @@ class IAPFCore:
                 at_goal=True,
                 tangent_active=False,
                 f_tan=np.zeros(3),
+                collinear_trap=False,
             )
 
         dir_goal = goal_vec / max(d_goal, small_num)
@@ -171,11 +269,12 @@ class IAPFCore:
         n_obs = len(obstacles)
 
         # Compute goal-distance sigmoid weighting once
-        # exp_goal = exp(-d_goal)
-        # weight_rep = 1.0 / (1.0 + exp_goal) - 0.5
         exp_goal = math.exp(-min(d_goal, 50.0))
         weight_rep = 1.0 / (1.0 + exp_goal) - 0.5
         sigmoid_deriv = exp_goal / ((1.0 + exp_goal) ** 2)
+
+        # [v2.4] Track f_rep1 of the nearest obstacle separately for collinear detection
+        f_rep1_nearest = np.zeros(3, dtype=float)
 
         for i, obs in enumerate(obstacles):
             obs_pos = np.asarray(obs, dtype=float)
@@ -200,6 +299,24 @@ class IAPFCore:
 
                 f_rep += (f_rep1 + f_rep2)
 
+                # Record f_rep1 of the nearest obstacle for collinear trap check
+                if i == nearest_idx or nearest_idx < 0:
+                    f_rep1_nearest = f_rep1.copy()
+
+        # After full loop, retrieve correct f_rep1 for nearest obstacle
+        # (re-compute if needed — nearest_idx now final)
+        if nearest_idx >= 0:
+            obs_pos_near = np.asarray(obstacles[nearest_idx], dtype=float)
+            obs_vec_near = p - obs_pos_near
+            d_obs_near = float(np.linalg.norm(obs_vec_near))
+            if d_obs_near <= d0:
+                d_safe_near = max(d_obs_near, small_num)
+                dir_away_near = obs_vec_near / d_safe_near
+                coeff1_near = 2.0 * k_rep * (1.0 / d_safe_near - 1.0 / d0) * (1.0 / (d_safe_near ** 2)) * weight_rep
+                f_rep1_nearest = coeff1_near * dir_away_near
+            else:
+                f_rep1_nearest = np.zeros(3, dtype=float)
+
         # -------------------------------------------------------------
         # 4. Resultant Force & Obstacle Nearby Check
         # -------------------------------------------------------------
@@ -208,8 +325,49 @@ class IAPFCore:
         obstacle_near = (n_obs > 0) and (min_obs_dist < d0)
 
         # -------------------------------------------------------------
+        # 4b. [v2.4] Collinear Trap Detection & Perpendicular Escape
+        # -------------------------------------------------------------
+        collinear_detected = False
+        f_tan_collinear = np.zeros(3, dtype=float)
+
+        if obstacle_near and nearest_idx >= 0:
+            # Check entry into collinear trap
+            if not self.collinear_active:
+                if self._is_collinear_trap(dir_goal, f_rep1_nearest, d_goal):
+                    self.collinear_active = True
+                    # Choose escape direction at entry time
+                    t_perp, sign = self._perpendicular_escape(
+                        dir_goal, self.collinear_sign, p, g
+                    )
+                    self.collinear_sign = sign
+            else:
+                # Check exit: alignment has improved sufficiently
+                f_rep1_norm = float(np.linalg.norm(f_rep1_nearest))
+                if f_rep1_norm > small_num:
+                    cos_now = float(np.dot(dir_goal, f_rep1_nearest / f_rep1_norm))
+                    if cos_now > p_cfg.collinear_exit_cos_thresh or not obstacle_near:
+                        self.collinear_active = False
+
+            if self.collinear_active:
+                collinear_detected = True
+                t_perp, self.collinear_sign = self._perpendicular_escape(
+                    dir_goal, self.collinear_sign, p, g
+                )
+                f_tan_collinear = p_cfg.k_collinear * t_perp
+        else:
+            # No obstacle nearby — clear collinear state
+            if self.collinear_active:
+                self.collinear_active = False
+
+        # Add collinear escape to total before local-minimum check
+        if collinear_detected:
+            f_total = f_total + f_tan_collinear
+
+        # -------------------------------------------------------------
         # 5. Local Minimum Detection with Hysteresis (Schmitt Trigger)
         # -------------------------------------------------------------
+        f_total_norm = float(np.linalg.norm(f_total))
+
         if not self.tangent_active:
             if (f_total_norm < p_cfg.f_enter) and (d_goal > p_cfg.goal_min_dist) and obstacle_near:
                 self.tangent_active = True
@@ -222,7 +380,7 @@ class IAPFCore:
                 self.tangent_active = False
 
         # -------------------------------------------------------------
-        # 6. Dynamic Tangent Escape
+        # 6. Dynamic Tangent Escape (3D tangent plane, if local minimum)
         # -------------------------------------------------------------
         f_tan = np.zeros(3)
         if self.tangent_active and nearest_idx >= 0:
@@ -355,8 +513,8 @@ class IAPFCore:
 
         v_cmd_mag = v_max * goal_speed_factor * obs_speed_factor
 
-        # Ensure minimum escape velocity when in local minimum
-        if self.tangent_active:
+        # Ensure minimum escape velocity when in local minimum or collinear trap
+        if self.tangent_active or collinear_detected:
             v_escape_min = p_cfg.v_escape_min_ratio * v_max
             if v_cmd_mag < v_escape_min:
                 v_cmd_mag = v_escape_min
@@ -383,6 +541,9 @@ class IAPFCore:
             else:
                 yaw_cmd = 0.0
 
+        # Combine collinear f_tan and tangent f_tan for output reporting
+        f_tan_out = f_tan + f_tan_collinear
+
         return IAPFResult(
             velocity=velocity,
             yaw_cmd=yaw_cmd,
@@ -391,5 +552,6 @@ class IAPFCore:
             f_total=f_cmd_raw,
             at_goal=False,
             tangent_active=self.tangent_active,
-            f_tan=f_tan,
+            f_tan=f_tan_out,
+            collinear_trap=collinear_detected,
         )

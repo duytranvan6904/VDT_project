@@ -93,6 +93,7 @@ class EkfNode(Node):
         self.declare_parameter("gate_threshold", 16.27)
         self.declare_parameter("max_target_speed", 2.5)
         self.declare_parameter("max_target_vz", 1.5)
+        self.declare_parameter("max_dv_per_step", 0.40)
         self.declare_parameter("target_frame", "world")
         self.declare_parameter("child_frame", "hpad")
         self.declare_parameter("tf_timeout_s", 0.03)
@@ -110,6 +111,7 @@ class EkfNode(Node):
             gate_threshold=float(self.get_parameter("gate_threshold").value),
             v_max=float(self.get_parameter("max_target_speed").value),
             vz_max=float(self.get_parameter("max_target_vz").value),
+            max_dv_per_step=float(self.get_parameter("max_dv_per_step").value),
         )
 
     def create_interfaces(self) -> None:

@@ -34,7 +34,8 @@ bool search_entry_ok(const SensorInput & s, const FsmParams & p)
 
 bool land_entry_ok(const SensorInput & s, const FsmParams & p)
 {
-  return s.geometry_valid && s.align_error < p.align_threshold && s.delta_h < p.land_entry_height;
+  const bool rxy_ok = (!std::isfinite(s.d_horiz) || s.d_horiz <= 0.0f || s.d_horiz < p.land_entry_rxy);
+  return s.geometry_valid && s.align_error < p.align_threshold && s.delta_h < p.land_entry_height && rxy_ok;
 }
 
 void counters_update_land_ok(Counters & counters, State current, bool land_ok)
@@ -43,12 +44,18 @@ void counters_update_land_ok(Counters & counters, State current, bool land_ok)
 }
 
 void counters_update_land_inhibit(
-  Counters & counters, State prev, State next, const RcInput & rc)
+  Counters & counters, State prev, State next, const RcInput & rc, bool auto_reland_after_abort)
 {
   if (!rc.land_switch) {
     counters.land_inhibit = false;
-  } else if (prev == State::APPROACH && next != State::APPROACH && next != State::LAND) {
-    counters.land_inhibit = true;
+  } else if (!auto_reland_after_abort) {
+    // If drone leaves APPROACH or LAND towards FOLLOW or SEARCH while land_switch is still on,
+    // inhibit re-entering APPROACH until operator resets the switch.
+    if ((prev == State::APPROACH || prev == State::LAND) &&
+        (next == State::FOLLOW || next == State::SEARCH))
+    {
+      counters.land_inhibit = true;
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -42,14 +42,6 @@ def to_grayscale(image: np.ndarray) -> np.ndarray:
     return image
 
 
-def build_square_object_points(side_m: float) -> np.ndarray:
-    half = side_m / 2.0
-    return np.array(
-        [[-half, half, 0.0], [half, half, 0.0], [half, -half, 0.0], [-half, -half, 0.0]],
-        dtype=np.float32,
-    )
-
-
 def build_pose_dict(rvec: np.ndarray, tvec: np.ndarray) -> Dict[str, Any]:
     x, y, z = (float(value) for value in tvec.flatten())
     return {
@@ -61,24 +53,81 @@ def build_pose_dict(rvec: np.ndarray, tvec: np.ndarray) -> Dict[str, Any]:
     }
 
 
-class ArUcoDetector:
+class DualScaleBoardDetector:
+    """
+    Dual-Scale ArUco Board Detector for Precision Landing.
+    Combines:
+      - Outer coarse marker (ID 42, 52cm): Far range guidance (0.8m - 5.0m)
+      - Inner fine marker (ID 43, 10cm): Close range touchdown guidance (0.05m - 1.2m)
+    Both markers' 3D corners are defined relative to the geometric center of the pad (0,0,0).
+    """
+
     def __init__(
         self,
-        dictionary_name: str,
-        marker_size_m: float,
-        camera_matrix: np.ndarray,
-        dist_coeffs: np.ndarray,
-        target_marker_id: int,
-        marker_offset_m: Tuple[float, float] = (0.0, 0.0),
+        dictionary_name: str = "DICT_6X6_50",
+        camera_matrix: Optional[np.ndarray] = None,
+        dist_coeffs: Optional[np.ndarray] = None,
+        board_config: Optional[Dict[str, Any]] = None,
     ) -> None:
-        self.marker_size_m = float(marker_size_m)
-        self.marker_offset_m = (float(marker_offset_m[0]), float(marker_offset_m[1]))
-        self.target_marker_id = int(target_marker_id)
+        self.dictionary_name = dictionary_name
         self.camera_matrix = camera_matrix
-        self.dist_coeffs = dist_coeffs
+        self.dist_coeffs = dist_coeffs if dist_coeffs is not None else np.zeros((1, 5), dtype=np.float32)
         self.dictionary = create_dictionary(dictionary_name)
         self.parameters = tune_detector_parameters(create_detector_parameters())
         self.detector_object = self.create_detector_object()
+
+        # Parse Board Configuration
+        if board_config is None:
+            # Default A0 dual scale configuration (ID 42 + ID 43)
+            self.big_id = 42
+            self.big_size_m = 0.52
+            self.big_corners_3d = np.array([
+                [-0.5825,  0.26, 0.0],
+                [-0.0625,  0.26, 0.0],
+                [-0.0625, -0.26, 0.0],
+                [-0.5825, -0.26, 0.0]
+            ], dtype=np.float32)
+
+            self.small_id = 43
+            self.small_size_m = 0.10
+            self.small_corners_3d = np.array([
+                [-0.05,  0.05, 0.0],
+                [ 0.05,  0.05, 0.0],
+                [ 0.05, -0.05, 0.0],
+                [-0.05, -0.05, 0.0]
+            ], dtype=np.float32)
+        else:
+            markers = board_config.get("markers", [])
+            self.big_id = int(markers[0]["id"])
+            self.big_size_m = float(markers[0]["size_m"])
+            self.big_corners_3d = np.array(markers[0]["corners_3d"], dtype=np.float32)
+
+            self.small_id = int(markers[1]["id"])
+            self.small_size_m = float(markers[1]["size_m"])
+            self.small_corners_3d = np.array(markers[1]["corners_3d"], dtype=np.float32)
+
+        self.marker_corners_3d = {
+            self.big_id: self.big_corners_3d,
+            self.small_id: self.small_corners_3d,
+        }
+        self.marker_centers_3d = {
+            self.big_id: np.mean(self.big_corners_3d, axis=0).reshape(3, 1),
+            self.small_id: np.mean(self.small_corners_3d, axis=0).reshape(3, 1),
+        }
+        self.marker_sizes = {
+            self.big_id: self.big_size_m,
+            self.small_id: self.small_size_m,
+        }
+
+        # Create OpenCV Board
+        obj_points = [self.big_corners_3d, self.small_corners_3d]
+        board_ids = np.array([self.big_id, self.small_id], dtype=np.int32)
+        if hasattr(cv2.aruco, "Board_create"):
+            self.board = cv2.aruco.Board_create(obj_points, self.dictionary, board_ids)
+        elif hasattr(cv2.aruco, "Board"):
+            self.board = cv2.aruco.Board(obj_points, self.dictionary, board_ids)
+        else:
+            self.board = None
 
     def create_detector_object(self):
         if hasattr(cv2.aruco, "ArucoDetector"):
@@ -96,53 +145,86 @@ class ArUcoDetector:
             corners, ids, _ = cv2.aruco.detectMarkers(gray, self.dictionary, parameters=self.parameters)
         return corners, ids
 
-    def select_target_corners(
-        self, corners: List[np.ndarray], ids: Optional[np.ndarray]
-    ) -> List[np.ndarray]:
-        if ids is None:
-            return []
-        return [
-            corner.reshape((4, 2))
-            for corner, marker_id in zip(corners, ids.flatten())
-            if int(marker_id) == self.target_marker_id
-        ]
-
-    def solve_marker_pose(self, corners: np.ndarray) -> Optional[Tuple[np.ndarray, np.ndarray]]:
-        success, rvec, tvec = cv2.solvePnP(
-            build_square_object_points(self.marker_size_m),
-            corners.astype(np.float32),
-            self.camera_matrix,
-            self.dist_coeffs,
-            flags=cv2.SOLVEPNP_IPPE_SQUARE,
-        )
-        if not success:
-            return None
-        return rvec, tvec
-
-    def apply_marker_offset(self, rvec: np.ndarray, tvec: np.ndarray) -> np.ndarray:
-        ox, oy = self.marker_offset_m
-        if ox == 0.0 and oy == 0.0:
-            return tvec
-        rotation, _ = cv2.Rodrigues(rvec)
-        shift = rotation @ np.array([[ox], [oy], [0.0]])
-        return tvec.reshape(3, 1) + shift
-
-    def build_detection(self, corners: np.ndarray) -> Optional[Detection]:
-        solved = self.solve_marker_pose(corners)
-        if solved is None:
-            return None
-        rvec, tvec = solved
-        tvec = self.apply_marker_offset(rvec, tvec)
-        return {
-            "id": self.target_marker_id,
-            "corners": corners,
-            "rvec": rvec,
-            "tvec": tvec,
-            "pose": build_pose_dict(rvec, tvec),
-        }
-
     def process_frame(self, image: np.ndarray) -> List[Detection]:
-        corners, ids = self.detect_markers(to_grayscale(image))
-        candidates = self.select_target_corners(corners, ids)
-        detections = [self.build_detection(candidate) for candidate in candidates]
-        return [detection for detection in detections if detection is not None]
+        if self.camera_matrix is None:
+            return []
+
+        gray = to_grayscale(image)
+        corners, ids = self.detect_markers(gray)
+        if ids is None or len(ids) == 0:
+            return []
+
+        detected_map = {}
+        for c, mid in zip(corners, ids.flatten()):
+            mid_int = int(mid)
+            if mid_int in (self.big_id, self.small_id):
+                detected_map[mid_int] = c.reshape((4, 2))
+
+        if not detected_map:
+            return []
+
+        # 1. Prepare corners and IDs for Board PnP
+        board_corners = []
+        board_ids = []
+        for mid in (self.big_id, self.small_id):
+            if mid in detected_map:
+                board_corners.append(detected_map[mid].astype(np.float32))
+                board_ids.append(mid)
+
+        board_ids_arr = np.array(board_ids, dtype=np.int32)
+        retval, rvec, tvec = 0, None, None
+
+        # 2. Solve Board PnP with OpenCV estimatePoseBoard
+        if self.board is not None:
+            try:
+                retval, rvec, tvec = cv2.aruco.estimatePoseBoard(
+                    board_corners,
+                    board_ids_arr,
+                    self.board,
+                    self.camera_matrix,
+                    self.dist_coeffs,
+                    None,
+                    None,
+                )
+            except Exception:
+                retval = 0
+
+        # 3. Fallback: solve individual marker PnP and map back to pad center (0,0,0)
+        if (retval == 0 or rvec is None or tvec is None) and detected_map:
+            # Prefer inner fine marker if available at close range (< 1.2m), otherwise big marker
+            pref_id = self.small_id if self.small_id in detected_map else self.big_id
+            c = detected_map[pref_id]
+            size_m = self.marker_sizes[pref_id]
+            half = size_m / 2.0
+            obj_p = np.array([[-half, half, 0.0], [half, half, 0.0], [half, -half, 0.0], [-half, -half, 0.0]], dtype=np.float32)
+
+            success, rvec_m, tvec_m = cv2.solvePnP(
+                obj_p, c.astype(np.float32), self.camera_matrix, self.dist_coeffs, flags=cv2.SOLVEPNP_IPPE_SQUARE
+            )
+            if success:
+                rvec = rvec_m
+                rot, _ = cv2.Rodrigues(rvec)
+                # Shift tvec from marker center to geometric center of the pad
+                center_offset = self.marker_centers_3d[pref_id]
+                tvec = tvec_m.reshape(3, 1) - rot @ center_offset
+                retval = 1
+
+        if retval > 0 and rvec is not None and tvec is not None:
+            # Active marker representation: prefer small marker's bounding box/corners if present
+            active_id = self.small_id if self.small_id in detected_map else self.big_id
+            rep_corners = detected_map[active_id]
+
+            mode = "DUAL_FUSED" if (len(detected_map) == 2) else ("INNER_FINE" if self.small_id in detected_map else "OUTER_COARSE")
+
+            return [{
+                "id": active_id,
+                "active_ids": list(detected_map.keys()),
+                "tracking_mode": mode,
+                "corners": rep_corners,
+                "all_corners": detected_map,
+                "rvec": rvec.reshape(3, 1),
+                "tvec": tvec.reshape(3, 1),
+                "pose": build_pose_dict(rvec, tvec),
+            }]
+
+        return []

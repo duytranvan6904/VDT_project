@@ -8,14 +8,16 @@ namespace fsm_state_machine
 FsmNode::FsmNode()
 : Node("fsm_node"), actuators_(this), last_update_time_(-1.0)
 {
-  params_.land_entry_height = declare_parameter<float>("land_entry_height", 0.5f);
+  params_.land_entry_height = declare_parameter<float>("land_entry_height", 0.60f);
+  params_.land_entry_rxy = declare_parameter<float>("land_entry_rxy", 0.85f);
   params_.enter_follow_cycles = declare_parameter<int>("enter_follow_cycles", 10);
-  params_.follow_lost_timeout = declare_parameter<float>("follow_lost_timeout", 2.5f);
-  params_.approach_lost_timeout = declare_parameter<float>("approach_lost_timeout", 1.5f);
+  params_.follow_lost_timeout = declare_parameter<float>("follow_lost_timeout", 5.0f);
+  params_.approach_lost_timeout = declare_parameter<float>("approach_lost_timeout", 7.0f);
   params_.align_threshold = declare_parameter<float>("align_threshold", 0.3f);
   params_.land_entry_cycles = declare_parameter<int>("land_entry_cycles", 5);
   params_.yaw_settle_rate = declare_parameter<float>("yaw_settle_rate", 0.1f);
   params_.land_requires_rearm = declare_parameter<bool>("land_requires_rearm", true);
+  params_.auto_reland_after_abort = declare_parameter<bool>("auto_reland_after_abort", false);
   params_.ignore_planner_timeout = declare_parameter<bool>("ignore_planner_timeout", false);
   debug_enabled_ = declare_parameter<bool>("debug_enabled", false);
 
@@ -92,14 +94,14 @@ void FsmNode::log_debug(const SensorInput & s, const RcInput & rc) const
   if (!debug_enabled_) {
     return;
   }
-    RCLCPP_INFO(
+  RCLCPP_INFO(
     get_logger(),
     "state=%d stable=%d lost_t=%.2f land_ok=%d land_inh=%d align_err=%.3f alt=%.2f delta_h=%.2f "
-    "yaw_rate=%.3f geom=%d land_sw=%d",
+    "d_horiz=%.2f yaw_rate=%.3f geom=%d land_sw=%d",
     static_cast<int>(ctx_.state), ctx_.counters.marker_stable_count,
     ctx_.counters.marker_lost_time, ctx_.counters.land_ok_count,
     static_cast<int>(ctx_.counters.land_inhibit), s.align_error, s.altitude, s.delta_h,
-    s.yaw_rate, static_cast<int>(s.geometry_valid), rc.land_switch);
+    s.d_horiz, s.yaw_rate, static_cast<int>(s.geometry_valid), rc.land_switch);
 }
 
 void FsmNode::update()
@@ -110,7 +112,7 @@ void FsmNode::update()
 
   const double now_sec = this->now().seconds();
   const float dt = last_update_time_ > 0.0 ?
-  static_cast<float>(now_sec - last_update_time_) : 0.0f;
+    static_cast<float>(now_sec - last_update_time_) : 0.0f;
   last_update_time_ = now_sec;
 
   const bool snapshot_timeout = (!has_snapshot_) || ((now_sec - last_snapshot_time_) > 0.2);
@@ -155,7 +157,7 @@ void FsmNode::update()
     counters_reset(ctx_.counters);
     ctx_.last_transition_time = now_sec;
   }
-  counters_update_land_inhibit(ctx_.counters, prev_state, ctx_.state, effective_rc);
+  counters_update_land_inhibit(ctx_.counters, prev_state, ctx_.state, effective_rc, params_.auto_reland_after_abort);
 
   switch (ctx_.state) {
     case State::SEARCH:
@@ -179,4 +181,4 @@ void FsmNode::update()
   log_debug(s, effective_rc);
 }
 
-}
+}  // namespace fsm_state_machine
