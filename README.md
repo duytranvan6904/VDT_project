@@ -966,11 +966,7 @@ Nếu cần selector và đường đạo hàm chạy liên tục, cần thiết
 
 UAV được cho là Soft Landing thành công khi thỏa mãn đồng thời 2 điều kiện: `Rxy` <= 0.05 m và Vận tốc tương đối giữa UAV và Hpad <= 0.05 m/s, đây cũng là điều kiện để dừng mô phỏng.
 
-## 12. Kết quả mô phỏng
-
-**Local Minima**
-![Quỹ đạo của UAV](Kết quả mô phỏng/Local Minima/Pos.png)
-## 13. Tài liệu tham chiếu
+## 12. Tài liệu tham chiếu
 
 *Terminal-Angle-Constrained Guidance based on Sliding Mode Control for UAV Soft Landing on Ground Vehicles*.
 
