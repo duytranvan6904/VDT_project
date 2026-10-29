@@ -962,15 +962,15 @@ Nếu dùng bản hiện tại trong mô hình liên tục, cấu hình riêng M
 Nếu cần selector và đường đạo hàm chạy liên tục, cần thiết kế lại/kiểm tra cách chốt pha và `x0`, cấu hình cập nhật biến `persistent`, cùng cách phát reset. Một tín hiệu reset giữ ở `1` sau chuyển pha vẫn chỉ reset một lần khi Integrator dùng `rising`; nó khác cơ chế xung một mẫu của file hiện tại. Không đổi reset sang `level` khi dùng tín hiệu giữ mức này.
 
 
-## 11. Phần tiếp đất cuối chưa được định nghĩa
+## 11. Phần tiếp đất cuối
 
-Luồng hiện tại quản lý hai pha APF và Landing. Nó chưa có một trạng thái riêng xác nhận tiếp đất hoặc hoàn tất nhiệm vụ.
+UAV được cho là Soft Landing thành công khi thỏa mãn đồng thời 2 điều kiện: `Rxy` <= 0.05 m và Vận tốc tương đối giữa UAV và Hpad <= 0.05 m/s, đây cũng là điều kiện để dừng mô phỏng.
 
-Khi `Rxy <= Rmin`, LOS có thể không hợp lệ dù UAV vẫn còn ở phía trên target. Việc chặn đạo hàm ở gần target không được coi là điều kiện hạ cánh hoàn tất.
+## 12. Kết quả mô phỏng
 
-Để đánh giá soft landing hoàn chỉnh, cần định nghĩa điều kiện tiếp đất theo mô hình, chẳng hạn sai số ngang, khoảng cách tới mặt pad, vận tốc tương đối ngang/đứng, và tín hiệu tiếp xúc nếu có. Sau đó xác định hành vi điều khiển khi tiếp xúc và khi mất validity kéo dài. Các điều kiện/ngưỡng này chưa được triển khai trong hai file guidance và selector hiện tại.
-
-## 12. Tài liệu tham chiếu
+**Local Minima**
+![Quỹ đạo của UAV](Kết quả mô phỏng/Local Minima/Pos.png)
+## 13. Tài liệu tham chiếu
 
 *Terminal-Angle-Constrained Guidance based on Sliding Mode Control for UAV Soft Landing on Ground Vehicles*.
 
