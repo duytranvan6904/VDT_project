@@ -607,5 +607,28 @@ Dữ liệu telemetry và đồ thị nghiệm thu đầy đủ được lưu t�
   2. `test_static_pad_crisp_vertical_descent`: Xác nhận trên bãi tĩnh ở $z = 2.0\,\text{m}$, tốc độ hạ đạt $0.55\,\text{m/s} \le -0.50\,\text{m/s}$, không còn hiện tượng lơ lửng chậm chạp.
 - **Đồng bộ mã nguồn**: Toàn bộ các thay đổi được cập nhật đồng bộ $100\%$ giữa `simulation/` và `embedded_handover/`.
 
+---
+
+### G. Đồng bộ Toàn bộ Dự án Lên Google NotebookLM Phục vụ Đào tạo & Nghiên cứu
+- **Mục tiêu**: Đóng gói toàn bộ kiến trúc, lý thuyết toán học (SMC, IAPF, IBVS, EKF/IMM, FSM), cẩm nang nhúng Raspberry Pi 5 và các bài báo khoa học nền tảng lên Google NotebookLM nhằm phục vụ việc học tập, tra cứu thuật toán và tự động sinh Study Guide/Quiz/Podcast.
+- **Tập tài liệu chuyên sâu chuẩn hóa (`notebooklm_sources/`)**:
+  1. `01_Kien_Truc_He_Thong_Va_Tong_Quan.md`: Tổng thể kiến trúc GNC, FSM, ROS 2 topics và tham số hệ thống.
+  2. `02_Thuat_Toan_SMC_Guidance.md`: Lý thuyết mặt trượt $s = \dot{e} + \lambda e$, luật tiếp cận triệt tiêu chattering và toàn bộ code `smc_guidance.py`.
+  3. `03_Thuat_Toan_IAPF_Tranh_Vat_Can.md`: Lý thuyết trường thế cải tiến với vận tốc tương đối $v_{rel}$ và code `iapf_core.py`.
+  4. `04_Thuat_Toan_IBVS_Visual_Servoing.md`: Ma trận Jacobian hình ảnh $L_e$, quan hệ pixel $\leftrightarrow$ vận tốc 4-DoF và code `ibvs_controller.py`.
+  5. `05_Thi_Giac_Aruco_Va_Uoc_Luong_EKF.md`: Chiến lược mốc kép, bộ lọc EKF/IMM và cổng lọc Mahalanobis (`covariance_gate.py`).
+  6. `06_FSM_Dieu_Khien_Su_Menh_Va_Touchdown.md`: Logic chuyển trạng thái nhiệm vụ và nhận diện tiếp đất (`touchdown_detector.py`).
+  7. `07_Trien_Khai_Phan_Cung_Raspberry_Pi5.md`: Hướng dẫn nhúng phần cứng Pi 5 + PX4 DDS bridge và RealSense.
+  8. `08_Nhat_Ky_Kinh_Nghiem_Va_Ton_Dong.md`: Nhật ký giải quyết sự cố, các lưu ý thực chiến và checklist bay thử.
+  9. `09_Ngan_Hang_Trac_Nghiem_Bo_Loc_Bayes_KF_EKF_UKF_PF.md`: Ngân hàng 25 câu hỏi trắc nghiệm chuyên sâu về lý thuyết và toán học các bộ lọc Bayes, KF, EKF, UKF, PF với 4 đáp án cân bằng chiều dài và lời giải chi tiết.
+  10. `10_Huong_Dan_Trien_Khai_Code_Cac_Bo_Loc_Thuc_Te.md`: Cẩm nang lập trình thực chiến từng dòng lệnh cho người mới bắt đầu (KF, EKF phi tuyến toàn phần với hàm g/h và ma trận Jacobi G/H, UKF, Particle Filter) cùng quy trình kết nối vòng lặp thời gian thực 50Hz.
+  11. Cùng 6 bài báo khoa học nền tảng dạng PDF từ `References/`.
+- **Công cụ đồng bộ tự động**:
+  - `scripts/prepare_notebooklm_sources.py`: Trích xuất và biên tập mã nguồn/lý thuyết thành 8 chuyên đề Markdown.
+  - `scripts/upload_to_notebooklm.py`: Tạo notebook, gán alias `vdt`, tự động upload nguồn và sinh Study Guide / Quiz.
+- **Liên kết NotebookLM**:
+  - URL: [https://notebooklm.google.com/notebook/0f67963e-f4a7-4a6b-8b11-5fb39214e96b](https://notebooklm.google.com/notebook/0f67963e-f4a7-4a6b-8b11-5fb39214e96b)
+  - Alias CLI: `vdt` (sử dụng được ngay với `nlm notebook query vdt "<câu hỏi>"`).
+
 
 

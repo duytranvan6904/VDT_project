@@ -27,3 +27,10 @@ PX4-Autopilot/
 *.ulg
 simulation_results/
 recordings/
+
+# NotebookLM synchronization & sources
+notebooklm_sources/
+scripts/*notebooklm*
+scripts/prepare_notebooklm_sources.py
+scripts/upload_to_notebooklm.py
+
